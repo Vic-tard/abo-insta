@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Abo Insta</title>
+<meta name="description" content="Vois qui se désabonne de ton Instagram, à partir de l'export officiel.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Abo Insta">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-512.png">
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; }
+  /* Layout : une colonne comme le profil Instagram — en-tête avec compteurs, onglets soulignés, liste d'abonnés, bouton bleu fixé en bas. */
+  :root {
+    --bg: #ffffff; --surface: #ffffff; --surface-2: #efefef; --surface-2-press: #dbdbdb;
+    --ink: #000000; --muted: #737373; --line: #dbdbdb;
+    --blue: #0095f6; --blue-press: #1877f2; --blue-ink: #ffffff; --link: #00376b;
+    --down: #ed4956; --down-soft: #fdecee; --up: #1a9a4b; --up-soft: #e6f6ec;
+    --warn-soft: #fff6db; --warn-ink: #6b4c00;
+    --ring: linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #000000; --surface: #000000; --surface-2: #262626; --surface-2-press: #363636;
+      --ink: #f5f5f5; --muted: #a8a8a8; --line: #262626;
+      --blue: #0095f6; --blue-press: #1877f2; --blue-ink: #ffffff; --link: #e0f1ff;
+      --down: #ff6b78; --down-soft: #3a1418; --up: #5fd38d; --up-soft: #12301f;
+      --warn-soft: #2f2610; --warn-ink: #f3d68a; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #000000; --surface: #000000; --surface-2: #262626; --surface-2-press: #363636;
+    --ink: #f5f5f5; --muted: #a8a8a8; --line: #262626;
+    --blue: #0095f6; --blue-press: #1877f2; --blue-ink: #ffffff; --link: #e0f1ff;
+    --down: #ff6b78; --down-soft: #3a1418; --up: #5fd38d; --up-soft: #12301f;
+    --warn-soft: #2f2610; --warn-ink: #f3d68a; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.4 var(--font); -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
+  .wrap {
+    max-width: 600px; margin: 0 auto; padding-top: max(10px, env(safe-area-inset-top, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  h1, h2 { margin: 0; text-wrap: balance; }
+  h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  h2 { font-size: 16px; font-weight: 700; }
+
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand svg { width: 26px; height: 26px; flex: none; }
+  .sync { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; text-align: right; }
+  .sync svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sync.ok { color: var(--up); }
+  .sync.warn { color: var(--down); }
+  button.sync { background: none; border: 0; padding: 4px 0; font: inherit; font-size: 12px; cursor: pointer; }
+  .banner { position: relative; }
+  .banner .x { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border: 0; background: none; color: inherit; font-size: 18px; cursor: pointer; }
+  .banner.install { padding-right: 40px; }
+
+  .banner { border-radius: 12px; padding: 12px 14px; font-size: 14px; background: var(--warn-soft); color: var(--warn-ink); }
+  .banner strong { font-weight: 600; }
+
+  /* En-tête façon profil : anneau dégradé + trois compteurs */
+  .profile { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 20px; }
+  .ring { width: 86px; height: 86px; border-radius: 50%; padding: 3px; background: var(--ring); flex: none; }
+  .ring-in { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); padding: 3px; }
+  .ring-core { width: 100%; height: 100%; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; color: var(--muted); }
+  .ring-core svg { width: 44%; height: 44%; fill: currentColor; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center; min-width: 0; }
+  .stat b { display: block; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .stat span { font-size: 13px; color: var(--ink); }
+  .stat.down b { color: var(--down); }
+  .stat.up b { color: var(--up); }
+  .caption { font-size: 14px; color: var(--muted); margin: -6px 0 0; }
+  .caption strong { color: var(--ink); font-weight: 600; }
+
+  /* Onglets soulignés comme sur un profil */
+  .tabs-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+  .tabs button { font: 600 14px var(--font); color: var(--muted); background: transparent; border: 0; border-bottom: 1px solid transparent; margin-bottom: -1px; padding: 12px 4px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .tabs .n { font-variant-numeric: tabular-nums; margin-left: 4px; font-weight: 400; }
+
+  .search { position: relative; }
+  .search svg { position: absolute; left: 12px; top: 50%; translate: 0 -50%; width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; pointer-events: none; }
+  input[type=search], input[type=date] {
+    font: 16px var(--font); color: var(--ink); background: var(--surface-2); border: 0;
+    border-radius: 10px; padding: 9px 12px; width: 100%; min-width: 0; outline: none;
+  }
+  input[type=search] { padding-left: 36px; }
+  input::placeholder { color: var(--muted); }
+
+  ul.people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  ul.people li { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; padding: 8px 0; }
+  .av { width: 52px; height: 52px; border-radius: 50%; padding: 2px; background: transparent; }
+  .av.up { background: var(--ring); }
+  .av.down { background: var(--line); }
+  .av i { width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center; font: 600 18px var(--font); font-style: normal; color: var(--muted); background: var(--surface-2); text-transform: uppercase; border: 2px solid var(--surface); }
+  .av.down i { color: var(--down); }
+  .who { min-width: 0; display: flex; flex-direction: column; }
+  .who a { color: var(--ink); text-decoration: none; font-weight: 600; overflow-wrap: anywhere; }
+  .who small { color: var(--muted); font-size: 14px; }
+  .who small.down { color: var(--down); }
+  .who small.up { color: var(--up); }
+  .empty { color: var(--muted); font-size: 14px; padding: 12px 0; }
+  .more { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 4px 0; cursor: pointer; align-self: flex-start; }
+
+  .block { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); min-width: 0; }
+  #chart svg { width: 100%; height: auto; display: block; }
+  #chart text { fill: var(--muted); font: 11px var(--font); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 4px; text-align: right; border-top: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; border-top: 0; }
+  th:first-child, td:first-child { text-align: left; }
+  .scroll { overflow-x: auto; }
+
+  .btn { font: 600 14px var(--font); border-radius: 8px; padding: 9px 16px; border: 0; cursor: pointer; text-decoration: none; text-align: center; }
+  .btn.primary { background: var(--blue); color: var(--blue-ink); }
+  .btn.primary:active { background: var(--blue-press); }
+  .btn.primary:disabled { opacity: .5; }
+  .btn.ghost { background: var(--surface-2); color: var(--ink); }
+  .btn.ghost:active { background: var(--surface-2-press); }
+  .btn.danger { background: var(--surface-2); color: var(--down); }
+  .btn.small { padding: 7px 14px; }
+  .btn:focus-visible, .tabs button:focus-visible, a:focus-visible, .more:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row .btn { flex: 1 1 140px; }
+  .note { font-size: 14px; color: var(--muted); margin: 0; }
+  .msg { font-size: 14px; border-radius: 10px; padding: 10px 12px; }
+  .msg.ok { background: var(--up-soft); color: var(--up); }
+  .msg.err { background: var(--down-soft); color: var(--down); }
+
+
+  /* Carte « Export de la semaine » : lien direct vers Instagram + rappel des réglages à cocher */
+  .weekly { background: var(--surface-2); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .weekly-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .due { font-size: 13px; color: var(--muted); text-align: right; }
+  .due.now { color: var(--blue); font-weight: 600; }
+  .weekly .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; font-size: 15px; border-radius: 10px; }
+  .weekly .btn svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .weekly .btn.ghost { background: var(--surface); }
+  .weekly .btn:disabled { opacity: .5; }
+  .howto { background: var(--surface); border-radius: 12px; }
+  .howto summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 11px 14px; font-weight: 600; font-size: 14px; }
+  .howto summary::-webkit-details-marker { display: none; }
+  .howto summary span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: auto; }
+  .howto summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: 45deg; margin: -4px 2px 0 0; transition: rotate .15s; }
+  .howto[open] summary::after { rotate: 225deg; margin-top: 4px; }
+  .howto summary:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; border-radius: 12px; }
+  .steps { list-style: none; margin: 0; padding: 2px 14px 14px; counter-reset: step; background: var(--surface); border-radius: 12px; display: flex; flex-direction: column; gap: 9px; }
+  .steps li { counter-increment: step; display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: baseline; font-size: 14px; line-height: 1.35; letter-spacing: -0.005em; }
+  .steps li::before { content: counter(step); width: 22px; height: 22px; border-radius: 50%; background: var(--ring); color: #fff; font: 700 12px/22px var(--font); text-align: center; align-self: start; }
+  .steps b { font-weight: 600; }
+  .weekly .note { font-size: 13px; }
+  .reminders { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+  .reminders a, .reminders button { font: 600 13px var(--font); color: var(--blue); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: none; }
+  .siri { font-size: 13px; background: var(--surface); border-radius: 8px; padding: 8px 10px; margin: 0; }
+
+  .toast { position: fixed; left: 50%; translate: -50% 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 6; width: min(568px, calc(100% - 32px));
+    background: var(--ink); color: var(--bg); border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / .25); }
+  .toast span { flex: 1; }
+  .toast button { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 4px 0; cursor: pointer; }
+
+  .sheet-bg { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / .5); display: flex; align-items: flex-end; justify-content: center; }
+  .sheet {
+    background: var(--surface); width: 100%; max-width: 600px; border-radius: 14px 14px 0 0;
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    display: flex; flex-direction: column; gap: 14px; max-height: 90%; overflow-y: auto;
+  }
+  .sheet::before { content: ""; width: 40px; height: 4px; border-radius: 2px; background: var(--line); align-self: center; }
+  .sheet > div { display: flex; flex-direction: column; gap: 14px; }
+  .sheet h2 { text-align: center; }
+  .sheet ol { margin: 0; padding-left: 20px; font-size: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .sheet label { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+  .preview { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; }
+  .sheet .note { text-align: center; overflow-wrap: anywhere; }
+  @media (prefers-reduced-motion: no-preference) { .sheet { animation: up .22s ease-out; } }
+  @keyframes up { from { transform: translateY(24px); opacity: .6; } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <img src="icon-180.png" alt="" width="28" height="28" style="border-radius:7px;display:block">
+      <h1>Abo Insta</h1>
+    </div>
+    <button class="sync" id="sync" type="button"></button>
+  </div>
+
+  <section class="weekly" id="weekly" aria-labelledby="weekly-title">
+    <div class="weekly-head"><h2 id="weekly-title">Export de la semaine</h2><span class="due" id="due"></span></div>
+    <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
+    <details class="howto">
+      <summary>Consignes<span>6 étapes</span></summary>
+      <ol class="steps" aria-label="Les étapes dans Instagram">
+      <li><span><b>Créer une exportation</b>, puis ton compte</span></li>
+      <li><span><b>Exporter sur l'appareil</b></span></li>
+      <li><span>Personnaliser : coche seulement <b>Followers et suivi(e)s</b></span></li>
+      <li><span>Période <b>Depuis le début</b> · Format <b>JSON</b></span></li>
+      <li><span><b>Démarrer l'exportation</b>, puis télécharge le .zip quand Instagram te prévient</span></li>
+      <li><span>Reviens ici : <b>Importer le .zip reçu</b></span></li>
+    </ol>
+    </details>
+    <button class="btn ghost" id="quick-import" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer le .zip reçu</button>
+    <p class="note" id="weekly-note" hidden></p>
+    <div class="reminders">
+      <a id="gcal" href="#" target="_blank" rel="noopener noreferrer">Rappel Google Agenda</a>
+      <button id="siri-btn" aria-expanded="false" aria-controls="siri">Rappel iPhone (Siri)</button>
+    </div>
+    <p class="siri" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ». Le rappel arrivera dans l'app Rappels.</p>
+  </section>
+
+  <div class="banner" id="demo-banner" hidden><strong>Données d'exemple.</strong> Importe ton export Instagram pour voir tes vrais abonnés. L'exemple disparaîtra.</div>
+  <div class="banner install" id="install-banner" hidden><strong>Installe l'app :</strong> touche <b>Partager</b> puis « <b>Sur l'écran d'accueil</b> ». Elle s'ouvrira en plein écran, comme une vraie app.<button class="x" id="install-x" aria-label="Fermer">✕</button></div>
+  <div class="banner" id="storage-banner" hidden></div>
+
+  <section class="profile" aria-label="Résumé">
+    <div class="ring" aria-hidden="true"><div class="ring-in"><div class="ring-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></div></div></div>
+    <div class="stats">
+      <div class="stat"><b id="st-count">–</b><span>abonnés</span></div>
+      <div class="stat down"><b id="st-down">–</b><span>départs</span></div>
+      <div class="stat up"><b id="st-up">–</b><span>arrivées</span></div>
+    </div>
+  </section>
+  <p class="caption" id="caption">Chargement…</p>
+
+  <section class="tabs-wrap">
+    <div class="tabs" role="tablist" aria-label="Listes">
+      <button role="tab" id="tab-unfollow" data-tab="unfollow" aria-selected="true">Départs</button>
+      <button role="tab" id="tab-follow" data-tab="follow" aria-selected="false">Arrivées</button>
+      <button role="tab" id="tab-recent" data-tab="recent" aria-selected="false">Abonnés</button>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="search" placeholder="Rechercher" autocomplete="off" autocapitalize="none" aria-label="Rechercher un compte">
+    </div>
+    <ul class="people" id="people"></ul>
+    <button class="more" id="more" hidden>Voir plus</button>
+  </section>
+
+  <section class="block">
+    <h2>Évolution</h2>
+    <div id="chart"></div>
+  </section>
+
+  <section class="block">
+    <h2>Imports</h2>
+    <div class="scroll"><table id="imports"></table></div>
+  </section>
+
+  <section class="block">
+    <h2>Sauvegarde</h2>
+    <p class="note">Ton historique reste sur ce téléphone, rien n'est envoyé sur internet. Après chaque import, garde une copie dans Fichiers ou iCloud Drive : si le téléphone efface les données du site, tu la restaures en deux touches.</p>
+    <p class="note" id="backup-status"></p>
+    <div class="row">
+      <button class="btn ghost" id="backup">Sauvegarder une copie</button>
+      <button class="btn ghost" id="restore">Restaurer une copie</button>
+    </div>
+    <div class="row" id="reset-row">
+      <button class="btn danger" id="reset">Tout effacer</button>
+    </div>
+    <div class="row" id="reset-confirm" hidden>
+      <button class="btn danger" id="reset-yes">Oui, effacer l'historique</button>
+      <button class="btn ghost" id="reset-no">Annuler</button>
+    </div>
+    <div class="msg" id="backup-msg" hidden></div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button id="undo">Annuler</button></div>
+<input type="file" id="file" accept=".zip,.json,application/zip,application/json" multiple hidden>
+<input type="file" id="restore-file" accept=".json,application/json" hidden>
+
+<div class="sheet-bg" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div id="sheet-help">
+      <h2 id="sheet-title">Importer ton export</h2>
+      <ol>
+        <li>Touche « Demander l'export à Instagram » en haut de l'app, puis « Créer une exportation », ton compte, « Exporter sur l'appareil ».</li>
+        <li>Dans « Personnaliser les informations », garde seulement « Followers et suivi(e)s » (rubrique Contacts). Format <strong>JSON</strong>, période « Depuis le début ».</li>
+        <li>Quand Instagram te prévient, télécharge le .zip sur ton téléphone.</li>
+        <li>Choisis ce .zip ci-dessous. Pas besoin de le décompresser.</li>
+      </ol>
+      <div class="row">
+        <button class="btn primary" id="pick">Choisir le fichier</button>
+        <button class="btn ghost" id="cancel-help">Annuler</button>
+      </div>
+    </div>
+    <div id="sheet-confirm" hidden>
+      <h2>Vérifie avant d'enregistrer</h2>
+      <div class="preview" id="pv-count"></div>
+      <p class="note" id="pv-source"></p>
+      <label for="pv-date">Date de l'export<input type="date" id="pv-date"></label>
+      <div class="msg err" id="pv-err" hidden></div>
+      <div class="row">
+        <button class="btn primary" id="save">Enregistrer</button>
+        <button class="btn ghost" id="cancel-confirm">Annuler</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const PAGE = 40;
+let state = { snapshots: [], events: [], followers: {} };  // { snapshots: [...], events: [...], followers: {name: ts} }
+let isDemo = false;
+let loading = true;
+let tab = "unfollow";
+let shown = PAGE;
+let pending = null;      // export lu, en attente de confirmation
+
+// ---------- Copie locale (IndexedDB) : seulement un cache, peut être vidée par iOS ----------
+const store = {
+  db: null,
+  async open() {
+    this.db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open("abo-insta", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("kv");
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async get(key) {
+    return new Promise((resolve, reject) => {
+      const req = this.db.transaction("kv").objectStore("kv").get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async set(key, value) {
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction("kv", "readwrite");
+      tx.objectStore("kv").put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+};
+
+// ---------- Double copie locale : IndexedDB + localStorage ----------
+// On écrit les deux ; au chargement, on garde celle qui a le plus d'imports.
+const LS_KEY = "abo-state";
+function lsGet() { try { const s = JSON.parse(localStorage.getItem(LS_KEY) || "null"); return isState(s) ? s : null; } catch { return null; } }
+function lsSet(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {} }
+
+const ICONS = {
+  ok: `<svg viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.1 4.75 4.75 0 0 0 7 18.5z"/><path d="m9.5 13.6 1.9 1.9 3.6-3.7"/></svg>`,
+  warn: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>`,
+  wait: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+};
+function setSync(kind, text) {
+  const el = $("sync");
+  el.className = "sync" + (kind === "ok" ? " ok" : kind === "warn" ? " warn" : "");
+  el.innerHTML = ICONS[kind] + `<span>${text}</span>`;
+}
+function showStorageBanner(html) { $("storage-banner").innerHTML = html; $("storage-banner").hidden = !html; }
+
+async function save() {
+  let ok = false;
+  try { await store.set("state", state); ok = true; } catch {}
+  lsSet(state);
+  try { localStorage.getItem(LS_KEY) && (ok = true); } catch {}
+  prefs.started = true; savePrefs();
+  showStorageBanner(ok ? "" : "<strong>Ce navigateur n'enregistre rien</strong> (navigation privée ?). Sauvegarde une copie après chaque import.");
+  renderBackup();
+}
+
+// ---------- Lecture de l'export Instagram ----------
+function cleanName(s) {
+  if (!s || typeof s !== "string") return null;
+  const n = s.trim().replace(/^@/, "").toLowerCase();
+  return n || null;
+}
+function nameFromHref(href) {
+  if (!href) return null;
+  try {
+    const parts = new URL(href).pathname.split("/").filter((p) => p && p !== "_u");
+    return parts.length ? parts[parts.length - 1] : null;
+  } catch { return null; }
+}
+// Gère l'ancienne variante (nom dans string_list_data[].value) et la récente (nom dans title).
+function parseFollowers(data) {
+  if (data && !Array.isArray(data)) {
+    if (Array.isArray(data.relationships_followers)) data = data.relationships_followers;
+    else if (data.relationships_following) throw new Error("Ce fichier liste les comptes que TU suis (following.json). Il faut tes abonnés : followers_1.json, ou le .zip complet.");
+    else throw new Error("Aucune liste d'abonnés dans ce fichier.");
+  }
+  if (!Array.isArray(data)) throw new Error("Aucune liste d'abonnés dans ce fichier.");
+  const out = {};
+  for (const entry of data) {
+    if (!entry || typeof entry !== "object") continue;
+    const items = Array.isArray(entry.string_list_data) && entry.string_list_data.length ? entry.string_list_data : [{}];
+    for (const item of items) {
+      const name = cleanName(item.value) || cleanName(entry.title) || cleanName(nameFromHref(item.href));
+      if (!name) continue;
+      out[name] = Number.isInteger(item.timestamp) ? item.timestamp : (out[name] ?? null);
+    }
+  }
+  return out;
+}
+function parseJsonText(text, label) {
+  const t = text.replace(/^﻿/, "").trimStart();
+  if (t.startsWith("<")) throw new Error(`${label} est au format HTML. Refais l'export Instagram en choisissant le format JSON.`);
+  try { return JSON.parse(t); } catch { throw new Error(`${label} n'est pas un fichier JSON valide.`); }
+}
+const FOLLOWERS_RE = /(^|\/)followers(_\d+)?\.json$/;
+
+// ---------- Lecteur de .zip minimal (sans bibliothèque externe) ----------
+// Lit le répertoire central du .zip, puis décompresse seulement les fichiers utiles.
+let zipNames = [];
+async function bytesOf(file, start, end) { return new DataView(await file.slice(start, end).arrayBuffer()); }
+async function listZip(file) {
+  const tailLen = Math.min(file.size, 66000);
+  const tail = await bytesOf(file, file.size - tailLen, file.size);
+  let eocd = -1;
+  for (let i = tail.byteLength - 22; i >= 0; i--) if (tail.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error(`${file.name} n'est pas un .zip valide.`);
+  let count = tail.getUint16(eocd + 10, true), cdSize = tail.getUint32(eocd + 12, true), cdOffset = tail.getUint32(eocd + 16, true);
+  if (cdOffset === 0xffffffff || count === 0xffff) {
+    // Zip64 : le localisateur précède l'EOCD.
+    const loc = eocd - 20;
+    if (loc < 0 || tail.getUint32(loc, true) !== 0x07064b50) throw new Error(`${file.name} n'est pas un .zip valide.`);
+    const z64 = await bytesOf(file, Number(tail.getBigUint64(loc + 8, true)), file.size);
+    count = Number(z64.getBigUint64(32, true)); cdSize = Number(z64.getBigUint64(40, true)); cdOffset = Number(z64.getBigUint64(48, true));
+  }
+  const cd = await bytesOf(file, cdOffset, cdOffset + cdSize);
+  const dec = new TextDecoder();
+  const out = [];
+  let p = 0;
+  for (let n = 0; n < count && p + 46 <= cd.byteLength; n++) {
+    if (cd.getUint32(p, true) !== 0x02014b50) break;
+    const method = cd.getUint16(p + 10, true), time = cd.getUint16(p + 12, true), day = cd.getUint16(p + 14, true);
+    let comp = cd.getUint32(p + 20, true), size = cd.getUint32(p + 24, true), local = cd.getUint32(p + 42, true);
+    const nameLen = cd.getUint16(p + 28, true), extraLen = cd.getUint16(p + 30, true), commentLen = cd.getUint16(p + 32, true);
+    const name = dec.decode(new Uint8Array(cd.buffer, cd.byteOffset + p + 46, nameLen));
+    let q = p + 46 + nameLen;
+    const extraEnd = q + extraLen;
+    while (q + 4 <= extraEnd) {
+      const id = cd.getUint16(q, true), len = cd.getUint16(q + 2, true);
+      if (id === 0x0001) {
+        let r = q + 4;
+        if (size === 0xffffffff) { size = Number(cd.getBigUint64(r, true)); r += 8; }
+        if (comp === 0xffffffff) { comp = Number(cd.getBigUint64(r, true)); r += 8; }
+        if (local === 0xffffffff) { local = Number(cd.getBigUint64(r, true)); }
+      }
+      q += 4 + len;
+    }
+    const date = new Date(1980 + (day >> 9), ((day >> 5) & 15) - 1, day & 31, time >> 11, (time >> 5) & 63, (time & 31) * 2);
+    out.push({ name, method, comp, size, local, date });
+    p = extraEnd + commentLen;
+  }
+  zipNames = out.map((e) => e.name);
+  return out;
+}
+async function readZipEntry(file, e) {
+  const head = await bytesOf(file, e.local, e.local + 30);
+  if (head.getUint32(0, true) !== 0x04034b50) throw new Error(`${e.name} est illisible dans le .zip.`);
+  const start = e.local + 30 + head.getUint16(26, true) + head.getUint16(28, true);
+  const blob = file.slice(start, start + e.comp);
+  if (e.method === 0) return blob.text();
+  if (e.method !== 8) throw new Error(`${e.name} utilise une compression non prise en charge.`);
+  if (typeof DecompressionStream === "undefined") throw new Error("Ce navigateur ne sait pas ouvrir les .zip. Mets à jour iOS, ou décompresse l'export et choisis followers_1.json.");
+  return new Response(blob.stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+}
+
+async function readExport(files) {
+  const followers = {};
+  let date = null;
+  for (const file of files) {
+    const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+    const isZip = head[0] === 0x50 && head[1] === 0x4b;
+    if (isZip) {
+      const entries = (await listZip(file)).filter((e) => FOLLOWERS_RE.test(e.name));
+      if (!entries.length) {
+        if (zipNames.some((n) => /followers_1\.html$/.test(n))) throw new Error("Cet export est au format HTML. Refais-le en choisissant JSON.");
+        throw new Error("Aucune liste d'abonnés dans ce .zip. Vérifie que tu as coché « Followers et suivi(e)s ».");
+      }
+      for (const e of entries) {
+        Object.assign(followers, parseFollowers(parseJsonText(await readZipEntry(file, e), e.name)));
+        if (!date || e.date > date) date = e.date;
+      }
+    } else {
+      Object.assign(followers, parseFollowers(parseJsonText(await file.text(), file.name)));
+      const d = new Date(file.lastModified);
+      if (file.lastModified && (!date || d > date)) date = d;
+    }
+  }
+  if (!Object.keys(followers).length) throw new Error("L'export ne contient aucun abonné.");
+  return { followers, date: date || new Date(), source: files.map((f) => f.name).join(" + ") };
+}
+
+async function hashNames(names) {
+  const text = names.slice().sort().join("\n");
+  try {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    let h = 0; for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
+    return "h" + h + ":" + names.length;
+  }
+}
+
+// ---------- Comparaison ----------
+async function recordSnapshot(followers, takenAt, source) {
+  const names = Object.keys(followers);
+  const hash = await hashNames(names);
+  const last = state.snapshots[state.snapshots.length - 1];
+  if (last && new Date(takenAt) < new Date(last.takenAt)) {
+    throw new Error(`Cet export est daté du ${fmtDate(takenAt)}, avant ton dernier import (${fmtDate(last.takenAt)}). Importe tes exports dans l'ordre.`);
+  }
+  if (last && last.hash === hash) return { status: "same" };
+  const prev = new Set(Object.keys(state.followers));
+  const cur = new Set(names);
+  const unfollows = last ? [...prev].filter((u) => !cur.has(u)).sort() : [];
+  const follows = last ? names.filter((u) => !prev.has(u)).sort() : [];
+  const id = (last ? last.id : 0) + 1;
+  state.snapshots.push({ id, takenAt, source, count: names.length, hash, unfollows: unfollows.length, follows: follows.length });
+  for (const u of unfollows) state.events.push({ u, kind: "unfollow", at: takenAt, since: last.takenAt });
+  for (const u of follows) state.events.push({ u, kind: "follow", at: takenAt, since: last.takenAt });
+  state.followers = followers;
+  return { status: last ? "ok" : "first", unfollows, follows, count: names.length };
+}
+
+// ---------- Affichage ----------
+const fmtDate = (iso) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+const fmtShort = (iso) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+const nf = (n) => n.toLocaleString("fr-FR");
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const profileUrl = (u) => `https://www.instagram.com/${encodeURIComponent(u)}/`;
+
+function render() {
+  $("demo-banner").hidden = !isDemo;
+  renderWeekly();
+  const snaps = state.snapshots;
+  const last = snaps[snaps.length - 1];
+  const compared = snaps.length >= 2;
+  $("st-count").textContent = last ? nf(last.count) : "–";
+  $("st-down").textContent = compared ? nf(last.unfollows) : "–";
+  $("st-up").textContent = compared ? nf(last.follows) : "–";
+  let cap;
+  if (loading) cap = "Chargement de ton historique…";
+  else if (!last) cap = "Aucun import pour l'instant.";
+  else if (!compared) cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · premier import, c'est ta référence. Refais un export dans quelques jours pour voir les départs.`;
+  else cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · comparé au ${fmtDate(snaps[snaps.length - 2].takenAt)}`;
+  $("caption").innerHTML = cap;
+  const counts = { unfollow: 0, follow: 0 };
+  for (const e of state.events) counts[e.kind]++;
+  $("tab-unfollow").innerHTML = `Départs<span class="n">${nf(counts.unfollow)}</span>`;
+  $("tab-follow").innerHTML = `Arrivées<span class="n">${nf(counts.follow)}</span>`;
+  $("tab-recent").innerHTML = `Abonnés<span class="n">${nf(Object.keys(state.followers).length)}</span>`;
+  renderList();
+  renderChart();
+  renderImports();
+}
+
+function renderList() {
+  const q = $("search").value.trim().toLowerCase();
+  let rows;
+  if (tab === "recent") {
+    rows = Object.entries(state.followers)
+      .filter(([u]) => u.includes(q))
+      .sort((a, b) => (b[1] ?? -1) - (a[1] ?? -1))
+      .map(([u, ts]) => ({ u, cls: "", sub: ts ? `abonné depuis le ${fmtDate(ts * 1000)}` : "" }));
+  } else {
+    rows = state.events
+      .filter((e) => e.kind === tab && e.u.includes(q))
+      .sort((a, b) => b.at.localeCompare(a.at) || a.u.localeCompare(b.u))
+      .map((e) => ({ u: e.u, cls: tab === "unfollow" ? "down" : "up",
+        sub: `${tab === "unfollow" ? "parti" : "arrivé"} entre le ${fmtShort(e.since)} et le ${fmtShort(e.at)}` }));
+  }
+  const html = rows.slice(0, shown).map((r) => `
+    <li><span class="av ${r.cls}" aria-hidden="true"><i>${esc(r.u[0])}</i></span>
+      <span class="who"><a href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer">${esc(r.u)}</a>${r.sub ? `<small class="${r.cls}">${r.sub}</small>` : ""}</span>
+      <a class="btn ghost small" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">Voir</a></li>`).join("");
+  const n = state.snapshots.length;
+  const empty = loading ? "Chargement…"
+    : q ? "Aucun compte ne correspond."
+    : tab === "recent" ? "Importe ton export pour voir tes abonnés."
+    : n < 2 ? "Il faut deux imports pour comparer. Refais un export dans quelques jours."
+    : tab === "unfollow" ? "Personne n'est parti. 🎉" : "Aucun nouvel abonné détecté.";
+  $("people").innerHTML = html || `<li class="empty" style="display:block">${empty}</li>`;
+  $("more").hidden = rows.length <= shown;
+  $("more").textContent = `Voir plus (${rows.length - shown} restants)`;
+}
+
+function renderChart() {
+  const snaps = state.snapshots;
+  if (snaps.length < 2) { $("chart").innerHTML = `<p class="empty">La courbe apparaît à partir de deux imports.</p>`; return; }
+  const W = 340, H = 180, L = 40, R = 10, T = 12, B = 24;
+  const xs = snaps.map((s) => new Date(s.takenAt).getTime());
+  const ys = snaps.map((s) => s.count);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  const step = niceStep((hi - lo) || 4);
+  lo = Math.floor(lo / step) * step - step; hi = Math.ceil(hi / step) * step + step;
+  lo = Math.max(0, lo);
+  const sx = (x) => L + ((x - x0) / (x1 - x0 || 1)) * (W - L - R);
+  const sy = (y) => T + (1 - (y - lo) / (hi - lo)) * (H - T - B);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Nombre d'abonnés à chaque import">
+    <defs><linearGradient id="line-g" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fa7e1e"/><stop offset=".45" stop-color="#d62976"/><stop offset=".75" stop-color="#962fbf"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient>
+    <linearGradient id="area-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d62976" stop-opacity=".22"/><stop offset="1" stop-color="#d62976" stop-opacity="0"/></linearGradient></defs>`;
+  for (let v = lo; v <= hi + 1e-9; v += step) {
+    svg += `<line x1="${L}" x2="${W - R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-width="1"/>`;
+    svg += `<text x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${nf(v)}</text>`;
+  }
+  const ticks = snaps.length <= 4 ? snaps.map((_, i) => i) : [0, Math.floor((snaps.length - 1) / 2), snaps.length - 1];
+  ticks.forEach((i, k) => {
+    const anchor = k === 0 ? "start" : (i === snaps.length - 1 ? "end" : "middle");
+    svg += `<text x="${sx(xs[i])}" y="${H - 6}" text-anchor="${anchor}">${fmtShort(snaps[i].takenAt)}</text>`;
+  });
+  const pts = xs.map((x, i) => `${sx(x)},${sy(ys[i])}`);
+  svg += `<polygon points="${sx(xs[0])},${sy(lo)} ${pts.join(" ")} ${sx(xs[xs.length - 1])},${sy(lo)}" fill="url(#area-g)"/>`;
+  svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="url(#line-g)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+  xs.forEach((x, i) => {
+    const endpoint = i === xs.length - 1;
+    svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="${endpoint ? 5 : 3.5}" fill="${endpoint ? "#4f5bd5" : "var(--surface)"}" stroke="${endpoint ? "var(--surface)" : "#d62976"}" stroke-width="2"><title>${fmtDate(snaps[i].takenAt)} : ${nf(ys[i])} abonnés</title></circle>`;
+  });
+  $("chart").innerHTML = svg + "</svg>";
+}
+function niceStep(range) {
+  const raw = range / 3;
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const m = raw / p;
+  return Math.max(1, (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p);
+}
+
+function renderImports() {
+  const snaps = state.snapshots;
+  if (!snaps.length) { $("imports").innerHTML = `<tr><td class="empty">${loading ? "Chargement…" : "Aucun import pour l'instant."}</td></tr>`; return; }
+  $("imports").innerHTML = `<tr><th>Date</th><th>Abonnés</th><th>Départs</th><th>Arrivées</th></tr>` +
+    snaps.slice().reverse().map((s, i) => {
+      const first = i === snaps.length - 1;
+      return `<tr><td>${fmtDate(s.takenAt)}</td><td>${nf(s.count)}</td>
+        <td style="color:var(--down)">${first ? "–" : "−" + s.unfollows}</td>
+        <td style="color:var(--up)">${first ? "–" : "+" + s.follows}</td></tr>`;
+    }).join("");
+}
+
+// ---------- Données d'exemple (affichées tant qu'aucun import n'a été fait) ----------
+function demoState() {
+  const names = ["lea.mrtn", "tom_vdl", "camille.photo", "jules_bzh", "ines.travel", "hugo.climb", "manon_draws", "nathan.music",
+    "chloe_cooks", "lucas.run", "emma.lyon", "theo_skate", "sarah.vintage", "maxime.dev", "julie.yoga", "antoine_film",
+    "clara.books", "paul.bike", "zoe.plants", "louis.coffee", "alice.ceramique", "romain_surf", "eva.danse", "noah.design"];
+  const day = 86400000, now = Date.now();
+  const at = (d) => new Date(now - d * day).toISOString();
+  const s = { snapshots: [], events: [], followers: {} };
+  const counts = [412, 418, 415, 421, 419];
+  const gone = [[], ["hugo.climb", "zoe.plants"], ["tom_vdl", "eva.danse", "paul.bike", "romain_surf"], ["clara.books"], ["maxime.dev", "julie.yoga", "noah.design"]];
+  const came = [[], ["lea.mrtn", "theo_skate", "alice.ceramique", "louis.coffee"], ["ines.travel"], ["camille.photo", "jules_bzh", "chloe_cooks", "emma.lyon", "lucas.run"], ["manon_draws"]];
+  [28, 21, 14, 7, 0].forEach((d, i) => {
+    s.snapshots.push({ id: i + 1, takenAt: at(d), source: "exemple", count: counts[i], hash: "demo" + i, unfollows: gone[i].length, follows: came[i].length });
+    if (i) {
+      gone[i].forEach((u) => s.events.push({ u, kind: "unfollow", at: at(d), since: at(d + 7) }));
+      came[i].forEach((u) => s.events.push({ u, kind: "follow", at: at(d), since: at(d + 7) }));
+    }
+  });
+  names.forEach((u, i) => { if (!gone.flat().includes(u)) s.followers[u] = Math.floor((now - i * 3.3 * day) / 1000); });
+  return s;
+}
+const emptyState = () => ({ snapshots: [], events: [], followers: {} });
+const isState = (s) => s && Array.isArray(s.snapshots) && Array.isArray(s.events) && s.followers && typeof s.followers === "object";
+
+// ---------- Import ----------
+function openSheet(which) {
+  $("sheet").hidden = false;
+  $("sheet-help").hidden = which !== "help";
+  $("sheet-confirm").hidden = which !== "confirm";
+}
+function closeSheet() { $("sheet").hidden = true; pending = null; }
+function toDateInput(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+
+// Après le premier vrai import, le bouton ouvre directement le sélecteur de fichier.
+const hasRealData = () => !isDemo && state.snapshots.length > 0;
+function startImport() { if (hasRealData()) $("file").click(); else openSheet("help"); }
+$("quick-import").addEventListener("click", startImport);
+$("pick").addEventListener("click", () => $("file").click());
+$("cancel-help").addEventListener("click", closeSheet);
+$("cancel-confirm").addEventListener("click", closeSheet);
+$("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
+
+$("file").addEventListener("change", async (e) => {
+  const files = [...e.target.files];
+  e.target.value = "";
+  if (!files.length) return;
+  openSheet("confirm");
+  $("pv-err").hidden = true;
+  $("pv-count").textContent = "Lecture…";
+  $("pv-source").textContent = "";
+  $("save").disabled = true;
+  try {
+    pending = await readExport(files);
+    // Import direct, sans écran de confirmation : on peut annuler juste après.
+    if (await commit(pending.date.toISOString())) return;
+    const n = Object.keys(pending.followers).length;
+    $("pv-count").textContent = `${nf(n)} abonnés`;
+    $("pv-source").textContent = pending.source;
+    $("pv-date").value = toDateInput(pending.date);
+    $("save").disabled = false;
+  } catch (err) {
+    $("pv-count").textContent = "Import impossible";
+    $("pv-err").textContent = err.message;
+    $("pv-err").hidden = false;
+  }
+});
+
+// Enregistre l'export en attente. Renvoie false (et affiche l'erreur dans la feuille) si l'import est refusé.
+let undoState = null, toastTimer = null;
+async function commit(takenAt) {
+  const before = JSON.stringify(state), wasDemo = isDemo;
+  if (isDemo) { state = emptyState(); isDemo = false; }
+  try {
+    const r = await recordSnapshot(pending.followers, takenAt, pending.source);
+    closeSheet();
+    tab = r.status === "ok" ? "unfollow" : "recent";
+    selectTab(tab);
+    shown = PAGE;
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (r.status === "same") { toast("Liste identique au dernier import : rien de nouveau.", false); return true; }
+    undoState = { state: wasDemo ? emptyState() : JSON.parse(before) };
+    toast(r.status === "first"
+      ? `${nf(r.count)} abonnés enregistrés. C'est ta référence.`
+      : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
+    await save();
+    return true;
+  } catch (err) {
+    if (wasDemo) { state = JSON.parse(before); isDemo = true; } else state = JSON.parse(before);
+    openSheet("confirm");
+    $("pv-count").textContent = `${nf(Object.keys(pending.followers).length)} abonnés`;
+    $("pv-source").textContent = pending.source;
+    $("pv-date").value = toDateInput(pending.date);
+    $("save").disabled = false;
+    $("pv-err").textContent = err.message;
+    $("pv-err").hidden = false;
+    return false;
+  }
+}
+$("save").addEventListener("click", async () => {
+  if (!pending) return;
+  const v = $("pv-date").value;
+  let takenAt = pending.date.toISOString();
+  if (v && v !== toDateInput(pending.date)) takenAt = new Date(v + "T12:00:00").toISOString();
+  await commit(takenAt);
+});
+
+function toast(text, canUndo) {
+  $("toast-text").textContent = text;
+  $("undo").hidden = !canUndo;
+  $("toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("toast").hidden = true; undoState = null; }, 8000);
+}
+$("undo").addEventListener("click", async () => {
+  if (!undoState) return;
+  state = undoState.state; undoState = null;
+  $("toast").hidden = true;
+  shown = PAGE;
+  render();
+  toast("Import annulé.", false);
+  await save();
+});
+
+function flash(text, kind) {
+  const m = $("backup-msg");
+  m.textContent = text; m.className = "msg " + kind; m.hidden = false;
+  m.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// ---------- Onglets et recherche ----------
+function selectTab(t) {
+  tab = t;
+  document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+}
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { selectTab(b.dataset.tab); shown = PAGE; renderList(); }));
+$("search").addEventListener("input", () => { shown = PAGE; renderList(); });
+$("more").addEventListener("click", () => { shown += PAGE * 3; renderList(); });
+
+// ---------- Copie / restauration ----------
+$("backup").addEventListener("click", async () => {
+  if (isDemo || !state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
+  const data = JSON.stringify({ app: "abo-insta", version: 1, savedAt: new Date().toISOString(), state });
+  const name = `abo-insta-sauvegarde-${toDateInput(new Date())}.json`;
+  const file = new File([data], name, { type: "application/json" });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      // iPhone : ouvre la feuille de partage, choisir « Enregistrer dans Fichiers ».
+      await navigator.share({ files: [file] });
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(file); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+    prefs.backupAt = new Date().toISOString(); prefs.backupCount = state.snapshots.length;
+    savePrefs(); renderBackup();
+    flash("Copie enregistrée.", "ok");
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+    flash("La copie n'a pas pu être enregistrée. Réessaie.", "err");
+  }
+});
+function renderBackup() {
+  const last = hasRealData() ? state.snapshots[state.snapshots.length - 1] : null;
+  const upToDate = !last || (prefs.backupAt && prefs.backupCount === state.snapshots.length);
+  if (!last) setSync("ok", "Sur ce téléphone");
+  else if (upToDate) setSync("ok", "Copie à jour");
+  else setSync("warn", "Copie à faire");
+  $("backup").className = "btn " + (last && !upToDate ? "primary" : "ghost");
+  $("backup-status").textContent = !last ? "" : prefs.backupAt
+    ? `Dernière copie : ${fmtDate(prefs.backupAt)}${upToDate ? "." : ", avant ton dernier import."}`
+    : "Aucune copie pour l'instant.";
+}
+$("sync").addEventListener("click", () => $("backup").scrollIntoView({ behavior: "smooth", block: "center" }));
+$("restore").addEventListener("click", () => $("restore-file").click());
+$("restore-file").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  let s;
+  try {
+    const data = JSON.parse(await f.text());
+    s = data && data.app === "abo-insta" && data.state;
+    if (!isState(s)) throw new Error();
+  } catch {
+    return flash("Ce fichier n'est pas une sauvegarde Abo Insta.", "err");
+  }
+  state = s; isDemo = false;
+  render();
+  await save();
+  flash(`Historique restauré : ${s.snapshots.length} import${s.snapshots.length > 1 ? "s" : ""}.`, "ok");
+});
+$("reset").addEventListener("click", () => {
+  if (isDemo || !state.snapshots.length) return flash("Il n'y a encore rien à effacer.", "err");
+  $("reset-row").hidden = true; $("reset-confirm").hidden = false;
+});
+$("reset-no").addEventListener("click", () => { $("reset-row").hidden = false; $("reset-confirm").hidden = true; });
+$("reset-yes").addEventListener("click", async () => {
+  state = emptyState();
+  $("reset-row").hidden = false; $("reset-confirm").hidden = true;
+  render();
+  await save();
+  flash("Historique effacé.", "ok");
+});
+
+// ---------- Export de la semaine ----------
+// Préférences (date de demande d'export, dernière copie) gardées dans localStorage.
+const APP_URL = location.origin + location.pathname;
+let prefs = {};
+try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } catch {}
+function savePrefs() { try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
+$("go-export").addEventListener("click", () => {
+  prefs.requestedAt = new Date().toISOString();
+  renderWeekly();
+  savePrefs();
+});
+$("siri-btn").addEventListener("click", () => {
+  const open = $("siri").hidden;
+  $("siri").hidden = !open;
+  $("siri-btn").setAttribute("aria-expanded", String(open));
+});
+
+// Bandeau « installer » : seulement sur iPhone/iPad dans Safari, hors app installée.
+const standalone = window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+$("install-banner").hidden = standalone || !isIOS || prefs.installDismissed;
+$("install-x").addEventListener("click", () => { prefs.installDismissed = true; savePrefs(); $("install-banner").hidden = true; });
+
+function gcalUrl() {
+  // Prochain dimanche 18 h, répété chaque semaine.
+  const d = new Date();
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
+  const day = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: "Exporter Instagram (Abo Insta)",
+    dates: `${day}T180000/${day}T181000`,
+    ctz: "Europe/Paris",
+    recur: "RRULE:FREQ=WEEKLY",
+    details: `Ouvre Abo Insta et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur l'appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
+  });
+  return "https://calendar.google.com/calendar/render?" + q.toString().replace(/\+/g, "%20");
+}
+$("gcal").href = gcalUrl();
+
+function daysSince(iso) { return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000); }
+function renderWeekly() {
+  const last = hasRealData() ? state.snapshots[state.snapshots.length - 1] : null;
+  const req = prefs.requestedAt;
+  const waiting = req && (!last || new Date(req) > new Date(last.takenAt)) && daysSince(req) < 5;
+  const due = $("due");
+  if (!last) { due.textContent = "Premier export"; due.className = "due now"; }
+  else {
+    const n = daysSince(last.takenAt);
+    due.textContent = n >= 7 ? `C'est le moment · ${n} j` : n === 0 ? "Importé aujourd'hui" : `Dernier il y a ${n} j`;
+    due.className = "due" + (n >= 7 ? " now" : "");
+  }
+  // Export déjà demandé : on met « Importer » en avant.
+  $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
+  $("quick-import").className = "btn " + (waiting ? "primary" : "ghost");
+  const note = $("weekly-note");
+  note.hidden = !waiting;
+  if (waiting) note.textContent = `Export demandé ${daysSince(req) === 0 ? "aujourd'hui" : "le " + fmtShort(req)}. Instagram te prévient quand il est prêt (souvent quelques minutes) : télécharge le .zip, puis touche « Importer ».`;
+}
+
+// ---------- Démarrage ----------
+setSync("wait", "Chargement…");
+render();
+(async () => {
+  let idb = null;
+  try {
+    await store.open();
+    const s = await store.get("state");
+    if (isState(s)) idb = s;
+  } catch {}
+  const ls = lsGet();
+  const best = [idb, ls].filter(Boolean).sort((a, b) => b.snapshots.length - a.snapshots.length)[0];
+  if (best) state = best;
+  if (best && (!idb || !ls || idb.snapshots.length !== ls.snapshots.length)) { try { await store.set("state", state); } catch {} lsSet(state); }
+  // Demande à Safari de ne pas effacer les données du site.
+  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch {}
+
+  loading = false;
+  $("quick-import").disabled = false;
+  if (!state.snapshots.length && !prefs.started) { state = demoState(); isDemo = true; }
+  render();
+  renderBackup();
+})();
+</script>
+</body>
+</html>
