@@ -166,8 +166,8 @@
   .steps b { font-weight: 600; }
   .weekly .note { font-size: 13px; }
   .reminders { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
-  .reminders a, .reminders button { font: 600 13px var(--font); color: var(--blue); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: none; }
-  .siri { font-size: 13px; background: var(--surface); border-radius: 8px; padding: 8px 10px; margin: 0; }
+  .reminders a, .reminders button { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: none; }
+  .siri { font-size: 13px; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin: 0; }
 
   .toast { position: fixed; left: 50%; translate: -50% 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 6; width: min(568px, calc(100% - 32px));
     background: var(--ink); color: var(--bg); border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / .25); }
@@ -217,12 +217,6 @@
     </details>
     <button class="btn ghost" id="quick-import" disabled>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer le .zip reçu</button>
-    <p class="note" id="weekly-note" hidden></p>
-    <div class="reminders">
-      <a id="gcal" href="#" target="_blank" rel="noopener noreferrer">Rappel Google Agenda</a>
-      <button id="siri-btn" aria-expanded="false" aria-controls="siri">Rappel iPhone (Siri)</button>
-    </div>
-    <p class="siri" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ». Le rappel arrivera dans l'app Rappels.</p>
   </section>
 
   <div class="banner" id="demo-banner" hidden><strong>Données d'exemple.</strong> Importe ton export Instagram pour voir tes vrais abonnés. L'exemple disparaîtra.</div>
@@ -261,6 +255,15 @@
   <section class="block">
     <h2>Imports</h2>
     <div class="scroll"><table id="imports"></table></div>
+  </section>
+
+  <section class="block">
+    <h2>Rappel chaque semaine</h2>
+    <div class="reminders">
+      <a id="gcal" href="#" target="_blank" rel="noopener noreferrer">Rappel Google Agenda</a>
+      <button id="siri-btn" aria-expanded="false" aria-controls="siri">Rappel iPhone (Siri)</button>
+    </div>
+    <p class="siri" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ». Le rappel arrivera dans l'app Rappels.</p>
   </section>
 
   <section class="block">
@@ -914,9 +917,6 @@ function renderWeekly() {
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
   $("quick-import").className = "btn " + (waiting ? "primary" : "ghost");
-  const note = $("weekly-note");
-  note.hidden = !waiting;
-  if (waiting) note.textContent = `Export demandé ${daysSince(req) === 0 ? "aujourd'hui" : "le " + fmtShort(req)}. Instagram te prévient quand il est prêt (souvent quelques minutes) : télécharge le .zip, puis touche « Importer ».`;
 }
 
 // ---------- Démarrage ----------
