@@ -88,8 +88,9 @@
 
   /* Onglets soulignés comme sur un profil */
   .tabs-wrap { display: flex; flex-direction: column; gap: 12px; }
-  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
-  .tabs button { font: 600 14px var(--font); color: var(--muted); background: transparent; border: 0; border-bottom: 1px solid transparent; margin-bottom: -1px; padding: 12px 4px; cursor: pointer; }
+  .tabs { display: flex; overflow-x: auto; scrollbar-width: none; box-shadow: inset 0 -1px var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 1 0 auto; white-space: nowrap; font: 600 14px var(--font); color: var(--muted); background: transparent; border: 0; border-bottom: 1px solid transparent; padding: 12px 10px; cursor: pointer; }
   .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
   .tabs .n { font-variant-numeric: tabular-nums; margin-left: 4px; font-weight: 400; }
 
@@ -352,8 +353,11 @@
     <div class="tabs" role="tablist" aria-label="Listes">
       <button role="tab" id="tab-unfollow" data-tab="unfollow" aria-selected="true">Départs</button>
       <button role="tab" id="tab-follow" data-tab="follow" aria-selected="false">Arrivées</button>
+      <button role="tab" id="tab-notback" data-tab="notback" aria-selected="false">Pas en retour</button>
+      <button role="tab" id="tab-fans" data-tab="fans" aria-selected="false">Fans</button>
       <button role="tab" id="tab-recent" data-tab="recent" aria-selected="false">Abonnés</button>
     </div>
+    <p class="note" id="list-note" hidden></p>
     <div class="search">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="search" id="search" placeholder="Rechercher" autocomplete="off" autocapitalize="none" aria-label="Rechercher un compte">
@@ -551,12 +555,15 @@ function nameFromHref(href) {
   } catch { return null; }
 }
 // Gère l'ancienne variante (nom dans string_list_data[].value) et la récente (nom dans title).
-function parseFollowers(data) {
-  if (data && !Array.isArray(data)) {
-    if (Array.isArray(data.relationships_followers)) data = data.relationships_followers;
-    else if (data.relationships_following) throw new Error("Ce fichier liste les comptes que TU suis (following.json). Il faut tes abonnés : followers_1.json, ou le .zip complet.");
-    else throw new Error("Aucune liste d'abonnés dans ce fichier.");
-  }
+// followers_1.json est une liste ; following.json est { relationships_following: [...] }.
+function listKind(data) {
+  if (Array.isArray(data)) return "followers";
+  if (data && Array.isArray(data.relationships_followers)) return "followers";
+  if (data && Array.isArray(data.relationships_following)) return "following";
+  return null;
+}
+function parseAccounts(data) {
+  if (data && !Array.isArray(data)) data = data.relationships_followers || data.relationships_following;
   if (!Array.isArray(data)) throw new Error("Aucune liste d'abonnés dans ce fichier.");
   const out = {};
   for (const entry of data) {
@@ -576,6 +583,7 @@ function parseJsonText(text, label) {
   try { return JSON.parse(t); } catch { throw new Error(`${label} n'est pas un fichier JSON valide.`); }
 }
 const FOLLOWERS_RE = /(^|\/)followers(_\d+)?\.json$/;
+const FOLLOWING_RE = /(^|\/)following\.json$/;
 
 // ---------- Lecteur de .zip minimal (sans bibliothèque externe) ----------
 // Lit le répertoire central du .zip, puis décompresse seulement les fichiers utiles.
@@ -637,28 +645,38 @@ async function readZipEntry(file, e) {
 
 async function readExport(files) {
   const followers = {};
+  let following = null;   // comptes que TU suis, si l'export les contient
   let date = null;
   for (const file of files) {
     const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const isZip = head[0] === 0x50 && head[1] === 0x4b;
     if (isZip) {
-      const entries = (await listZip(file)).filter((e) => FOLLOWERS_RE.test(e.name));
+      const all = await listZip(file);
+      const entries = all.filter((e) => FOLLOWERS_RE.test(e.name));
       if (!entries.length) {
         if (zipNames.some((n) => /followers_1\.html$/.test(n))) throw new Error("Cet export est au format HTML. Refais-le en choisissant JSON.");
         throw new Error("Aucune liste d'abonnés dans ce .zip. Vérifie que tu as coché « Followers et suivi(e)s ».");
       }
       for (const e of entries) {
-        Object.assign(followers, parseFollowers(parseJsonText(await readZipEntry(file, e), e.name)));
+        Object.assign(followers, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
         if (!date || e.date > date) date = e.date;
       }
+      for (const e of all.filter((e) => FOLLOWING_RE.test(e.name))) {
+        following = Object.assign(following || {}, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
+      }
     } else {
-      Object.assign(followers, parseFollowers(parseJsonText(await file.text(), file.name)));
+      const data = parseJsonText(await file.text(), file.name);
+      if (listKind(data) === "following") { following = Object.assign(following || {}, parseAccounts(data)); continue; }
+      Object.assign(followers, parseAccounts(data));
       const d = new Date(file.lastModified);
       if (file.lastModified && (!date || d > date)) date = d;
     }
   }
-  if (!Object.keys(followers).length) throw new Error("L'export ne contient aucun abonné.");
-  return { followers, date: date || new Date(), source: files.map((f) => f.name).join(" + ") };
+  if (!Object.keys(followers).length) {
+    if (following) throw new Error("Ce fichier liste les comptes que TU suis (following.json). Choisis-le avec followers_1.json, ou importe le .zip complet.");
+    throw new Error("L'export ne contient aucun abonné.");
+  }
+  return { followers, following, date: date || new Date(), source: files.map((f) => f.name).join(" + ") };
 }
 
 async function hashNames(names) {
@@ -673,13 +691,15 @@ async function hashNames(names) {
 }
 
 // ---------- Comparaison ----------
-async function recordSnapshot(followers, takenAt, source) {
+async function recordSnapshot(followers, following, takenAt, source) {
   const names = Object.keys(followers);
   const hash = await hashNames(names);
   const last = state.snapshots[state.snapshots.length - 1];
   if (last && new Date(takenAt) < new Date(last.takenAt)) {
     throw new Error(`Cet export est daté du ${fmtDate(takenAt)}, avant ton dernier import (${fmtDate(last.takenAt)}). Importe tes exports dans l'ordre.`);
   }
+  // La liste des comptes suivis n'a pas d'historique : on garde la plus récente.
+  if (following) { state.following = following; state.followingAt = takenAt; }
   if (last && last.hash === hash) return { status: "same" };
   const prev = new Set(Object.keys(state.followers));
   const cur = new Set(names);
@@ -720,15 +740,40 @@ function render() {
   $("tab-unfollow").innerHTML = `Départs<span class="n">${nf(counts.unfollow)}</span>`;
   $("tab-follow").innerHTML = `Arrivées<span class="n">${nf(counts.follow)}</span>`;
   $("tab-recent").innerHTML = `Abonnés<span class="n">${nf(Object.keys(state.followers).length)}</span>`;
+  const rel = relations();
+  $("tab-notback").innerHTML = `Pas en retour${rel ? `<span class="n">${nf(rel.notBack.length)}</span>` : ""}`;
+  $("tab-fans").innerHTML = `Fans${rel ? `<span class="n">${nf(rel.fans.length)}</span>` : ""}`;
   renderList();
   renderChart();
   renderImports();
 }
 
+// Comptes que tu suis sans qu'ils te suivent, et l'inverse. null si l'export ne contenait pas following.json.
+function relations() {
+  if (!state.following) return null;
+  const fol = state.following, me = state.followers;
+  return {
+    notBack: Object.keys(fol).filter((u) => !(u in me)),
+    fans: Object.keys(me).filter((u) => !(u in fol)),
+  };
+}
+
 function renderList() {
   const q = $("search").value.trim().toLowerCase();
+  const rel = relations();
+  const relTab = tab === "notback" || tab === "fans";
+  $("list-note").hidden = !(relTab && rel);
+  if (relTab && rel) $("list-note").textContent = tab === "notback"
+    ? `Tu les suis, mais ils ne te suivent pas. D'après ton export du ${fmtDate(state.followingAt)}.`
+    : `Ils te suivent, mais tu ne les suis pas. D'après ton export du ${fmtDate(state.followingAt)}.`;
   let rows;
-  if (tab === "recent") {
+  if (relTab) {
+    const src = tab === "notback" ? state.following : state.followers;
+    rows = (rel ? rel[tab === "notback" ? "notBack" : "fans"] : [])
+      .filter((u) => u.includes(q))
+      .sort((a, b) => (src[b] ?? -1) - (src[a] ?? -1))
+      .map((u) => ({ u, cls: "", sub: src[u] ? `${tab === "notback" ? "suivi" : "abonné"} depuis le ${fmtDate(src[u] * 1000)}` : "" }));
+  } else if (tab === "recent") {
     rows = Object.entries(state.followers)
       .filter(([u]) => u.includes(q))
       .sort((a, b) => (b[1] ?? -1) - (a[1] ?? -1))
@@ -747,8 +792,11 @@ function renderList() {
   const n = state.snapshots.length;
   const empty = loading ? "Chargement…"
     : q ? "Aucun compte ne correspond."
+    : relTab && !rel ? "Ton dernier export ne contenait pas la liste des comptes que tu suis. Au prochain, garde bien « Followers et suivi(e)s » coché : cet onglet se remplira tout seul."
+    : tab === "notback" ? "Tout le monde te suit en retour. 🎉"
+    : tab === "fans" ? "Tu suis tous tes abonnés."
     : tab === "recent" ? "Importe ton export pour voir tes abonnés."
-    : n < 2 ? "Il faut deux imports pour comparer. Refais un export dans quelques jours."
+    : n < 2 ? "Il faut deux imports pour comparer. Refais un export dès que tu en as envie."
     : tab === "unfollow" ? "Personne n'est parti. 🎉" : "Aucun nouvel abonné détecté.";
   $("people").innerHTML = html || `<li class="empty" style="display:block">${empty}</li>`;
   $("more").hidden = rows.length <= shown;
@@ -857,14 +905,15 @@ let undoState = null, toastTimer = null;
 async function commit(takenAt) {
   const before = JSON.stringify(state);
   try {
-    const r = await recordSnapshot(pending.followers, takenAt, pending.source);
+    const r = await recordSnapshot(pending.followers, pending.following, takenAt, pending.source);
     closeSheet();
-    tab = r.status === "ok" ? "unfollow" : "recent";
+    // Premier import : « Pas en retour » est le seul résultat disponible tout de suite.
+    tab = r.status === "ok" ? "unfollow" : state.following ? "notback" : "recent";
     selectTab(tab);
     shown = PAGE;
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (r.status === "same") { toast("Liste identique au dernier import : rien de nouveau.", false); return true; }
+    if (r.status === "same") { toast("Liste identique au dernier import : rien de nouveau.", false); await save(); return true; }
     undoState = { state: JSON.parse(before) };
     toast(r.status === "first"
       ? `${nf(r.count)} abonnés enregistrés. C'est ton départ.`
@@ -918,6 +967,9 @@ function flash(text, kind) {
 function selectTab(t) {
   tab = t;
   document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  // Les onglets défilent sur petit écran : on garde l'onglet choisi visible, sans faire bouger la page.
+  const bar = document.querySelector(".tabs"), btn = bar.querySelector(`[data-tab="${t}"]`);
+  bar.scrollTo({ left: btn.offsetLeft - (bar.clientWidth - btn.offsetWidth) / 2, behavior: "smooth" });
 }
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { selectTab(b.dataset.tab); shown = PAGE; renderList(); }));
 $("search").addEventListener("input", () => { shown = PAGE; renderList(); });
@@ -1087,7 +1139,8 @@ function renderNext() {
   if (!one) return;
   const s = state.snapshots[0];
   $("next-text").innerHTML = `<strong>${nf(s.count)} abonnés</strong> au ${fmtDate(s.takenAt)}. Pour l'instant il n'y a rien à comparer, c'est normal. `
-    + `<strong>Dès que tu remarques un changement</strong>, ou quand tu en as envie, refais un export : tu verras qui est parti et qui est arrivé.`;
+    + `<strong>Dès que tu remarques un changement</strong>, ou quand tu en as envie, refais un export : tu verras qui est parti et qui est arrivé.`
+    + (state.following ? ` En attendant, regarde l'onglet <strong>Pas en retour</strong>.` : "");
 }
 
 // ---------- Présentation en 3 écrans ----------
