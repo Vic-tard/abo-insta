@@ -189,6 +189,83 @@
   .sheet .note { text-align: center; overflow-wrap: anywhere; }
   @media (prefers-reduced-motion: no-preference) { .sheet { animation: up .22s ease-out; } }
   @keyframes up { from { transform: translateY(24px); opacity: .6; } }
+
+  /* Tant qu'aucun import n'est fait, on n'affiche que la carte « Pour commencer ». */
+  body[data-mode="empty"] .needs-data { display: none !important; }
+  body:not([data-mode="empty"]) .only-empty { display: none !important; }
+  .top-actions { display: flex; align-items: center; gap: 12px; }
+  .help-btn { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--ink); font: 700 15px var(--font); cursor: pointer; flex: none; }
+  .help-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  /* Carte « Pour commencer » : le parcours en étapes, l'étape en cours mise en avant */
+  .start { background: var(--surface-2); border-radius: 14px; padding: 16px 14px; display: flex; flex-direction: column; gap: 14px; }
+  .start > p { margin: -8px 0 0; color: var(--muted); font-size: 14px; }
+  .journey { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .journey > li { background: var(--surface); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 28px 1fr; gap: 4px 12px; align-items: start; }
+  .journey .num { grid-row: span 3; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--font); background: var(--surface-2); color: var(--muted); }
+  .journey .num svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .journey li.current .num { background: var(--ring); color: #fff; }
+  .journey li.done .num { background: var(--up-soft); color: var(--up); }
+  .journey b.t { font-size: 15px; font-weight: 600; line-height: 28px; }
+  .journey li.todo b.t { color: var(--muted); }
+  .journey li.done b.t { color: var(--muted); font-weight: 500; }
+  .journey .sub { font-size: 14px; color: var(--muted); line-height: 1.4; margin: 0; }
+  .journey .act { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .journey .act .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; font-size: 15px; border-radius: 10px; }
+  .journey .act .btn svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .journey .howto { background: var(--surface-2); }
+  .journey .howto .steps { background: var(--surface-2); }
+  .share-ico { display: inline-block; width: 15px; height: 15px; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .linkish { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 0; cursor: pointer; align-self: flex-start; }
+
+  /* Carte « Prochaine étape » après le premier import */
+  .next { background: var(--up-soft); color: var(--ink); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .next h2 { display: flex; align-items: center; gap: 8px; color: var(--up); }
+  .next h2 svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .next p { margin: 0; font-size: 14px; }
+
+  /* Présentation au premier lancement : 3 écrans qu'on fait glisser */
+  .onb { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 0 calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .onb-top { display: flex; justify-content: flex-end; padding: 0 16px; min-height: 44px; align-items: center; }
+  .onb-skip { font: 600 15px var(--font); color: var(--muted); background: none; border: 0; padding: 8px 4px; cursor: pointer; }
+  .onb-track { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .onb-track::-webkit-scrollbar { display: none; }
+  .onb-slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 0 28px; max-width: 600px; margin: 0 auto; box-sizing: border-box; }
+  .onb-step { font: 600 13px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0; }
+  .onb-slide h2 { font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; }
+  .onb-slide p { margin: 0; font-size: 16px; line-height: 1.45; color: var(--muted); }
+  .onb-slide p strong { color: var(--ink); font-weight: 600; }
+  .onb-art { background: var(--surface-2); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-height: 190px; justify-content: center; }
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 6px; text-align: center; }
+  .flow .fi { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.2; }
+  .flow .fi span.ic { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; background: var(--surface); }
+  .flow .fi span.ic svg { width: 28px; height: 28px; fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .flow .fi span.ic img { width: 54px; height: 54px; border-radius: 14px; display: block; }
+  .flow .arrow { color: var(--muted); font-size: 18px; }
+  .flow .fi span.ic.down { color: var(--down); font: 700 18px var(--font); }
+  .mock { background: var(--surface); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .mock-head { display: flex; align-items: center; gap: 14px; }
+  .mock-head .ring { width: 56px; height: 56px; }
+  .mock-head b { font-size: 20px; display: block; font-variant-numeric: tabular-nums; }
+  .mock-head small { color: var(--muted); font-size: 13px; }
+  .tag { align-self: flex-start; font: 600 12px var(--font); border-radius: 999px; padding: 4px 10px; background: var(--surface-2); color: var(--ink); }
+  .mock-row { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 10px; font-size: 14px; }
+  .mock-row .av { width: 36px; height: 36px; }
+  .mock-row .av i { font-size: 13px; }
+  .mock-row b { font-weight: 600; }
+  .mock-row small { display: block; color: var(--down); font-size: 12px; }
+  .mock-row small.up { color: var(--up); }
+  .mock-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center; }
+  .mock-stats div { background: var(--surface-2); border-radius: 10px; padding: 8px; font-size: 12px; }
+  .mock-stats b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .mock-stats .d b { color: var(--down); }
+  .mock-stats .u b { color: var(--up); }
+  .onb-foot { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 12px 28px 0; max-width: 600px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+  .dots { display: flex; gap: 7px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: width .2s, background .2s; }
+  .dots i.on { width: 20px; border-radius: 4px; background: var(--ink); }
+  .onb-foot .btn { width: 100%; padding: 14px; font-size: 16px; border-radius: 12px; }
 </style>
 
 <div class="wrap">
@@ -197,14 +274,55 @@
       <img src="icone-v4-180.png" alt="" width="28" height="28" style="border-radius:7px;display:block">
       <h1>Abo Insta</h1>
     </div>
-    <button class="sync" id="sync" type="button"></button>
+    <div class="top-actions">
+      <button class="sync needs-data" id="sync" type="button"></button>
+      <button class="help-btn" id="help-btn" type="button" aria-label="Comment ça marche">?</button>
+    </div>
   </div>
 
-  <section class="weekly" id="weekly" aria-labelledby="weekly-title">
+  <section class="start only-empty" id="start" aria-labelledby="start-title">
+    <h2 id="start-title">Pour commencer</h2>
+    <p>Trois étapes, la première fois seulement.</p>
+    <ol class="journey" id="journey">
+      <li id="j-install">
+        <span class="num">1</span>
+        <b class="t">Ajoute l'app à ton écran d'accueil</b>
+        <p class="sub">Dans Safari, touche <b>Partager</b> <svg class="share-ico" viewBox="0 0 24 24" aria-label="(l'icône carré avec une flèche)"><path d="M12 3v12M8 7l4-4 4 4M6 11H5v10h14V11h-1"/></svg> puis « <b>Sur l'écran d'accueil</b> ». Ouvre ensuite l'app depuis son icône et continue là-bas : c'est elle qui garde ton historique.</p>
+      </li>
+      <li id="j-export">
+        <span class="num">2</span>
+        <b class="t">Demande ton export à Instagram</b>
+        <p class="sub" id="j-export-sub">Instagram prépare un fichier avec la liste de tes abonnés. C'est officiel et gratuit, sans donner ton mot de passe.</p>
+        <div class="act" id="j-export-act">
+          <a class="btn primary" id="start-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Ouvrir Instagram</a>
+          <div id="howto-slot-start"></div>
+        </div>
+      </li>
+      <li id="j-import">
+        <span class="num">3</span>
+        <b class="t">Importe le .zip reçu</b>
+        <p class="sub">Instagram te prévient quand c'est prêt (quelques minutes à quelques heures). Télécharge le .zip, puis choisis-le ici. Pas besoin de le décompresser.</p>
+        <div class="act">
+          <button class="btn ghost" id="start-import" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Choisir le .zip</button>
+        </div>
+      </li>
+    </ol>
+    <p class="note">Ensuite, tu refais l'export une fois par semaine pour voir qui est parti.</p>
+  </section>
+
+  <section class="next" id="next" hidden>
+    <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Ta référence est enregistrée</h2>
+    <p id="next-text"></p>
+    <button class="linkish" id="next-remind">Me le rappeler</button>
+  </section>
+
+  <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
     <div class="weekly-head"><h2 id="weekly-title">Export de la semaine</h2><span class="due" id="due"></span></div>
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
-    <details class="howto">
+    <div id="howto-slot-weekly"><details class="howto" id="howto">
       <summary>Consignes<span>6 étapes</span></summary>
       <ol class="steps" aria-label="Les étapes dans Instagram">
       <li><span><b>Créer une exportation</b>, puis ton compte</span></li>
@@ -214,16 +332,15 @@
       <li><span><b>Démarrer l'exportation</b>, puis télécharge le .zip quand Instagram te prévient</span></li>
       <li><span>Reviens ici : <b>Importer le .zip reçu</b></span></li>
     </ol>
-    </details>
+    </details></div>
     <button class="btn ghost" id="quick-import" disabled>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer le .zip reçu</button>
   </section>
 
-  <div class="banner" id="demo-banner" hidden><strong>Données d'exemple.</strong> Importe ton export Instagram pour voir tes vrais abonnés. L'exemple disparaîtra.</div>
   <div class="banner install" id="install-banner" hidden><strong>Installe l'app :</strong> touche <b>Partager</b> puis « <b>Sur l'écran d'accueil</b> ». Elle s'ouvrira en plein écran, comme une vraie app.<button class="x" id="install-x" aria-label="Fermer">✕</button></div>
   <div class="banner" id="storage-banner" hidden></div>
 
-  <section class="profile" aria-label="Résumé">
+  <section class="needs-data profile" aria-label="Résumé">
     <div class="ring" aria-hidden="true"><div class="ring-in"><div class="ring-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></div></div></div>
     <div class="stats">
       <div class="stat"><b id="st-count">–</b><span>abonnés</span></div>
@@ -231,9 +348,9 @@
       <div class="stat up"><b id="st-up">–</b><span>arrivées</span></div>
     </div>
   </section>
-  <p class="caption" id="caption">Chargement…</p>
+  <p class="needs-data caption" id="caption">Chargement…</p>
 
-  <section class="tabs-wrap">
+  <section class="needs-data tabs-wrap">
     <div class="tabs" role="tablist" aria-label="Listes">
       <button role="tab" id="tab-unfollow" data-tab="unfollow" aria-selected="true">Départs</button>
       <button role="tab" id="tab-follow" data-tab="follow" aria-selected="false">Arrivées</button>
@@ -247,17 +364,17 @@
     <button class="more" id="more" hidden>Voir plus</button>
   </section>
 
-  <section class="block">
+  <section class="block needs-data">
     <h2>Évolution</h2>
     <div id="chart"></div>
   </section>
 
-  <section class="block">
+  <section class="block needs-data">
     <h2>Imports</h2>
     <div class="scroll"><table id="imports"></table></div>
   </section>
 
-  <section class="block">
+  <section class="block needs-data" id="reminders-block">
     <h2>Rappel chaque semaine</h2>
     <div class="reminders">
       <a id="gcal" href="#" target="_blank" rel="noopener noreferrer">Rappel Google Agenda</a>
@@ -268,13 +385,14 @@
 
   <section class="block">
     <h2>Sauvegarde</h2>
-    <p class="note">Ton historique reste sur ce téléphone, rien n'est envoyé sur internet. Après chaque import, garde une copie dans Fichiers ou iCloud Drive : si le téléphone efface les données du site, tu la restaures en deux touches.</p>
-    <p class="note" id="backup-status"></p>
+    <p class="note needs-data">Ton historique reste sur ce téléphone, rien n'est envoyé sur internet. Après chaque import, garde une copie dans Fichiers ou iCloud Drive : si le téléphone efface les données du site, tu la restaures en deux touches.</p>
+    <p class="note only-empty">Tu as déjà utilisé l'app sur un autre téléphone ? Restaure la copie que tu avais gardée.</p>
+    <p class="note needs-data" id="backup-status"></p>
     <div class="row">
-      <button class="btn ghost" id="backup">Sauvegarder une copie</button>
+      <button class="btn ghost needs-data" id="backup">Sauvegarder une copie</button>
       <button class="btn ghost" id="restore">Restaurer une copie</button>
     </div>
-    <div class="row" id="reset-row">
+    <div class="row needs-data" id="reset-row">
       <button class="btn danger" id="reset">Tout effacer</button>
     </div>
     <div class="row" id="reset-confirm" hidden>
@@ -285,27 +403,65 @@
   </section>
 </div>
 
+<div class="onb" id="onb" role="dialog" aria-modal="true" aria-label="Comment ça marche" hidden>
+  <div class="onb-top"><button class="onb-skip" id="onb-skip" type="button">Passer</button></div>
+  <div class="onb-track" id="onb-track">
+    <section class="onb-slide" aria-label="1 sur 3">
+      <div class="onb-art">
+        <div class="flow" aria-hidden="true">
+          <div class="fi"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r=".6"/></svg></span>Instagram<br>t'envoie ta liste</div>
+          <span class="arrow">→</span>
+          <div class="fi"><span class="ic"><img src="icone-v4-180.png" alt=""></span>Tu l'importes<br>ici</div>
+          <span class="arrow">→</span>
+          <div class="fi"><span class="ic down">−3</span>Tu vois qui<br>est parti</div>
+        </div>
+      </div>
+      <p class="onb-step">Comment ça marche</p>
+      <h2>Vois qui se désabonne de toi</h2>
+      <p>Instagram peut t'envoyer la liste officielle de tes abonnés. Tu la donnes à l'app chaque semaine, elle compare et te montre <strong>qui est parti</strong> et qui est arrivé.</p>
+      <p><strong>Aucun mot de passe, aucune connexion à ton compte</strong> : zéro risque. Tout reste sur ton téléphone.</p>
+    </section>
+    <section class="onb-slide" aria-label="2 sur 3">
+      <div class="onb-art">
+        <div class="mock" aria-hidden="true">
+          <div class="mock-head">
+            <div class="ring"><div class="ring-in"><div class="ring-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></div></div></div>
+            <div><b>412 abonnés</b><small>enregistrés aujourd'hui</small></div>
+          </div>
+          <span class="tag">📸 Ta photo de départ</span>
+        </div>
+      </div>
+      <p class="onb-step">Premier import</p>
+      <h2>Le premier import, c'est ta photo de départ</h2>
+      <p>La première fois, l'app note simplement qui te suit aujourd'hui. Elle n'a encore rien à comparer : <strong>c'est normal de ne voir aucun départ</strong>.</p>
+    </section>
+    <section class="onb-slide" aria-label="3 sur 3">
+      <div class="onb-art">
+        <div class="mock" aria-hidden="true">
+          <div class="mock-stats"><div class="d"><b>3</b>départs</div><div class="u"><b>5</b>arrivées</div></div>
+          <div class="mock-row"><span class="av down"><i>j</i></span><span><b>julie.yoga</b><small>partie cette semaine</small></span></div>
+          <div class="mock-row"><span class="av up"><i>m</i></span><span><b>manon_draws</b><small class="up">arrivée cette semaine</small></span></div>
+        </div>
+      </div>
+      <p class="onb-step">Deuxième import, une semaine après</p>
+      <h2>Les résultats arrivent au deuxième import</h2>
+      <p>Refais l'export la semaine suivante : l'app compare les deux listes et te montre <strong>les départs et les arrivées</strong>. Ensuite, une fois par semaine suffit.</p>
+    </section>
+  </div>
+  <div class="onb-foot">
+    <div class="dots" id="dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+    <button class="btn primary" id="onb-next" type="button">Suivant</button>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button id="undo">Annuler</button></div>
 <input type="file" id="file" accept=".zip,.json,application/zip,application/json" multiple hidden>
 <input type="file" id="restore-file" accept=".json,application/json" hidden>
 
 <div class="sheet-bg" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <div id="sheet-help">
-      <h2 id="sheet-title">Importer ton export</h2>
-      <ol>
-        <li>Touche « Demander l'export à Instagram » en haut de l'app, puis « Créer une exportation », ton compte, « Exporter sur l'appareil ».</li>
-        <li>Dans « Personnaliser les informations », garde seulement « Followers et suivi(e)s » (rubrique Contacts). Format <strong>JSON</strong>, période « Depuis le début ».</li>
-        <li>Quand Instagram te prévient, télécharge le .zip sur ton téléphone.</li>
-        <li>Choisis ce .zip ci-dessous. Pas besoin de le décompresser.</li>
-      </ol>
-      <div class="row">
-        <button class="btn primary" id="pick">Choisir le fichier</button>
-        <button class="btn ghost" id="cancel-help">Annuler</button>
-      </div>
-    </div>
     <div id="sheet-confirm" hidden>
-      <h2>Vérifie avant d'enregistrer</h2>
+      <h2 id="sheet-title">Vérifie avant d'enregistrer</h2>
       <div class="preview" id="pv-count"></div>
       <p class="note" id="pv-source"></p>
       <label for="pv-date">Date de l'export<input type="date" id="pv-date"></label>
@@ -323,7 +479,6 @@
 const $ = (id) => document.getElementById(id);
 const PAGE = 40;
 let state = { snapshots: [], events: [], followers: {} };  // { snapshots: [...], events: [...], followers: {name: ts} }
-let isDemo = false;
 let loading = true;
 let tab = "unfollow";
 let shown = PAGE;
@@ -370,7 +525,7 @@ const ICONS = {
 };
 function setSync(kind, text) {
   const el = $("sync");
-  el.className = "sync" + (kind === "ok" ? " ok" : kind === "warn" ? " warn" : "");
+  el.className = "sync needs-data" + (kind === "ok" ? " ok" : kind === "warn" ? " warn" : "");
   el.innerHTML = ICONS[kind] + `<span>${text}</span>`;
 }
 function showStorageBanner(html) { $("storage-banner").innerHTML = html; $("storage-banner").hidden = !html; }
@@ -380,7 +535,6 @@ async function save() {
   try { await store.set("state", state); ok = true; } catch {}
   lsSet(state);
   try { localStorage.getItem(LS_KEY) && (ok = true); } catch {}
-  prefs.started = true; savePrefs();
   showStorageBanner(ok ? "" : "<strong>Ce navigateur n'enregistre rien</strong> (navigation privée ?). Sauvegarde une copie après chaque import.");
   renderBackup();
 }
@@ -549,7 +703,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const profileUrl = (u) => `https://www.instagram.com/${encodeURIComponent(u)}/`;
 
 function render() {
-  $("demo-banner").hidden = !isDemo;
+  renderMode();
   renderWeekly();
   const snaps = state.snapshots;
   const last = snaps[snaps.length - 1];
@@ -560,7 +714,7 @@ function render() {
   let cap;
   if (loading) cap = "Chargement de ton historique…";
   else if (!last) cap = "Aucun import pour l'instant.";
-  else if (!compared) cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · premier import, c'est ta référence. Refais un export dans quelques jours pour voir les départs.`;
+  else if (!compared) cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · premier import`;
   else cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · comparé au ${fmtDate(snaps[snaps.length - 2].takenAt)}`;
   $("caption").innerHTML = cap;
   const counts = { unfollow: 0, follow: 0 };
@@ -656,45 +810,22 @@ function renderImports() {
     }).join("");
 }
 
-// ---------- Données d'exemple (affichées tant qu'aucun import n'a été fait) ----------
-function demoState() {
-  const names = ["lea.mrtn", "tom_vdl", "camille.photo", "jules_bzh", "ines.travel", "hugo.climb", "manon_draws", "nathan.music",
-    "chloe_cooks", "lucas.run", "emma.lyon", "theo_skate", "sarah.vintage", "maxime.dev", "julie.yoga", "antoine_film",
-    "clara.books", "paul.bike", "zoe.plants", "louis.coffee", "alice.ceramique", "romain_surf", "eva.danse", "noah.design"];
-  const day = 86400000, now = Date.now();
-  const at = (d) => new Date(now - d * day).toISOString();
-  const s = { snapshots: [], events: [], followers: {} };
-  const counts = [412, 418, 415, 421, 419];
-  const gone = [[], ["hugo.climb", "zoe.plants"], ["tom_vdl", "eva.danse", "paul.bike", "romain_surf"], ["clara.books"], ["maxime.dev", "julie.yoga", "noah.design"]];
-  const came = [[], ["lea.mrtn", "theo_skate", "alice.ceramique", "louis.coffee"], ["ines.travel"], ["camille.photo", "jules_bzh", "chloe_cooks", "emma.lyon", "lucas.run"], ["manon_draws"]];
-  [28, 21, 14, 7, 0].forEach((d, i) => {
-    s.snapshots.push({ id: i + 1, takenAt: at(d), source: "exemple", count: counts[i], hash: "demo" + i, unfollows: gone[i].length, follows: came[i].length });
-    if (i) {
-      gone[i].forEach((u) => s.events.push({ u, kind: "unfollow", at: at(d), since: at(d + 7) }));
-      came[i].forEach((u) => s.events.push({ u, kind: "follow", at: at(d), since: at(d + 7) }));
-    }
-  });
-  names.forEach((u, i) => { if (!gone.flat().includes(u)) s.followers[u] = Math.floor((now - i * 3.3 * day) / 1000); });
-  return s;
-}
 const emptyState = () => ({ snapshots: [], events: [], followers: {} });
 const isState = (s) => s && Array.isArray(s.snapshots) && Array.isArray(s.events) && s.followers && typeof s.followers === "object";
 
 // ---------- Import ----------
 function openSheet(which) {
   $("sheet").hidden = false;
-  $("sheet-help").hidden = which !== "help";
   $("sheet-confirm").hidden = which !== "confirm";
 }
 function closeSheet() { $("sheet").hidden = true; pending = null; }
 function toDateInput(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 
 // Après le premier vrai import, le bouton ouvre directement le sélecteur de fichier.
-const hasRealData = () => !isDemo && state.snapshots.length > 0;
-function startImport() { if (hasRealData()) $("file").click(); else openSheet("help"); }
+const hasRealData = () => state.snapshots.length > 0;
+function startImport() { $("file").click(); }
 $("quick-import").addEventListener("click", startImport);
-$("pick").addEventListener("click", () => $("file").click());
-$("cancel-help").addEventListener("click", closeSheet);
+$("start-import").addEventListener("click", startImport);
 $("cancel-confirm").addEventListener("click", closeSheet);
 $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
 
@@ -726,8 +857,7 @@ $("file").addEventListener("change", async (e) => {
 // Enregistre l'export en attente. Renvoie false (et affiche l'erreur dans la feuille) si l'import est refusé.
 let undoState = null, toastTimer = null;
 async function commit(takenAt) {
-  const before = JSON.stringify(state), wasDemo = isDemo;
-  if (isDemo) { state = emptyState(); isDemo = false; }
+  const before = JSON.stringify(state);
   try {
     const r = await recordSnapshot(pending.followers, takenAt, pending.source);
     closeSheet();
@@ -737,14 +867,14 @@ async function commit(takenAt) {
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (r.status === "same") { toast("Liste identique au dernier import : rien de nouveau.", false); return true; }
-    undoState = { state: wasDemo ? emptyState() : JSON.parse(before) };
+    undoState = { state: JSON.parse(before) };
     toast(r.status === "first"
       ? `${nf(r.count)} abonnés enregistrés. C'est ta référence.`
       : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
     await save();
     return true;
   } catch (err) {
-    if (wasDemo) { state = JSON.parse(before); isDemo = true; } else state = JSON.parse(before);
+    state = JSON.parse(before);
     openSheet("confirm");
     $("pv-count").textContent = `${nf(Object.keys(pending.followers).length)} abonnés`;
     $("pv-source").textContent = pending.source;
@@ -797,7 +927,7 @@ $("more").addEventListener("click", () => { shown += PAGE * 3; renderList(); });
 
 // ---------- Copie / restauration ----------
 $("backup").addEventListener("click", async () => {
-  if (isDemo || !state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
+  if (!state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
   const data = JSON.stringify({ app: "abo-insta", version: 1, savedAt: new Date().toISOString(), state });
   const name = `abo-insta-sauvegarde-${toDateInput(new Date())}.json`;
   const file = new File([data], name, { type: "application/json" });
@@ -825,7 +955,7 @@ function renderBackup() {
   if (!last) setSync("ok", "Sur ce téléphone");
   else if (upToDate) setSync("ok", "Copie à jour");
   else setSync("warn", "Copie à faire");
-  $("backup").className = "btn " + (last && !upToDate ? "primary" : "ghost");
+  $("backup").className = "btn needs-data " + (last && !upToDate ? "primary" : "ghost");
   $("backup-status").textContent = !last ? "" : prefs.backupAt
     ? `Dernière copie : ${fmtDate(prefs.backupAt)}${upToDate ? "." : ", avant ton dernier import."}`
     : "Aucune copie pour l'instant.";
@@ -844,13 +974,13 @@ $("restore-file").addEventListener("change", async (e) => {
   } catch {
     return flash("Ce fichier n'est pas une sauvegarde Abo Insta.", "err");
   }
-  state = s; isDemo = false;
+  state = s;
   render();
   await save();
   flash(`Historique restauré : ${s.snapshots.length} import${s.snapshots.length > 1 ? "s" : ""}.`, "ok");
 });
 $("reset").addEventListener("click", () => {
-  if (isDemo || !state.snapshots.length) return flash("Il n'y a encore rien à effacer.", "err");
+  if (!state.snapshots.length) return flash("Il n'y a encore rien à effacer.", "err");
   $("reset-row").hidden = true; $("reset-confirm").hidden = false;
 });
 $("reset-no").addEventListener("click", () => { $("reset-row").hidden = false; $("reset-confirm").hidden = true; });
@@ -868,11 +998,13 @@ const APP_URL = location.origin + location.pathname;
 let prefs = {};
 try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } catch {}
 function savePrefs() { try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
-$("go-export").addEventListener("click", () => {
+function markRequested() {
   prefs.requestedAt = new Date().toISOString();
-  renderWeekly();
   savePrefs();
-});
+  render();
+}
+$("go-export").addEventListener("click", markRequested);
+$("start-export").addEventListener("click", markRequested);
 $("siri-btn").addEventListener("click", () => {
   const open = $("siri").hidden;
   $("siri").hidden = !open;
@@ -882,7 +1014,8 @@ $("siri-btn").addEventListener("click", () => {
 // Bandeau « installer » : seulement sur iPhone/iPad dans Safari, hors app installée.
 const standalone = window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-$("install-banner").hidden = standalone || !isIOS || prefs.installDismissed;
+const needsInstall = !standalone && isIOS;
+$("install-banner").hidden = !needsInstall || prefs.installDismissed;
 $("install-x").addEventListener("click", () => { prefs.installDismissed = true; savePrefs(); $("install-banner").hidden = true; });
 
 function gcalUrl() {
@@ -919,6 +1052,78 @@ function renderWeekly() {
   $("quick-import").className = "btn " + (waiting ? "primary" : "ghost");
 }
 
+// ---------- Premier lancement : parcours « Pour commencer » ----------
+const CHECK = `<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>`;
+function setStep(id, status, n) {
+  const li = $(id);
+  li.className = status;
+  li.querySelector(".num").innerHTML = status === "done" ? CHECK : String(n);
+}
+function renderMode() {
+  const empty = !loading && !state.snapshots.length;
+  document.body.dataset.mode = loading ? "loading" : empty ? "empty" : "data";
+  // Le détail des réglages Instagram suit la carte visible.
+  const slot = $(empty ? "howto-slot-start" : "howto-slot-weekly");
+  if ($("howto").parentElement !== slot) slot.appendChild($("howto"));
+  if (empty) renderJourney();
+  renderNext();
+  $("install-banner").hidden = empty || !needsInstall || prefs.installDismissed;
+}
+function renderJourney() {
+  // Sur iPhone dans Safari, il faut d'abord installer l'app : Safari et l'icône n'ont pas la même mémoire.
+  $("j-install").hidden = !needsInstall;
+  const off = needsInstall ? 1 : 0;
+  const req = prefs.requestedAt;
+  if (needsInstall) setStep("j-install", "current", 1);
+  setStep("j-export", req ? "done" : needsInstall ? "todo" : "current", 1 + off);
+  setStep("j-import", req ? "current" : "todo", 2 + off);
+  $("j-export-sub").textContent = req
+    ? `Demandé le ${fmtDate(req)}. Pas reçu ? Tu peux le redemander.`
+    : "Instagram prépare un fichier avec la liste de tes abonnés. C'est officiel et gratuit, sans donner ton mot de passe.";
+  $("start-export").className = "btn " + (req || needsInstall ? "ghost" : "primary");
+  $("start-import").className = "btn " + (req && !needsInstall ? "primary" : "ghost");
+}
+function renderNext() {
+  const one = !loading && state.snapshots.length === 1;
+  $("next").hidden = !one;
+  if (!one) return;
+  const s = state.snapshots[0];
+  const nextDate = new Date(new Date(s.takenAt).getTime() + 7 * 86400000);
+  $("next-text").innerHTML = `<strong>${nf(s.count)} abonnés</strong> au ${fmtDate(s.takenAt)}. Pour l'instant il n'y a rien à comparer, c'est normal. `
+    + `Refais l'export à partir du <strong>${fmtDate(nextDate.toISOString())}</strong> : tu verras qui est parti et qui est arrivé.`;
+}
+$("next-remind").addEventListener("click", () => $("reminders-block").scrollIntoView({ behavior: "smooth", block: "center" }));
+
+// ---------- Présentation en 3 écrans ----------
+const track = $("onb-track");
+const slideIndex = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+function openOnboarding() {
+  $("onb").hidden = false;
+  document.body.style.overflow = "hidden";
+  track.scrollLeft = 0;
+  renderDots();
+}
+function closeOnboarding() {
+  $("onb").hidden = true;
+  document.body.style.overflow = "";
+  if (!prefs.onboarded) { prefs.onboarded = true; savePrefs(); }
+}
+function renderDots() {
+  const i = slideIndex();
+  [...$("dots").children].forEach((d, k) => d.classList.toggle("on", k === i));
+  const last = i === track.children.length - 1;
+  $("onb-next").textContent = last ? (state.snapshots.length ? "Fermer" : "C'est parti") : "Suivant";
+  $("onb-skip").style.visibility = last ? "hidden" : "visible";
+}
+track.addEventListener("scroll", () => requestAnimationFrame(renderDots), { passive: true });
+$("onb-next").addEventListener("click", () => {
+  const i = slideIndex();
+  if (i >= track.children.length - 1) return closeOnboarding();
+  track.scrollTo({ left: (i + 1) * track.clientWidth, behavior: "smooth" });
+});
+$("onb-skip").addEventListener("click", closeOnboarding);
+$("help-btn").addEventListener("click", openOnboarding);
+
 // ---------- Démarrage ----------
 setSync("wait", "Chargement…");
 render();
@@ -938,8 +1143,9 @@ render();
 
   loading = false;
   $("quick-import").disabled = false;
-  if (!state.snapshots.length && !prefs.started) { state = demoState(); isDemo = true; }
+  $("start-import").disabled = false;
   render();
+  if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
 })();
 </script>
