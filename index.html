@@ -144,7 +144,7 @@
   .msg.err { background: var(--down-soft); color: var(--down); }
 
 
-  /* Carte « Export de la semaine » : lien direct vers Instagram + rappel des réglages à cocher */
+  /* Carte « Nouvel export » : lien direct vers Instagram + rappel des réglages à cocher */
   .weekly { background: var(--surface-2); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .weekly-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .due { font-size: 13px; color: var(--muted); text-align: right; }
@@ -216,7 +216,6 @@
   .journey .howto { background: var(--surface-2); }
   .journey .howto .steps { background: var(--surface-2); }
   .share-ico { display: inline-block; width: 15px; height: 15px; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .linkish { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 0; cursor: pointer; align-self: flex-start; }
 
   /* Carte « Prochaine étape » après le premier import */
   .next { background: var(--up-soft); color: var(--ink); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
@@ -309,17 +308,16 @@
         </div>
       </li>
     </ol>
-    <p class="note">Ensuite, tu refais l'export une fois par semaine pour voir qui est parti.</p>
+    <p class="note">Ensuite, refais un export dès que tu en as envie, par exemple quand ton nombre d'abonnés bouge : l'app te montre qui a fait quoi.</p>
   </section>
 
   <section class="next" id="next" hidden>
-    <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Ta référence est enregistrée</h2>
+    <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Ton départ est enregistré</h2>
     <p id="next-text"></p>
-    <button class="linkish" id="next-remind">Me le rappeler</button>
   </section>
 
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
-    <div class="weekly-head"><h2 id="weekly-title">Export de la semaine</h2><span class="due" id="due"></span></div>
+    <div class="weekly-head"><h2 id="weekly-title">Nouvel export</h2><span class="due" id="due"></span></div>
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
     <div id="howto-slot-weekly"><details class="howto" id="howto">
@@ -375,7 +373,7 @@
   </section>
 
   <section class="block needs-data" id="reminders-block">
-    <h2>Rappel chaque semaine</h2>
+    <h2>Un rappel, si tu veux</h2>
     <div class="reminders">
       <a id="gcal" href="#" target="_blank" rel="noopener noreferrer">Rappel Google Agenda</a>
       <button id="siri-btn" aria-expanded="false" aria-controls="siri">Rappel iPhone (Siri)</button>
@@ -418,7 +416,7 @@
       </div>
       <p class="onb-step">Comment ça marche</p>
       <h2>Vois qui se désabonne de toi</h2>
-      <p>Instagram peut t'envoyer la liste officielle de tes abonnés. Tu la donnes à l'app chaque semaine, elle compare et te montre <strong>qui est parti</strong> et qui est arrivé.</p>
+      <p>Instagram peut t'envoyer la liste officielle de tes abonnés. Tu la donnes à l'app quand tu veux, elle la compare avec la précédente et te montre <strong>qui est parti</strong> et qui est arrivé.</p>
       <p><strong>Aucun mot de passe, aucune connexion à ton compte</strong> : zéro risque. Tout reste sur ton téléphone.</p>
     </section>
     <section class="onb-slide" aria-label="2 sur 3">
@@ -428,24 +426,24 @@
             <div class="ring"><div class="ring-in"><div class="ring-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></div></div></div>
             <div><b>412 abonnés</b><small>enregistrés aujourd'hui</small></div>
           </div>
-          <span class="tag">📸 Ta photo de départ</span>
+          <span class="tag">🏁 Ton départ</span>
         </div>
       </div>
       <p class="onb-step">Premier import</p>
-      <h2>Le premier import, c'est ta photo de départ</h2>
-      <p>La première fois, l'app note simplement qui te suit aujourd'hui. Elle n'a encore rien à comparer : <strong>c'est normal de ne voir aucun départ</strong>.</p>
+      <h2>Le premier import, c'est ton départ</h2>
+      <p>La première fois, l'app note simplement qui te suit aujourd'hui : c'est ton départ. Elle n'a encore rien à comparer : <strong>c'est normal de ne voir encore personne partir</strong>.</p>
     </section>
     <section class="onb-slide" aria-label="3 sur 3">
       <div class="onb-art">
         <div class="mock" aria-hidden="true">
           <div class="mock-stats"><div class="d"><b>3</b>départs</div><div class="u"><b>5</b>arrivées</div></div>
-          <div class="mock-row"><span class="av down"><i>j</i></span><span><b>julie.yoga</b><small>partie cette semaine</small></span></div>
-          <div class="mock-row"><span class="av up"><i>m</i></span><span><b>manon_draws</b><small class="up">arrivée cette semaine</small></span></div>
+          <div class="mock-row"><span class="av down"><i>j</i></span><span><b>julie.yoga</b><small>partie depuis le dernier export</small></span></div>
+          <div class="mock-row"><span class="av up"><i>m</i></span><span><b>manon_draws</b><small class="up">arrivée depuis le dernier export</small></span></div>
         </div>
       </div>
-      <p class="onb-step">Deuxième import, une semaine après</p>
-      <h2>Les résultats arrivent au deuxième import</h2>
-      <p>Refais l'export la semaine suivante : l'app compare les deux listes et te montre <strong>les départs et les arrivées</strong>. Ensuite, une fois par semaine suffit.</p>
+      <p class="onb-step">Les imports suivants</p>
+      <h2>Les résultats arrivent dès le deuxième import</h2>
+      <p><strong>Dès que tu remarques un changement</strong>, ou simplement quand tu en as envie, refais un export. L'app le compare au précédent et te montre <strong>qui est parti et qui est arrivé</strong> entre les deux.</p>
     </section>
   </div>
   <div class="onb-foot">
@@ -869,7 +867,7 @@ async function commit(takenAt) {
     if (r.status === "same") { toast("Liste identique au dernier import : rien de nouveau.", false); return true; }
     undoState = { state: JSON.parse(before) };
     toast(r.status === "first"
-      ? `${nf(r.count)} abonnés enregistrés. C'est ta référence.`
+      ? `${nf(r.count)} abonnés enregistrés. C'est ton départ.`
       : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
     await save();
     return true;
@@ -992,7 +990,7 @@ $("reset-yes").addEventListener("click", async () => {
   flash("Historique effacé.", "ok");
 });
 
-// ---------- Export de la semaine ----------
+// ---------- Nouvel export ----------
 // Préférences (date de demande d'export, dernière copie) gardées dans localStorage.
 const APP_URL = location.origin + location.pathname;
 let prefs = {};
@@ -1044,8 +1042,8 @@ function renderWeekly() {
   if (!last) { due.textContent = "Premier export"; due.className = "due now"; }
   else {
     const n = daysSince(last.takenAt);
-    due.textContent = n >= 7 ? `C'est le moment · ${n} j` : n === 0 ? "Importé aujourd'hui" : `Dernier il y a ${n} j`;
-    due.className = "due" + (n >= 7 ? " now" : "");
+    due.textContent = n === 0 ? "Importé aujourd'hui" : `Dernier il y a ${n} j`;
+    due.className = "due";
   }
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
@@ -1088,11 +1086,9 @@ function renderNext() {
   $("next").hidden = !one;
   if (!one) return;
   const s = state.snapshots[0];
-  const nextDate = new Date(new Date(s.takenAt).getTime() + 7 * 86400000);
   $("next-text").innerHTML = `<strong>${nf(s.count)} abonnés</strong> au ${fmtDate(s.takenAt)}. Pour l'instant il n'y a rien à comparer, c'est normal. `
-    + `Refais l'export à partir du <strong>${fmtDate(nextDate.toISOString())}</strong> : tu verras qui est parti et qui est arrivé.`;
+    + `<strong>Dès que tu remarques un changement</strong>, ou quand tu en as envie, refais un export : tu verras qui est parti et qui est arrivé.`;
 }
-$("next-remind").addEventListener("click", () => $("reminders-block").scrollIntoView({ behavior: "smooth", block: "center" }));
 
 // ---------- Présentation en 3 écrans ----------
 const track = $("onb-track");
