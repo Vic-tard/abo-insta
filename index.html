@@ -700,7 +700,7 @@ async function recordSnapshot(followers, following, takenAt, source) {
   }
   // La liste des comptes suivis n'a pas d'historique : on garde la plus récente.
   if (following) { state.following = following; state.followingAt = takenAt; }
-  if (last && last.hash === hash) return { status: "same" };
+  if (last && last.hash === hash) return { status: "same", withFollowing: !!following };
   const prev = new Set(Object.keys(state.followers));
   const cur = new Set(names);
   const unfollows = last ? [...prev].filter((u) => !cur.has(u)).sort() : [];
@@ -909,11 +909,15 @@ async function commit(takenAt) {
     closeSheet();
     // Premier import : « Pas en retour » est le seul résultat disponible tout de suite.
     tab = r.status === "ok" ? "unfollow" : state.following ? "notback" : "recent";
+    if (r.status === "same" && !r.withFollowing) tab = "unfollow";
     selectTab(tab);
     shown = PAGE;
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (r.status === "same") { toast("Liste identique au dernier import : rien de nouveau.", false); await save(); return true; }
+    if (r.status === "same") {
+      toast(r.withFollowing ? "Aucun départ ni arrivée depuis le dernier import. « Pas en retour » et « Fans » sont à jour." : "Liste identique au dernier import : rien de nouveau.", false);
+      await save(); return true;
+    }
     undoState = { state: JSON.parse(before) };
     toast(r.status === "first"
       ? `${nf(r.count)} abonnés enregistrés. C'est ton départ.`
