@@ -1242,9 +1242,16 @@ async function driveImport() {
   driveMsg("Ouverture de Google Drive…");
   try { await loadPicker(); } catch { pickerLoaded = null; return driveMsg("Google Drive ne répond pas. Vérifie ta connexion."); }
   driveMsg("");
+  // Deux fenêtres à la suite : la recherche du sélecteur Google ne gère pas « A OU B ».
+  // 1. followers_1.json (indispensable), 2. following.json (pour « Pas en retour » et « Fans », facultatif).
+  openPicker(token, "followers_1", "1/2 · Touche le followers_1.json le plus récent", (first) => {
+    openPicker(token, "following", "2/2 · Touche le following.json le plus récent", (second) => driveFetch(first.concat(second), token), () => driveFetch(first, token));
+  });
+}
+function openPicker(token, query, title, onPick, onCancel) {
   const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
     .setMimeTypes("application/json")
-    .setQuery("followers_1 OR following")
+    .setQuery(query)
     .setIncludeFolders(false)
     .setMode(google.picker.DocsViewMode.LIST);
   new google.picker.PickerBuilder()
@@ -1252,11 +1259,13 @@ async function driveImport() {
     .setDeveloperKey(DRIVE.apiKey)
     .setOAuthToken(token)
     .setLocale("fr")
-    .setTitle("Choisis followers_1.json et following.json (les plus récents)")
-    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+    .setTitle(title)
     .enableFeature(google.picker.Feature.NAV_HIDDEN)
     .addView(view)
-    .setCallback((d) => { if (d.action === google.picker.Action.PICKED) driveFetch(d.docs, token); })
+    .setCallback((d) => {
+      if (d.action === google.picker.Action.PICKED) onPick(d.docs);
+      else if (d.action === google.picker.Action.CANCEL && onCancel) onCancel();
+    })
     .build()
     .setVisible(true);
 }
