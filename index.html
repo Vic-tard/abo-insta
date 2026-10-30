@@ -1186,17 +1186,16 @@ $("onb-skip").addEventListener("click", closeOnboarding);
 $("help-btn").addEventListener("click", openOnboarding);
 
 // ---------- Import depuis Google Drive ----------
-// Instagram peut déposer l'export tout seul dans Google Drive (export programmé). Ce bouton ouvre le sélecteur Google
-// déjà filtré sur followers_1.json / following.json ; on télécharge les fichiers choisis puis on les importe comme un .zip.
-// Accès « drive.file » : l'app ne voit que les fichiers choisis dans le sélecteur, jamais le reste du Drive.
-// Connexion par redirection (pas de fenêtre popup) : les popups ne reviennent pas dans une app installée sur l'iPhone.
+// Instagram peut déposer l'export tout seul dans Google Drive (export programmé, fichiers JSON non zippés).
+// Un seul bouton : l'app cherche le followers_1.json le plus récent du Drive, et le following.json du même dossier.
+// Pas de sélecteur Google : il a besoin de cookies tiers, bloqués par Safari dans une app installée sur l'iPhone.
+// Connexion par redirection (pas de fenêtre popup) : les popups ne reviennent pas dans une app installée.
 const DRIVE = {
-  clientId: "246738820732-umpohueucl4pnuagf0pba2lc0ttk84fp.apps.googleusercontent.com",   // ID client OAuth (type « Application Web »), origine autorisée : https://vic-tard.github.io
-  apiKey: "AIzaSyCYkuK2aSvwBYKxzqbeGPFrulujWVjP3r0",     // clé API limitée à https://vic-tard.github.io/* et à la Google Picker API
-  appId: "246738820732",      // numéro du projet Google Cloud
+  clientId: "246738820732-umpohueucl4pnuagf0pba2lc0ttk84fp.apps.googleusercontent.com",   // ID client OAuth « Application Web », origine https://vic-tard.github.io
 };
-const driveReady = () => DRIVE.clientId && DRIVE.apiKey && DRIVE.appId;
-const DRIVE_TOKEN = "abo-drive-token";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
+const driveReady = () => !!DRIVE.clientId;
+const DRIVE_TOKEN = "abo-drive-token-ro";
 function driveToken() {
   try { const t = JSON.parse(sessionStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
 }
@@ -1206,11 +1205,10 @@ function driveSignIn() {
     client_id: DRIVE.clientId,
     redirect_uri: location.origin + location.pathname,
     response_type: "token",
-    scope: "https://www.googleapis.com/auth/drive.file",
+    scope: DRIVE_SCOPE,
     include_granted_scopes: "true",
     state: "drive-import",
   });
-  if (prefs.driveHint) q.set("login_hint", prefs.driveHint);
   location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + q;
 }
 // Retour de la connexion Google : le jeton arrive dans l'adresse (#access_token=…), on le garde le temps de la session.
@@ -1218,74 +1216,51 @@ function driveCallback() {
   if (!location.hash.includes("state=drive-import")) return false;
   const h = new URLSearchParams(location.hash.slice(1));
   history.replaceState(null, "", location.pathname + location.search);
-  if (h.get("access_token")) {
+  if (h.get("access_token") && (h.get("scope") || "").includes("drive")) {
     try { sessionStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch {}
     return true;
   }
-  driveMsg(h.get("error") === "access_denied" ? "Connexion à Google annulée." : "La connexion à Google n'a pas marché. Réessaie.");
+  driveMsg(h.get("error") === "access_denied" ? "Connexion à Google annulée." : "Google n'a pas donné l'accès au Drive. Réessaie et coche l'accès à Google Drive.");
   return false;
 }
-let pickerLoaded = null;
-function loadPicker() {
-  pickerLoaded = pickerLoaded || new Promise((resolve, reject) => {
-    const sc = document.createElement("script");
-    sc.src = "https://apis.google.com/js/api.js";
-    sc.onload = () => gapi.load("picker", { callback: resolve, onerror: reject });
-    sc.onerror = reject;
-    document.head.appendChild(sc);
-  });
-  return pickerLoaded;
+async function driveApi(token, path) {
+  const r = await fetch("https://www.googleapis.com/drive/v3/" + path, { headers: { Authorization: "Bearer " + token } });
+  if (!r.ok) throw r.status;
+  return r;
+}
+async function driveFind(token, q) {
+  const params = new URLSearchParams({ q: q + " and trashed = false", orderBy: "modifiedTime desc", pageSize: "1", fields: "files(id,name,modifiedTime,parents)" });
+  const { files } = await (await driveApi(token, "files?" + params)).json();
+  return files[0] || null;
+}
+async function driveDownload(token, f) {
+  const blob = await (await driveApi(token, `files/${f.id}?alt=media`)).blob();
+  // La date du fichier dans Drive = la date de l'export Instagram.
+  return new File([blob], f.name, { type: "application/json", lastModified: Date.parse(f.modifiedTime) || Date.now() });
 }
 async function driveImport() {
   const token = driveToken();
   if (!token) return driveSignIn();
-  driveMsg("Ouverture de Google Drive…");
-  try { await loadPicker(); } catch { pickerLoaded = null; return driveMsg("Google Drive ne répond pas. Vérifie ta connexion."); }
-  driveMsg("");
-  // Deux fenêtres à la suite : la recherche du sélecteur Google ne gère pas « A OU B ».
-  // 1. followers_1.json (indispensable), 2. following.json (pour « Pas en retour » et « Fans », facultatif).
-  openPicker(token, "followers_1", "1/2 · Touche le followers_1.json le plus récent", (first) => {
-    openPicker(token, "following", "2/2 · Touche le following.json le plus récent", (second) => driveFetch(first.concat(second), token), () => driveFetch(first, token));
-  });
-}
-function openPicker(token, query, title, onPick, onCancel) {
-  const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setMimeTypes("application/json")
-    .setQuery(query)
-    .setIncludeFolders(false)
-    .setMode(google.picker.DocsViewMode.LIST);
-  new google.picker.PickerBuilder()
-    .setAppId(DRIVE.appId)
-    .setDeveloperKey(DRIVE.apiKey)
-    .setOAuthToken(token)
-    .setLocale("fr")
-    .setTitle(title)
-    .enableFeature(google.picker.Feature.NAV_HIDDEN)
-    .addView(view)
-    .setCallback((d) => {
-      if (d.action === google.picker.Action.PICKED) onPick(d.docs);
-      else if (d.action === google.picker.Action.CANCEL && onCancel) onCancel();
-    })
-    .build()
-    .setVisible(true);
-}
-async function driveFetch(docs, token) {
-  driveMsg("Téléchargement depuis Google Drive…");
+  $("drive-import").disabled = true;
+  driveMsg("Recherche du dernier export dans ton Drive…");
   try {
-    const files = await Promise.all(docs.map(async (doc) => {
-      const auth = { headers: { Authorization: "Bearer " + token } };
-      const [meta, body] = await Promise.all([
-        fetch(`https://www.googleapis.com/drive/v3/files/${doc.id}?fields=name,modifiedTime`, auth).then((r) => r.ok ? r.json() : Promise.reject(r.status)),
-        fetch(`https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`, auth).then((r) => r.ok ? r.blob() : Promise.reject(r.status)),
-      ]);
-      // La date du fichier dans Drive = la date de l'export Instagram.
-      return new File([body], meta.name, { type: "application/json", lastModified: Date.parse(meta.modifiedTime) || Date.now() });
-    }));
+    const followers = await driveFind(token, "name = 'followers_1.json'");
+    if (!followers) return driveMsg("Aucun export Instagram dans ton Drive pour l'instant. Règle l'export automatique (Consignes), puis attends qu'il arrive.");
+    const last = state.snapshots[state.snapshots.length - 1];
+    if (last && Date.parse(followers.modifiedTime) <= Date.parse(last.takenAt) + 60000) {
+      return driveMsg(`Pas de nouvel export dans ton Drive : le dernier date du ${fmtDate(followers.modifiedTime)}, il est déjà importé.`);
+    }
+    const parent = followers.parents && followers.parents[0];
+    const following = parent ? await driveFind(token, `name = 'following.json' and '${parent}' in parents`) : null;
+    driveMsg("Téléchargement…");
+    const files = await Promise.all([followers, following].filter(Boolean).map((f) => driveDownload(token, f)));
     driveMsg("");
     importFiles(files);
   } catch (err) {
-    if (err === 401) { try { sessionStorage.removeItem(DRIVE_TOKEN); } catch {} return driveSignIn(); }
-    driveMsg("Le téléchargement depuis Google Drive n'a pas marché. Réessaie.");
+    if (err === 401 || err === 403) { try { sessionStorage.removeItem(DRIVE_TOKEN); } catch {} return driveSignIn(); }
+    driveMsg("Google Drive ne répond pas. Vérifie ta connexion et réessaie.");
+  } finally {
+    $("drive-import").disabled = false;
   }
 }
 $("drive-import").addEventListener("click", driveImport);
