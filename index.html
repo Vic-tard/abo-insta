@@ -857,8 +857,8 @@ function renderImports() {
     snaps.slice().reverse().map((s, i) => {
       const first = i === snaps.length - 1;
       return `<tr><td>${fmtDate(s.takenAt)}</td><td>${nf(s.count)}</td>
-        <td style="color:var(--down)">${first ? "–" : "−" + s.unfollows}</td>
-        <td style="color:var(--up)">${first ? "–" : "+" + s.follows}</td></tr>`;
+        <td style="color:var(--down)">${first ? "–" : (s.unfollows ? "−" + s.unfollows : "0")}</td>
+        <td style="color:var(--up)">${first ? "–" : (s.follows ? "+" + s.follows : "0")}</td></tr>`;
     }).join("");
 }
 
