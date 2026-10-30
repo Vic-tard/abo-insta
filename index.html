@@ -1110,7 +1110,7 @@ function renderWeekly() {
     due.className = "due";
   }
   // Export déjà demandé : on met « Importer » en avant.
-  $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
+  if (driveReady()) $("go-export").className = "btn ghost"; else $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
   $("quick-import").className = "btn " + (waiting && !driveReady() ? "primary" : "ghost");
 }
 
@@ -1191,9 +1191,9 @@ $("help-btn").addEventListener("click", openOnboarding);
 // Accès « drive.file » : l'app ne voit que les fichiers choisis dans le sélecteur, jamais le reste du Drive.
 // Connexion par redirection (pas de fenêtre popup) : les popups ne reviennent pas dans une app installée sur l'iPhone.
 const DRIVE = {
-  clientId: "",   // ID client OAuth (type « Application Web »), origine autorisée : https://vic-tard.github.io
-  apiKey: "",     // clé API limitée à https://vic-tard.github.io/* et à la Google Picker API
-  appId: "",      // numéro du projet Google Cloud
+  clientId: "246738820732-umpohueucl4pnuagf0pba2lc0ttk84fp.apps.googleusercontent.com",   // ID client OAuth (type « Application Web »), origine autorisée : https://vic-tard.github.io
+  apiKey: "AIzaSyCYkuK2aSvwBYKxzqbeGPFrulujWVjP3r0",     // clé API limitée à https://vic-tard.github.io/* et à la Google Picker API
+  appId: "246738820732",      // numéro du projet Google Cloud
 };
 const driveReady = () => DRIVE.clientId && DRIVE.apiKey && DRIVE.appId;
 const DRIVE_TOKEN = "abo-drive-token";
@@ -1306,6 +1306,8 @@ render();
   if (driveReady()) {
     $("drive-import").hidden = false;
     $("quick-import").lastChild.textContent = "Importer un fichier";
+    $("go-export").lastChild.textContent = "Régler l'export automatique";
+    $("go-export").before($("drive-import"));
     if (driveCallback()) driveImport();
   }
   render();
