@@ -165,6 +165,8 @@
   .steps li { counter-increment: step; display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: baseline; font-size: 14px; line-height: 1.35; letter-spacing: -0.005em; }
   .steps li::before { content: counter(step); width: 22px; height: 22px; border-radius: 50%; background: var(--ring); color: #fff; font: 700 12px/22px var(--font); text-align: center; align-self: start; }
   .steps b { font-weight: 600; }
+  .steps-alt { margin: 0; padding: 0 14px 12px; font-size: 13px; color: var(--muted); }
+  .steps-alt b { color: var(--ink); font-weight: 600; }
   .weekly .note { font-size: 13px; }
   .reminders { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
   .reminders a, .reminders button { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: none; }
@@ -322,18 +324,22 @@
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
     <div id="howto-slot-weekly"><details class="howto" id="howto">
-      <summary>Consignes<span>6 étapes</span></summary>
+      <summary>Consignes<span>à faire une seule fois</span></summary>
       <ol class="steps" aria-label="Les étapes dans Instagram">
       <li><span><b>Créer une exportation</b>, puis ton compte</span></li>
-      <li><span><b>Exporter sur l'appareil</b></span></li>
-      <li><span>Personnaliser : coche seulement <b>Followers et suivi(e)s</b></span></li>
-      <li><span>Période <b>Depuis le début</b> · Format <b>JSON</b></span></li>
-      <li><span><b>Démarrer l'exportation</b>, puis télécharge le .zip quand Instagram te prévient</span></li>
-      <li><span>Reviens ici : <b>Importer le .zip reçu</b></span></li>
+      <li><span><b>Exporter vers un service externe</b> → <b>Google Drive</b></span></li>
+      <li><span>Coche seulement <b>Followers et suivi(e)s</b></span></li>
+      <li><span><b>Depuis le début</b> · <b>JSON</b> · fréquence au choix (ex. <b>toutes les semaines</b>)</span></li>
+      <li><span><b>Démarrer</b> : Instagram déposera tes exports tout seul dans ton Drive</span></li>
+      <li><span id="step-import">Ensuite, ici : <b>Importer depuis Google Drive</b></span></li>
     </ol>
+    <p class="steps-alt">Sans Google Drive : choisis <b>Exporter sur l'appareil</b>, puis importe le .zip reçu.</p>
     </details></div>
     <button class="btn ghost" id="quick-import" disabled>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer le .zip reçu</button>
+    <button class="btn primary" id="drive-import" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>Importer depuis Google Drive</button>
+    <p class="note" id="drive-msg" hidden></p>
   </section>
 
   <div class="banner install" id="install-banner" hidden><strong>Installe l'app :</strong> touche <b>Partager</b> puis « <b>Sur l'écran d'accueil</b> ». Elle s'ouvrira en plein écran, comme une vraie app.<button class="x" id="install-x" aria-label="Fermer">✕</button></div>
@@ -875,10 +881,12 @@ $("start-import").addEventListener("click", startImport);
 $("cancel-confirm").addEventListener("click", closeSheet);
 $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
 
-$("file").addEventListener("change", async (e) => {
+$("file").addEventListener("change", (e) => {
   const files = [...e.target.files];
   e.target.value = "";
-  if (!files.length) return;
+  if (files.length) importFiles(files);
+});
+async function importFiles(files) {
   openSheet("confirm");
   $("pv-err").hidden = true;
   $("pv-count").textContent = "Lecture…";
@@ -898,7 +906,7 @@ $("file").addEventListener("change", async (e) => {
     $("pv-err").textContent = err.message;
     $("pv-err").hidden = false;
   }
-});
+}
 
 // Enregistre l'export en attente. Renvoie false (et affiche l'erreur dans la feuille) si l'import est refusé.
 let undoState = null, toastTimer = null;
@@ -1103,7 +1111,7 @@ function renderWeekly() {
   }
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
-  $("quick-import").className = "btn " + (waiting ? "primary" : "ghost");
+  $("quick-import").className = "btn " + (waiting && !driveReady() ? "primary" : "ghost");
 }
 
 // ---------- Premier lancement : parcours « Pour commencer » ----------
@@ -1177,6 +1185,102 @@ $("onb-next").addEventListener("click", () => {
 $("onb-skip").addEventListener("click", closeOnboarding);
 $("help-btn").addEventListener("click", openOnboarding);
 
+// ---------- Import depuis Google Drive ----------
+// Instagram peut déposer l'export tout seul dans Google Drive (export programmé). Ce bouton ouvre le sélecteur Google
+// déjà filtré sur followers_1.json / following.json ; on télécharge les fichiers choisis puis on les importe comme un .zip.
+// Accès « drive.file » : l'app ne voit que les fichiers choisis dans le sélecteur, jamais le reste du Drive.
+// Connexion par redirection (pas de fenêtre popup) : les popups ne reviennent pas dans une app installée sur l'iPhone.
+const DRIVE = {
+  clientId: "",   // ID client OAuth (type « Application Web »), origine autorisée : https://vic-tard.github.io
+  apiKey: "",     // clé API limitée à https://vic-tard.github.io/* et à la Google Picker API
+  appId: "",      // numéro du projet Google Cloud
+};
+const driveReady = () => DRIVE.clientId && DRIVE.apiKey && DRIVE.appId;
+const DRIVE_TOKEN = "abo-drive-token";
+function driveToken() {
+  try { const t = JSON.parse(sessionStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
+}
+function driveMsg(text) { $("drive-msg").textContent = text || ""; $("drive-msg").hidden = !text; }
+function driveSignIn() {
+  const q = new URLSearchParams({
+    client_id: DRIVE.clientId,
+    redirect_uri: location.origin + location.pathname,
+    response_type: "token",
+    scope: "https://www.googleapis.com/auth/drive.file",
+    include_granted_scopes: "true",
+    state: "drive-import",
+  });
+  if (prefs.driveHint) q.set("login_hint", prefs.driveHint);
+  location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + q;
+}
+// Retour de la connexion Google : le jeton arrive dans l'adresse (#access_token=…), on le garde le temps de la session.
+function driveCallback() {
+  if (!location.hash.includes("state=drive-import")) return false;
+  const h = new URLSearchParams(location.hash.slice(1));
+  history.replaceState(null, "", location.pathname + location.search);
+  if (h.get("access_token")) {
+    try { sessionStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch {}
+    return true;
+  }
+  driveMsg(h.get("error") === "access_denied" ? "Connexion à Google annulée." : "La connexion à Google n'a pas marché. Réessaie.");
+  return false;
+}
+let pickerLoaded = null;
+function loadPicker() {
+  pickerLoaded = pickerLoaded || new Promise((resolve, reject) => {
+    const sc = document.createElement("script");
+    sc.src = "https://apis.google.com/js/api.js";
+    sc.onload = () => gapi.load("picker", { callback: resolve, onerror: reject });
+    sc.onerror = reject;
+    document.head.appendChild(sc);
+  });
+  return pickerLoaded;
+}
+async function driveImport() {
+  const token = driveToken();
+  if (!token) return driveSignIn();
+  driveMsg("Ouverture de Google Drive…");
+  try { await loadPicker(); } catch { pickerLoaded = null; return driveMsg("Google Drive ne répond pas. Vérifie ta connexion."); }
+  driveMsg("");
+  const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+    .setMimeTypes("application/json")
+    .setQuery("followers_1 OR following")
+    .setIncludeFolders(false)
+    .setMode(google.picker.DocsViewMode.LIST);
+  new google.picker.PickerBuilder()
+    .setAppId(DRIVE.appId)
+    .setDeveloperKey(DRIVE.apiKey)
+    .setOAuthToken(token)
+    .setLocale("fr")
+    .setTitle("Choisis followers_1.json et following.json (les plus récents)")
+    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+    .enableFeature(google.picker.Feature.NAV_HIDDEN)
+    .addView(view)
+    .setCallback((d) => { if (d.action === google.picker.Action.PICKED) driveFetch(d.docs, token); })
+    .build()
+    .setVisible(true);
+}
+async function driveFetch(docs, token) {
+  driveMsg("Téléchargement depuis Google Drive…");
+  try {
+    const files = await Promise.all(docs.map(async (doc) => {
+      const auth = { headers: { Authorization: "Bearer " + token } };
+      const [meta, body] = await Promise.all([
+        fetch(`https://www.googleapis.com/drive/v3/files/${doc.id}?fields=name,modifiedTime`, auth).then((r) => r.ok ? r.json() : Promise.reject(r.status)),
+        fetch(`https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`, auth).then((r) => r.ok ? r.blob() : Promise.reject(r.status)),
+      ]);
+      // La date du fichier dans Drive = la date de l'export Instagram.
+      return new File([body], meta.name, { type: "application/json", lastModified: Date.parse(meta.modifiedTime) || Date.now() });
+    }));
+    driveMsg("");
+    importFiles(files);
+  } catch (err) {
+    if (err === 401) { try { sessionStorage.removeItem(DRIVE_TOKEN); } catch {} return driveSignIn(); }
+    driveMsg("Le téléchargement depuis Google Drive n'a pas marché. Réessaie.");
+  }
+}
+$("drive-import").addEventListener("click", driveImport);
+
 // ---------- Démarrage ----------
 setSync("wait", "Chargement…");
 render();
@@ -1197,6 +1301,13 @@ render();
   loading = false;
   $("quick-import").disabled = false;
   $("start-import").disabled = false;
+  // Avec Drive configuré, le bouton Drive passe devant et l'import de fichier devient secondaire.
+  if (!driveReady()) $("step-import").innerHTML = "Ensuite : <b>Importer le .zip reçu</b> → <b>Drive</b> → dernier dossier <b>meta-…</b> → … → <b>followers_and_following</b>, choisis <b>followers_1</b> et <b>following</b>";
+  if (driveReady()) {
+    $("drive-import").hidden = false;
+    $("quick-import").lastChild.textContent = "Importer un fichier";
+    if (driveCallback()) driveImport();
+  }
   render();
   if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
