@@ -81,6 +81,14 @@
   .ring-in { width: 100%; height: 100%; border-radius: 50%; background: var(--surface); padding: 3px; }
   .ring-core { width: 100%; height: 100%; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; color: var(--muted); }
   .ring-core svg { width: 44%; height: 44%; fill: currentColor; }
+  /* Photo de profil : un toucher sur le rond pour la choisir, gardée sur le téléphone */
+  .avatar-btn { position: relative; border: 0; cursor: pointer; display: block; }
+  .avatar-btn .ring-in, .avatar-btn .ring-core { display: grid; }
+  .ring-core img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .avatar-edit { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--btn); color: var(--btn-ink); border: 3px solid var(--bg); display: grid; place-items: center; }
+  .avatar-edit svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+  .avatar-btn.has-photo .avatar-edit { display: none; }
+  .avatar-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center; min-width: 0; }
   .stat b { display: block; font: 700 21px/1.25 var(--round); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
   .stat > span { font-size: 13px; color: var(--ink); }
@@ -482,7 +490,7 @@
   <div class="banner" id="storage-banner" hidden></div>
 
   <section class="needs-data profile" aria-label="Résumé">
-    <div class="ring" aria-hidden="true"><div class="ring-in"><div class="ring-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></div></div></div>
+    <button class="ring avatar-btn" id="avatar-btn" type="button" aria-label="Choisir ta photo de profil"><span class="ring-in"><span class="ring-core" id="avatar-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></span></span><span class="avatar-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
     <div class="stats">
       <div class="stat"><b id="st-count">–</b><span>abonnés</span></div>
       <div class="stat down"><b id="st-down">–</b><span>départs</span></div>
@@ -655,9 +663,17 @@
 <div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button id="undo">Annuler</button></div>
 <input type="file" id="file" accept=".zip,.json,application/zip,application/json" multiple hidden>
 <input type="file" id="restore-file" accept=".json,application/json" hidden>
+<input type="file" id="avatar-file" accept="image/*" hidden>
 
 <div class="sheet-bg" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div id="sheet-photo" hidden>
+      <h2>Ta photo de profil</h2>
+      <p class="note">Elle reste sur ce téléphone, comme ton historique.</p>
+      <button class="btn primary" id="photo-change" type="button">Changer la photo</button>
+      <button class="btn danger" id="photo-remove" type="button">Retirer la photo</button>
+      <button class="btn ghost" id="photo-cancel" type="button">Annuler</button>
+    </div>
     <div id="sheet-confirm" hidden>
       <h2 id="sheet-title">Vérifie avant d'enregistrer</h2>
       <div class="radar" id="pv-radar" aria-hidden="true" hidden></div>
@@ -1075,6 +1091,7 @@ const isState = (s) => s && Array.isArray(s.snapshots) && Array.isArray(s.events
 function openSheet(which) {
   $("sheet").hidden = false;
   $("sheet-confirm").hidden = which !== "confirm";
+  $("sheet-photo").hidden = which !== "photo";
 }
 function closeSheet() { $("sheet").hidden = true; pending = null; }
 function toDateInput(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
@@ -1201,7 +1218,7 @@ $("more").addEventListener("click", () => { shown += PAGE * 3; renderList(); });
 // ---------- Copie / restauration ----------
 $("backup").addEventListener("click", async () => {
   if (!state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
-  const data = JSON.stringify({ app: "abo-insta", version: 1, savedAt: new Date().toISOString(), state });
+  const data = JSON.stringify({ app: "abo-insta", version: 1, savedAt: new Date().toISOString(), state, avatar: avatar || undefined });
   const name = `abo-insta-sauvegarde-${toDateInput(new Date())}.json`;
   const file = new File([data], name, { type: "application/json" });
   try {
@@ -1239,15 +1256,16 @@ $("restore-file").addEventListener("change", async (e) => {
   const f = e.target.files[0];
   e.target.value = "";
   if (!f) return;
-  let s;
+  let s, data;
   try {
-    const data = JSON.parse(await f.text());
+    data = JSON.parse(await f.text());
     s = data && data.app === "abo-insta" && data.state;
     if (!isState(s)) throw new Error();
   } catch {
     return flash("Ce fichier n'est pas une sauvegarde Abo Insta.", "err");
   }
   state = s;
+  if (typeof data.avatar === "string" && data.avatar.startsWith("data:image/")) setAvatar(data.avatar);
   render();
   await save();
   flash(`Historique restauré : ${s.snapshots.length} import${s.snapshots.length > 1 ? "s" : ""}.`, "ok");
@@ -1849,6 +1867,46 @@ document.addEventListener("keydown", (e) => {
   if (!$("trophy-sheet").hidden) $("trophy-sheet").hidden = true;
 });
 
+// ---------- Photo de profil : réduite à 320 px et gardée sur le téléphone ----------
+const AVATAR_KEY = "abo-avatar";
+let avatar = null;
+try { avatar = localStorage.getItem(AVATAR_KEY); } catch {}
+function renderAvatar() {
+  const core = $("avatar-core"), btn = $("avatar-btn");
+  btn.classList.toggle("has-photo", !!avatar);
+  btn.setAttribute("aria-label", avatar ? "Changer ta photo de profil" : "Choisir ta photo de profil");
+  const img = core.querySelector("img");
+  if (avatar) { if (img) img.src = avatar; else core.innerHTML = `<img alt="" src="${avatar}">`; }
+  else if (img) core.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg>`;
+}
+function setAvatar(url) {
+  avatar = url;
+  try { url ? localStorage.setItem(AVATAR_KEY, url) : localStorage.removeItem(AVATAR_KEY); } catch {}
+  try { store.db && store.set("avatar", url); } catch {}
+  renderAvatar();
+}
+async function shrinkImage(file) {
+  const bmp = await createImageBitmap(file).catch(() => null);
+  const src = bmp || await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
+  const w = src.width, h = src.height, side = Math.min(w, h), size = Math.min(320, side);
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = size;
+  cv.getContext("2d").drawImage(src, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
+  return cv.toDataURL("image/jpeg", 0.85);
+}
+$("avatar-btn").addEventListener("click", () => avatar ? openSheet("photo") : $("avatar-file").click());
+$("photo-change").addEventListener("click", () => { closeSheet(); $("avatar-file").click(); });
+$("photo-remove").addEventListener("click", () => { closeSheet(); setAvatar(null); });
+$("photo-cancel").addEventListener("click", closeSheet);
+$("avatar-file").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  try { setAvatar(await shrinkImage(f)); confetti(); }
+  catch { toast("Cette image n'a pas pu être ouverte. Essaie une autre photo.", false); }
+});
+renderAvatar();
+
 // ---------- Démarrage ----------
 setSync("wait", "Chargement…");
 render();
@@ -1858,6 +1916,9 @@ render();
     await store.open();
     const s = await store.get("state");
     if (isState(s)) idb = s;
+    const a = await store.get("avatar");
+    if (!avatar && typeof a === "string") setAvatar(a);
+    else if (avatar && a !== avatar) store.set("avatar", avatar);
   } catch {}
   const ls = lsGet();
   const best = [idb, ls].filter(Boolean).sort((a, b) => b.snapshots.length - a.snapshots.length)[0];
