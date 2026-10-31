@@ -9,39 +9,41 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Abo Insta">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#faf5f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161112" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-v4-180.png">
 <link rel="icon" href="icone-v4-512.png">
 <style>
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; }
-  /* Layout : une colonne comme le profil Instagram — en-tête avec compteurs, onglets soulignés, liste d'abonnés, bouton bleu fixé en bas. */
+  /* Layout : une colonne — en-tête avec compteurs, onglets soulignés, liste d'abonnés. Fond rose poudré calme, couleurs vives seulement pour les moments forts. */
   :root {
-    --bg: #ffffff; --surface: #ffffff; --surface-2: #efefef; --surface-2-press: #dbdbdb;
-    --ink: #000000; --muted: #737373; --line: #dbdbdb;
-    --blue: #0095f6; --blue-press: #1877f2; --blue-ink: #ffffff; --link: #00376b;
-    --down: #ed4956; --down-soft: #fdecee; --up: #1a9a4b; --up-soft: #e6f6ec;
-    --warn-soft: #fff6db; --warn-ink: #6b4c00;
-    --ring: linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+    --bg: #faf5f5; --surface: #ffffff; --surface-2: #f4eaec; --surface-2-press: #eadbde;
+    --ink: #2e2328; --muted: #7d6e74; --line: #ecdfe2;
+    --btn: #2e2328; --btn-press: #4a3a41; --btn-ink: #ffffff; --link: #a0505f; --rose: #d4919b; --rose-soft: #f6e2e5; --rose-ink: #8e4552; --toast-link: #f0b3bd;
+    --down: #b8502e; --down-soft: #f8e6df; --up: #3f7f68; --up-soft: #e3f0ea;
+    --warn-soft: #fbf0e1; --warn-ink: #6e4b12;
+    /* Touches vives : réservées aux moments forts (bilan, confettis, badges) */
+    --ring: linear-gradient(135deg, #ef7f6a 0%, #f4a96a 55%, #f2c45a 100%);
     --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --round: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #000000; --surface: #000000; --surface-2: #262626; --surface-2-press: #363636;
-      --ink: #f5f5f5; --muted: #a8a8a8; --line: #262626;
-      --blue: #0095f6; --blue-press: #1877f2; --blue-ink: #ffffff; --link: #e0f1ff;
-      --down: #ff6b78; --down-soft: #3a1418; --up: #5fd38d; --up-soft: #12301f;
-      --warn-soft: #2f2610; --warn-ink: #f3d68a; color-scheme: dark;
+      --bg: #161112; --surface: #161112; --surface-2: #2a2023; --surface-2-press: #382b2f;
+      --ink: #f5ecee; --muted: #ab9aa0; --line: #2f2528;
+      --btn: #f5ecee; --btn-press: #dccfd2; --btn-ink: #1a1416; --link: #eab3bc; --rose: #e0a3ac; --rose-soft: #3d272c; --rose-ink: #f0bcc4; --toast-link: #a0505f;
+      --down: #f08a6c; --down-soft: #3a201a; --up: #7cc4a8; --up-soft: #15291f;
+      --warn-soft: #2f2510; --warn-ink: #f0d38e; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #000000; --surface: #000000; --surface-2: #262626; --surface-2-press: #363636;
-    --ink: #f5f5f5; --muted: #a8a8a8; --line: #262626;
-    --blue: #0095f6; --blue-press: #1877f2; --blue-ink: #ffffff; --link: #e0f1ff;
-    --down: #ff6b78; --down-soft: #3a1418; --up: #5fd38d; --up-soft: #12301f;
-    --warn-soft: #2f2610; --warn-ink: #f3d68a; color-scheme: dark;
+    --bg: #161112; --surface: #161112; --surface-2: #2a2023; --surface-2-press: #382b2f;
+      --ink: #f5ecee; --muted: #ab9aa0; --line: #2f2528;
+      --btn: #f5ecee; --btn-press: #dccfd2; --btn-ink: #1a1416; --link: #eab3bc; --rose: #e0a3ac; --rose-soft: #3d272c; --rose-ink: #f0bcc4; --toast-link: #a0505f;
+      --down: #f08a6c; --down-soft: #3a201a; --up: #7cc4a8; --up-soft: #15291f;
+      --warn-soft: #2f2510; --warn-ink: #f0d38e; color-scheme: dark;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
@@ -54,7 +56,8 @@
     display: flex; flex-direction: column; gap: 18px;
   }
   h1, h2 { margin: 0; text-wrap: balance; }
-  h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  h1 { font: 700 24px/1.2 var(--round); letter-spacing: -0.01em; }
+  h2 { font-family: var(--round); }
   h2 { font-size: 16px; font-weight: 700; }
 
   .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; }
@@ -79,8 +82,8 @@
   .ring-core { width: 100%; height: 100%; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; color: var(--muted); }
   .ring-core svg { width: 44%; height: 44%; fill: currentColor; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center; min-width: 0; }
-  .stat b { display: block; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-  .stat span { font-size: 13px; color: var(--ink); }
+  .stat b { display: block; font: 700 21px/1.25 var(--round); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .stat > span { font-size: 13px; color: var(--ink); }
   .stat.down b { color: var(--down); }
   .stat.up b { color: var(--up); }
   .caption { font-size: 14px; color: var(--muted); margin: -6px 0 0; }
@@ -106,7 +109,7 @@
   ul.people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   ul.people li { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; padding: 8px 0; }
   .av { width: 52px; height: 52px; border-radius: 50%; padding: 2px; background: transparent; }
-  .av.up { background: var(--ring); }
+  .av.up { background: var(--rose); }
   .av.down { background: var(--line); }
   .av i { width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center; font: 600 18px var(--font); font-style: normal; color: var(--muted); background: var(--surface-2); text-transform: uppercase; border: 2px solid var(--surface); }
   .av.down i { color: var(--down); }
@@ -116,7 +119,7 @@
   .who small.down { color: var(--down); }
   .who small.up { color: var(--up); }
   .empty { color: var(--muted); font-size: 14px; padding: 12px 0; }
-  .more { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 4px 0; cursor: pointer; align-self: flex-start; }
+  .more { font: 600 14px var(--font); color: var(--link); background: none; border: 0; padding: 4px 0; cursor: pointer; align-self: flex-start; }
 
   .block { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); min-width: 0; }
   #chart svg { width: 100%; height: auto; display: block; }
@@ -129,14 +132,14 @@
   .scroll { overflow-x: auto; }
 
   .btn { font: 600 14px var(--font); border-radius: 8px; padding: 9px 16px; border: 0; cursor: pointer; text-decoration: none; text-align: center; }
-  .btn.primary { background: var(--blue); color: var(--blue-ink); }
-  .btn.primary:active { background: var(--blue-press); }
+  .btn.primary { background: var(--btn); color: var(--btn-ink); }
+  .btn.primary:active { background: var(--btn-press); }
   .btn.primary:disabled { opacity: .5; }
   .btn.ghost { background: var(--surface-2); color: var(--ink); }
   .btn.ghost:active { background: var(--surface-2-press); }
   .btn.danger { background: var(--surface-2); color: var(--down); }
   .btn.small { padding: 7px 14px; }
-  .btn:focus-visible, .tabs button:focus-visible, a:focus-visible, .more:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn:focus-visible, .tabs button:focus-visible, a:focus-visible, .more:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row .btn { flex: 1 1 140px; }
   .note { font-size: 14px; color: var(--muted); margin: 0; }
@@ -149,7 +152,7 @@
   .weekly { background: var(--surface-2); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .weekly-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .due { font-size: 13px; color: var(--muted); text-align: right; }
-  .due.now { color: var(--blue); font-weight: 600; }
+  .due.now { color: var(--link); font-weight: 600; }
   .weekly .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; font-size: 15px; border-radius: 10px; }
   .weekly .btn svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .weekly .btn.ghost { background: var(--surface); }
@@ -160,22 +163,22 @@
   .howto summary span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: auto; }
   .howto summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: 45deg; margin: -4px 2px 0 0; transition: rotate .15s; }
   .howto[open] summary::after { rotate: 225deg; margin-top: 4px; }
-  .howto summary:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; border-radius: 12px; }
+  .howto summary:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; border-radius: 12px; }
   .steps { list-style: none; margin: 0; padding: 2px 14px 14px; counter-reset: step; background: var(--surface); border-radius: 12px; display: flex; flex-direction: column; gap: 9px; }
   .steps li { counter-increment: step; display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: baseline; font-size: 14px; line-height: 1.35; letter-spacing: -0.005em; }
-  .steps li::before { content: counter(step); width: 22px; height: 22px; border-radius: 50%; background: var(--ring); color: #fff; font: 700 12px/22px var(--font); text-align: center; align-self: start; }
+  .steps li::before { content: counter(step); width: 22px; height: 22px; border-radius: 50%; background: var(--rose-soft); color: var(--rose-ink); font: 700 12px/22px var(--font); text-align: center; align-self: start; }
   .steps b { font-weight: 600; }
   .steps-alt { margin: 0; padding: 0 14px 12px; font-size: 13px; color: var(--muted); }
   .steps-alt b { color: var(--ink); font-weight: 600; }
   .weekly .note { font-size: 13px; }
   .reminders { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
-  .reminders a, .reminders button { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: none; }
+  .reminders a, .reminders button { font: 600 14px var(--font); color: var(--link); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: none; }
   .siri { font-size: 13px; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin: 0; }
 
-  .toast { position: fixed; left: 50%; translate: -50% 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 6; width: min(568px, calc(100% - 32px));
+  .toast { position: fixed; left: 50%; translate: -50% 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 50; width: min(568px, calc(100% - 32px));
     background: var(--ink); color: var(--bg); border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / .25); }
   .toast span { flex: 1; }
-  .toast button { font: 600 14px var(--font); color: var(--blue); background: none; border: 0; padding: 4px 0; cursor: pointer; }
+  .toast button { font: 600 14px var(--font); color: var(--toast-link); background: none; border: 0; padding: 4px 0; cursor: pointer; }
 
   .sheet-bg { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / .5); display: flex; align-items: flex-end; justify-content: center; }
   .sheet {
@@ -198,7 +201,7 @@
   body:not([data-mode="empty"]) .only-empty { display: none !important; }
   .top-actions { display: flex; align-items: center; gap: 12px; }
   .help-btn { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--ink); font: 700 15px var(--font); cursor: pointer; flex: none; }
-  .help-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .help-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 
   /* Carte « Pour commencer » : le parcours en étapes, l'étape en cours mise en avant */
   .start { background: var(--surface-2); border-radius: 14px; padding: 16px 14px; display: flex; flex-direction: column; gap: 14px; }
@@ -207,7 +210,7 @@
   .journey > li { background: var(--surface); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 28px 1fr; gap: 4px 12px; align-items: start; }
   .journey .num { grid-row: span 3; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--font); background: var(--surface-2); color: var(--muted); }
   .journey .num svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-  .journey li.current .num { background: var(--ring); color: #fff; }
+  .journey li.current .num { background: var(--btn); color: var(--btn-ink); }
   .journey li.done .num { background: var(--up-soft); color: var(--up); }
   .journey b.t { font-size: 15px; font-weight: 600; line-height: 28px; }
   .journey li.todo b.t { color: var(--muted); }
@@ -268,6 +271,71 @@
   .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: width .2s, background .2s; }
   .dots i.on { width: 20px; border-radius: 4px; background: var(--ink); }
   .onb-foot .btn { width: 100%; padding: 14px; font-size: 16px; border-radius: 12px; }
+
+  /* ---------- Animations : courtes (< 1 s), coupées si l'iPhone demande de réduire les animations ---------- */
+  .roll { display: inline-flex; }
+  .roll .dg { display: inline-block; height: 1.25em; overflow: hidden; }
+  .roll .dg > span { display: block; transition: transform .9s cubic-bezier(.2,.9,.25,1); }
+  .roll .dg > span > span { display: block; height: 1.25em; }
+  @media (prefers-reduced-motion: no-preference) {
+    body.intro .brand img { animation: squish .6s cubic-bezier(.3,1.6,.5,1) both; }
+    body.intro .profile .ring { animation: pop .5s .05s cubic-bezier(.3,1.6,.5,1) both; }
+    body.intro .stat { animation: pop .45s cubic-bezier(.3,1.7,.5,1) both; }
+    body.intro .stat:nth-child(1) { animation-delay: .12s; } body.intro .stat:nth-child(2) { animation-delay: .2s; } body.intro .stat:nth-child(3) { animation-delay: .28s; }
+    body.intro .caption, body.intro .weekly { animation: rise .4s .3s both; }
+    .people.anim li { animation: rise .35s both; }
+    .people.anim li.dep { animation: slidein .45s cubic-bezier(.3,1.4,.5,1) both; }
+    .people.anim li.dep .av { animation: wave .7s .25s both; }
+    .people.anim li:nth-child(2) { animation-delay: .04s; } .people.anim li:nth-child(3) { animation-delay: .08s; } .people.anim li:nth-child(4) { animation-delay: .12s; }
+    .people.anim li:nth-child(5) { animation-delay: .16s; } .people.anim li:nth-child(6) { animation-delay: .2s; } .people.anim li:nth-child(n+7) { animation-delay: .24s; }
+    .bilan .card { animation: pop .45s cubic-bezier(.3,1.5,.5,1) both; }
+    .g-opt.ok { animation: pop .4s cubic-bezier(.3,1.7,.5,1); }
+    .g-opt.miss { animation: shake .35s; }
+  }
+  @keyframes squish { 0% { transform: scale(.3) rotate(-15deg); } 60% { transform: scale(1.15, .88); } 100% { transform: none; } }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } }
+  @keyframes rise { from { transform: translateY(12px); opacity: 0; } }
+  @keyframes slidein { from { transform: translateX(40px); opacity: 0; } }
+  @keyframes wave { 0%, 100% { transform: none; } 25% { transform: rotate(-12deg); } 50% { transform: rotate(10deg); } 75% { transform: rotate(-6deg); } }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  @keyframes sweep { to { transform: rotate(360deg); } }
+
+  /* Radar pendant la lecture d'un export */
+  .radar { width: 64px; height: 64px; border-radius: 50%; position: relative; overflow: hidden; align-self: center; flex: none;
+    background: repeating-radial-gradient(circle, transparent 0 10px, var(--line) 10px 11px); border: 1.5px solid var(--rose); }
+  .radar::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, var(--rose), transparent 80deg, transparent); animation: sweep 1.1s linear infinite; }
+  .radar.small { width: 22px; height: 22px; background: none; border-width: 1.5px; }
+  .drive-busy { display: flex; align-items: center; gap: 10px; }
+
+  /* Bilan après un import : ticket à gratter, puis mini-jeu */
+  .bilan { position: fixed; inset: 0; z-index: 40; background: rgb(22 17 18 / .55); display: flex; align-items: center; justify-content: center;
+    padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  .bilan .card { width: 100%; max-width: 380px; background: var(--surface); border-radius: 24px; padding: 20px 18px 18px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 50px rgb(0 0 0 / .3); max-height: 100%; overflow-y: auto; }
+  .bilan-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .bilan-top p { margin: 0; color: var(--muted); font-size: 13px; }
+  .bilan-skip { font: 600 14px var(--font); color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; }
+  .bilan h2 { font: 800 25px/1.1 var(--round); letter-spacing: -0.01em; }
+  .milestone { align-self: flex-start; font: 700 13px var(--round); border-radius: 999px; padding: 5px 11px; background: var(--ring); color: #2e2328; }
+  .ticket { position: relative; height: 150px; border-radius: 18px; overflow: hidden; background: var(--ring); color: #2e2328; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .ticket-res { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; text-align: center; }
+  .ticket-res b { display: block; font: 800 46px/1 var(--round); font-variant-numeric: tabular-nums; }
+  .ticket-res span { font: 700 14px var(--round); }
+  .ticket canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .4s; }
+  .ticket canvas.gone { opacity: 0; pointer-events: none; }
+  .bilan .hint { align-self: center; text-align: center; font-size: 13px; font-weight: 500; margin: -6px 0 0; }
+  .bilan .acts { display: flex; flex-direction: column; gap: 8px; }
+  .bilan .acts .btn { padding: 13px; font-size: 15px; border-radius: 12px; }
+  .game { display: flex; flex-direction: column; gap: 12px; }
+  .game > p { margin: 0; color: var(--muted); font-size: 14px; }
+  .g-opts { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .g-opt { display: flex; align-items: center; gap: 8px; min-width: 0; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 14px; padding: 10px 9px; font: 600 14px var(--font); cursor: pointer; text-align: left; }
+  .g-opt i { width: 28px; height: 28px; border-radius: 50%; flex: none; display: grid; place-items: center; font: 600 13px var(--font); font-style: normal; text-transform: uppercase; background: var(--surface-2); color: var(--muted); }
+  .g-opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .g-opt.ok { border-color: var(--up); background: var(--up-soft); color: var(--up); }
+  .g-opt.miss { border-color: var(--down); color: var(--down); }
+  .g-opt:disabled { cursor: default; }
+  .g-msg { margin: 0; font: 700 15px var(--round); text-align: center; min-height: 1.4em; }
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 45; }
 </style>
 
 <div class="wrap">
@@ -462,6 +530,31 @@
   </div>
 </div>
 
+<div class="bilan" id="bilan" role="dialog" aria-modal="true" aria-labelledby="bilan-title" hidden>
+  <div class="card">
+    <div class="bilan-top"><p id="bilan-since"></p><button class="bilan-skip" id="bilan-skip" type="button">Passer</button></div>
+    <h2 id="bilan-title">Ton bilan est prêt</h2>
+    <span class="milestone" id="bilan-milestone" hidden></span>
+    <div id="bilan-scratch">
+      <div class="ticket" id="ticket">
+        <div class="ticket-res"><div><b id="bilan-down"></b><span>départs</span></div><div><b id="bilan-up"></b><span>arrivées</span></div></div>
+        <canvas id="ticket-cv" aria-label="Zone à gratter : touche pour révéler"></canvas>
+      </div>
+    </div>
+    <button class="bilan-skip hint" id="bilan-hint" type="button">Gratte avec ton doigt, ou touche ici pour tout voir</button>
+    <div class="game" id="game" hidden>
+      <p>Mini-jeu : un de ces comptes ne te suit plus. Lequel ?</p>
+      <div class="g-opts" id="g-opts"></div>
+      <p class="g-msg" id="g-msg" role="status"></p>
+    </div>
+    <div class="acts">
+      <button class="btn ghost" id="bilan-play" type="button" hidden>Devine qui est parti</button>
+      <button class="btn primary" id="bilan-see" type="button">Voir le détail</button>
+    </div>
+  </div>
+</div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
 <div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button id="undo">Annuler</button></div>
 <input type="file" id="file" accept=".zip,.json,application/zip,application/json" multiple hidden>
 <input type="file" id="restore-file" accept=".json,application/json" hidden>
@@ -470,6 +563,7 @@
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div id="sheet-confirm" hidden>
       <h2 id="sheet-title">Vérifie avant d'enregistrer</h2>
+      <div class="radar" id="pv-radar" aria-hidden="true" hidden></div>
       <div class="preview" id="pv-count"></div>
       <p class="note" id="pv-source"></p>
       <label for="pv-date">Date de l'export<input type="date" id="pv-date"></label>
@@ -792,7 +886,7 @@ function renderList() {
         sub: `${tab === "unfollow" ? "parti" : "arrivé"} entre le ${fmtShort(e.since)} et le ${fmtShort(e.at)}` }));
   }
   const html = rows.slice(0, shown).map((r) => `
-    <li><span class="av ${r.cls}" aria-hidden="true"><i>${esc(r.u[0])}</i></span>
+    <li${r.cls === "down" ? ' class="dep"' : ""}><span class="av ${r.cls}" aria-hidden="true"><i>${esc(r.u[0])}</i></span>
       <span class="who"><a href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer">${esc(r.u)}</a>${r.sub ? `<small class="${r.cls}">${r.sub}</small>` : ""}</span>
       <a class="btn ghost small" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">Voir</a></li>`).join("");
   const n = state.snapshots.length;
@@ -890,10 +984,11 @@ async function importFiles(files) {
   openSheet("confirm");
   $("pv-err").hidden = true;
   $("pv-count").textContent = "Lecture…";
+  $("pv-radar").hidden = false;
   $("pv-source").textContent = "";
   $("save").disabled = true;
   try {
-    pending = await readExport(files);
+    pending = await readExport(files).finally(() => { $("pv-radar").hidden = true; });
     // Import direct, sans écran de confirmation : on peut annuler juste après.
     if (await commit(pending.date.toISOString())) return;
     const n = Object.keys(pending.followers).length;
@@ -912,6 +1007,7 @@ async function importFiles(files) {
 let undoState = null, toastTimer = null;
 async function commit(takenAt) {
   const before = JSON.stringify(state);
+  const prev = state.snapshots[state.snapshots.length - 1];
   try {
     const r = await recordSnapshot(pending.followers, pending.following, takenAt, pending.source);
     closeSheet();
@@ -930,6 +1026,8 @@ async function commit(takenAt) {
     toast(r.status === "first"
       ? `${nf(r.count)} abonnés enregistrés. C'est ton départ.`
       : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
+    if (r.status === "ok") openBilan(r, prev);
+    else { playIntro(); confetti(); }
     await save();
     return true;
   } catch (err) {
@@ -962,6 +1060,7 @@ function toast(text, canUndo) {
 $("undo").addEventListener("click", async () => {
   if (!undoState) return;
   state = undoState.state; undoState = null;
+  $("bilan").hidden = true;
   $("toast").hidden = true;
   shown = PAGE;
   render();
@@ -983,7 +1082,7 @@ function selectTab(t) {
   const bar = document.querySelector(".tabs"), btn = bar.querySelector(`[data-tab="${t}"]`);
   bar.scrollTo({ left: btn.offsetLeft - (bar.clientWidth - btn.offsetWidth) / 2, behavior: "smooth" });
 }
-document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { selectTab(b.dataset.tab); shown = PAGE; renderList(); }));
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { selectTab(b.dataset.tab); shown = PAGE; renderList(); animateList(); }));
 $("search").addEventListener("input", () => { shown = PAGE; renderList(); });
 $("more").addEventListener("click", () => { shown += PAGE * 3; renderList(); });
 
@@ -1199,7 +1298,10 @@ const DRIVE_TOKEN = "abo-drive-token-ro";
 function driveToken() {
   try { const t = JSON.parse(sessionStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
 }
-function driveMsg(text) { $("drive-msg").textContent = text || ""; $("drive-msg").hidden = !text; }
+function driveMsg(text, busy) {
+  $("drive-msg").innerHTML = busy ? `<span class="drive-busy"><span class="radar small" aria-hidden="true"></span>${esc(text)}</span>` : esc(text || "");
+  $("drive-msg").hidden = !text;
+}
 function driveSignIn() {
   const q = new URLSearchParams({
     client_id: DRIVE.clientId,
@@ -1242,7 +1344,7 @@ async function driveImport() {
   const token = driveToken();
   if (!token) return driveSignIn();
   $("drive-import").disabled = true;
-  driveMsg("Recherche du dernier export dans ton Drive…");
+  driveMsg("Recherche du dernier export dans ton Drive…", true);
   try {
     const followers = await driveFind(token, "name = 'followers_1.json'");
     if (!followers) return driveMsg("Aucun export Instagram dans ton Drive pour l'instant. Règle l'export automatique (Consignes), puis attends qu'il arrive.");
@@ -1252,7 +1354,7 @@ async function driveImport() {
     }
     const parent = followers.parents && followers.parents[0];
     const following = parent ? await driveFind(token, `name = 'following.json' and '${parent}' in parents`) : null;
-    driveMsg("Téléchargement…");
+    driveMsg("Téléchargement…", true);
     const files = await Promise.all([followers, following].filter(Boolean).map((f) => driveDownload(token, f)));
     driveMsg("");
     importFiles(files);
@@ -1264,6 +1366,162 @@ async function driveImport() {
   }
 }
 $("drive-import").addEventListener("click", driveImport);
+
+// ---------- Animations et bilan ----------
+const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Compteur façon machine à sous : chaque chiffre défile avant de s'arrêter.
+function rollNumber(el) {
+  const text = el.textContent;
+  if (calm() || !/\d/.test(text)) return;
+  const wrap = document.createElement("span");
+  wrap.className = "roll"; wrap.setAttribute("aria-label", text);
+  const cols = [];
+  for (const ch of text) {
+    const cell = document.createElement("span");
+    cell.setAttribute("aria-hidden", "true");
+    if (!/\d/.test(ch)) { cell.textContent = ch; wrap.append(cell); continue; }
+    cell.className = "dg";
+    const col = document.createElement("span");
+    for (let k = 0; k < 20; k++) { const d = document.createElement("span"); d.textContent = k % 10; col.append(d); }
+    cell.append(col); wrap.append(cell); cols.push([col, +ch]);
+  }
+  el.replaceChildren(wrap);
+  requestAnimationFrame(() => requestAnimationFrame(() => cols.forEach(([col, n], i) => {
+    col.style.transitionDuration = `${0.6 + i * 0.12}s`;
+    col.style.transform = `translateY(-${(10 + n) * 1.25}em)`;
+  })));
+}
+
+// Arrivée sur l'app : le logo rebondit, les compteurs apparaissent et défilent.
+let introTimer = null;
+function playIntro() {
+  if (calm()) return;
+  document.body.classList.remove("intro"); void document.body.offsetWidth;
+  document.body.classList.add("intro");
+  ["st-count", "st-down", "st-up"].forEach((id) => rollNumber($(id)));
+  clearTimeout(introTimer);
+  introTimer = setTimeout(() => document.body.classList.remove("intro"), 1200);
+}
+
+function animateList() {
+  const ul = $("people");
+  ul.classList.remove("anim"); void ul.offsetWidth; ul.classList.add("anim");
+}
+
+// Confettis aux couleurs vives de l'app, pour les bonnes nouvelles.
+let confettiRaf = 0;
+function confetti() {
+  if (calm()) return;
+  const cv = $("confetti"), cx = cv.getContext("2d"), dpr = devicePixelRatio || 1;
+  const w = innerWidth, h = innerHeight;
+  cv.width = w * dpr; cv.height = h * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const colors = ["#ef7f6a", "#f4a96a", "#f2c45a", "#d4919b", "#f6c8cf", "#7cc4a8"];
+  let parts = Array.from({ length: 130 }, () => ({
+    x: w / 2 + (Math.random() - .5) * 60, y: h * .42, vx: (Math.random() - .5) * 13, vy: -Math.random() * 12 - 5,
+    s: 5 + Math.random() * 6, c: colors[Math.random() * colors.length | 0], a: Math.random() * 6, va: (Math.random() - .5) * .4 }));
+  cancelAnimationFrame(confettiRaf);
+  const tick = () => {
+    cx.clearRect(0, 0, w, h);
+    for (const p of parts) {
+      p.vy += .32; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c; cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); cx.restore();
+    }
+    parts = parts.filter((p) => p.y < h + 20);
+    if (parts.length) confettiRaf = requestAnimationFrame(tick); else cx.clearRect(0, 0, w, h);
+  };
+  tick();
+}
+
+// Bilan après un import : ticket à gratter, confettis, puis mini-jeu « Devine qui est parti ».
+const MILESTONES = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
+let bilan = null;
+function openBilan(r, prev) {
+  const ms = MILESTONES.filter((m) => prev.count < m && r.count >= m).pop();
+  const cur = Object.keys(state.followers);
+  bilan = { r, revealed: false, strokes: 0, party: !!ms || r.follows.length > r.unfollows.length || !r.unfollows.length,
+    game: r.unfollows.length > 0 && cur.length >= 3 };
+  $("bilan-since").textContent = `Depuis ton import du ${fmtDate(prev.takenAt)}`;
+  $("bilan-down").textContent = r.unfollows.length ? `−${nf(r.unfollows.length)}` : "0";
+  $("bilan-up").textContent = `+${nf(r.follows.length)}`;
+  $("bilan-milestone").textContent = ms ? `Cap des ${nf(ms)} abonnés !` : "";
+  $("bilan-milestone").hidden = !ms;
+  $("bilan-hint").hidden = false;
+  $("bilan-play").hidden = true;
+  $("game").hidden = true;
+  $("bilan-scratch").hidden = false;
+  $("bilan").hidden = false;
+  paintTicket();
+  if (calm()) revealBilan();
+}
+function paintTicket() {
+  const cv = $("ticket-cv"), cx = cv.getContext("2d"), box = $("ticket").getBoundingClientRect(), dpr = devicePixelRatio || 1;
+  cv.classList.remove("gone");
+  cv.width = box.width * dpr; cv.height = box.height * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx.globalCompositeOperation = "source-over";
+  const g = cx.createLinearGradient(0, 0, box.width, box.height);
+  g.addColorStop(0, "#e9d3d7"); g.addColorStop(.5, "#f8eef0"); g.addColorStop(1, "#dcc1c6");
+  cx.fillStyle = g; cx.fillRect(0, 0, box.width, box.height);
+  cx.fillStyle = "#a88a91"; cx.font = "700 16px ui-rounded, -apple-system, sans-serif"; cx.textAlign = "center";
+  for (let y = 28, row = 0; y < box.height; y += 30, row++) for (let x = 24 + (row % 2) * 30; x < box.width; x += 60) cx.fillText("±", x, y);
+}
+function revealBilan() {
+  if (!bilan || bilan.revealed) return;
+  bilan.revealed = true;
+  $("ticket-cv").classList.add("gone");
+  $("bilan-hint").hidden = true;
+  $("bilan-play").hidden = !bilan.game;
+  if (bilan.party) confetti();
+}
+{
+  const cv = $("ticket-cv");
+  let down = false;
+  const scratch = (e) => {
+    if (!down || !bilan || bilan.revealed) return;
+    const box = cv.getBoundingClientRect(), cx = cv.getContext("2d");
+    cx.globalCompositeOperation = "destination-out";
+    cx.beginPath(); cx.arc(e.clientX - box.left, e.clientY - box.top, 24, 0, 7); cx.fill();
+    if (++bilan.strokes > 28) revealBilan();
+  };
+  cv.addEventListener("pointerdown", (e) => { down = true; cv.setPointerCapture(e.pointerId); scratch(e); });
+  cv.addEventListener("pointermove", scratch);
+  cv.addEventListener("pointerup", () => { down = false; });
+  cv.addEventListener("pointercancel", () => { down = false; });
+}
+function closeBilan() {
+  $("bilan").hidden = true;
+  bilan = null;
+  playIntro();
+  animateList();
+}
+function startGame() {
+  const r = bilan.r, gone = r.unfollows[Math.random() * r.unfollows.length | 0];
+  const others = Object.keys(state.followers).sort(() => Math.random() - .5).slice(0, 3);
+  const opts = [gone, ...others].sort(() => Math.random() - .5);
+  $("g-opts").innerHTML = opts.map((u) => `<button class="g-opt" type="button" data-u="${esc(u)}"><i>${esc(u[0])}</i><span>${esc(u)}</span></button>`).join("");
+  $("g-msg").textContent = "";
+  bilan.gone = gone;
+  $("bilan-scratch").hidden = true;
+  $("bilan-play").hidden = true;
+  $("game").hidden = false;
+}
+$("g-opts").addEventListener("click", (e) => {
+  const b = e.target.closest(".g-opt");
+  if (!b || !bilan || b.disabled) return;
+  const right = b.dataset.u === bilan.gone;
+  $("g-opts").querySelectorAll(".g-opt").forEach((o) => {
+    o.disabled = true;
+    if (o.dataset.u === bilan.gone) o.classList.add("ok");
+  });
+  if (!right) b.classList.add("miss");
+  $("g-msg").textContent = right ? `Bien vu ! ${bilan.gone} ne te suit plus.` : `Raté : c'était ${bilan.gone}.`;
+  if (right) confetti();
+});
+$("bilan-hint").addEventListener("click", revealBilan);
+$("bilan-play").addEventListener("click", startGame);
+$("bilan-see").addEventListener("click", closeBilan);
+$("bilan-skip").addEventListener("click", closeBilan);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("bilan").hidden) closeBilan(); });
 
 // ---------- Démarrage ----------
 setSync("wait", "Chargement…");
@@ -1295,6 +1553,7 @@ render();
     if (driveCallback()) driveImport();
   }
   render();
+  if (state.snapshots.length) playIntro();
   if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
 })();
