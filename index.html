@@ -164,7 +164,19 @@
 
 
   /* Carte « Nouvel export » : lien direct vers Instagram + rappel des réglages à cocher */
-  .weekly { background: var(--surface-2); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .weekly { background: var(--surface-2); border-radius: 16px; padding: 10px 10px 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+  /* Une seule ligne : « Nouvel export » ouvre le menu, le bouton Drive reste à portée de pouce */
+  .wk-bar { display: flex; align-items: center; gap: 10px; }
+  .wk-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: none; color: var(--ink); padding: 4px 0; cursor: pointer; text-align: left; font: inherit; }
+  .wk-toggle .t { display: block; font: 700 16px/1.2 var(--round); }
+  .wk-toggle .due { display: block; text-align: left; font-size: 12px; }
+  .wk-toggle .chev { width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: 45deg; margin: -5px 2px 0 4px; transition: rotate .2s; flex: none; }
+  .wk-toggle[aria-expanded="true"] .chev { rotate: 225deg; margin-top: 3px; }
+  .wk-toggle:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 8px; }
+  .wk-more { display: flex; flex-direction: column; gap: 10px; }
+  .weekly .btn.pill { flex: none; padding: 9px 15px; font-size: 14px; border-radius: 999px; gap: 6px; }
+  .weekly .btn.pill svg { width: 16px; height: 16px; }
+  @media (prefers-reduced-motion: no-preference) { .wk-more:not([hidden]) { animation: rise .25s ease-out; } }
   .weekly-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .due { font-size: 13px; color: var(--muted); text-align: right; }
   .due.now { color: var(--link); font-weight: 600; }
@@ -464,7 +476,14 @@
   </section>
 
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
-    <div class="weekly-head"><h2 id="weekly-title">Nouvel export</h2><span class="due" id="due"></span></div>
+    <div class="wk-bar">
+      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span><span class="t" id="weekly-title">Nouvel export</span><small class="due" id="due"></small></span></button>
+      <button class="btn primary pill" id="drive-import" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>Drive</button>
+      <button class="btn primary pill" id="bar-file" type="button" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer</button>
+    </div>
+    <div class="wk-more" id="wk-more" hidden>
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
     <div id="howto-slot-weekly"><details class="howto" id="howto">
@@ -481,8 +500,7 @@
     </details></div>
     <button class="btn ghost" id="quick-import" disabled>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer le .zip reçu</button>
-    <button class="btn primary" id="drive-import" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>Importer depuis Google Drive</button>
+    </div>
     <p class="note" id="drive-msg" hidden></p>
   </section>
 
@@ -1100,6 +1118,12 @@ function toDateInput(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 
 const hasRealData = () => state.snapshots.length > 0;
 function startImport() { $("file").click(); }
 $("quick-import").addEventListener("click", startImport);
+$("bar-file").addEventListener("click", startImport);
+$("wk-toggle").addEventListener("click", () => {
+  const open = $("wk-toggle").getAttribute("aria-expanded") !== "true";
+  $("wk-toggle").setAttribute("aria-expanded", String(open));
+  $("wk-more").hidden = !open;
+});
 $("start-import").addEventListener("click", startImport);
 $("cancel-confirm").addEventListener("click", closeSheet);
 $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
@@ -1929,6 +1953,7 @@ render();
 
   loading = false;
   $("quick-import").disabled = false;
+  $("bar-file").disabled = false;
   $("start-import").disabled = false;
   // Avec Drive configuré, le bouton Drive passe devant et l'import de fichier devient secondaire.
   if (!driveReady()) $("step-import").innerHTML = "Ensuite : <b>Importer le .zip reçu</b> → <b>Drive</b> → dernier dossier <b>meta-…</b> → … → <b>followers_and_following</b>, choisis <b>followers_1</b> et <b>following</b>";
@@ -1936,7 +1961,7 @@ render();
     $("drive-import").hidden = false;
     $("quick-import").lastChild.textContent = "Importer un fichier";
     $("go-export").lastChild.textContent = "Régler l'export automatique";
-    $("go-export").before($("drive-import"));
+    $("bar-file").hidden = true;
     if (driveCallback()) driveImport();
   }
   render();
