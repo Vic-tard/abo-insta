@@ -21,7 +21,7 @@
   :root {
     --bg: #faf5f5; --surface: #ffffff; --surface-2: #f4eaec; --surface-2-press: #eadbde;
     --ink: #2e2328; --muted: #7d6e74; --line: #ecdfe2;
-    --btn: #2e2328; --btn-press: #4a3a41; --btn-ink: #ffffff; --link: #a0505f; --rose: #d4919b; --rose-soft: #f6e2e5; --rose-ink: #8e4552; --toast-link: #f0b3bd;
+    --btn: #2e2328; --btn-press: #4a3a41; --btn-ink: #ffffff; --link: #a0505f; --rose: #d4919b; --rose-soft: #f6e2e5; --rose-ink: #8e4552; --toast-link: #f0b3bd; --chart: #c27583;
     --down: #b8502e; --down-soft: #f8e6df; --up: #3f7f68; --up-soft: #e3f0ea;
     --warn-soft: #fbf0e1; --warn-ink: #6e4b12;
     /* Touches vives : réservées aux moments forts (bilan, confettis, badges) */
@@ -33,7 +33,7 @@
     :root:not([data-theme="light"]) {
       --bg: #161112; --surface: #161112; --surface-2: #2a2023; --surface-2-press: #382b2f;
       --ink: #f5ecee; --muted: #ab9aa0; --line: #2f2528;
-      --btn: #f5ecee; --btn-press: #dccfd2; --btn-ink: #1a1416; --link: #eab3bc; --rose: #e0a3ac; --rose-soft: #3d272c; --rose-ink: #f0bcc4; --toast-link: #a0505f;
+      --btn: #f5ecee; --btn-press: #dccfd2; --btn-ink: #1a1416; --link: #eab3bc; --rose: #e0a3ac; --rose-soft: #3d272c; --rose-ink: #f0bcc4; --toast-link: #a0505f; --chart: #e0a3ac;
       --down: #f08a6c; --down-soft: #3a201a; --up: #7cc4a8; --up-soft: #15291f;
       --warn-soft: #2f2510; --warn-ink: #f0d38e; color-scheme: dark;
     }
@@ -41,7 +41,7 @@
   :root[data-theme="dark"] {
     --bg: #161112; --surface: #161112; --surface-2: #2a2023; --surface-2-press: #382b2f;
       --ink: #f5ecee; --muted: #ab9aa0; --line: #2f2528;
-      --btn: #f5ecee; --btn-press: #dccfd2; --btn-ink: #1a1416; --link: #eab3bc; --rose: #e0a3ac; --rose-soft: #3d272c; --rose-ink: #f0bcc4; --toast-link: #a0505f;
+      --btn: #f5ecee; --btn-press: #dccfd2; --btn-ink: #1a1416; --link: #eab3bc; --rose: #e0a3ac; --rose-soft: #3d272c; --rose-ink: #f0bcc4; --toast-link: #a0505f; --chart: #e0a3ac;
       --down: #f08a6c; --down-soft: #3a201a; --up: #7cc4a8; --up-soft: #15291f;
       --warn-soft: #2f2510; --warn-ink: #f0d38e; color-scheme: dark;
   }
@@ -124,6 +124,13 @@
   .block { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); min-width: 0; }
   #chart svg { width: 100%; height: auto; display: block; }
   #chart text { fill: var(--muted); font: 11px var(--font); }
+  @media (prefers-reduced-motion: no-preference) {
+    #chart.draw .curve { stroke-dasharray: 1; animation: draw 1s .1s ease-out both; }
+    #chart.draw .dot { animation: pop .3s .9s both; transform-box: fill-box; transform-origin: center; }
+    #chart.draw polygon { animation: fadein .8s .3s both; }
+  }
+  @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes fadein { from { opacity: 0; } }
 
   table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
   th, td { padding: 9px 4px; text-align: right; border-top: 1px solid var(--line); white-space: nowrap; }
@@ -917,8 +924,7 @@ function renderChart() {
   const sx = (x) => L + ((x - x0) / (x1 - x0 || 1)) * (W - L - R);
   const sy = (y) => T + (1 - (y - lo) / (hi - lo)) * (H - T - B);
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Nombre d'abonnés à chaque import">
-    <defs><linearGradient id="line-g" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fa7e1e"/><stop offset=".45" stop-color="#d62976"/><stop offset=".75" stop-color="#962fbf"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient>
-    <linearGradient id="area-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d62976" stop-opacity=".22"/><stop offset="1" stop-color="#d62976" stop-opacity="0"/></linearGradient></defs>`;
+    <defs><linearGradient id="area-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--chart)" stop-opacity=".28"/><stop offset="1" stop-color="var(--chart)" stop-opacity="0"/></linearGradient></defs>`;
   for (let v = lo; v <= hi + 1e-9; v += step) {
     svg += `<line x1="${L}" x2="${W - R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-width="1"/>`;
     svg += `<text x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${nf(v)}</text>`;
@@ -930,12 +936,27 @@ function renderChart() {
   });
   const pts = xs.map((x, i) => `${sx(x)},${sy(ys[i])}`);
   svg += `<polygon points="${sx(xs[0])},${sy(lo)} ${pts.join(" ")} ${sx(xs[xs.length - 1])},${sy(lo)}" fill="url(#area-g)"/>`;
-  svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="url(#line-g)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+  svg += `<polyline points="${pts.join(" ")}" class="curve" pathLength="1" fill="none" stroke="var(--chart)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
   xs.forEach((x, i) => {
     const endpoint = i === xs.length - 1;
-    svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="${endpoint ? 5 : 3.5}" fill="${endpoint ? "#4f5bd5" : "var(--surface)"}" stroke="${endpoint ? "var(--surface)" : "#d62976"}" stroke-width="2"><title>${fmtDate(snaps[i].takenAt)} : ${nf(ys[i])} abonnés</title></circle>`;
+    svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="${endpoint ? 5 : 3.5}" class="dot" fill="${endpoint ? "var(--ink)" : "var(--surface)"}" stroke="${endpoint ? "var(--surface)" : "var(--chart)"}" stroke-width="2"><title>${fmtDate(snaps[i].takenAt)} : ${nf(ys[i])} abonnés</title></circle>`;
   });
   $("chart").innerHTML = svg + "</svg>";
+  drawChartWhenSeen();
+}
+// La courbe se dessine quand on arrive dessus en faisant défiler la page.
+let chartSeen = null;
+function drawChartWhenSeen() {
+  const el = $("chart");
+  if (!("IntersectionObserver" in window)) return;
+  el.classList.remove("draw");
+  chartSeen?.disconnect();
+  chartSeen = new IntersectionObserver((entries) => {
+    if (!entries[0].isIntersecting) return;
+    el.classList.add("draw");
+    chartSeen.disconnect();
+  }, { threshold: 0.5 });
+  chartSeen.observe(el);
 }
 function niceStep(range) {
   const raw = range / 3;
