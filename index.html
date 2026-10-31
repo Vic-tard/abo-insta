@@ -682,13 +682,15 @@
 <input type="file" id="file" accept=".zip,.json,application/zip,application/json" multiple hidden>
 <input type="file" id="restore-file" accept=".json,application/json" hidden>
 <input type="file" id="avatar-file" accept="image/*" hidden>
+<input type="file" id="avatar-cam" accept="image/*" capture="user" hidden>
 
 <div class="sheet-bg" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div id="sheet-photo" hidden>
       <h2>Ta photo de profil</h2>
       <p class="note">Elle reste sur ce téléphone, comme ton historique.</p>
-      <button class="btn primary" id="photo-change" type="button">Changer la photo</button>
+      <button class="btn primary" id="photo-cam" type="button">Prendre une photo</button>
+      <button class="btn primary" id="photo-change" type="button">Choisir dans mes photos</button>
       <button class="btn danger" id="photo-remove" type="button">Retirer la photo</button>
       <button class="btn ghost" id="photo-cancel" type="button">Annuler</button>
     </div>
@@ -1918,17 +1920,20 @@ async function shrinkImage(file) {
   cv.getContext("2d").drawImage(src, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
   return cv.toDataURL("image/jpeg", 0.85);
 }
-$("avatar-btn").addEventListener("click", () => avatar ? openSheet("photo") : $("avatar-file").click());
+$("avatar-btn").addEventListener("click", () => { $("photo-remove").hidden = !avatar; openSheet("photo"); });
+$("photo-cam").addEventListener("click", () => { closeSheet(); $("avatar-cam").click(); });
 $("photo-change").addEventListener("click", () => { closeSheet(); $("avatar-file").click(); });
 $("photo-remove").addEventListener("click", () => { closeSheet(); setAvatar(null); });
 $("photo-cancel").addEventListener("click", closeSheet);
-$("avatar-file").addEventListener("change", async (e) => {
+async function onAvatarPick(e) {
   const f = e.target.files[0];
   e.target.value = "";
   if (!f) return;
   try { setAvatar(await shrinkImage(f)); confetti(); }
   catch { toast("Cette image n'a pas pu être ouverte. Essaie une autre photo.", false); }
-});
+}
+$("avatar-file").addEventListener("change", onAvatarPick);
+$("avatar-cam").addEventListener("change", onAvatarPick);
 renderAvatar();
 
 // ---------- Démarrage ----------
