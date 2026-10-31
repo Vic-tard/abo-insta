@@ -343,6 +343,67 @@
   .g-opt:disabled { cursor: default; }
   .g-msg { margin: 0; font: 700 15px var(--round); text-align: center; min-height: 1.4em; }
   #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 45; }
+
+  /* Coin « Jeux » : tuiles qui défilent, sous le résumé */
+  .games { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
+    margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); padding-block: 2px; }
+  .games::-webkit-scrollbar { display: none; }
+  .tile { flex: 0 0 138px; scroll-snap-align: start; border: 0; border-radius: 18px; padding: 12px; background: var(--surface-2); color: var(--ink);
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; font: 13px/1.3 var(--font); cursor: pointer; }
+  .tile:active { background: var(--surface-2-press); }
+  .tile:disabled { cursor: default; opacity: .55; }
+  .tile b { font: 700 15px/1.2 var(--round); }
+  .tile small { color: var(--muted); font-size: 12px; }
+  .tile .ico { width: 34px; height: 34px; border-radius: 11px; background: var(--ring); color: #2e2328; display: grid; place-items: center; font: 800 15px/1 var(--round); }
+  .tile .ico svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .tile:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+  /* Partie de quiz */
+  .quiz-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .quiz-head p { margin: 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .pips { display: flex; gap: 5px; }
+  .pips i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+  .pips i.ok { background: var(--up); } .pips i.no { background: var(--down); } .pips i.cur { background: var(--ink); }
+  .quiz-q { font: 800 21px/1.2 var(--round); margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+  .g-opt small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .g-opt .txt { min-width: 0; display: flex; flex-direction: column; }
+  .g-opt .txt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .yesno { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .yesno .g-opt { justify-content: center; padding: 14px 8px; font: 700 16px var(--round); }
+  .score { text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .score b { font: 800 56px/1 var(--round); font-variant-numeric: tabular-nums; }
+  .score p { margin: 0; color: var(--muted); }
+  .record { font: 700 13px var(--round); border-radius: 999px; padding: 5px 11px; background: var(--ring); color: #2e2328; }
+
+  /* Pari « Plus ou moins » dans le bilan */
+  .bet { display: flex; flex-direction: column; gap: 8px; }
+  .bet p { margin: 0; font-size: 14px; font-weight: 600; }
+  .bet .row .btn { flex: 1 1 0; padding: 11px 6px; font-size: 15px; border-radius: 12px; }
+  .bet .btn.picked { background: var(--btn); color: var(--btn-ink); }
+  .bet-res { margin: 0; text-align: center; font: 700 15px var(--round); }
+  .bet-res.ok { color: var(--up); } .bet-res.no { color: var(--muted); }
+
+  /* Trophées */
+  .trophies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .trophy { border-radius: 16px; padding: 10px 6px; text-align: center; background: var(--surface-2); display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11.5px; line-height: 1.25; color: var(--muted); min-width: 0; }
+  .trophy .medal { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font: 800 14px/1 var(--round); background: var(--line); color: var(--muted); position: relative; overflow: hidden; }
+  .trophy b { color: var(--ink); font: 700 12.5px/1.2 var(--round); }
+  .trophy.on .medal { background: var(--ring); color: #2e2328; }
+  .trophy:not(.on) b { color: var(--muted); }
+  .medal::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / .7) 50%, transparent 65%); transform: translateX(-130%); }
+  .unlock { position: fixed; left: 50%; translate: -50% 0; top: calc(14px + env(safe-area-inset-top, 0px)); z-index: 55; width: min(380px, calc(100% - 32px));
+    background: var(--surface); color: var(--ink); border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgb(0 0 0 / .25); border: 0; font: 14px var(--font); text-align: left; cursor: pointer; }
+  .unlock .medal { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; font: 800 15px/1 var(--round); background: var(--ring); color: #2e2328; position: relative; overflow: hidden; }
+  .unlock small { display: block; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .unlock b { font: 700 16px var(--round); }
+  @media (prefers-reduced-motion: no-preference) {
+    .unlock { animation: drop .5s cubic-bezier(.3,1.5,.5,1) both; }
+    .unlock .medal::after, .trophy.new .medal::after { animation: shine 1s .35s both; }
+    .trophy.new .medal { animation: pop .5s cubic-bezier(.3,1.7,.5,1) both; }
+    .quiz-body { animation: rise .3s both; }
+  }
+  @keyframes drop { from { transform: translateY(-80px); opacity: 0; } }
+  @keyframes shine { to { transform: translateX(130%); } }
 </style>
 
 <div class="wrap">
@@ -429,6 +490,13 @@
     </div>
   </section>
   <p class="needs-data caption" id="caption">Chargement…</p>
+
+  <section class="needs-data games" id="games" aria-label="Jeux et trophées">
+    <button class="tile" id="tile-oldest" data-game="oldest" type="button"><span class="ico">1er</span><b>Le plus ancien</b><small></small></button>
+    <button class="tile" id="tile-back" data-game="back" type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></span><b>Il te suit ou pas ?</b><small></small></button>
+    <button class="tile" id="tile-gone" data-game="gone" type="button"><span class="ico">?</span><b>Qui est parti ?</b><small></small></button>
+    <button class="tile" id="tile-trophies" type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7"/></svg></span><b>Trophées</b><small id="trophy-count"></small></button>
+  </section>
 
   <section class="needs-data tabs-wrap">
     <div class="tabs" role="tablist" aria-label="Listes">
@@ -542,6 +610,11 @@
     <div class="bilan-top"><p id="bilan-since"></p><button class="bilan-skip" id="bilan-skip" type="button">Passer</button></div>
     <h2 id="bilan-title">Ton bilan est prêt</h2>
     <span class="milestone" id="bilan-milestone" hidden></span>
+    <div class="bet" id="bet">
+      <p>Avant de gratter : tu as gagné ou perdu des abonnés ?</p>
+      <div class="row"><button class="btn ghost" type="button" data-bet="up">Plus</button><button class="btn ghost" type="button" data-bet="same">Pareil</button><button class="btn ghost" type="button" data-bet="down">Moins</button></div>
+    </div>
+    <p class="bet-res" id="bet-res" role="status" hidden></p>
     <div id="bilan-scratch">
       <div class="ticket" id="ticket">
         <div class="ticket-res"><div><b id="bilan-down"></b><span>départs</span></div><div><b id="bilan-up"></b><span>arrivées</span></div></div>
@@ -560,6 +633,23 @@
     </div>
   </div>
 </div>
+<div class="bilan" id="quiz" role="dialog" aria-modal="true" aria-labelledby="quiz-title" hidden>
+  <div class="card">
+    <div class="quiz-head"><p id="quiz-title"></p><button class="bilan-skip" id="quiz-close" type="button">Fermer</button></div>
+    <div class="pips" id="quiz-pips" aria-hidden="true"></div>
+    <div class="quiz-body" id="quiz-body"></div>
+    <p class="g-msg" id="quiz-msg" role="status"></p>
+    <div class="acts" id="quiz-acts"></div>
+  </div>
+</div>
+<div class="bilan" id="trophy-sheet" role="dialog" aria-modal="true" aria-labelledby="trophy-title" hidden>
+  <div class="card">
+    <div class="quiz-head"><p id="trophy-sum"></p><button class="bilan-skip" id="trophy-close" type="button">Fermer</button></div>
+    <h2 id="trophy-title">Tes trophées</h2>
+    <div class="trophies" id="trophy-grid"></div>
+  </div>
+</div>
+<button class="unlock" id="unlock" type="button" hidden><span class="medal" id="unlock-medal"></span><span><small>Trophée débloqué</small><b id="unlock-name"></b></span></button>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
 <div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button id="undo">Annuler</button></div>
@@ -853,6 +943,7 @@ function render() {
   renderList();
   renderChart();
   renderImports();
+  renderGames();
 }
 
 // Comptes que tu suis sans qu'ils te suivent, et l'inverse. null si l'export ne contenait pas following.json.
@@ -1048,7 +1139,7 @@ async function commit(takenAt) {
       ? `${nf(r.count)} abonnés enregistrés. C'est ton départ.`
       : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
     if (r.status === "ok") openBilan(r, prev);
-    else { playIntro(); confetti(); }
+    else { playIntro(); confetti(); checkTrophies(); }
     await save();
     return true;
   } catch (err) {
@@ -1471,9 +1562,11 @@ function openBilan(r, prev) {
   $("bilan-play").hidden = true;
   $("game").hidden = true;
   $("bilan-scratch").hidden = false;
+  $("bet").hidden = false;
+  $("bet-res").hidden = true;
+  $("bet").querySelectorAll("[data-bet]").forEach((b) => { b.classList.remove("picked"); b.disabled = false; });
   $("bilan").hidden = false;
   paintTicket();
-  if (calm()) revealBilan();
 }
 function paintTicket() {
   const cv = $("ticket-cv"), cx = cv.getContext("2d"), box = $("ticket").getBoundingClientRect(), dpr = devicePixelRatio || 1;
@@ -1492,6 +1585,8 @@ function revealBilan() {
   $("ticket-cv").classList.add("gone");
   $("bilan-hint").hidden = true;
   $("bilan-play").hidden = !bilan.game;
+  $("bet").hidden = true;
+  settleBet();
   if (bilan.party) confetti();
 }
 {
@@ -1514,6 +1609,8 @@ function closeBilan() {
   bilan = null;
   playIntro();
   animateList();
+  renderGames();
+  checkTrophies();
 }
 function startGame() {
   const r = bilan.r, gone = r.unfollows[Math.random() * r.unfollows.length | 0];
@@ -1536,13 +1633,221 @@ $("g-opts").addEventListener("click", (e) => {
   });
   if (!right) b.classList.add("miss");
   $("g-msg").textContent = right ? `Bien vu ! ${bilan.gone} ne te suit plus.` : `Raté : c'était ${bilan.gone}.`;
-  if (right) confetti();
+  if (right) { confetti(); stats("gone").wins = (stats("gone").wins || 0) + 1; savePrefs(); }
 });
 $("bilan-hint").addEventListener("click", revealBilan);
 $("bilan-play").addEventListener("click", startGame);
 $("bilan-see").addEventListener("click", closeBilan);
 $("bilan-skip").addEventListener("click", closeBilan);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("bilan").hidden) closeBilan(); });
+
+// ---------- Pari « Plus ou moins » ----------
+$("bet").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-bet]");
+  if (!b || !bilan || bilan.bet) return;
+  bilan.bet = b.dataset.bet;
+  $("bet").querySelectorAll("[data-bet]").forEach((o) => { o.disabled = true; o.classList.toggle("picked", o === b); });
+});
+function settleBet() {
+  if (!bilan.bet) return;
+  const d = bilan.r.follows.length - bilan.r.unfollows.length;
+  const truth = d > 0 ? "up" : d < 0 ? "down" : "same";
+  const bet = prefs.bet || (prefs.bet = { streak: 0, best: 0 });
+  const ok = bilan.bet === truth;
+  bet.streak = ok ? bet.streak + 1 : 0;
+  bet.best = Math.max(bet.best, bet.streak);
+  savePrefs();
+  const what = { up: `tu as gagné ${nf(d)} abonné${d > 1 ? "s" : ""}`, down: `tu as perdu ${nf(-d)} abonné${d < -1 ? "s" : ""}`, same: "ton nombre d'abonnés n'a pas bougé" }[truth];
+  $("bet-res").textContent = ok ? `Pari gagné : ${what} ! Série : ${bet.streak}` : `Pari perdu : ${what}.`;
+  $("bet-res").className = "bet-res " + (ok ? "ok" : "no");
+  $("bet-res").hidden = false;
+  if (ok) bilan.party = true;
+}
+
+// ---------- Coin « Jeux » : 3 quiz sur les vrais abonnés ----------
+const QUIZ_LEN = 5;
+const pick = (arr) => arr[Math.random() * arr.length | 0];
+const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function stats(id) { prefs.games = prefs.games || {}; return prefs.games[id] || (prefs.games[id] = { best: 0 }); }
+
+// Chaque jeu dit s'il est jouable (sinon pourquoi) et fabrique une question.
+const GAMES = {
+  oldest: {
+    title: "Le plus ancien",
+    ready() { return Object.values(state.followers).filter(Boolean).length >= 6 || "Pas assez d'abonnés datés dans ton export."; },
+    question(used) {
+      const pool = Object.entries(state.followers).filter(([u, t]) => t && !used.has(u));
+      const opts = [];
+      for (const [u, t] of shuffle(pool)) { if (!opts.some((o) => o.t === t)) opts.push({ u, t }); if (opts.length === 3) break; }
+      if (opts.length < 3) return null;
+      const answer = opts.reduce((a, b) => (b.t < a.t ? b : a)).u;
+      return { q: "Lequel te suit depuis le plus longtemps ?", opts: opts.map((o) => ({ u: o.u, sub: `depuis le ${fmtDate(o.t * 1000)}` })), answer };
+    },
+  },
+  back: {
+    title: "Il te suit ou pas ?",
+    ready() { return (state.following && Object.keys(state.following).length >= 4) || "Réimporte un export avec « Followers et suivi(e)s » pour y jouer."; },
+    question(used) {
+      const fol = Object.keys(state.following).filter((u) => !used.has(u));
+      const yes = fol.filter((u) => u in state.followers), no = fol.filter((u) => !(u in state.followers));
+      const side = !no.length ? yes : !yes.length ? no : Math.random() < .5 ? yes : no;
+      if (!side.length) return null;
+      const u = pick(side);
+      return { q: `${u} te suit-il en retour ?`, u, yesno: true, answer: u in state.followers ? "yes" : "no" };
+    },
+  },
+  gone: {
+    title: "Qui est parti ?",
+    ready() {
+      const gone = state.events.some((e) => e.kind === "unfollow" && !(e.u in state.followers));
+      return (gone && Object.keys(state.followers).length >= 3) || "Il faut au moins un départ pour y jouer.";
+    },
+    question(used) {
+      // Peu de départs : un même compte peut revenir, mais jamais deux fois de suite.
+      const all = [...new Set(state.events.filter((e) => e.kind === "unfollow" && !(e.u in state.followers)).map((e) => e.u))];
+      const fresh = all.filter((x) => !used.has(x)), pool = fresh.length ? fresh : all.filter((x) => x !== quiz.q?.answer);
+      const u = pick(pool.length ? pool : all);
+      const others = shuffle(Object.keys(state.followers).filter((x) => !used.has(x))).slice(0, 3);
+      return { q: "Un de ces comptes ne te suit plus. Lequel ?", opts: shuffle([u, ...others]).map((x) => ({ u: x })), answer: u };
+    },
+  },
+};
+
+function renderGames() {
+  for (const [id, g] of Object.entries(GAMES)) {
+    const ok = g.ready(), tile = $("tile-" + id), best = stats(id).best;
+    tile.disabled = ok !== true;
+    tile.querySelector("small").textContent = ok !== true ? (id === "gone" ? "Après un départ" : id === "back" ? "Réimporte le .zip" : "Bientôt") : best ? `Record : ${best}/${QUIZ_LEN}` : "Jamais joué";
+    tile.title = ok === true ? "" : ok;
+  }
+  const t = trophyStatus();
+  $("trophy-count").textContent = `${t.filter((x) => x.on).length} sur ${t.length}`;
+}
+
+let quiz = null;
+function openQuiz(id) {
+  if (GAMES[id].ready() !== true) return;
+  quiz = { id, n: 0, score: 0, used: new Set(), results: [] };
+  $("quiz-title").textContent = GAMES[id].title;
+  $("quiz").hidden = false;
+  nextQuestion();
+}
+function renderPips() {
+  $("quiz-pips").innerHTML = Array.from({ length: QUIZ_LEN }, (_, i) =>
+    `<i class="${quiz.results[i] === true ? "ok" : quiz.results[i] === false ? "no" : i === quiz.n ? "cur" : ""}"></i>`).join("");
+}
+function nextQuestion() {
+  const q = quiz.n < QUIZ_LEN ? GAMES[quiz.id].question(quiz.used) : null;
+  if (!q) return endQuiz();
+  quiz.q = q;
+  const body = $("quiz-body");
+  body.innerHTML = `<p class="quiz-q">${esc(q.q)}</p>` + (q.yesno
+    ? `<div class="yesno"><button class="g-opt" type="button" data-a="yes">Oui</button><button class="g-opt" type="button" data-a="no">Non</button></div>`
+    : `<div class="g-opts">${q.opts.map((o) => `<button class="g-opt" type="button" data-a="${esc(o.u)}"><i>${esc(o.u[0])}</i><span class="txt"><span>${esc(o.u)}</span>${o.sub ? `<small hidden>${esc(o.sub)}</small>` : ""}</span></button>`).join("")}</div>`);
+  body.style.animation = "none"; void body.offsetWidth; body.style.animation = "";
+  $("quiz-msg").textContent = "";
+  $("quiz-acts").innerHTML = "";
+  renderPips();
+}
+$("quiz-body").addEventListener("click", (e) => {
+  const b = e.target.closest(".g-opt");
+  if (!b || b.disabled || !quiz) return;
+  const q = quiz.q, right = b.dataset.a === q.answer;
+  $("quiz-body").querySelectorAll(".g-opt").forEach((o) => {
+    o.disabled = true;
+    if (o.dataset.a === q.answer) o.classList.add("ok");
+    o.querySelector("small")?.removeAttribute("hidden");
+  });
+  if (!right) b.classList.add("miss");
+  (q.opts || [{ u: q.u }]).forEach((o) => quiz.used.add(o.u));
+  quiz.results[quiz.n] = right;
+  if (right) quiz.score++;
+  quiz.n++;
+  renderPips();
+  $("quiz-msg").textContent = right ? pick(["Bien vu !", "Exact !", "Bravo !", "Trop fort !"])
+    : q.yesno ? (q.answer === "yes" ? `Raté : ${q.u} te suit bien.` : `Raté : ${q.u} ne te suit pas.`)
+    : `Raté : c'était ${q.answer}.`;
+  $("quiz-acts").innerHTML = `<button class="btn primary" type="button" id="quiz-next">${quiz.n < QUIZ_LEN ? "Question suivante" : "Voir mon score"}</button>`;
+  $("quiz-next").addEventListener("click", nextQuestion);
+  $("quiz-next").focus({ preventScroll: true });
+});
+function endQuiz() {
+  const st = stats(quiz.id), total = quiz.n, record = quiz.score > st.best;
+  if (record) st.best = quiz.score;
+  if (quiz.score === QUIZ_LEN) st.perfect = true;
+  savePrefs();
+  const line = quiz.score === total ? "Sans faute !" : quiz.score >= total - 1 ? "Presque parfait." : quiz.score >= total / 2 ? "Pas mal du tout." : "Tu connais tes abonnés ? Rejoue !";
+  $("quiz-body").innerHTML = `<div class="score"><b>${quiz.score}/${total}</b><p>${line}</p>${record ? `<span class="record">Nouveau record</span>` : `<p>Ton record : ${st.best}/${QUIZ_LEN}</p>`}</div>`;
+  $("quiz-msg").textContent = "";
+  $("quiz-acts").innerHTML = `<button class="btn primary" type="button" id="quiz-again">Rejouer</button><button class="btn ghost" type="button" id="quiz-done">Fermer</button>`;
+  $("quiz-again").addEventListener("click", () => openQuiz(quiz.id));
+  $("quiz-done").addEventListener("click", closeQuiz);
+  if (record || quiz.score === total) confetti();
+}
+function closeQuiz() { $("quiz").hidden = true; quiz = null; renderGames(); checkTrophies(); }
+$("quiz-close").addEventListener("click", closeQuiz);
+document.querySelectorAll("[data-game]").forEach((t) => t.addEventListener("click", () => openQuiz(t.dataset.game)));
+
+// ---------- Trophées : calculés depuis l'historique, donc aussi pour les anciens imports ----------
+const TROPHIES = [
+  { id: "first", m: "1", name: "Premier import", how: "Fais ton premier import", test: (s) => s.length >= 1 },
+  { id: "duo", m: "2", name: "Premier bilan", how: "Fais un deuxième import", test: (s) => s.length >= 2 },
+  { id: "five", m: "5", name: "Habitué", how: "Fais 5 imports", test: (s) => s.length >= 5 },
+  { id: "ten", m: "10", name: "Fidèle au poste", how: "Fais 10 imports", test: (s) => s.length >= 10 },
+  { id: "streak", m: "4×", name: "4 semaines de suite", how: "Importe 4 semaines d'affilée", test: (s) => {
+      let run = 1; for (let i = 1; i < s.length; i++) { run = (Date.parse(s[i].takenAt) - Date.parse(s[i - 1].takenAt)) <= 10 * 864e5 ? run + 1 : 1; if (run >= 4) return true; } return false; } },
+  { id: "zero", m: "0", name: "Personne n'est parti", how: "Un bilan sans aucun départ", test: (s) => s.slice(1).some((x) => !x.unfollows) },
+  { id: "boom", m: "+10", name: "Belle semaine", how: "Gagne 10 abonnés d'un coup", test: (s) => s.slice(1).some((x) => x.follows - x.unfollows >= 10) },
+  { id: "c100", m: "100", name: "Cap des 100", how: "Atteins 100 abonnés", test: (s) => s.some((x) => x.count >= 100) },
+  { id: "c500", m: "500", name: "Cap des 500", how: "Atteins 500 abonnés", test: (s) => s.some((x) => x.count >= 500) },
+  { id: "c1k", m: "1k", name: "Cap des 1 000", how: "Atteins 1 000 abonnés", test: (s) => s.some((x) => x.count >= 1000) },
+  { id: "c10k", m: "10k", name: "Cap des 10 000", how: "Atteins 10 000 abonnés", test: (s) => s.some((x) => x.count >= 10000) },
+  { id: "perfect", m: "5/5", name: "Sans faute", how: "Fais 5/5 à un quiz", test: () => Object.values(prefs.games || {}).some((g) => g.perfect) },
+  { id: "detective", m: "?", name: "Détective", how: "Trouve 5 fois qui est parti", test: () => (prefs.games?.gone?.wins || 0) >= 5 },
+  { id: "seer", m: "3×", name: "Voyant", how: "Gagne 3 paris d'affilée", test: () => (prefs.bet?.best || 0) >= 3 },
+  { id: "all", m: "★", name: "Expert", how: "Joue aux 3 quiz", test: () => ["oldest", "back", "gone"].every((g) => prefs.games?.[g]?.best > 0) },
+];
+function trophyStatus() { return TROPHIES.map((t) => ({ ...t, on: !!t.test(state.snapshots) })); }
+
+let unlockQueue = [], unlockTimer = null, freshTrophies = new Set();
+// Montre les trophées gagnés depuis la dernière fois. La première fois, on enregistre sans fêter.
+function checkTrophies() {
+  const on = trophyStatus().filter((t) => t.on);
+  if (!prefs.trophies) { prefs.trophies = on.map((t) => t.id); savePrefs(); return; }
+  const fresh = on.filter((t) => !prefs.trophies.includes(t.id));
+  if (!fresh.length) return;
+  prefs.trophies.push(...fresh.map((t) => t.id));
+  savePrefs();
+  fresh.forEach((t) => freshTrophies.add(t.id));
+  unlockQueue.push(...fresh);
+  if (!unlockTimer) showUnlock();
+  renderGames();
+}
+function showUnlock() {
+  const t = unlockQueue.shift();
+  if (!t) { $("unlock").hidden = true; unlockTimer = null; return; }
+  $("unlock-medal").textContent = t.m;
+  $("unlock-name").textContent = t.name;
+  const u = $("unlock");
+  u.hidden = true; void u.offsetWidth; u.hidden = false;
+  confetti();
+  unlockTimer = setTimeout(showUnlock, 2600);
+}
+$("unlock").addEventListener("click", () => { clearTimeout(unlockTimer); unlockTimer = null; unlockQueue = []; $("unlock").hidden = true; openTrophies(); });
+function openTrophies() {
+  const t = trophyStatus(), n = t.filter((x) => x.on).length;
+  $("trophy-sum").textContent = `${n} sur ${t.length} débloqués`;
+  $("trophy-grid").innerHTML = t.map((x) => `<div class="trophy${x.on ? " on" : ""}${freshTrophies.has(x.id) ? " new" : ""}"><span class="medal" aria-hidden="true">${esc(x.m)}</span><b>${esc(x.name)}</b>${x.on ? "" : `<span>${esc(x.how)}</span>`}</div>`).join("");
+  freshTrophies.clear();
+  $("trophy-sheet").hidden = false;
+}
+$("tile-trophies").addEventListener("click", openTrophies);
+$("trophy-close").addEventListener("click", () => { $("trophy-sheet").hidden = true; });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("quiz").hidden) closeQuiz();
+  if (!$("trophy-sheet").hidden) $("trophy-sheet").hidden = true;
+});
 
 // ---------- Démarrage ----------
 setSync("wait", "Chargement…");
@@ -1575,6 +1880,7 @@ render();
   }
   render();
   if (state.snapshots.length) playIntro();
+  checkTrophies();
   if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
 })();
