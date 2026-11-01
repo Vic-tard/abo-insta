@@ -512,6 +512,47 @@
   }
   @keyframes drop { from { transform: translateY(-80px); opacity: 0; } }
   @keyframes shine { to { transform: translateX(130%); } }
+
+  /* Parcours guidé du premier export : plein écran, une étape à la fois, impossible à contourner */
+  .gf { position: fixed; inset: 0; z-index: 18; background: var(--bg); overflow-y: auto; display: flex; flex-direction: column;
+    padding: max(14px, env(safe-area-inset-top, 0px)) 0 calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .gf-in { width: 100%; max-width: 520px; margin: 0 auto; padding: 0 22px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px; flex: 1; }
+  .gf-head { display: flex; align-items: center; gap: 10px; }
+  .gf-head img { width: 30px; height: 30px; border-radius: 8px; }
+  .gf-head b { font: 700 17px var(--round, var(--font)); flex: 1; }
+  .gf-prog { display: flex; gap: 6px; }
+  .gf-prog i { flex: 1; height: 5px; border-radius: 3px; background: var(--line); transition: background .3s; }
+  .gf-prog i.on { background: var(--btn); }
+  .gf-step { font: 600 13px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0; }
+  .gf-body { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+  .gf h2 { font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; margin: -10px 0 0; }
+  .gf p.lead { margin: 0; font-size: 16px; line-height: 1.45; color: var(--muted); }
+  .gf p.lead strong { color: var(--ink); }
+  .gf .big { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; font-size: 17px; border-radius: 14px; box-sizing: border-box; text-decoration: none; }
+  .gf .big svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .gf .alt { background: none; border: 0; color: var(--muted); font: 500 14px var(--font); text-decoration: underline; padding: 6px; cursor: pointer; align-self: center; }
+  .gf-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
+  .gf-why { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: flex-start; margin: 0; }
+  .gf-why svg { width: 18px; height: 18px; flex: none; margin-top: 1px; fill: none; stroke: var(--up); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  /* Les touches à faire dans Instagram, dessinées comme ses boutons, à cocher au fur et à mesure */
+  .taps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .taps li button { width: 100%; display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: center; text-align: left; border: 0; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font: 14px var(--font); color: var(--ink); cursor: pointer; }
+  .taps .n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); font: 700 12px var(--font); color: var(--muted); }
+  .taps .n svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .taps .ig { display: inline-block; background: #0095f6; color: #fff; border-radius: 8px; padding: 3px 9px; font-weight: 600; font-size: 13px; margin: 1px 2px; }
+  .taps .ig.w { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+  .taps li.ok button { opacity: .55; }
+  .taps li.ok .n { background: var(--up-soft); color: var(--up); }
+  .taps li.cur button { box-shadow: inset 0 0 0 2px var(--btn); }
+  .taps li.cur .n { background: var(--btn); color: var(--btn-ink); }
+  .gf-wait { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 18px 0 4px; }
+  .gf-wait .radar { width: 96px; height: 96px; }
+  .gf-wait b { font-size: 17px; }
+  .gf-wait small { color: var(--muted); font-size: 14px; }
+  .gf-share { display: inline-flex; width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2); align-items: center; justify-content: center; vertical-align: middle; margin: 0 4px; }
+  .gf-share svg { width: 20px; height: 20px; fill: none; stroke: #0a84ff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-reduced-motion: no-preference) { .gf-body { animation: rise .3s both; } .gf-share { animation: nudge 1.6s ease-in-out infinite; } }
+  @keyframes nudge { 50% { transform: translateY(-4px); } }
 </style>
 
 <div class="wrap">
@@ -661,6 +702,15 @@
     </div>
     <div class="msg" id="backup-msg" hidden></div>
   </section>
+</div>
+
+<!-- Parcours guidé du premier export : remplace tout l'écran tant qu'aucun import n'est fait -->
+<div class="gf" id="gf" role="dialog" aria-modal="true" aria-labelledby="gf-title" hidden>
+  <div class="gf-in">
+    <div class="gf-head"><img src="icone-v5-180.png" alt=""><b>Abo Insta</b><button class="help-btn" id="gf-help" type="button" aria-label="Comment ça marche">?</button></div>
+    <div class="gf-prog" id="gf-prog" aria-hidden="true"></div>
+    <div class="gf-body" id="gf-body"></div>
+  </div>
 </div>
 
 <div class="onb" id="onb" role="dialog" aria-modal="true" aria-label="Comment ça marche" hidden>
@@ -1533,6 +1583,7 @@ function renderMode() {
   const slot = $(empty ? "howto-slot-start" : "howto-slot-weekly");
   if ($("howto").parentElement !== slot) slot.appendChild($("howto"));
   if (empty) renderJourney();
+  renderGuided();
   renderNext();
   $("install-banner").hidden = empty || !needsInstall || prefs.installDismissed;
 }
@@ -1602,32 +1653,37 @@ const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 const driveReady = () => !!DRIVE.clientId;
 const DRIVE_TOKEN = "abo-drive-token-ro";
 function driveToken() {
-  try { const t = JSON.parse(sessionStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
+  try { const t = JSON.parse(localStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
 }
+function driveForget() { try { localStorage.removeItem(DRIVE_TOKEN); } catch {} }
 function driveMsg(text, busy) {
   $("drive-msg").innerHTML = busy ? `<span class="drive-busy"><span class="radar small" aria-hidden="true"></span>${esc(text)}</span>` : esc(text || "");
   $("drive-msg").hidden = !text;
 }
-function driveSignIn() {
+function driveSignIn(state = "drive-import", silent = false) {
   const q = new URLSearchParams({
     client_id: DRIVE.clientId,
     redirect_uri: location.origin + location.pathname,
     response_type: "token",
     scope: DRIVE_SCOPE,
     include_granted_scopes: "true",
-    state: "drive-import",
+    state,
   });
+  if (silent) q.set("prompt", "none");
   location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + q;
 }
 // Retour de la connexion Google : le jeton arrive dans l'adresse (#access_token=…), on le garde le temps de la session.
 function driveCallback() {
-  if (!location.hash.includes("state=drive-import")) return false;
   const h = new URLSearchParams(location.hash.slice(1));
+  const st = h.get("state");
+  if (st !== "drive-import" && st !== "drive-flow") return false;
   history.replaceState(null, "", location.pathname + location.search);
   if (h.get("access_token") && (h.get("scope") || "").includes("drive")) {
-    try { sessionStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch {}
-    return true;
+    try { localStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch {}
+    if (st === "drive-flow") { prefs.driveLinked = true; savePrefs(); }
+    return st;
   }
+  if (st === "drive-flow") { gfAuthFailed = true; return false; }
   driveMsg(h.get("error") === "access_denied" ? "Connexion à Google annulée." : "Google n'a pas donné l'accès au Drive. Réessaie et coche l'accès à Google Drive.");
   return false;
 }
@@ -1672,13 +1728,136 @@ async function driveImport() {
     driveMsg("");
     importFiles(files);
   } catch (err) {
-    if (err === 401 || err === 403) { try { sessionStorage.removeItem(DRIVE_TOKEN); } catch {} return driveSignIn(); }
+    if (err === 401 || err === 403) { driveForget(); return driveSignIn(); }
     driveMsg("Google Drive ne répond pas. Vérifie ta connexion et réessaie.");
   } finally {
     $("drive-import").disabled = false;
   }
 }
 $("drive-import").addEventListener("click", driveImport);
+
+// ---------- Parcours guidé du premier export ----------
+// Tant qu'aucun import n'est fait, l'app n'affiche que ce parcours : une étape à la fois, un seul gros bouton.
+// 1. (iPhone, Safari) installer l'app  2. relier Google Drive  3. demander l'export à Instagram (touches à suivre)
+// 4. l'app guette le Drive toute seule et importe dès que l'export complet arrive.
+const IG_EXPORT_URL = "https://accountscenter.instagram.com/info_and_permissions/dyi/";
+const IG_TAPS = [
+  `<span class="ig w">Créer une exportation</span> puis ton compte`,
+  `<span class="ig w">Exporter vers un service externe</span>`,
+  `<span class="ig w">Google Drive</span>, puis autorise ton compte Google`,
+  `Personnaliser : coche seulement <span class="ig w">Followers et suivi(e)s</span>`,
+  `Période <span class="ig w">Depuis le début</span>`,
+  `Format <span class="ig w">JSON</span> · Fréquence <span class="ig w">Une fois</span>`,
+  `<span class="ig">Démarrer l'exportation</span>`,
+];
+const ICON = {
+  out: `<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
+  drive: `<svg viewBox="0 0 24 24"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>`,
+  lock: `<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
+  share: `<svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M6 11H5v10h14V11h-1"/></svg>`,
+};
+let gfTaps = [], gfChecking = false, gfTimer = null, gfStatus = "", gfAuthFailed = false;
+const gfOn = () => !loading && !state.snapshots.length && !prefs.manualStart;
+function gfStep() {
+  if (needsInstall && !prefs.stayInSafari) return "install";
+  if (!driveReady()) return null;
+  if (!driveToken() && !prefs.driveLinked) return "drive";
+  if (!prefs.requestedAt) return "insta";
+  return "wait";
+}
+function renderGuided() {
+  const step = gfOn() ? gfStep() : null;
+  $("gf").hidden = !step;
+  document.documentElement.style.overflow = step ? "hidden" : "";
+  if (!step) { clearInterval(gfTimer); gfTimer = null; return; }
+  const order = (needsInstall ? ["install"] : []).concat(["drive", "insta", "wait"]);
+  const at = order.indexOf(step);
+  $("gf-prog").innerHTML = order.map((_, i) => `<i class="${i <= at ? "on" : ""}"></i>`).join("");
+  const n = `Étape ${at + 1} sur ${order.length}`;
+  const body = $("gf-body");
+  if (body.dataset.step !== step) { body.dataset.step = step; body.style.animation = "none"; void body.offsetWidth; body.style.animation = ""; }
+  if (step === "install") {
+    body.innerHTML = `
+      <p class="gf-step">${n}</p><h2 id="gf-title">Mets l'app sur ton écran d'accueil</h2>
+      <p class="lead">Touche <span class="gf-share">${ICON.share}</span> en bas de Safari, puis <strong>« Sur l'écran d'accueil »</strong>.</p>
+      <p class="lead">Ensuite, <strong>ouvre l'app depuis sa nouvelle icône</strong> : c'est elle qui garde ton historique, et la suite t'attend là-bas.</p>
+      <div class="gf-foot"><button class="alt" id="gf-stay" type="button">Continuer dans Safari quand même</button></div>`;
+    $("gf-stay").onclick = () => { prefs.stayInSafari = true; savePrefs(); render(); };
+  } else if (step === "drive") {
+    body.innerHTML = `
+      <p class="gf-step">${n}</p><h2 id="gf-title">Relie ton Google Drive</h2>
+      <p class="lead">Instagram va déposer la liste de tes abonnés dans ton Drive. <strong>L'app ira la chercher toute seule</strong> : aucun fichier à télécharger.</p>
+      <p class="gf-why">${ICON.lock}<span>L'app ne fait que lire ton Drive, depuis ton téléphone. Rien n'est envoyé ailleurs.</span></p>
+      <div class="gf-foot">
+        <button class="btn primary big" id="gf-drive" type="button">${ICON.drive}Relier Google Drive</button>
+        <button class="alt" id="gf-manual" type="button">Je n'ai pas Google Drive</button>
+        <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>
+      </div>`;
+    $("gf-restore").onclick = () => $("restore").click();
+    $("gf-drive").onclick = () => driveSignIn("drive-flow");
+  } else if (step === "insta") {
+    if (gfTaps.length !== IG_TAPS.length) gfTaps = IG_TAPS.map(() => false);
+    const next = gfTaps.indexOf(false);
+    body.innerHTML = `
+      <p class="gf-step">${n}</p><h2 id="gf-title">Demande ta liste à Instagram</h2>
+      <p class="lead">Touche le bouton, puis fais ces touches dans l'ordre. <strong>Coche-les ici au fur et à mesure</strong> si ça t'aide.</p>
+      <a class="btn ${prefs.igOpened ? "ghost" : "primary"} big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>
+      <ol class="taps">${IG_TAPS.map((t, i) => `<li class="${gfTaps[i] ? "ok" : i === next && prefs.igOpened ? "cur" : ""}"><button type="button" data-i="${i}"><span class="n">${gfTaps[i] ? CHECK : i + 1}</span><span>${t}</span></button></li>`).join("")}</ol>
+      <div class="gf-foot">
+        <button class="btn ${prefs.igOpened ? "primary" : "ghost"} big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
+        <button class="alt" id="gf-manual" type="button">Je préfère importer un fichier</button>
+      </div>`;
+    $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); setTimeout(renderGuided, 400); };
+    body.querySelectorAll(".taps button").forEach((b) => b.onclick = () => { gfTaps[+b.dataset.i] = !gfTaps[+b.dataset.i]; renderGuided(); });
+    $("gf-done").onclick = () => { markRequested(); gfCheck(); };
+  } else {
+    const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
+    body.innerHTML = `
+      <p class="gf-step">${n}</p><h2 id="gf-title">On guette ton Drive</h2>
+      <div class="gf-wait"><div class="radar" aria-hidden="true"></div>
+        <b>${esc(gfStatus || "En attente de l'export d'Instagram…")}</b>
+        <small>${since < 2 ? "Instagram met en général quelques minutes." : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Ça peut prendre jusqu'à quelques heures.`}<br>Tu peux fermer l'app : à ta prochaine ouverture, elle vérifie toute seule et importe dès que c'est là.</small></div>
+      <div class="gf-foot">
+        ${gfAuthFailed ? `<button class="btn primary big" id="gf-reauth" type="button">${ICON.drive}Reconnecter Google Drive</button>` : ""}
+        <a class="btn ghost big" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Revoir l'export dans Instagram</a>
+        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
+        <button class="alt" id="gf-manual" type="button">Je préfère importer un fichier</button>
+      </div>`;
+    if (gfAuthFailed) $("gf-reauth").onclick = () => driveSignIn("drive-flow");
+    $("gf-back").onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
+    if (!gfTimer) gfTimer = setInterval(() => { if (!document.hidden) gfCheck(); }, 20000);
+  }
+  const m = $("gf-manual");
+  if (m) m.onclick = () => { prefs.manualStart = true; savePrefs(); render(); };
+}
+// Cherche un export complet dans le Drive et l'importe sans rien demander.
+async function gfCheck() {
+  if (gfStep() !== "wait" || gfChecking || !gfOn()) return;
+  const token = driveToken();
+  if (!token) {
+    // Jeton expiré : reconnexion silencieuse une fois par ouverture (Google revient tout seul si l'accès est déjà donné).
+    if (gfAuthFailed || sessionStorage.getItem("abo-drive-silent")) { gfAuthFailed = true; return renderGuided(); }
+    try { sessionStorage.setItem("abo-drive-silent", "1"); } catch {}
+    return driveSignIn("drive-flow", true);
+  }
+  gfChecking = true; gfStatus = "Je regarde dans ton Drive…"; renderGuided();
+  try {
+    const cands = await driveFindAll(token, "name = 'followers_1.json'");
+    const biggest = Math.max(0, ...cands.map((f) => Number(f.size) || 0));
+    const followers = cands.find((f) => (Number(f.size) || 0) >= biggest * 0.5);
+    if (!followers) { gfStatus = "Pas encore arrivé. Je revérifie toutes les 20 secondes."; return; }
+    gfStatus = "Ton export est arrivé ! Import…"; renderGuided();
+    const parent = followers.parents && followers.parents[0];
+    const following = parent ? await driveFind(token, `name = 'following.json' and '${parent}' in parents`) : null;
+    const files = await Promise.all([followers, following].filter(Boolean).map((f) => driveDownload(token, f)));
+    await importFiles(files);
+  } catch (err) {
+    if (err === 401 || err === 403) { driveForget(); gfAuthFailed = true; gfStatus = "Google Drive s'est déconnecté."; }
+    else gfStatus = "Pas de réseau pour l'instant. Je réessaie bientôt.";
+  } finally { gfChecking = false; renderGuided(); }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && gfOn()) { renderGuided(); gfCheck(); } });
+$("gf-help").addEventListener("click", openOnboarding);
 
 // ---------- Animations et bilan ----------
 const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -2396,12 +2575,14 @@ render();
     $("quick-import").lastChild.textContent = "Importer un fichier";
     $("go-export").lastChild.textContent = "Demander un export vers Drive";
     $("bar-file").hidden = true;
-    if (driveCallback()) driveImport();
+    if (driveCallback() === "drive-import") driveImport();
   }
   render();
   if (state.snapshots.length) playIntro();
   checkTrophies();
-  if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
+  // Premier lancement : le parcours guidé prend tout l'écran ; sinon (pas de Drive), la présentation en 3 écrans.
+  if (gfOn() && gfStep()) gfCheck();
+  else if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
 })();
 </script>
