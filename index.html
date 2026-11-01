@@ -1700,7 +1700,9 @@ $("siri-btn").addEventListener("click", () => {
 });
 
 // Bandeau « installer » : seulement sur iPhone/iPad dans Safari, hors app installée.
-const standalone = window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+// Dans l'app iPhone Zyeuto, la page est affichée par l'app (pas de Safari, pas d'écran d'accueil).
+const nativeApp = !!window.ZYEUTO_APP;
+const standalone = nativeApp || window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const needsInstall = !standalone && isIOS;
 $("install-banner").hidden = !needsInstall || prefs.installDismissed;
@@ -1822,7 +1824,8 @@ const DRIVE = {
   clientId: "246738820732-umpohueucl4pnuagf0pba2lc0ttk84fp.apps.googleusercontent.com",   // ID client OAuth « Application Web », origine https://vic-tard.github.io
 };
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
-const driveReady = () => !!DRIVE.clientId;
+// Google refuse la connexion dans une app (vue web intégrée) : le mode Drive reste réservé au site.
+const driveReady = () => !!DRIVE.clientId && !nativeApp;
 const DRIVE_TOKEN = "abo-drive-token-ro";
 function driveToken() {
   try { const t = JSON.parse(localStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
@@ -1956,7 +1959,7 @@ const IG_SHOTS = [
 const GET_SHOTS = [
   { img: "get-1", why: "Instagram met un peu de temps à rassembler ta liste.", t: `Attends cet e-mail d'Instagram`, tip: "Avant, tu en reçois un qui dit « en cours », c'est normal. Ça prend de quelques minutes à quelques heures : tu peux fermer l'app." },
   { img: "get-2", why: "Ton fichier arrive sur ton téléphone. Rien ne passe par un serveur.", t: `Touche ${igc("Télécharger")}`, tip: "Safari te demande de confirmer : touche encore Télécharger. Ton fichier reste disponible 4 jours." },
-  { img: "get-3", why: "L'app lit ta liste sur ton téléphone et trouve qui est parti et qui est arrivé.", t: `Touche ton fichier Instagram`, tip: "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
+  { img: "get-3", why: "L'app lit ta liste sur ton téléphone et trouve qui est parti et qui est arrivé.", t: `Touche ton fichier Instagram`, tip: nativeApp ? "Il est tout en haut, dans Récents. Encore plus simple : dans Safari, touche le fichier téléchargé, puis Partager et Zyeuto." : "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
 ];
 const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Maintenant, on fait le tri 🧹", "Tout effacer, sans crainte&nbsp;: ça ne supprime rien, ça décoche juste&nbsp;!", "La seule case qui compte 👇", "Et on enregistre&nbsp;!", "Plus que quelques touches 💪", "Le plus important&nbsp;: depuis le début&nbsp;!", "On y est presque&nbsp;!", "JSON, c'est ma langue 😄", "Dernière touche&nbsp;! 🎉"];
 let shDir = 1, shLost = false;
@@ -1997,7 +2000,9 @@ function shotsWire(body, list, get, set) {
 }
 // Comment revenir au guide depuis Instagram : ça dépend d'où l'app est ouverte (test réel : sans ça, on reste bloqué dans Instagram).
 const TABS_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="13" height="13" rx="2.5"/><path d="M16 19.5a1.5 1.5 0 0 1-1.5 1.5H5a2 2 0 0 1-2-2V9.5A1.5 1.5 0 0 1 4.5 8"/></svg>`;
-const BACK_HOW = standalone
+const BACK_HOW = nativeApp
+  ? `Après chaque étape, touche « ◀ Zyeuto » tout en haut à gauche de l'écran.`
+  : standalone
   ? `Après chaque étape, glisse le doigt vers la droite sur la petite barre tout en bas de l'écran.`
   : isIOS
   ? `Instagram s'ouvre dans un autre onglet. Après chaque étape, touche ${TABS_ICON} en bas de Safari, puis Zyeuto.`
@@ -2337,9 +2342,29 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-01-1725";
+const BUILD = "2026-11-01-1800";
 let updChecked = 0;
+
+// ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
+// L'app envoie le fichier par morceaux (base64), puis on l'importe comme un fichier choisi à la main.
+let sharedBusy = false;
+const nativePost = (msg) => { try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch {} };
+window.zyeutoFile = {
+  begin(name) { sharedBusy = true; this.name = name || "export.zip"; this.parts = []; },
+  add(b64) {
+    const bin = atob(b64), u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    this.parts.push(u);
+  },
+  async end() {
+    const file = new File(this.parts, this.name, { type: /\.json$/i.test(this.name) ? "application/json" : "application/zip" });
+    this.parts = [];
+    nativePost({ type: "received" });
+    try { await importFiles([file]); } finally { sharedBusy = false; }
+  },
+};
 async function checkUpdate() {
+  if (sharedBusy) return false; // pas de rechargement pendant l'import d'un fichier partagé
   if (Date.now() - updChecked < 30000 || !navigator.onLine) return false;
   updChecked = Date.now();
   try {
@@ -3091,7 +3116,9 @@ render();
     $("howto").querySelector("summary span").textContent = (IG_TAPS_DEVICE.length + 1) + " étapes";
   }
   render();
-  setTimeout(checkUpdate, 1500);
+  // Dans l'app : d'abord la mise à jour éventuelle, puis on dit à l'app qu'elle peut envoyer le fichier partagé.
+  if (nativeApp) checkUpdate().then((reloading) => { if (!reloading) nativePost({ type: "ready" }); });
+  else setTimeout(checkUpdate, 1500);
   if (state.snapshots.length) playIntro();
   checkTrophies();
   // Premier lancement : le parcours guidé prend tout l'écran ; sinon (pas de Drive), la présentation en 3 écrans.
