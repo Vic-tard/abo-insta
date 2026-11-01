@@ -42,6 +42,8 @@ final class WebViewController: UIViewController {
         webView.allowsBackForwardNavigationGestures = false
         webView.allowsLinkPreview = false
         webView.scrollView.bounces = false
+        webView.scrollView.showsVerticalScrollIndicator = false
+        webView.scrollView.showsHorizontalScrollIndicator = false
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -58,7 +60,8 @@ final class WebViewController: UIViewController {
       var st = document.createElement('style');
       st.textContent = '*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}' +
         'input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text}' +
-        'html,body{overscroll-behavior:none}';
+        '*{overscroll-behavior:none;scrollbar-width:none}' +
+        '::-webkit-scrollbar{display:none;width:0;height:0}';
       document.head.appendChild(st);
     })();
     """
