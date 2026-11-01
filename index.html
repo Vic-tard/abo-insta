@@ -542,6 +542,7 @@
   .taps .ig { display: inline-block; background: #0095f6; color: #fff; border-radius: 8px; padding: 3px 9px; font-weight: 600; font-size: 13px; margin: 1px 2px; }
   .taps .ig.w { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
   .taps li.ok button { opacity: .55; }
+  .taps.get li button { cursor: default; }
   .taps li.ok .n { background: var(--up-soft); color: var(--up); }
   .taps li.cur button { box-shadow: inset 0 0 0 2px var(--btn); }
   .taps li.cur .n { background: var(--btn); color: var(--btn-ink); }
@@ -1614,8 +1615,8 @@ function renderWeekly() {
     due.className = "due";
   }
   // Export déjà demandé : on met « Importer » en avant.
-  if (driveReady()) $("go-export").className = "btn ghost"; else $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
-  $("quick-import").className = "btn " + (waiting && !driveReady() ? "primary" : "ghost");
+  if (useDrive()) $("go-export").className = "btn ghost"; else $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
+  $("quick-import").className = "btn " + (waiting && !useDrive() ? "primary" : "ghost");
 }
 
 // ---------- Premier lancement : parcours « Pour commencer » ----------
@@ -1729,7 +1730,9 @@ function driveCallback() {
   history.replaceState(null, "", location.pathname + location.search);
   if (h.get("access_token") && (h.get("scope") || "").includes("drive")) {
     try { localStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch {}
-    if (st === "drive-flow") { prefs.driveLinked = true; savePrefs(); }
+    prefs.useDrive = true;
+    if (st === "drive-flow") prefs.driveLinked = true;
+    savePrefs();
     return st;
   }
   if (st === "drive-flow") { gfAuthFailed = true; return false; }
@@ -1790,7 +1793,16 @@ $("drive-import").addEventListener("click", driveImport);
 // 1. (iPhone, Safari) installer l'app  2. relier Google Drive  3. demander l'export à Instagram (touches à suivre)
 // 4. l'app guette le Drive toute seule et importe dès que l'export complet arrive.
 const IG_EXPORT_URL = "https://accountscenter.instagram.com/info_and_permissions/dyi/";
-const IG_TAPS = [
+// Sans Drive (par défaut, marche pour tout le monde) : Instagram envoie le fichier sur le téléphone.
+const IG_TAPS_DEVICE = [
+  `<span class="ig w">Créer une exportation</span> puis ton compte`,
+  `<span class="ig w">Exporter sur l'appareil</span>`,
+  `Personnaliser : coche seulement <span class="ig w">Followers et suivi(e)s</span>`,
+  `Période <span class="ig w">Depuis le début</span>`,
+  `Format <span class="ig w">JSON</span>`,
+  `<span class="ig">Démarrer l'exportation</span>`,
+];
+const IG_TAPS_DRIVE = [
   `<span class="ig w">Créer une exportation</span> puis ton compte`,
   `<span class="ig w">Exporter vers un service externe</span>`,
   `<span class="ig w">Google Drive</span>, puis autorise ton compte Google`,
@@ -1841,10 +1853,12 @@ function wlPlay() {
 }
 let gfTaps = [], gfChecking = false, gfTimer = null, gfStatus = "", gfAuthFailed = false;
 const gfOn = () => !loading && !state.snapshots.length && !prefs.manualStart;
+// Drive : seulement pour qui le choisit (projet Google encore en test = comptes testeurs uniquement).
+const useDrive = () => driveReady() && !!prefs.useDrive;
 function gfStep() {
   if (!prefs.welcomed && !prefs.driveLinked && !prefs.requestedAt) return "welcome";
   if (needsInstall && !prefs.stayInSafari) return "install";
-  if (!driveReady()) return null;
+  if (!useDrive()) return prefs.requestedAt ? "get" : "insta";
   if (!driveToken() && !prefs.driveLinked) return "drive";
   if (!prefs.requestedAt) return "insta";
   return "wait";
@@ -1855,7 +1869,7 @@ function renderGuided() {
   document.documentElement.style.overflow = step ? "hidden" : "";
   if (!step) { clearInterval(gfTimer); gfTimer = null; return; }
   $("gf").classList.toggle("welcome", step === "welcome");
-  const order = (needsInstall ? ["install"] : []).concat(["drive", "insta", "wait"]);
+  const order = (needsInstall ? ["install"] : []).concat(useDrive() ? ["drive", "insta", "wait"] : ["insta", "get"]);
   const at = order.indexOf(step);
   $("gf-prog").innerHTML = order.map((_, i) => `<i class="${i <= at ? "on" : ""}"></i>`).join("");
   const n = `Étape ${at + 1} sur ${order.length}`;
@@ -1890,26 +1904,42 @@ function renderGuided() {
       <p class="gf-why">${ICON.lock}<span>L'app ne fait que lire ton Drive, depuis ton téléphone. Rien n'est envoyé ailleurs.</span></p>
       <div class="gf-foot">
         <button class="btn primary big" id="gf-drive" type="button">${ICON.drive}Relier Google Drive</button>
-        <button class="alt" id="gf-manual" type="button">Je n'ai pas Google Drive</button>
-        <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>
+        <button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>
       </div>`;
-    $("gf-restore").onclick = () => $("restore").click();
     $("gf-drive").onclick = () => driveSignIn("drive-flow");
   } else if (step === "insta") {
-    if (gfTaps.length !== IG_TAPS.length) gfTaps = IG_TAPS.map(() => false);
+    const TAPS = useDrive() ? IG_TAPS_DRIVE : IG_TAPS_DEVICE;
+    if (gfTaps.length !== TAPS.length) gfTaps = TAPS.map(() => false);
     const next = gfTaps.indexOf(false);
     body.innerHTML = `
       <p class="gf-step">${n}</p><h2 id="gf-title">Demande ta liste à Instagram</h2>
-      <p class="lead">Touche le bouton, puis fais ces touches dans l'ordre. <strong>Coche-les ici au fur et à mesure</strong> si ça t'aide.</p>
+      <p class="lead">Touche le bouton, puis fais ces touches dans l'ordre. Coche-les ici au fur et à mesure si ça t'aide.</p>
       <a class="btn ${prefs.igOpened ? "ghost" : "primary"} big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>
-      <ol class="taps">${IG_TAPS.map((t, i) => `<li class="${gfTaps[i] ? "ok" : i === next && prefs.igOpened ? "cur" : ""}"><button type="button" data-i="${i}"><span class="n">${gfTaps[i] ? CHECK : i + 1}</span><span>${t}</span></button></li>`).join("")}</ol>
+      <ol class="taps">${TAPS.map((t, i) => `<li class="${gfTaps[i] ? "ok" : i === next && prefs.igOpened ? "cur" : ""}"><button type="button" data-i="${i}"><span class="n">${gfTaps[i] ? CHECK : i + 1}</span><span>${t}</span></button></li>`).join("")}</ol>
       <div class="gf-foot">
         <button class="btn ${prefs.igOpened ? "primary" : "ghost"} big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
-        <button class="alt" id="gf-manual" type="button">Je préfère importer un fichier</button>
+        ${useDrive() ? `<button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>` : `<button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>`}
       </div>`;
     $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); setTimeout(renderGuided, 400); };
     body.querySelectorAll(".taps button").forEach((b) => b.onclick = () => { gfTaps[+b.dataset.i] = !gfTaps[+b.dataset.i]; renderGuided(); });
     $("gf-done").onclick = () => { markRequested(); gfCheck(); };
+  } else if (step === "get") {
+    const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
+    body.innerHTML = `
+      <p class="gf-step">${n}</p><h2 id="gf-title">Récupère ton fichier</h2>
+      <p class="lead">${since < 2 ? "Instagram prépare ta liste, en général en quelques minutes." : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Ça peut prendre jusqu'à quelques heures.`}</p>
+      <ol class="taps get">
+        <li><button type="button" tabindex="-1"><span class="n">1</span><span>Instagram te prévient par une notification ou un e-mail</span></button></li>
+        <li><button type="button" tabindex="-1"><span class="n">2</span><span>Touche <span class="ig">Télécharger</span> : le fichier arrive sur ton téléphone</span></button></li>
+        <li><button type="button" tabindex="-1"><span class="n">3</span><span>Reviens ici, touche <span class="ig w">Importer mon fichier</span> et choisis-le : il est tout en haut, dans <span class="ig w">Récents</span></span></button></li>
+      </ol>
+      <div class="gf-foot">
+        <button class="btn primary big" id="gf-file" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer mon fichier</button>
+        <a class="btn ghost big" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Pas de notif ? Voir mes exports</a>
+        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
+      </div>`;
+    $("gf-file").onclick = startImport;
+    $("gf-back").onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
   } else {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
     body.innerHTML = `
@@ -1921,14 +1951,23 @@ function renderGuided() {
         ${gfAuthFailed ? `<button class="btn primary big" id="gf-reauth" type="button">${ICON.drive}Reconnecter Google Drive</button>` : ""}
         <a class="btn ghost big" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Revoir l'export dans Instagram</a>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
-        <button class="alt" id="gf-manual" type="button">Je préfère importer un fichier</button>
+        <button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>
       </div>`;
     if (gfAuthFailed) $("gf-reauth").onclick = () => driveSignIn("drive-flow");
     $("gf-back").onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
     if (!gfTimer) gfTimer = setInterval(() => { if (!document.hidden) gfCheck(); }, 20000);
   }
-  const m = $("gf-manual");
-  if (m) m.onclick = () => { prefs.manualStart = true; savePrefs(); render(); };
+  const nd = $("gf-nodrive");
+  if (nd) nd.onclick = () => { prefs.useDrive = false; delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
+  const rs = $("gf-restore");
+  if (rs) rs.onclick = () => $("restore").click();
+  // Option Drive, discrète, sur le premier écran du parcours sans Drive.
+  if (step === "insta" && !useDrive() && driveReady()) {
+    const d = document.createElement("button");
+    d.className = "alt"; d.type = "button"; d.textContent = "Tu as Gmail ? Mode automatique avec Google Drive";
+    d.onclick = () => { prefs.useDrive = true; gfTaps = []; savePrefs(); render(); };
+    body.querySelector(".gf-foot").append(d);
+  }
 }
 // Cherche un export complet dans le Drive et l'importe sans rien demander.
 async function gfCheck() {
@@ -2670,12 +2709,21 @@ render();
   $("start-import").disabled = false;
   // Avec Drive configuré, le bouton Drive passe devant et l'import de fichier devient secondaire.
   if (!driveReady()) $("step-import").innerHTML = "Ensuite : <b>Importer le .zip reçu</b> → <b>Drive</b> → dernier dossier <b>meta-…</b> → … → <b>followers_and_following</b>, choisis <b>followers_1</b> et <b>following</b>";
-  if (driveReady()) {
+  // Retour de Google (connexion Drive) : à traiter avant de choisir l'affichage.
+  const driveBack = driveReady() ? driveCallback() : false;
+  if (prefs.useDrive === undefined && (prefs.driveLinked || driveToken())) { prefs.useDrive = true; savePrefs(); }
+  if (useDrive()) {
     $("drive-import").hidden = false;
     $("quick-import").lastChild.textContent = "Importer un fichier";
     $("go-export").lastChild.textContent = "Demander un export vers Drive";
     $("bar-file").hidden = true;
-    if (driveCallback() === "drive-import") driveImport();
+    if (driveBack === "drive-import") driveImport();
+  } else {
+    // Sans Drive : consignes « Exporter sur l'appareil », puis import du fichier téléchargé.
+    $("howto").querySelector(".steps").innerHTML = IG_TAPS_DEVICE.map((t) => `<li><span>${t}</span></li>`).join("")
+      + `<li><span>Quand Instagram te prévient, <span class="ig">Télécharger</span>, puis ici <b>Importer</b> → <b>Récents</b></span></li>`;
+    const alt = $("howto").querySelector(".steps-alt"); if (alt) alt.hidden = true;
+    $("howto").querySelector("summary span").textContent = (IG_TAPS_DEVICE.length + 1) + " étapes";
   }
   render();
   if (state.snapshots.length) playIntro();
