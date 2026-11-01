@@ -619,39 +619,32 @@
   .guide-av svg { width: 100%; height: 100%; display: block; }
   .guide-say { position: relative; background: var(--surface); color: var(--ink); border-radius: 18px 18px 18px 4px; padding: 11px 14px; font: 600 15px/1.35 var(--round); box-shadow: 0 6px 18px rgb(46 35 40 / .08); }
   .fun h2 { margin: 2px 0 0; font-size: 26px; }
-  .stk { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  .stk li { --c: #ef7f6a; --soft: #fde7e2; }
-  .stk li:nth-child(3n+2) { --c: #f2a04a; --soft: #fdf0dc; }
-  .stk li:nth-child(3n) { --c: #c27583; --soft: #f6e2e5; }
-  .stk li > button { width: 100%; display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; align-items: center; text-align: left; border: 0; cursor: pointer;
-    background: var(--soft); color: #2e2328; border-radius: 16px; padding: 11px 12px; font: 15px/1.35 var(--font); transition: transform .15s, background .2s; }
-  .stk li:nth-child(odd) > button { transform: rotate(-.6deg); } .stk li:nth-child(even) > button { transform: rotate(.6deg); }
-  .stk li > button:active { transform: scale(.97); }
-  .stk .n { grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; font: 800 15px var(--round); align-self: start; }
-  .stk .n svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
-  .stk small { grid-column: 2; font-size: 13px; color: #7d6e74; line-height: 1.35; }
-  .stk .ig { display: inline-block; background: #fff; color: #2e2328; border-radius: 8px; padding: 2px 8px; font-weight: 700; font-size: 13.5px; margin: 1px 1px; box-shadow: 0 1px 0 rgb(0 0 0 / .06); }
+  .stk { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .stk li > button { width: 100%; display: grid; grid-template-columns: 32px 1fr; gap: 3px 12px; align-items: center; text-align: left; cursor: pointer;
+    background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: 11px 12px; font: 15px/1.35 var(--font); transition: background .25s, opacity .25s; }
+  .stk .n { grid-row: span 2; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--rose-soft); color: var(--rose-ink); font: 800 14px var(--round); align-self: start; transition: background .25s, color .25s; }
+  .stk .n svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+  .stk small { grid-column: 2; font-size: 13px; color: var(--muted); line-height: 1.35; }
+  .stk .ig { display: inline-block; background: var(--surface-2); color: var(--ink); border-radius: 8px; padding: 2px 8px; font-weight: 600; font-size: 13.5px; margin: 1px 1px; }
   .stk .ig.b { background: #0095f6; color: #fff; }
-  .stk li.ok > button { background: var(--c); color: #fff; }
-  .stk li.ok small { color: rgb(255 255 255 / .85); }
-  .stk li.ok .n { background: #fff; color: var(--c); }
-  .stk li.ok .ig { background: rgb(255 255 255 / .25); color: #fff; box-shadow: none; }
-  .stk li.cur > button { box-shadow: 0 0 0 2.5px var(--c); }
+  .stk li.cur .n { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; }
+  .stk li.cur > button { border-color: #ef7f6a; }
+  .stk li.ok .n { background: var(--up); color: #fff; }
+  .stk li.ok > button { background: var(--up-soft); border-color: transparent; }
+  .stk li.ok small { display: none; }
   .stk.read li > button { cursor: default; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stk li { --soft: #40251f; } :root:not([data-theme="light"]) .stk li:nth-child(3n+2) { --soft: #3d2d18; } :root:not([data-theme="light"]) .stk li:nth-child(3n) { --soft: #3b2329; } :root:not([data-theme="light"]) .stk li > button { color: var(--ink); } :root:not([data-theme="light"]) .stk small { color: var(--muted); } :root:not([data-theme="light"]) .stk li.ok > button { color: #fff; } :root:not([data-theme="light"]) .stk li.ok small { color: rgb(255 255 255 / .85); } }
-  :root[data-theme="dark"] .stk li { --soft: #40251f; } :root[data-theme="dark"] .stk li:nth-child(3n+2) { --soft: #3d2d18; } :root[data-theme="dark"] .stk li:nth-child(3n) { --soft: #3b2329; } :root[data-theme="dark"] .stk li > button { color: var(--ink); } :root[data-theme="dark"] .stk small { color: var(--muted); } :root[data-theme="dark"] .stk li.ok > button { color: #fff; } :root[data-theme="dark"] .stk li.ok small { color: rgb(255 255 255 / .85); }
   .btn.cheer { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; box-shadow: 0 8px 22px rgb(239 127 106 / .4); }
   .letter { align-self: center; width: 120px; height: 92px; position: relative; margin: 6px 0 2px; }
   .letter svg { width: 100%; height: 100%; overflow: visible; }
   @media (prefers-reduced-motion: no-preference) {
-    .stk li.pop > button { animation: stkpop .45s cubic-bezier(.3,1.7,.5,1); }
+    .stk li.pop .n { animation: stkpop .45s cubic-bezier(.3,1.7,.5,1); }
     .guide-say { animation: bubble .4s cubic-bezier(.3,1.6,.5,1) both; transform-origin: 0 100%; }
     .btn.cheer { animation: cheer 1.6s ease-in-out infinite; }
     .letter svg { animation: float 2.6s ease-in-out infinite; }
     .letter .dot { animation: twinkle 1.4s ease-in-out infinite both; }
     .letter .dot:nth-of-type(2) { animation-delay: .3s; } .letter .dot:nth-of-type(3) { animation-delay: .6s; }
   }
-  @keyframes stkpop { 40% { transform: scale(1.05) rotate(-1.5deg); } }
+  @keyframes stkpop { 40% { transform: scale(1.3); } }
   @keyframes cheer { 50% { transform: scale(1.03); } }
   @keyframes float { 50% { transform: translateY(-6px) rotate(-2deg); } }
   @keyframes nudge { 50% { transform: translateY(-4px); } }
@@ -1904,6 +1897,7 @@ function wlPlay() {
     };
   };
 }
+let gfLeftAt = 0, gfOnReturn = null;
 let gfTaps = [], gfChecking = false, gfTimer = null, gfStatus = "", gfAuthFailed = false;
 const gfOn = () => !loading && !state.snapshots.length && !prefs.manualStart;
 // Drive : seulement pour qui le choisit (projet Google encore en test = comptes testeurs uniquement).
@@ -1988,7 +1982,7 @@ function renderGuided() {
       if (popped != null) { const li = body.querySelectorAll(".stk li")[popped]; li.classList.add("pop"); }
       const say = all ? "Bravo, t'es un·e chef&nbsp;! Touche le bouton en bas 🎉"
         : !prefs.igOpened ? "Première mission&nbsp;: on demande ta liste à Instagram. Touche le bouton, je te guide&nbsp;!"
-        : next === 0 ? "Coche chaque étape ici quand c'est fait, on avance ensemble 👇"
+        : next === 0 ? "Fais ces étapes dans Instagram. Quand tu reviens ici, je coche tout 👇"
         : `Super, encore ${TAPS.length - next > 1 ? TAPS.length - next + " étapes" : "une étape"}&nbsp;!`;
       const el = $("guide-say");
       if (el.innerHTML !== say) { el.innerHTML = say; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
@@ -1996,7 +1990,16 @@ function renderGuided() {
       $("gf-done").className = "btn " + (all ? "cheer" : prefs.igOpened ? "primary" : "ghost") + " big";
     };
     sync();
-    $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); setTimeout(() => sync(), 400); };
+    $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); gfLeftAt = Date.now(); setTimeout(() => sync(), 400); };
+    // Retour d'Instagram : l'app ne voit pas ce qui s'y passe, alors elle coche tout en cascade et demande confirmation.
+    gfOnReturn = () => {
+      if (!prefs.igOpened || !gfLeftAt || Date.now() - gfLeftAt < 4000 || !gfTaps.includes(false)) return;
+      gfLeftAt = 0;
+      gfTaps.forEach((v, i) => { if (!v) setTimeout(() => { gfTaps[i] = true; sync(i); if (!gfTaps.includes(false)) {
+        $("guide-say").innerHTML = "Te revoilà&nbsp;! Si tu as touché « Démarrer l'exportation », c'est gagné 🎉";
+        $("gf-done").scrollIntoView({ behavior: "smooth", block: "center" });
+      } }, 250 + i * 160); });
+    };
     body.querySelectorAll(".stk button").forEach((b) => b.onclick = () => { const i = +b.dataset.i; gfTaps[i] = !gfTaps[i]; if (navigator.vibrate) try { navigator.vibrate(10); } catch {} sync(gfTaps[i] ? i : null); });
     $("gf-done").onclick = () => { markRequested(); gfCheck(); };
   } else if (step === "get") {
@@ -2072,7 +2075,11 @@ async function gfCheck() {
     else gfStatus = "Pas de réseau pour l'instant. Je réessaie bientôt.";
   } finally { gfChecking = false; renderGuided(); }
 }
-document.addEventListener("visibilitychange", () => { if (!document.hidden && gfOn()) { renderGuided(); gfCheck(); } });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  if (gfOn() && gfStep() === "insta" && gfOnReturn) return gfOnReturn();
+  if (gfOn()) { renderGuided(); gfCheck(); }
+});
 $("gf-help").addEventListener("click", openOnboarding);
 
 // ---------- Animations et bilan ----------
