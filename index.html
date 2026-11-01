@@ -2194,8 +2194,28 @@ async function gfCheck() {
     else gfStatus = "Pas de réseau pour l'instant. Je réessaie bientôt.";
   } finally { gfChecking = false; renderGuided(); }
 }
+// Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
+// (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
+const BUILD = "2026-11-01-1525";
+let updChecked = 0;
+async function checkUpdate() {
+  if (Date.now() - updChecked < 30000 || !navigator.onLine) return false;
+  updChecked = Date.now();
+  try {
+    const html = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
+    const m = html.match(/const BUILD = "([^"]+)"/);
+    // L'adresse change (?v=…) pour contourner le cache de GitHub Pages ; une seule tentative par version.
+    if (m && m[1] !== BUILD && sessionStorage.getItem("abo-upd") !== m[1]) {
+      sessionStorage.setItem("abo-upd", m[1]);
+      location.replace(location.pathname + "?v=" + encodeURIComponent(m[1]));
+      return true;
+    }
+  } catch {}
+  return false;
+}
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;
+  checkUpdate();
   if (gfOn() && gfStep() === "insta" && gfOnReturn) return gfOnReturn();
   if (gfOn()) { renderGuided(); gfCheck(); }
 });
@@ -2929,6 +2949,7 @@ render();
     $("howto").querySelector("summary span").textContent = (IG_TAPS_DEVICE.length + 1) + " étapes";
   }
   render();
+  setTimeout(checkUpdate, 1500);
   if (state.snapshots.length) playIntro();
   checkTrophies();
   // Premier lancement : le parcours guidé prend tout l'écran ; sinon (pas de Drive), la présentation en 3 écrans.
