@@ -632,7 +632,14 @@
   .stk li.open.ok > a .n { background: var(--up); color: #fff; }
   .modes { display: flex; flex-direction: column; gap: 12px; }
   .mode { position: relative; display: grid; grid-template-columns: 52px 1fr; gap: 4px 14px; align-items: center; text-align: left; width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 20px; padding: 16px; cursor: pointer; font: 15px/1.4 var(--font); }
-  .mode:first-child { border: 2px solid #ef7f6a; box-shadow: 0 10px 26px rgb(239 127 106 / .2); }
+  .mode { border-width: 2px; }
+  .mode::after { content: ""; position: absolute; top: 50%; right: 16px; translate: 0 -50%; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); }
+  .mode { padding-right: 50px; }
+  .mode[aria-pressed="true"] { border-color: #ef7f6a; box-shadow: 0 10px 26px rgb(239 127 106 / .22); }
+  .mode[aria-pressed="true"]::after { border-color: #ef7f6a; background: radial-gradient(circle, #ef7f6a 0 6px, var(--surface) 7px); }
+  .btn:disabled { opacity: .45; }
+  .gf-backbtn { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); font: 600 14px var(--font); border-radius: 999px; padding: 7px 14px 7px 10px; cursor: pointer; margin-bottom: -4px; }
+  .gf-backbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .mode:active { transform: scale(.98); }
   .mode-ic { grid-row: span 2; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; align-self: start; }
   .mode-ic svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1924,7 +1931,7 @@ const gfOn = () => !loading && !state.snapshots.length && !prefs.manualStart;
 // Drive : seulement pour qui le choisit (projet Google encore en test = comptes testeurs uniquement).
 const useDrive = () => driveReady() && !!prefs.useDrive;
 function gfStep() {
-  if (!prefs.welcomed && !prefs.driveLinked && !prefs.requestedAt) return "welcome";
+  if (prefs.welcomed === false || (prefs.welcomed === undefined && !prefs.driveLinked && !prefs.requestedAt)) return "welcome";
   if (needsInstall && !prefs.stayInSafari) return "install";
   if (prefs.useDrive === undefined && driveReady()) return "how";
   if (!useDrive()) return prefs.requestedAt ? "get" : "insta";
@@ -1969,21 +1976,34 @@ function renderGuided() {
       ${guide("Comment tu veux recevoir tes données&nbsp;? Choisis, je m'en occupe&nbsp;!")}
       <h2 id="gf-title">Choisis ton mode</h2>
       <div class="modes">
-        <button class="mode" id="gf-mode-drive" type="button">
+        <button class="mode" id="gf-mode-drive" type="button" aria-pressed="false">
           <span class="mode-ic g">${ICON.drive}</span>
           <span class="mode-t">J'ai Gmail</span>
           <span class="mode-tag">Le plus simple</span>
           <span class="mode-d">Instagram dépose ta liste dans ton Google Drive, l'app va la chercher toute seule. Aucun fichier à manipuler.</span>
         </button>
-        <button class="mode" id="gf-mode-phone" type="button">
+        <button class="mode" id="gf-mode-phone" type="button" aria-pressed="false">
           <span class="mode-ic p"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></span>
           <span class="mode-t">Pas de Gmail</span>
           <span class="mode-d">Instagram envoie ta liste sur ton téléphone, tu la donnes à l'app en deux touches.</span>
         </button>
       </div>
-      <div class="gf-foot"><button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button></div>`;
-    $("gf-mode-drive").onclick = () => { prefs.useDrive = true; gfTaps = []; savePrefs(); render(); };
-    $("gf-mode-phone").onclick = () => { prefs.useDrive = false; gfTaps = []; savePrefs(); render(); };
+      <div class="gf-foot">
+        <button class="btn primary big" id="gf-mode-next" type="button" disabled>Suivant</button>
+        <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>
+      </div>`;
+    // Choisir d'abord, puis « Suivant » : pas de mauvais choix sur un toucher raté.
+    let pick = null;
+    const choose = (v) => {
+      pick = v;
+      $("gf-mode-drive").setAttribute("aria-pressed", String(v === true));
+      $("gf-mode-phone").setAttribute("aria-pressed", String(v === false));
+      $("gf-mode-next").disabled = false;
+      $("gf-mode-next").className = "btn cheer big";
+    };
+    $("gf-mode-drive").onclick = () => choose(true);
+    $("gf-mode-phone").onclick = () => choose(false);
+    $("gf-mode-next").onclick = () => { if (pick === null) return; prefs.useDrive = pick; gfTaps = []; prefs.igOpened = false; savePrefs(); render(); };
   } else if (step === "install") {
     body.innerHTML = `
       ${path}${guide("D'abord, installe-moi sur ton téléphone, c'est là que je garde ton historique&nbsp;!")}<h2 id="gf-title">Mets l'app sur ton écran d'accueil</h2>
@@ -1994,7 +2014,7 @@ function renderGuided() {
   } else if (step === "drive") {
     body.innerHTML = `
       ${path}${guide(gfAuthFailed ? "Oups, Google n'a pas donné l'accès. Réessaie, ou passe en mode « Pas de Gmail » juste en dessous." : "Mode automatique&nbsp;: relie ton Drive, et j'irai chercher ta liste tout seul.")}<h2 id="gf-title">Relie ton Google Drive</h2>
-      <p class="lead">Instagram va déposer la liste de tes abonnés dans ton Drive. <strong>L'app ira la chercher toute seule</strong> : aucun fichier à télécharger.</p>
+      <p class="lead">Instagram va déposer la liste de tes abonnés dans ton Drive. L'app ira la chercher toute seule : aucun fichier à télécharger.</p>
       <p class="gf-why">${ICON.lock}<span>L'app ne fait que lire ton Drive, depuis ton téléphone. Rien n'est envoyé ailleurs.</span></p>
       <div class="gf-foot">
         <button class="btn primary big" id="gf-drive" type="button">${ICON.drive}Relier Google Drive</button>
@@ -2081,6 +2101,23 @@ function renderGuided() {
     if (gfAuthFailed) $("gf-reauth").onclick = () => driveSignIn("drive-flow");
     $("gf-back").onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
     if (!gfTimer) gfTimer = setInterval(() => { if (!document.hidden) gfCheck(); }, 20000);
+  }
+  // Bouton Retour sur chaque page (sauf la bienvenue) : on défait le dernier choix.
+  if (step !== "welcome") {
+    const bk = document.createElement("button");
+    bk.className = "gf-backbtn"; bk.type = "button"; bk.id = "gf-backbtn";
+    bk.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Retour`;
+    bk.onclick = () => {
+      if (step === "install") prefs.welcomed = false;
+      else if (step === "how") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
+      else if (step === "get" || step === "wait") { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; }
+      else if (step === "drive" || step === "insta") {
+        if (driveReady()) { delete prefs.useDrive; prefs.igOpened = false; gfTaps = []; }
+        else if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false;
+      }
+      savePrefs(); render();
+    };
+    body.prepend(bk);
   }
   const nd = $("gf-nodrive");
   if (nd) nd.onclick = () => { prefs.useDrive = false; delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
