@@ -616,7 +616,12 @@
   .path li:not(.now) span { display: none; }
   /* Guide en images : une étape à l'écran, la capture d'Instagram, le bouton entouré. */
   .sh-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .sh-n { font: 500 13px var(--font); color: var(--muted); }
+  .sh-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .sh-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #d4919b, #ef7f6a, #f2a04a); }
+  @media (prefers-reduced-motion: no-preference) { .sh-bar i { animation: barup .6s cubic-bezier(.3,1.1,.5,1) both; } }
+  @keyframes barup { from { width: var(--w0); } }
+  .sh-why { margin: 0; padding: 9px 12px; border-radius: 12px; background: var(--rose-soft); color: var(--rose-ink); font-size: 13.5px; line-height: 1.4; text-align: center; }
+  .sh-why b { font-weight: 500; }
   .sh-lost { background: none; border: 0; color: var(--link); font: 500 13px var(--font); text-decoration: underline; padding: 4px 0; cursor: pointer; }
   .sh-dots { display: flex; gap: 4px; }
   .sh-dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); transition: background .3s; }
@@ -1913,8 +1918,8 @@ const IG_TAPS_DEVICE = [
   { t: `Choisis ton compte Instagram`, tip: "Celui dont tu veux suivre les abonnés." },
   { t: `Touche <span class="ig">Exporter sur mon appareil</span>`, tip: "Le fichier arrivera directement sur ton téléphone." },
   { t: `Dans <span class="ig">Personnaliser les informations</span> garde seulement <span class="ig">Followers et suivi(e)s</span>`, tip: "Décoche tout le reste. Elle est dans la rubrique Contacts. Moins de cases, fichier plus rapide." },
-  { t: `Période : choisis <span class="ig">Depuis le début</span>`, tip: "Sinon Instagram ne donne qu'une année, et l'app croirait que des gens sont partis." },
-  { t: `Format : choisis <span class="ig">JSON</span>`, tip: "C'est le format que l'app sait lire." },
+  { t: `Période : choisis <span class="ig">Depuis le début</span>` },
+  { t: `Format : choisis <span class="ig">JSON</span>` },
   { t: `Touche <span class="ig b">Commencer l'exportation</span>`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
 ];
 const IG_TAPS_DRIVE = [
@@ -1931,29 +1936,29 @@ const IG_TAPS_DRIVE = [
 const SHOT = {"ig-01": [1.7647, 3.3, 62.4, 93.3, 12.9], "ig-02": [1.4052, 3.5, 55.3, 93.0, 15.2], "ig-03": [1.4184, 3.5, 47.5, 93.0, 12.3], "ig-04": [0.9693, 3.5, 70.1, 93.0, 10.3], "ig-05": [0.9693, 80.7, 25.7, 17.0, 4.2], "ig-06": [0.9693, 3.5, 27.8, 93.0, 8.4], "ig-07": [0.9693, 3.3, 89.7, 93.3, 7.1], "ig-08": [0.9693, 3.5, 80.6, 93.0, 10.3], "ig-09": [0.9693, 3.5, 76.1, 93.0, 9.7], "ig-10": [0.9693, 3.5, 91.1, 93.0, 8.9], "ig-11": [1.4184, 3.5, 54.6, 93.0, 18.9], "ig-12": [0.9693, 3.3, 89.7, 93.3, 7.1], "get-1": [0.8614, 9.6, 42.1, 82.1, 18.6], "get-2": [1.0471, 6.0, 92.5, 43.0, 6.3], "get-3": [1.3166, 4, 36.2, 29.6, 41.9]};
 const igc = (s) => `<span class="ig">${s}</span>`;
 const IG_SHOTS = [
-  { img: "ig-01", t: `Touche ${igc("Créer une exportation")}`, tip: "Commence par le bouton juste en dessous : il ouvre cette page." },
-  { img: "ig-02", t: `Touche ton compte marqué Instagram`, tip: "Pas celui marqué Facebook ou Threads." },
-  { img: "ig-03", t: `Touche ${igc("Exporter sur mon appareil")}`, tip: "Le fichier arrivera directement sur ton téléphone." },
-  { img: "ig-04", t: `Touche ${igc("Personnaliser les informations")}` },
-  { img: "ig-05", t: `Touche ${igc("Tout effacer")}`, tip: "Il y en a 8, un par rubrique : descends et touche-les tous." },
-  { img: "ig-06", t: `Coche ${igc("Followers et suivi(e)s")}`, tip: "Dans la rubrique Contacts. C'est la seule case utile." },
-  { img: "ig-07", t: `Touche ${igc("Enregistrer")}`, tip: "Tout en bas de la liste." },
-  { img: "ig-08", t: `Touche ${igc("Période")}` },
-  { img: "ig-09", t: `Choisis ${igc("Depuis le début")}, puis ${igc("Enregistrer")}`, tip: "Sinon Instagram ne donne qu'une année, et l'app croirait que des gens sont partis." },
-  { img: "ig-10", t: `Touche ${igc("Format")}` },
-  { img: "ig-11", t: `Choisis ${igc("JSON")}, puis ${igc("Enregistrer")}`, tip: "C'est le format que l'app sait lire." },
-  { img: "ig-12", t: `Touche ${igc("Commencer l'exportation")}`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
+  { img: "ig-01", why: "C'est la page officielle d'Instagram pour récupérer tes données : zéro risque pour ton compte.", t: `Touche ${igc("Créer une exportation")}`, tip: "Commence par le bouton juste en dessous : il ouvre cette page." },
+  { img: "ig-02", why: "Instagram regroupe tes comptes Meta : on veut seulement celui d'Instagram.", t: `Touche ton compte marqué Instagram`, tip: "Pas celui marqué Facebook ou Threads." },
+  { img: "ig-03", why: "Ta liste arrivera sur ton téléphone, sans passer par personne d'autre.", t: `Touche ${igc("Exporter sur mon appareil")}`, tip: "Le fichier arrivera directement sur ton téléphone." },
+  { img: "ig-04", why: "Par défaut, Instagram exporte tout (photos, messages…). On garde seulement l'utile.", t: `Touche ${igc("Personnaliser les informations")}` },
+  { img: "ig-05", why: "Moins de données, c'est un export beaucoup plus rapide. Ça ne supprime rien de ton compte.", t: `Touche ${igc("Tout effacer")}`, tip: "Il y en a 8, un par rubrique : descends et touche-les tous." },
+  { img: "ig-06", why: "C'est la liste de tes abonnés et de tes abonnements : tout ce dont l'app a besoin.", t: `Coche ${igc("Followers et suivi(e)s")}`, tip: "Dans la rubrique Contacts. C'est la seule case utile." },
+  { img: "ig-07", why: "Pour valider ton choix.", t: `Touche ${igc("Enregistrer")}`, tip: "Tout en bas de la liste." },
+  { img: "ig-08", why: "Par défaut, Instagram ne donne que la dernière année.", t: `Touche ${igc("Période")}` },
+  { img: "ig-09", why: "Avec la liste complète, l'app ne prend pas un ancien abonné pour un départ.", t: `Choisis ${igc("Depuis le début")}, puis ${igc("Enregistrer")}` },
+  { img: "ig-10", why: "Par défaut, c'est HTML, fait pour être lu par toi. L'app, elle, lit le JSON.", t: `Touche ${igc("Format")}` },
+  { img: "ig-11", why: "C'est le format que l'app sait lire.", t: `Choisis ${igc("JSON")}, puis ${igc("Enregistrer")}` },
+  { img: "ig-12", why: "Instagram prépare ta liste et te prévient par e-mail quand elle est prête.", t: `Touche ${igc("Commencer l'exportation")}`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
 ];
 const GET_SHOTS = [
-  { img: "get-1", t: `Attends cet e-mail d'Instagram`, tip: "Avant, tu en reçois un qui dit « en cours », c'est normal. Ça prend de quelques minutes à quelques heures : tu peux fermer l'app." },
-  { img: "get-2", t: `Touche ${igc("Télécharger")}`, tip: "Safari te demande de confirmer : touche encore Télécharger. Ton fichier reste disponible 4 jours." },
-  { img: "get-3", t: `Touche ton fichier Instagram`, tip: "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
+  { img: "get-1", why: "Instagram met un peu de temps à rassembler ta liste.", t: `Attends cet e-mail d'Instagram`, tip: "Avant, tu en reçois un qui dit « en cours », c'est normal. Ça prend de quelques minutes à quelques heures : tu peux fermer l'app." },
+  { img: "get-2", why: "Ton fichier arrive sur ton téléphone. Rien ne passe par un serveur.", t: `Touche ${igc("Télécharger")}`, tip: "Safari te demande de confirmer : touche encore Télécharger. Ton fichier reste disponible 4 jours." },
+  { img: "get-3", why: "L'app lit ta liste sur ton téléphone et trouve qui est parti et qui est arrivé.", t: `Touche ton fichier Instagram`, tip: "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
 ];
 const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Maintenant, on fait le tri 🧹", "Tout effacer, sans crainte&nbsp;: ça ne supprime rien, ça décoche juste&nbsp;!", "La seule case qui compte 👇", "Et on enregistre&nbsp;!", "Plus que quelques touches 💪", "Le plus important&nbsp;: depuis le début&nbsp;!", "On y est presque&nbsp;!", "JSON, c'est ma langue 😄", "Dernière touche&nbsp;! 🎉"];
 let shDir = 1, shLost = false;
 function shotHTML(id, cls = "") {
   const [r, x, y, w, h] = SHOT[id];
-  return `<figure class="shot ${cls}" id="sh-fig" style="aspect-ratio:${r};width:min(100%, calc(46svh * ${r}));--from:${shDir * 24}px">
+  return `<figure class="shot ${cls}" id="sh-fig" style="aspect-ratio:${r};width:min(100%, calc(38svh * ${r}));--from:${shDir * 24}px">
     <img src="guide/${id}.jpg" alt="" draggable="false"><i class="sh-ring" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i><i class="tapme" style="left:${w > 50 ? x + w * .9 : x + w}%;top:${w > 50 ? y + h / 2 : y + h}%"></i></figure>`;
 }
 // Vue « une étape à la fois » partagée par la demande et la récupération.
@@ -1962,10 +1967,11 @@ function shotsView(list, i, foot) {
     <div class="sh-grid">${list.map((x, k) => `<button type="button" data-go="${k}" class="${k === i ? "now" : ""}"><img src="guide/${x.img}.jpg" alt="" loading="lazy">Étape ${k + 1}</button>`).join("")}</div>
     <div class="gf-foot"><button class="alt" id="sh-lost-x" type="button">Revenir à l'étape ${i + 1}</button></div>`;
   const x = list[i];
-  return `<div class="sh-head"><span class="sh-n">Étape ${i + 1} sur ${list.length}</span><button class="sh-lost" id="sh-lost" type="button">Mon écran est différent</button></div>
-    <div class="sh-dots" aria-hidden="true">${list.map((_, k) => `<i class="${k < i ? "on" : k === i ? "now" : ""}"></i>`).join("")}</div>
+  // Une barre qui avance plutôt qu'un « 1 sur 12 » : ça fait moins peur.
+  const pct = Math.round((i + 1) / (list.length + 1) * 100), from = Math.round(i / (list.length + 1) * 100);
+  return `<div class="sh-head"><div class="sh-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Progression"><i style="width:${pct}%;--w0:${from}%"></i></div><button class="sh-lost" id="sh-lost" type="button">Mon écran est différent</button></div>
     ${shotHTML(x.img, "in")}
-    <p class="sh-say" id="gf-title">${x.t}</p>${x.tip ? `<p class="sh-tip">${x.tip}</p>` : ""}
+    <p class="sh-say" id="gf-title">${x.t}</p>${x.tip ? `<p class="sh-tip">${x.tip}</p>` : ""}${x.why ? `<p class="sh-why"><b>Pourquoi&nbsp;?</b> ${x.why}</p>` : ""}
     <div class="gf-foot">${foot}</div>`;
 }
 function shotsWire(body, list, get, set) {
@@ -2318,7 +2324,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-01-1650";
+const BUILD = "2026-11-01-1700";
 let updChecked = 0;
 async function checkUpdate() {
   if (Date.now() - updChecked < 30000 || !navigator.onLine) return false;
