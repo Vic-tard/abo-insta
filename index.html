@@ -2104,17 +2104,17 @@ function renderGuided() {
   } else if (step === "get") {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
     body.innerHTML = `${path}
-      ${guide(since < 2 ? "Instagram prépare ta liste. En général c'est prêt en quelques minutes, je patiente avec toi 👀" : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Parfois Instagram prend quelques heures, pas de panique&nbsp;!`)}
+      ${guide(since < 2 ? "Instagram prépare ta liste. Tu vas recevoir deux e-mails&nbsp;: le premier dit que c'est en cours, le deuxième que c'est prêt 💌" : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Guette le deuxième e-mail d'Instagram, parfois ça prend quelques heures&nbsp;!`)}
       <h2 id="gf-title">Récupère ton fichier</h2>
-      <div class="letter" aria-hidden="true"><svg viewBox="0 0 120 92"><rect x="10" y="22" width="100" height="64" rx="10" fill="#fff" stroke="#ecdfe2" stroke-width="2"/><path d="M12 28 60 60l48-32" fill="none" stroke="#d4919b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="26" r="13" fill="#ef7f6a"/><text x="96" y="31" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="system-ui">1</text><circle class="dot" cx="10" cy="10" r="3" fill="#f2c45a"/><circle class="dot" cx="116" cy="70" r="2.5" fill="#ef7f6a"/><circle class="dot" cx="4" cy="60" r="2" fill="#d4919b"/></svg></div>
+      <div class="letter" aria-hidden="true"><svg viewBox="0 0 120 92"><rect x="10" y="22" width="100" height="64" rx="10" fill="#fff" stroke="#ecdfe2" stroke-width="2"/><path d="M12 28 60 60l48-32" fill="none" stroke="#d4919b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="26" r="13" fill="#ef7f6a"/><text x="96" y="31" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="system-ui">2</text><circle class="dot" cx="10" cy="10" r="3" fill="#f2c45a"/><circle class="dot" cx="116" cy="70" r="2.5" fill="#ef7f6a"/><circle class="dot" cx="4" cy="60" r="2" fill="#d4919b"/></svg></div>
       <ol class="stk read">
-        <li><button type="button" tabindex="-1"><span class="n">1</span><span>Instagram te prévient par une notification ou un e-mail</span><small>Tu peux fermer l'app en attendant, ta progression est gardée.</small></button></li>
-        <li><button type="button" tabindex="-1"><span class="n">2</span><span>Touche <span class="ig b">Télécharger</span></span><small>Le fichier arrive sur ton téléphone, dans Téléchargements.</small></button></li>
+        <li><button type="button" tabindex="-1"><span class="n">1</span><span>Attends le deuxième e-mail d'Instagram</span><small>Le premier dit que ta demande est en cours, c'est normal. Le deuxième arrive quand c'est prêt. Tu peux fermer l'app en attendant.</small></button></li>
+        <li><button type="button" tabindex="-1"><span class="n">2</span><span>Touche <span class="ig">Télécharger sur Instagram</span> ci-dessous, puis <span class="ig b">Télécharger</span></span><small>Ton fichier reste disponible 4 jours.</small></button></li>
         <li><button type="button" tabindex="-1"><span class="n">3</span><span>Reviens ici et touche <span class="ig">Importer mon fichier</span></span><small>Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser.</small></button></li>
       </ol>
       <div class="gf-foot">
+        <a class="btn primary big" id="gf-dl" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Télécharger sur Instagram</a>
         <button class="btn cheer big" id="gf-file" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer mon fichier</button>
-        <a class="btn ghost big" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Pas de notif ? Voir mes exports</a>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
     $("gf-file").onclick = startImport;
