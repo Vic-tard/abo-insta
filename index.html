@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Abo Insta</title>
+<title>Zyeuto</title>
 <meta name="description" content="Vois qui se désabonne de ton Instagram, à partir de l'export officiel.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Abo Insta">
+<meta name="apple-mobile-web-app-title" content="Zyeuto">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#faf5f5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#161112" media="(prefers-color-scheme: dark)">
@@ -682,7 +682,7 @@
   <div class="top">
     <div class="brand">
       <img src="icone-v5-180.png" alt="" width="28" height="28" style="border-radius:7px;display:block">
-      <h1>Abo Insta</h1>
+      <h1>Zyeuto</h1>
     </div>
     <div class="top-actions">
       <button class="sync needs-data" id="sync" type="button"></button>
@@ -830,7 +830,7 @@
 <!-- Parcours guidé du premier export : remplace tout l'écran tant qu'aucun import n'est fait -->
 <div class="gf" id="gf" role="dialog" aria-modal="true" aria-labelledby="gf-title" hidden>
   <div class="gf-in">
-    <div class="gf-head"><img src="icone-v5-180.png" alt=""><b>Abo Insta</b><button class="help-btn" id="gf-help" type="button" aria-label="Comment ça marche">?</button></div>
+    <div class="gf-head"><img src="icone-v5-180.png" alt=""><b>Zyeuto</b><button class="help-btn" id="gf-help" type="button" aria-label="Comment ça marche">?</button></div>
     <div class="gf-prog" id="gf-prog" aria-hidden="true"></div>
     <div class="gf-body" id="gf-body"></div>
   </div>
@@ -1567,8 +1567,8 @@ $("more").addEventListener("click", () => { shown += PAGE * 3; renderList(); });
 // ---------- Copie / restauration ----------
 $("backup").addEventListener("click", async () => {
   if (!state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
-  const data = JSON.stringify({ app: "abo-insta", version: 1, savedAt: new Date().toISOString(), state, avatar: avatar || undefined });
-  const name = `abo-insta-sauvegarde-${toDateInput(new Date())}.json`;
+  const data = JSON.stringify({ app: "zyeuto", version: 1, savedAt: new Date().toISOString(), state, avatar: avatar || undefined });
+  const name = `zyeuto-sauvegarde-${toDateInput(new Date())}.json`;
   const file = new File([data], name, { type: "application/json" });
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1608,10 +1608,11 @@ $("restore-file").addEventListener("change", async (e) => {
   let s, data;
   try {
     data = JSON.parse(await f.text());
-    s = data && data.app === "abo-insta" && data.state;
+    // Les copies faites avant le changement de nom portent encore l'ancien identifiant.
+    s = data && (data.app === "zyeuto" || data.app === "abo-insta") && data.state;
     if (!isState(s)) throw new Error();
   } catch {
-    return flash("Ce fichier n'est pas une sauvegarde Abo Insta.", "err");
+    return flash("Ce fichier n'est pas une sauvegarde Zyeuto.", "err");
   }
   state = s;
   if (typeof data.avatar === "string" && data.avatar.startsWith("data:image/")) setAvatar(data.avatar);
@@ -1665,11 +1666,11 @@ function gcalUrl() {
   const day = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const q = new URLSearchParams({
     action: "TEMPLATE",
-    text: "Exporter Instagram (Abo Insta)",
+    text: "Exporter Instagram (Zyeuto)",
     dates: `${day}T180000/${day}T181000`,
     ctz: "Europe/Paris",
     recur: "RRULE:FREQ=WEEKLY",
-    details: `Ouvre Abo Insta et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur l'appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
+    details: `Ouvre Zyeuto et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur l'appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
   });
   return "https://calendar.google.com/calendar/render?" + q.toString().replace(/\+/g, "%20");
 }
