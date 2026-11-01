@@ -567,9 +567,13 @@
   .wl h2 { margin: 8px 0 0; font-size: 28px; line-height: 1.15; }
   .wl h2 em { font-style: normal; color: var(--rose-ink); }
   .wl p.lead { max-width: 330px; margin: 0 auto; }
-  .wl-pts { list-style: none; margin: 6px auto 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 340px; width: 100%; }
-  .wl-pts li { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; line-height: 1.25; color: var(--muted); background: var(--surface-2); border-radius: 14px; padding: 10px 6px; }
-  .wl-pts li span { font-size: 18px; }
+  .wl-pts { list-style: none; margin: 10px auto 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 340px; width: 100%; }
+  .wl-pts li { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 4px 11px; border-radius: 18px; font: 800 13px/1.15 var(--round); color: #fff; box-shadow: 0 8px 18px rgb(46 35 40 / .14); }
+  .wl-pts li:nth-child(1) { background: linear-gradient(150deg, #ef7f6a, #e2685a); transform: rotate(-4deg); }
+  .wl-pts li:nth-child(2) { background: linear-gradient(150deg, #f6b65f, #f2a04a); color: #3b2414; transform: rotate(2.5deg) translateY(-4px); }
+  .wl-pts li:nth-child(3) { background: linear-gradient(150deg, #d4919b, #c27583); transform: rotate(-2deg); }
+  .wl-pts li i { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgb(255 255 255 / .28); }
+  .wl-pts li i svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) {
     .wl-head { animation: peek 1s .25s cubic-bezier(.3,1.5,.5,1) both; }
     .wl-hands { animation: grab .35s .9s cubic-bezier(.3,1.6,.5,1) both; }
@@ -577,11 +581,14 @@
     .wl-look { animation: look 4s 1.3s ease-in-out infinite; }
     .wl-wave { transform-box: fill-box; transform-origin: 50% 100%; animation: wave 1.2s 1.25s ease-in-out 2; }
     .wl > :not(.wl-stage) { animation: rise .45s both; }
+    .wl-pts li { animation: sticker .5s cubic-bezier(.3,1.6,.5,1) both; }
+    .wl-pts li:nth-child(1) { animation-delay: 1.3s; } .wl-pts li:nth-child(2) { animation-delay: 1.42s; } .wl-pts li:nth-child(3) { animation-delay: 1.54s; }
     .wl-bubble { animation: bubble .4s 1.35s cubic-bezier(.3,1.6,.5,1) both; transform-origin: 0 100%; }
     .wl-spark { animation: twinkle 2.4s ease-in-out infinite both; }
     .wl-spark.b { animation-delay: .8s; } .wl-spark.c { animation-delay: 1.6s; }
     .wl > :nth-child(2) { animation-delay: .9s; } .wl > :nth-child(3) { animation-delay: 1s; } .wl > :nth-child(4) { animation-delay: 1.1s; } .wl > :nth-child(5) { animation-delay: 1.2s; }
   }
+  @keyframes sticker { from { scale: .3; opacity: 0; } }
   @keyframes bubble { from { transform: scale(0); opacity: 0; } }
   @keyframes twinkle { 0%, 100% { transform: scale(.6); opacity: .3; } 50% { transform: scale(1.1); opacity: 1; } }
   @keyframes peek { from { transform: translateY(60px); } }
@@ -1828,11 +1835,11 @@ function renderGuided() {
       <div class="wl">
         <div class="wl-stage" aria-hidden="true"><div class="wl-art">${MASCOT}</div><span class="wl-bubble">Coucou&nbsp;!</span><span class="wl-spark a">✨</span><span class="wl-spark b">💗</span><span class="wl-spark c">✨</span></div>
         <h2 id="gf-title">Salut, jeune <em>zieuteur·euse</em>&nbsp;!</h2>
-        <p class="lead">Bienvenue&nbsp;! Ici, tu vas enfin voir <strong>qui se désabonne de toi</strong> sur Instagram, et qui arrive. On s'y met ensemble&nbsp;?</p>
+        <p class="lead">Bienvenue&nbsp;! Ici, tu vas enfin voir qui se désabonne de toi, qui arrive, et plein d'autres choses. On s'y met ensemble&nbsp;?</p>
         <ul class="wl-pts">
-          <li><span>🔒</span>Aucun mot de passe</li>
-          <li><span>👣</span>Guidé pas à pas</li>
-          <li><span>📱</span>Tout reste chez toi</li>
+          <li><i>${ICON.lock}</i>Zéro mot<br>de passe</li>
+          <li><i><svg viewBox="0 0 24 24"><path d="M5 12h12M13 7l5 5-5 5"/></svg></i>Je te guide<br>pas à pas</li>
+          <li><i><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></i>Tout reste<br>chez toi</li>
         </ul>
         <div class="gf-foot"><button class="btn primary big" id="gf-go" type="button">C'est parti</button></div>
       </div>`;
