@@ -648,6 +648,9 @@
   .mode-t { font: 800 19px var(--round); }
   .mode-tag { position: absolute; top: -10px; right: 14px; background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; font: 800 11.5px var(--round); padding: 4px 10px; border-radius: 999px; }
   .mode-d { grid-column: 2; color: var(--muted); font-size: 14px; }
+  .say-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .say-btns button { border: 0; border-radius: 999px; padding: 8px 14px; font: 700 14px var(--round); cursor: pointer; background: var(--surface-2); color: var(--ink); }
+  .say-btns button:first-child { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; }
   .stk-sep { font: 700 12px var(--round); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 4px 0; display: flex; align-items: center; gap: 8px; }
   .stk-sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
   .stk .n { grid-row: span 2; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--rose-soft); color: var(--rose-ink); font: 800 14px var(--round); align-self: start; transition: background .25s, color .25s; }
@@ -730,9 +733,11 @@
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
     <div class="wk-bar">
       <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span><span class="t" id="weekly-title">Nouvel export</span><small class="due" id="due"></small></span></button>
+      <button class="btn primary pill" id="wk-go" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12M13 7l5 5-5 5"/></svg><span id="wk-go-t">C'est parti</span></button>
       <button class="btn primary pill" id="drive-import" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>Drive</button>
-      <button class="btn primary pill" id="bar-file" type="button" disabled>
+      <button class="btn primary pill" id="bar-file" type="button" disabled hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer</button>
     </div>
     <div class="wk-more" id="wk-more" hidden>
@@ -1488,6 +1493,7 @@ async function commit(takenAt) {
   const prev = state.snapshots[state.snapshots.length - 1];
   try {
     const r = await recordSnapshot(pending.followers, pending.following, takenAt, pending.source);
+    prefs.lastImportAt = new Date().toISOString(); savePrefs();
     closeSheet();
     // Premier import : « Pas en retour » est le seul résultat disponible tout de suite.
     tab = r.status === "ok" ? "unfollow" : state.following ? "notback" : "recent";
@@ -1688,6 +1694,7 @@ function renderWeekly() {
     due.textContent = n === 0 ? "Importé aujourd'hui" : `Dernier il y a ${n} j`;
     due.className = "due";
   }
+  $("wk-go-t").textContent = reqPending() ? (useDrive() ? "Vérifier" : "Importer") : "C'est parti";
   // Export déjà demandé : on met « Importer » en avant.
   if (useDrive()) $("go-export").className = "btn ghost"; else $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
   $("quick-import").className = "btn " + (waiting && !useDrive() ? "primary" : "ghost");
@@ -1861,6 +1868,7 @@ async function driveImport() {
   }
 }
 $("drive-import").addEventListener("click", driveImport);
+$("wk-go").addEventListener("click", openRepeat);
 
 // ---------- Parcours guidé du premier export ----------
 // Tant qu'aucun import n'est fait, l'app n'affiche que ce parcours : une étape à la fois, un seul gros bouton.
@@ -1928,26 +1936,44 @@ function wlPlay() {
 }
 let gfLeftAt = 0, gfOnReturn = null;
 let gfTaps = [], gfChecking = false, gfTimer = null, gfStatus = "", gfAuthFailed = false;
-const gfOn = () => !loading && !state.snapshots.length && !prefs.manualStart;
+// gfRepeat : le même parcours, rouvert depuis « Nouvel export » pour les imports suivants.
+let gfRepeat = false, gfRepeatFrom = 0;
+// Gardé le temps de la session : la reconnexion Google recharge la page.
+try { const r = sessionStorage.getItem("abo-gf-repeat"); if (r !== null) { gfRepeat = true; gfRepeatFrom = +r; } } catch {}
+function setRepeat(on) {
+  gfRepeat = on; if (on) gfRepeatFrom = state.snapshots.length;
+  try { on ? sessionStorage.setItem("abo-gf-repeat", String(gfRepeatFrom)) : sessionStorage.removeItem("abo-gf-repeat"); } catch {}
+}
+const gfOn = () => !loading && (gfRepeat || (!state.snapshots.length && !prefs.manualStart));
+// Une demande est « en cours » si elle est plus récente que le dernier import.
+function reqPending() {
+  const last = state.snapshots[state.snapshots.length - 1];
+  if (!prefs.requestedAt || !last) return !!prefs.requestedAt;
+  return Date.parse(prefs.requestedAt) > Date.parse(prefs.lastImportAt || last.takenAt);
+}
+function openRepeat() { setRepeat(true); gfTaps = []; prefs.igOpened = reqPending() ? prefs.igOpened : false; render(); }
 // Drive : seulement pour qui le choisit (projet Google encore en test = comptes testeurs uniquement).
 const useDrive = () => driveReady() && !!prefs.useDrive;
 function gfStep() {
-  if (prefs.welcomed === false || (prefs.welcomed === undefined && !prefs.driveLinked && !prefs.requestedAt)) return "welcome";
-  if (needsInstall && !prefs.stayInSafari) return "install";
+  if (!gfRepeat) {
+    if (prefs.welcomed === false || (prefs.welcomed === undefined && !prefs.driveLinked && !prefs.requestedAt)) return "welcome";
+    if (needsInstall && !prefs.stayInSafari) return "install";
+  }
   if (prefs.useDrive === undefined && driveReady()) return "how";
-  if (!useDrive()) return prefs.requestedAt ? "get" : "insta";
+  if (!useDrive()) return reqPending() ? "get" : "insta";
   if (!driveToken() && !prefs.driveLinked) return "drive";
-  if (!prefs.requestedAt) return "insta";
+  if (!reqPending()) return "insta";
   return "wait";
 }
 function renderGuided() {
+  if (gfRepeat && state.snapshots.length > gfRepeatFrom) setRepeat(false);   // import fait : on referme
   const step = gfOn() ? gfStep() : null;
   $("gf").hidden = !step;
   document.documentElement.style.overflow = step ? "hidden" : "";
   if (!step) { clearInterval(gfTimer); gfTimer = null; return; }
   $("gf").classList.toggle("welcome", step === "welcome");
   $("gf").classList.toggle("fun", step !== "welcome");
-  const order = (needsInstall ? ["install"] : []).concat(useDrive() ? ["drive", "insta", "wait"] : ["insta", "get"]);
+  const order = (needsInstall && !gfRepeat ? ["install"] : []).concat(useDrive() ? (gfRepeat || prefs.driveLinked ? ["insta", "wait"] : ["drive", "insta", "wait"]) : ["insta", "get"]);
   const at = order.indexOf(step);
   $("gf-prog").innerHTML = order.map((_, i) => `<i class="${i <= at ? "on" : ""}"></i>`).join("");
   const n = `Étape ${at + 1} sur ${order.length}`;
@@ -2048,8 +2074,8 @@ function renderGuided() {
       });
       if (popped != null) { const li = body.querySelectorAll(".stk li[data-k]")[popped]; li.classList.add("pop"); }
       const say = all ? "Bravo, t'es un·e chef&nbsp;! Touche le bouton en bas 🎉"
-        : !prefs.igOpened ? "Première mission&nbsp;: on demande ta liste à Instagram. Commence par la case 1, je te guide&nbsp;!"
-        : next === 0 ? "Fais ces étapes dans Instagram. Quand tu reviens ici, je coche tout 👇"
+        : !prefs.igOpened ? (gfRepeat ? "On remet ça&nbsp;? Même chemin que la dernière fois, commence par la case 1 😉" : "Première mission&nbsp;: on demande ta liste à Instagram. Commence par la case 1, je te guide&nbsp;!")
+        : next === 0 ? "Fais ces étapes dans Instagram. Quand tu reviens ici, je te demande où tu en es 👇"
         : `Super, encore ${TAPS.length - next > 1 ? TAPS.length - next + " étapes" : "une étape"}&nbsp;!`;
       const el = $("guide-say");
       if (el.innerHTML !== say) { el.innerHTML = say; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
@@ -2057,14 +2083,21 @@ function renderGuided() {
     };
     sync();
     $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); gfLeftAt = Date.now(); setTimeout(() => sync(), 400); };
-    // Retour d'Instagram : l'app ne voit pas ce qui s'y passe, alors elle coche tout en cascade et demande confirmation.
+    // Retour d'Instagram : l'app ne voit pas ce qui s'y passe, alors elle demande. « Oui » coche tout en cascade et passe à la suite.
     gfOnReturn = () => {
       if (!prefs.igOpened || !gfLeftAt || Date.now() - gfLeftAt < 4000 || !gfTaps.includes(false)) return;
       gfLeftAt = 0;
-      gfTaps.forEach((v, i) => { if (!v) setTimeout(() => { gfTaps[i] = true; sync(i); if (!gfTaps.includes(false)) {
-        $("guide-say").innerHTML = "Te revoilà&nbsp;! Si tu as touché « Démarrer l'exportation », c'est gagné 🎉";
-        $("gf-done").scrollIntoView({ behavior: "smooth", block: "center" });
-      } }, 250 + i * 160); });
+      const el = $("guide-say");
+      el.innerHTML = `Te revoilà&nbsp;! Tu as touché « Démarrer l'exportation »&nbsp;?<span class="say-btns"><button type="button" id="say-yes">Oui, c'est fait</button><button type="button" id="say-no">Pas encore</button></span>`;
+      el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
+      window.scrollTo({ top: 0 }); $("gf").scrollTo({ top: 0, behavior: "smooth" });
+      $("say-no").onclick = () => { el.innerHTML = "Pas de souci, reprends là où tu en étais. Je t'attends 😉"; };
+      $("say-yes").onclick = () => {
+        el.innerHTML = "Bravo&nbsp;! 🎉";
+        const todo = gfTaps.map((v, i) => v ? -1 : i).filter((i) => i >= 0);
+        todo.forEach((i, k) => setTimeout(() => { gfTaps[i] = true; sync(i); }, 120 + k * 140));
+        setTimeout(() => { markRequested(); gfCheck(); }, 120 + todo.length * 140 + 700);
+      };
     };
     body.querySelectorAll(".stk button").forEach((b) => b.onclick = () => { const i = +b.dataset.i; gfTaps[i] = !gfTaps[i]; if (navigator.vibrate) try { navigator.vibrate(10); } catch {} sync(gfTaps[i] ? i : null); });
     $("gf-done").onclick = () => { markRequested(); gfCheck(); };
@@ -2107,8 +2140,10 @@ function renderGuided() {
   if (step !== "welcome") {
     const bk = document.createElement("button");
     bk.className = "gf-backbtn"; bk.type = "button"; bk.id = "gf-backbtn";
-    bk.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Retour`;
+    const closes = gfRepeat && (step === "insta" || step === "how" || step === "drive");
+    bk.innerHTML = closes ? `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Fermer` : `<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Retour`;
     bk.onclick = () => {
+      if (closes) { setRepeat(false); return render(); }
       if (step === "install") prefs.welcomed = false;
       else if (step === "how") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
       else if (step === "get" || step === "wait") { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; }
@@ -2147,7 +2182,8 @@ async function gfCheck() {
     const cands = await driveFindAll(token, "name = 'followers_1.json'");
     const biggest = Math.max(0, ...cands.map((f) => Number(f.size) || 0));
     const followers = cands.find((f) => (Number(f.size) || 0) >= biggest * 0.5);
-    if (!followers) { gfStatus = "Pas encore arrivé. Je revérifie toutes les 20 secondes."; return; }
+    const last = state.snapshots[state.snapshots.length - 1];
+    if (!followers || (last && Date.parse(followers.modifiedTime) <= Date.parse(last.takenAt) + 60000)) { gfStatus = "Pas encore arrivé. Je revérifie toutes les 20 secondes."; return; }
     gfStatus = "Ton export est arrivé ! Import…"; renderGuided();
     const parent = followers.parents && followers.parents[0];
     const following = parent ? await driveFind(token, `name = 'following.json' and '${parent}' in parents`) : null;
@@ -2880,7 +2916,7 @@ render();
   const driveBack = driveReady() ? driveCallback() : false;
   if (prefs.useDrive === undefined && (prefs.driveLinked || driveToken())) { prefs.useDrive = true; savePrefs(); }
   if (useDrive()) {
-    $("drive-import").hidden = false;
+    // Le bouton « C'est parti » (parcours guidé) remplace les anciens boutons Drive / Importer de la barre.
     $("quick-import").lastChild.textContent = "Importer un fichier";
     $("go-export").lastChild.textContent = "Demander un export vers Drive";
     $("bar-file").hidden = true;
