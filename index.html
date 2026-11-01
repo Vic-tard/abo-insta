@@ -781,10 +781,10 @@
       <li><span><b>Exporter vers un service externe</b> → <b>Google Drive</b></span></li>
       <li><span>Coche seulement <b>Followers et suivi(e)s</b></span></li>
       <li><span><b>Depuis le début</b> · <b>JSON</b> · fréquence <b>Une fois</b></span></li>
-      <li><span><b>Démarrer</b> : l'export arrive dans ton Drive en quelques minutes</span></li>
+      <li><span><b>Commencer l'exportation</b> : l'export arrive dans ton Drive en quelques minutes</span></li>
       <li><span id="step-import">Ensuite, ici : <b>Importer depuis Google Drive</b></span></li>
     </ol>
-    <p class="steps-alt">Sans Google Drive : choisis <b>Exporter sur l'appareil</b>, puis importe le .zip reçu.</p>
+    <p class="steps-alt">Sans Google Drive : choisis <b>Exporter sur mon appareil</b>, puis importe le .zip reçu.</p>
     </details></div>
     <button class="btn ghost" id="quick-import" disabled>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer le .zip reçu</button>
@@ -1708,7 +1708,7 @@ function gcalUrl() {
     dates: `${day}T180000/${day}T181000`,
     ctz: "Europe/Paris",
     recur: "RRULE:FREQ=WEEKLY",
-    details: `Ouvre Zyeuto et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur l'appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
+    details: `Ouvre Zyeuto et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur mon appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
   });
   return "https://calendar.google.com/calendar/render?" + q.toString().replace(/\+/g, "%20");
 }
@@ -1911,11 +1911,11 @@ const IG_EXPORT_URL = "https://accountscenter.instagram.com/info_and_permissions
 const IG_TAPS_DEVICE = [
   { t: `Touche <span class="ig">Créer une exportation</span>`, tip: "Sur la page « Exporter vos informations »." },
   { t: `Choisis ton compte Instagram`, tip: "Celui dont tu veux suivre les abonnés." },
-  { t: `Touche <span class="ig">Exporter sur l'appareil</span>`, tip: "Le fichier arrivera directement sur ton téléphone." },
+  { t: `Touche <span class="ig">Exporter sur mon appareil</span>`, tip: "Le fichier arrivera directement sur ton téléphone." },
   { t: `Dans <span class="ig">Personnaliser les informations</span> garde seulement <span class="ig">Followers et suivi(e)s</span>`, tip: "Décoche tout le reste. Elle est dans la rubrique Contacts. Moins de cases, fichier plus rapide." },
   { t: `Période : choisis <span class="ig">Depuis le début</span>`, tip: "Sinon Instagram ne donne qu'une année, et l'app croirait que des gens sont partis." },
   { t: `Format : choisis <span class="ig">JSON</span>`, tip: "C'est le format que l'app sait lire." },
-  { t: `Touche <span class="ig b">Démarrer l'exportation</span>`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
+  { t: `Touche <span class="ig b">Commencer l'exportation</span>`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
 ];
 const IG_TAPS_DRIVE = [
   { t: `Touche <span class="ig">Créer une exportation</span>, puis choisis ton compte` },
@@ -1924,37 +1924,37 @@ const IG_TAPS_DRIVE = [
   { t: `Personnalise : garde seulement <span class="ig">Followers et suivi(e)s</span>` },
   { t: `Période <span class="ig">Depuis le début</span>` },
   { t: `Format <span class="ig">JSON</span> · Fréquence <span class="ig">Une fois</span>` },
-  { t: `Touche <span class="ig b">Démarrer l'exportation</span>` },
+  { t: `Touche <span class="ig b">Commencer l'exportation</span>` },
 ];
 // Guide en images (mode sans Drive) : une seule étape à l'écran, la capture de l'écran d'Instagram et le bouton à toucher entouré.
 // SHOT[id] = [largeur/hauteur, zone entourée en % : x, y, largeur, hauteur]
-const SHOT = {"ig-01": [0.7934, 5, 65.1, 90, 8.6], "ig-02": [1.1442, 5.1, 68.5, 89.7, 19], "ig-03": [1.0134, 5.1, 60.7, 89.7, 14.1], "ig-04": [0.7731, 6, 17.9, 88.1, 12.3], "ig-05": [0.7831, 70.5, 45.8, 26.5, 5.2], "ig-06": [0.7831, 5, 68.2, 90, 10.1], "ig-07": [0.9136, 5, 87, 90, 10.2], "ig-08": [0.7731, 6, 30.4, 88.1, 12.3], "ig-09": [0.8094, 5.1, 82.7, 89.7, 11.3], "ig-10": [0.7731, 6, 42.9, 88.1, 12.3], "ig-11": [1.2231, 5.1, 73.8, 89.7, 17], "ig-12": [0.7731, 6, 89.6, 88.1, 8.5], "get-1": [0.8614, 9.6, 42.1, 82.1, 18.6], "get-2": [0.8614, 8.8, 81.6, 82.4, 7.4], "get-3": [1.3166, 4, 36.2, 29.6, 41.9]};
+const SHOT = {"ig-01": [1.7647, 3.3, 62.4, 93.3, 12.9], "ig-02": [1.4052, 3.5, 55.3, 93.0, 15.2], "ig-03": [1.4184, 3.5, 47.5, 93.0, 12.3], "ig-04": [0.9693, 3.5, 70.1, 93.0, 10.3], "ig-05": [0.9693, 80.7, 25.7, 17.0, 4.2], "ig-06": [0.9693, 3.5, 27.8, 93.0, 8.4], "ig-07": [0.9693, 3.3, 89.7, 93.3, 7.1], "ig-08": [0.9693, 3.5, 80.6, 93.0, 10.3], "ig-09": [0.9693, 3.5, 76.1, 93.0, 9.7], "ig-10": [0.9693, 3.5, 91.1, 93.0, 8.9], "ig-11": [1.4184, 3.5, 54.6, 93.0, 18.9], "ig-12": [0.9693, 3.3, 89.7, 93.3, 7.1], "get-1": [0.8614, 9.6, 42.1, 82.1, 18.6], "get-2": [1.0471, 6.0, 92.5, 43.0, 6.3], "get-3": [1.3166, 4, 36.2, 29.6, 41.9]};
 const igc = (s) => `<span class="ig">${s}</span>`;
 const IG_SHOTS = [
   { img: "ig-01", t: `Touche ${igc("Créer une exportation")}`, tip: "Commence par le bouton juste en dessous : il ouvre cette page." },
-  { img: "ig-02", t: `Touche ton compte Instagram`, tip: "Celui dont tu veux suivre les abonnés." },
-  { img: "ig-03", t: `Touche ${igc("Exporter sur l'appareil")}`, tip: "Le fichier arrivera directement sur ton téléphone." },
+  { img: "ig-02", t: `Touche ton compte marqué Instagram`, tip: "Pas celui marqué Facebook ou Threads." },
+  { img: "ig-03", t: `Touche ${igc("Exporter sur mon appareil")}`, tip: "Le fichier arrivera directement sur ton téléphone." },
   { img: "ig-04", t: `Touche ${igc("Personnaliser les informations")}` },
-  { img: "ig-05", t: `Touche ${igc("Tout effacer")}`, tip: "Il y en a un par rubrique : descends et touche-les tous." },
+  { img: "ig-05", t: `Touche ${igc("Tout effacer")}`, tip: "Il y en a 8, un par rubrique : descends et touche-les tous." },
   { img: "ig-06", t: `Coche ${igc("Followers et suivi(e)s")}`, tip: "Dans la rubrique Contacts. C'est la seule case utile." },
   { img: "ig-07", t: `Touche ${igc("Enregistrer")}`, tip: "Tout en bas de la liste." },
   { img: "ig-08", t: `Touche ${igc("Période")}` },
-  { img: "ig-09", t: `Choisis ${igc("Depuis le début")}`, tip: "Sinon Instagram ne donne qu'une année, et l'app croirait que des gens sont partis." },
+  { img: "ig-09", t: `Choisis ${igc("Depuis le début")}, puis ${igc("Enregistrer")}`, tip: "Sinon Instagram ne donne qu'une année, et l'app croirait que des gens sont partis." },
   { img: "ig-10", t: `Touche ${igc("Format")}` },
-  { img: "ig-11", t: `Choisis ${igc("JSON")}`, tip: "C'est le format que l'app sait lire." },
-  { img: "ig-12", t: `Touche ${igc("Démarrer l'exportation")}`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
+  { img: "ig-11", t: `Choisis ${igc("JSON")}, puis ${igc("Enregistrer")}`, tip: "C'est le format que l'app sait lire." },
+  { img: "ig-12", t: `Touche ${igc("Commencer l'exportation")}`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
 ];
 const GET_SHOTS = [
   { img: "get-1", t: `Attends cet e-mail d'Instagram`, tip: "Avant, tu en reçois un qui dit « en cours », c'est normal. Ça prend de quelques minutes à quelques heures : tu peux fermer l'app." },
   { img: "get-2", t: `Touche ${igc("Télécharger")}`, tip: "Safari te demande de confirmer : touche encore Télécharger. Ton fichier reste disponible 4 jours." },
   { img: "get-3", t: `Touche ton fichier Instagram`, tip: "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
 ];
-const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Plus que quelques touches 💪", "Presque fini&nbsp;!"];
+const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Maintenant, on fait le tri 🧹", "Tout effacer, sans crainte&nbsp;: ça ne supprime rien, ça décoche juste&nbsp;!", "La seule case qui compte 👇", "Et on enregistre&nbsp;!", "Plus que quelques touches 💪", "Le plus important&nbsp;: depuis le début&nbsp;!", "On y est presque&nbsp;!", "JSON, c'est ma langue 😄", "Dernière touche&nbsp;! 🎉"];
 let shDir = 1, shLost = false;
 function shotHTML(id, cls = "") {
   const [r, x, y, w, h] = SHOT[id];
-  return `<figure class="shot ${cls}" id="sh-fig" style="aspect-ratio:${r};width:min(100%, calc(42svh * ${r}));--from:${shDir * 24}px">
-    <img src="guide/${id}.jpg" alt="" draggable="false"><i class="sh-ring" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i><i class="tapme" style="left:${x + w * (w > 50 ? .85 : .5)}%;top:${y + h / 2}%"></i></figure>`;
+  return `<figure class="shot ${cls}" id="sh-fig" style="aspect-ratio:${r};width:min(100%, calc(46svh * ${r}));--from:${shDir * 24}px">
+    <img src="guide/${id}.jpg" alt="" draggable="false"><i class="sh-ring" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i><i class="tapme" style="left:${w > 50 ? x + w * .9 : x + w}%;top:${w > 50 ? y + h / 2 : y + h}%"></i></figure>`;
 }
 // Vue « une étape à la fois » partagée par la demande et la récupération.
 function shotsView(list, i, foot) {
@@ -2146,7 +2146,7 @@ function renderGuided() {
       ? `<a class="btn cheer big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>${SWAP}
          <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>`
       : last
-      ? `<button class="btn cheer big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
+      ? `<button class="btn cheer big" id="gf-done" type="button">C'est fait, j'ai touché « Commencer »</button>
          <div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button">Précédent</button><a class="btn ghost" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer" id="gf-ig">Rouvrir Instagram</a></div>`
       : `<div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button"${i ? "" : " disabled"}>Précédent</button><button class="btn primary big" id="sh-next" type="button">C'est fait, la suite</button></div>${SWAP}`;
     const say = shLost ? "Pas de panique, ça arrive&nbsp;!" : !prefs.igOpened
@@ -2177,7 +2177,7 @@ function renderGuided() {
         <li class="stk-sep" aria-hidden="true">Puis, dans Instagram</li>
         ${TAPS.map((x, i) => `<li data-k><button type="button" data-i="${i}" aria-pressed="false"><span class="n">${i + 2}</span><span>${x.t}</span>${x.tip ? `<small>${x.tip}</small>` : ""}</button></li>`).join("")}</ol>
       <div class="gf-foot">
-        <button class="btn ghost big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
+        <button class="btn ghost big" id="gf-done" type="button">C'est fait, j'ai touché « Commencer »</button>
         ${useDrive() ? `<button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>` : `<button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>`}
       </div>`;
     // Cocher une étape met à jour la carte sur place (sans tout redessiner, le bonhomme ne rejoue pas son entrée).
@@ -2206,7 +2206,7 @@ function renderGuided() {
       if (!prefs.igOpened || !gfLeftAt || Date.now() - gfLeftAt < 4000 || !gfTaps.includes(false)) return;
       gfLeftAt = 0;
       const el = $("guide-say");
-      el.innerHTML = `Te revoilà&nbsp;! Tu as touché « Démarrer l'exportation »&nbsp;?<span class="say-btns"><button type="button" id="say-yes">Oui, c'est fait</button><button type="button" id="say-no">Pas encore</button></span>`;
+      el.innerHTML = `Te revoilà&nbsp;! Tu as touché « Commencer l'exportation »&nbsp;?<span class="say-btns"><button type="button" id="say-yes">Oui, c'est fait</button><button type="button" id="say-no">Pas encore</button></span>`;
       el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
       window.scrollTo({ top: 0 }); $("gf").scrollTo({ top: 0, behavior: "smooth" });
       $("say-no").onclick = () => { el.innerHTML = "Pas de souci, reprends là où tu en étais. Je t'attends 😉"; };
@@ -2318,7 +2318,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-01-1600";
+const BUILD = "2026-11-01-1650";
 let updChecked = 0;
 async function checkUpdate() {
   if (Date.now() - updChecked < 30000 || !navigator.onLine) return false;
@@ -3065,7 +3065,7 @@ render();
     $("bar-file").hidden = true;
     if (driveBack === "drive-import") driveImport();
   } else {
-    // Sans Drive : consignes « Exporter sur l'appareil », puis import du fichier téléchargé.
+    // Sans Drive : consignes « Exporter sur mon appareil », puis import du fichier téléchargé.
     $("howto").querySelector(".steps").innerHTML = IG_TAPS_DEVICE.map((x) => `<li><span>${x.t}</span></li>`).join("")
       + `<li><span>Quand Instagram te prévient, <span class="ig">Télécharger</span>, puis ici <b>Importer</b> → <b>Récents</b></span></li>`;
     const alt = $("howto").querySelector(".steps-alt"); if (alt) alt.hidden = true;
