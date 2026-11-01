@@ -2342,13 +2342,15 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-01-1800";
+const BUILD = "2026-11-02-0000";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
 // L'app envoie le fichier par morceaux (base64), puis on l'importe comme un fichier choisi à la main.
 let sharedBusy = false;
 const nativePost = (msg) => { try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch {} };
+// Petite vibration dans l'app iPhone : "success", "error", "light", "medium", "selection".
+const haptic = (kind) => { if (nativeApp) nativePost({ type: "haptic", kind }); };
 window.zyeutoFile = {
   begin(name) { sharedBusy = true; this.name = name || "export.zip"; this.parts = []; },
   add(b64) {
@@ -2433,6 +2435,7 @@ function animateList() {
 // Confettis aux couleurs vives de l'app, pour les bonnes nouvelles.
 let confettiRaf = 0;
 function confetti() {
+  haptic("success");
   if (calm()) return;
   const cv = $("confetti"), cx = cv.getContext("2d"), dpr = devicePixelRatio || 1;
   const w = innerWidth, h = innerHeight;
@@ -2496,7 +2499,7 @@ function revealBilan() {
   $("bilan-play").hidden = !bilan.game;
   $("bet").hidden = true;
   settleBet();
-  if (bilan.party) confetti();
+  if (bilan.party) confetti(); else haptic("medium");
 }
 {
   const cv = $("ticket-cv");
@@ -2540,7 +2543,7 @@ $("g-opts").addEventListener("click", (e) => {
     o.disabled = true;
     if (o.dataset.u === bilan.gone) o.classList.add("ok");
   });
-  if (!right) b.classList.add("miss");
+  if (!right) { b.classList.add("miss"); haptic("error"); }
   $("g-msg").textContent = right ? `Bien vu ! ${bilan.gone} ne te suit plus.` : `Raté : c'était ${bilan.gone}.`;
   if (right) { confetti(); stats("gone").wins = (stats("gone").wins || 0) + 1; savePrefs(); }
 });
@@ -2667,7 +2670,7 @@ $("quiz-body").addEventListener("click", (e) => {
     if (o.dataset.a === q.answer) o.classList.add("ok");
     o.querySelector("small")?.removeAttribute("hidden");
   });
-  if (!right) b.classList.add("miss");
+  if (!right) { b.classList.add("miss"); haptic("error"); } else haptic("success");
   (q.opts || [{ u: q.u }]).forEach((o) => quiz.used.add(o.u));
   quiz.results[quiz.n] = right;
   if (right) quiz.score++;
@@ -2779,7 +2782,7 @@ function setPage(p) {
     if (open) el.classList.remove("off");
     el.style.transform = `translateX(${open ? 0 : REST[k]}%)`;
     el.inert = !open;
-    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); }
+    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); }
   }
   document.documentElement.style.overflow = p === "home" ? "" : "hidden";
   $("pager").querySelectorAll("button").forEach((b) => b.dataset.page === p ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
