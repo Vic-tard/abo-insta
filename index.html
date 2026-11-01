@@ -622,6 +622,16 @@
   .stk { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .stk li > button { width: 100%; display: grid; grid-template-columns: 32px 1fr; gap: 3px 12px; align-items: center; text-align: left; cursor: pointer;
     background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: 11px 12px; font: 15px/1.35 var(--font); transition: background .25s, opacity .25s; }
+  .stk li > a { width: 100%; box-sizing: border-box; display: grid; grid-template-columns: 32px 1fr 20px; gap: 3px 12px; align-items: center; text-decoration: none; border-radius: 16px; padding: 13px 12px; font: 600 16px/1.35 var(--font);
+    background: var(--btn); color: var(--btn-ink); transition: background .25s; }
+  .stk li > a .n { background: var(--btn-ink); color: var(--btn); }
+  .stk li > a small { color: inherit; opacity: .75; font-weight: 400; }
+  .stk li > a .go { grid-row: 1; grid-column: 3; }
+  .stk li > a .go svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+  .stk li.open.ok > a { background: var(--up-soft); color: var(--ink); font-weight: 400; }
+  .stk li.open.ok > a .n { background: var(--up); color: #fff; }
+  .stk-sep { font: 700 12px var(--round); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 4px 0; display: flex; align-items: center; gap: 8px; }
+  .stk-sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
   .stk .n { grid-row: span 2; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--rose-soft); color: var(--rose-ink); font: 800 14px var(--round); align-self: start; transition: background .25s, color .25s; }
   .stk .n svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
   .stk small { grid-column: 2; font-size: 13px; color: var(--muted); line-height: 1.35; }
@@ -1840,7 +1850,7 @@ $("drive-import").addEventListener("click", driveImport);
 const IG_EXPORT_URL = "https://accountscenter.instagram.com/info_and_permissions/dyi/";
 // Sans Drive (par défaut, marche pour tout le monde) : Instagram envoie le fichier sur le téléphone.
 const IG_TAPS_DEVICE = [
-  { t: `Touche <span class="ig">Créer une exportation</span>`, tip: "Si Instagram te demande de te connecter, vas-y : tu es bien chez Instagram." },
+  { t: `Touche <span class="ig">Créer une exportation</span>`, tip: "Sur la page « Exporter vos informations »." },
   { t: `Choisis ton compte Instagram`, tip: "Celui dont tu veux suivre les abonnés." },
   { t: `Touche <span class="ig">Exporter sur l'appareil</span>`, tip: "Le fichier arrivera directement sur ton téléphone." },
   { t: `Dans <span class="ig">Personnaliser les informations</span> garde seulement <span class="ig">Followers et suivi(e)s</span>`, tip: "Décoche tout le reste. Elle est dans la rubrique Contacts. Moins de cases, fichier plus rapide." },
@@ -1965,8 +1975,10 @@ function renderGuided() {
     body.innerHTML = `${path}
       ${guide("")}
       <h2 id="gf-title">Demande ta liste à Instagram</h2>
-      <a class="btn primary big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>
-      <ol class="stk">${TAPS.map((x, i) => `<li><button type="button" data-i="${i}" aria-pressed="false"><span class="n">${i + 1}</span><span>${x.t}</span>${x.tip ? `<small>${x.tip}</small>` : ""}</button></li>`).join("")}</ol>
+      <ol class="stk">
+        <li class="open" id="gf-open"><a id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer"><span class="n">1</span><span>Touche ici pour ouvrir Instagram</span><small>S'il te demande de te connecter, vas-y : tu es bien chez Instagram.</small><i class="go">${ICON.out}</i></a></li>
+        <li class="stk-sep" aria-hidden="true">Puis, dans Instagram</li>
+        ${TAPS.map((x, i) => `<li data-k><button type="button" data-i="${i}" aria-pressed="false"><span class="n">${i + 2}</span><span>${x.t}</span>${x.tip ? `<small>${x.tip}</small>` : ""}</button></li>`).join("")}</ol>
       <div class="gf-foot">
         <button class="btn ghost big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
         ${useDrive() ? `<button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>` : `<button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>`}
@@ -1974,19 +1986,20 @@ function renderGuided() {
     // Cocher une étape met à jour la carte sur place (sans tout redessiner, le bonhomme ne rejoue pas son entrée).
     const sync = (popped) => {
       const next = gfTaps.indexOf(false), all = next < 0;
-      body.querySelectorAll(".stk li").forEach((li, i) => {
+      $("gf-open").className = "open " + (prefs.igOpened ? "ok" : "cur");
+      $("gf-open").querySelector(".n").innerHTML = prefs.igOpened ? CHECK : "1";
+      body.querySelectorAll(".stk li[data-k]").forEach((li, i) => {
         li.className = gfTaps[i] ? "ok" : i === next && prefs.igOpened ? "cur" : "";
-        li.querySelector(".n").innerHTML = gfTaps[i] ? CHECK : String(i + 1);
+        li.querySelector(".n").innerHTML = gfTaps[i] ? CHECK : String(i + 2);
         li.querySelector("button").setAttribute("aria-pressed", String(gfTaps[i]));
       });
-      if (popped != null) { const li = body.querySelectorAll(".stk li")[popped]; li.classList.add("pop"); }
+      if (popped != null) { const li = body.querySelectorAll(".stk li[data-k]")[popped]; li.classList.add("pop"); }
       const say = all ? "Bravo, t'es un·e chef&nbsp;! Touche le bouton en bas 🎉"
-        : !prefs.igOpened ? "Première mission&nbsp;: on demande ta liste à Instagram. Touche le bouton, je te guide&nbsp;!"
+        : !prefs.igOpened ? "Première mission&nbsp;: on demande ta liste à Instagram. Commence par la case 1, je te guide&nbsp;!"
         : next === 0 ? "Fais ces étapes dans Instagram. Quand tu reviens ici, je coche tout 👇"
         : `Super, encore ${TAPS.length - next > 1 ? TAPS.length - next + " étapes" : "une étape"}&nbsp;!`;
       const el = $("guide-say");
       if (el.innerHTML !== say) { el.innerHTML = say; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
-      $("gf-ig").className = "btn " + (prefs.igOpened ? "ghost" : "primary") + " big";
       $("gf-done").className = "btn " + (all ? "cheer" : prefs.igOpened ? "primary" : "ghost") + " big";
     };
     sync();
