@@ -602,6 +602,58 @@
   @keyframes blink { 0%, 46%, 50%, 100% { transform: scaleY(1); } 48% { transform: scaleY(.1); } }
   @keyframes look { 0%, 20% { transform: translateX(0); } 30%, 45% { transform: translateX(-3px); } 55%, 70% { transform: translateX(3px); } 80%, 100% { transform: translateX(0); } }
   @keyframes wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+  /* Étapes du parcours, version ludique : même ambiance que l'accueil, le bonhomme guide */
+  .gf.fun { background: radial-gradient(120% 50% at 50% 0%, var(--rose-soft), var(--bg) 70%); }
+  .gf.fun .gf-head, .gf.fun .gf-prog { display: none; }
+  .path { list-style: none; margin: 4px 0 0; padding: 0; display: flex; align-items: center; gap: 0; }
+  .path li { display: flex; align-items: center; gap: 6px; font: 700 12.5px var(--round); color: var(--muted); white-space: nowrap; }
+  .path li + li::before { content: ""; width: 18px; height: 3px; border-radius: 2px; background: var(--line); margin: 0 6px; flex: none; }
+  .path li b { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font: 800 12px var(--round); color: var(--muted); flex: none; }
+  .path li.done b { background: var(--up-soft); color: var(--up); }
+  .path li.done + li::before, .path li.now + li::before { background: linear-gradient(90deg, #ef7f6a, var(--line)); }
+  .path li.now { color: var(--ink); }
+  .path li.now b { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; box-shadow: 0 3px 10px rgb(239 127 106 / .45); }
+  .path li:not(.now) span { display: none; }
+  .guide { display: flex; align-items: flex-end; gap: 12px; margin-top: 4px; }
+  .guide-av { width: 64px; height: 64px; flex: none; border-radius: 30%; overflow: hidden; background: #d4919b; box-shadow: 0 8px 20px rgb(212 145 155 / .45); }
+  .guide-av svg { width: 100%; height: 100%; display: block; }
+  .guide-say { position: relative; background: var(--surface); color: var(--ink); border-radius: 18px 18px 18px 4px; padding: 11px 14px; font: 600 15px/1.35 var(--round); box-shadow: 0 6px 18px rgb(46 35 40 / .08); }
+  .fun h2 { margin: 2px 0 0; font-size: 26px; }
+  .stk { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .stk li { --c: #ef7f6a; --soft: #fde7e2; }
+  .stk li:nth-child(3n+2) { --c: #f2a04a; --soft: #fdf0dc; }
+  .stk li:nth-child(3n) { --c: #c27583; --soft: #f6e2e5; }
+  .stk li > button { width: 100%; display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; align-items: center; text-align: left; border: 0; cursor: pointer;
+    background: var(--soft); color: #2e2328; border-radius: 16px; padding: 11px 12px; font: 15px/1.35 var(--font); transition: transform .15s, background .2s; }
+  .stk li:nth-child(odd) > button { transform: rotate(-.6deg); } .stk li:nth-child(even) > button { transform: rotate(.6deg); }
+  .stk li > button:active { transform: scale(.97); }
+  .stk .n { grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; font: 800 15px var(--round); align-self: start; }
+  .stk .n svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+  .stk small { grid-column: 2; font-size: 13px; color: #7d6e74; line-height: 1.35; }
+  .stk .ig { display: inline-block; background: #fff; color: #2e2328; border-radius: 8px; padding: 2px 8px; font-weight: 700; font-size: 13.5px; margin: 1px 1px; box-shadow: 0 1px 0 rgb(0 0 0 / .06); }
+  .stk .ig.b { background: #0095f6; color: #fff; }
+  .stk li.ok > button { background: var(--c); color: #fff; }
+  .stk li.ok small { color: rgb(255 255 255 / .85); }
+  .stk li.ok .n { background: #fff; color: var(--c); }
+  .stk li.ok .ig { background: rgb(255 255 255 / .25); color: #fff; box-shadow: none; }
+  .stk li.cur > button { box-shadow: 0 0 0 2.5px var(--c); }
+  .stk.read li > button { cursor: default; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stk li { --soft: #40251f; } :root:not([data-theme="light"]) .stk li:nth-child(3n+2) { --soft: #3d2d18; } :root:not([data-theme="light"]) .stk li:nth-child(3n) { --soft: #3b2329; } :root:not([data-theme="light"]) .stk li > button { color: var(--ink); } :root:not([data-theme="light"]) .stk small { color: var(--muted); } :root:not([data-theme="light"]) .stk li.ok > button { color: #fff; } :root:not([data-theme="light"]) .stk li.ok small { color: rgb(255 255 255 / .85); } }
+  :root[data-theme="dark"] .stk li { --soft: #40251f; } :root[data-theme="dark"] .stk li:nth-child(3n+2) { --soft: #3d2d18; } :root[data-theme="dark"] .stk li:nth-child(3n) { --soft: #3b2329; } :root[data-theme="dark"] .stk li > button { color: var(--ink); } :root[data-theme="dark"] .stk small { color: var(--muted); } :root[data-theme="dark"] .stk li.ok > button { color: #fff; } :root[data-theme="dark"] .stk li.ok small { color: rgb(255 255 255 / .85); }
+  .btn.cheer { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; box-shadow: 0 8px 22px rgb(239 127 106 / .4); }
+  .letter { align-self: center; width: 120px; height: 92px; position: relative; margin: 6px 0 2px; }
+  .letter svg { width: 100%; height: 100%; overflow: visible; }
+  @media (prefers-reduced-motion: no-preference) {
+    .stk li.pop > button { animation: stkpop .45s cubic-bezier(.3,1.7,.5,1); }
+    .guide-say { animation: bubble .4s cubic-bezier(.3,1.6,.5,1) both; transform-origin: 0 100%; }
+    .btn.cheer { animation: cheer 1.6s ease-in-out infinite; }
+    .letter svg { animation: float 2.6s ease-in-out infinite; }
+    .letter .dot { animation: twinkle 1.4s ease-in-out infinite both; }
+    .letter .dot:nth-of-type(2) { animation-delay: .3s; } .letter .dot:nth-of-type(3) { animation-delay: .6s; }
+  }
+  @keyframes stkpop { 40% { transform: scale(1.05) rotate(-1.5deg); } }
+  @keyframes cheer { 50% { transform: scale(1.03); } }
+  @keyframes float { 50% { transform: translateY(-6px) rotate(-2deg); } }
   @keyframes nudge { 50% { transform: translateY(-4px); } }
 </style>
 
@@ -1795,21 +1847,22 @@ $("drive-import").addEventListener("click", driveImport);
 const IG_EXPORT_URL = "https://accountscenter.instagram.com/info_and_permissions/dyi/";
 // Sans Drive (par défaut, marche pour tout le monde) : Instagram envoie le fichier sur le téléphone.
 const IG_TAPS_DEVICE = [
-  `<span class="ig w">Créer une exportation</span> puis ton compte`,
-  `<span class="ig w">Exporter sur l'appareil</span>`,
-  `Personnaliser : coche seulement <span class="ig w">Followers et suivi(e)s</span>`,
-  `Période <span class="ig w">Depuis le début</span>`,
-  `Format <span class="ig w">JSON</span>`,
-  `<span class="ig">Démarrer l'exportation</span>`,
+  { t: `Touche <span class="ig">Créer une exportation</span>`, tip: "Si Instagram te demande de te connecter, vas-y : tu es bien chez Instagram." },
+  { t: `Choisis ton compte Instagram`, tip: "Celui dont tu veux suivre les abonnés." },
+  { t: `Touche <span class="ig">Exporter sur l'appareil</span>`, tip: "Le fichier arrivera directement sur ton téléphone." },
+  { t: `Dans <span class="ig">Personnaliser les informations</span> garde seulement <span class="ig">Followers et suivi(e)s</span>`, tip: "Décoche tout le reste. Elle est dans la rubrique Contacts. Moins de cases, fichier plus rapide." },
+  { t: `Période : choisis <span class="ig">Depuis le début</span>`, tip: "Sinon Instagram ne donne qu'une année, et l'app croirait que des gens sont partis." },
+  { t: `Format : choisis <span class="ig">JSON</span>`, tip: "C'est le format que l'app sait lire." },
+  { t: `Touche <span class="ig b">Démarrer l'exportation</span>`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
 ];
 const IG_TAPS_DRIVE = [
-  `<span class="ig w">Créer une exportation</span> puis ton compte`,
-  `<span class="ig w">Exporter vers un service externe</span>`,
-  `<span class="ig w">Google Drive</span>, puis autorise ton compte Google`,
-  `Personnaliser : coche seulement <span class="ig w">Followers et suivi(e)s</span>`,
-  `Période <span class="ig w">Depuis le début</span>`,
-  `Format <span class="ig w">JSON</span> · Fréquence <span class="ig w">Une fois</span>`,
-  `<span class="ig">Démarrer l'exportation</span>`,
+  { t: `Touche <span class="ig">Créer une exportation</span>, puis choisis ton compte` },
+  { t: `Touche <span class="ig">Exporter vers un service externe</span>` },
+  { t: `Choisis <span class="ig">Google Drive</span>, puis autorise ton compte Google` },
+  { t: `Personnalise : garde seulement <span class="ig">Followers et suivi(e)s</span>` },
+  { t: `Période <span class="ig">Depuis le début</span>` },
+  { t: `Format <span class="ig">JSON</span> · Fréquence <span class="ig">Une fois</span>` },
+  { t: `Touche <span class="ig b">Démarrer l'exportation</span>` },
 ];
 const ICON = {
   out: `<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
@@ -1869,10 +1922,15 @@ function renderGuided() {
   document.documentElement.style.overflow = step ? "hidden" : "";
   if (!step) { clearInterval(gfTimer); gfTimer = null; return; }
   $("gf").classList.toggle("welcome", step === "welcome");
+  $("gf").classList.toggle("fun", step !== "welcome");
   const order = (needsInstall ? ["install"] : []).concat(useDrive() ? ["drive", "insta", "wait"] : ["insta", "get"]);
   const at = order.indexOf(step);
   $("gf-prog").innerHTML = order.map((_, i) => `<i class="${i <= at ? "on" : ""}"></i>`).join("");
   const n = `Étape ${at + 1} sur ${order.length}`;
+  // Petit chemin ludique : où on en est, et la récompense au bout.
+  const LBL = { install: "L'app", drive: "Ton Drive", insta: "Ta liste", get: "Ton fichier", wait: "L'arrivée" };
+  const path = `<ol class="path" aria-label="${n}">${order.concat(["end"]).map((k, i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"><b>${i < at ? "✓" : k === "end" ? "🎉" : i + 1}</b><span>${k === "end" ? "Tes stats" : LBL[k]}</span></li>`).join("")}</ol>`;
+  const guide = (say) => `<div class="guide"><div class="guide-av" aria-hidden="true">${MASCOT}</div><p class="guide-say" id="guide-say">${say}</p></div>`;
   const body = $("gf-body");
   if (body.dataset.step !== step) { body.dataset.step = step; body.style.animation = "none"; void body.offsetWidth; body.style.animation = ""; }
   if (step === "welcome") {
@@ -1892,14 +1950,14 @@ function renderGuided() {
     wlPlay();
   } else if (step === "install") {
     body.innerHTML = `
-      <p class="gf-step">${n}</p><h2 id="gf-title">Mets l'app sur ton écran d'accueil</h2>
+      ${path}${guide("D'abord, installe-moi sur ton téléphone, c'est là que je garde ton historique&nbsp;!")}<h2 id="gf-title">Mets l'app sur ton écran d'accueil</h2>
       <p class="lead">Touche <span class="gf-share">${ICON.share}</span> en bas de Safari, puis <strong>« Sur l'écran d'accueil »</strong>.</p>
       <p class="lead">Ensuite, <strong>ouvre l'app depuis sa nouvelle icône</strong> : c'est elle qui garde ton historique, et la suite t'attend là-bas.</p>
       <div class="gf-foot"><button class="alt" id="gf-stay" type="button">Continuer dans Safari quand même</button></div>`;
     $("gf-stay").onclick = () => { prefs.stayInSafari = true; savePrefs(); render(); };
   } else if (step === "drive") {
     body.innerHTML = `
-      <p class="gf-step">${n}</p><h2 id="gf-title">Relie ton Google Drive</h2>
+      ${path}${guide("Mode automatique&nbsp;: relie ton Drive, et j'irai chercher ta liste tout seul.")}<h2 id="gf-title">Relie ton Google Drive</h2>
       <p class="lead">Instagram va déposer la liste de tes abonnés dans ton Drive. <strong>L'app ira la chercher toute seule</strong> : aucun fichier à télécharger.</p>
       <p class="gf-why">${ICON.lock}<span>L'app ne fait que lire ton Drive, depuis ton téléphone. Rien n'est envoyé ailleurs.</span></p>
       <div class="gf-foot">
@@ -1910,31 +1968,50 @@ function renderGuided() {
   } else if (step === "insta") {
     const TAPS = useDrive() ? IG_TAPS_DRIVE : IG_TAPS_DEVICE;
     if (gfTaps.length !== TAPS.length) gfTaps = TAPS.map(() => false);
-    const next = gfTaps.indexOf(false);
-    body.innerHTML = `
-      <p class="gf-step">${n}</p><h2 id="gf-title">Demande ta liste à Instagram</h2>
-      <p class="lead">Touche le bouton, puis fais ces touches dans l'ordre. Coche-les ici au fur et à mesure si ça t'aide.</p>
-      <a class="btn ${prefs.igOpened ? "ghost" : "primary"} big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>
-      <ol class="taps">${TAPS.map((t, i) => `<li class="${gfTaps[i] ? "ok" : i === next && prefs.igOpened ? "cur" : ""}"><button type="button" data-i="${i}"><span class="n">${gfTaps[i] ? CHECK : i + 1}</span><span>${t}</span></button></li>`).join("")}</ol>
+    body.innerHTML = `${path}
+      ${guide("")}
+      <h2 id="gf-title">Demande ta liste à Instagram</h2>
+      <a class="btn primary big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>
+      <ol class="stk">${TAPS.map((x, i) => `<li><button type="button" data-i="${i}" aria-pressed="false"><span class="n">${i + 1}</span><span>${x.t}</span>${x.tip ? `<small>${x.tip}</small>` : ""}</button></li>`).join("")}</ol>
       <div class="gf-foot">
-        <button class="btn ${prefs.igOpened ? "primary" : "ghost"} big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
+        <button class="btn ghost big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
         ${useDrive() ? `<button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>` : `<button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>`}
       </div>`;
-    $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); setTimeout(renderGuided, 400); };
-    body.querySelectorAll(".taps button").forEach((b) => b.onclick = () => { gfTaps[+b.dataset.i] = !gfTaps[+b.dataset.i]; renderGuided(); });
+    // Cocher une étape met à jour la carte sur place (sans tout redessiner, le bonhomme ne rejoue pas son entrée).
+    const sync = (popped) => {
+      const next = gfTaps.indexOf(false), all = next < 0;
+      body.querySelectorAll(".stk li").forEach((li, i) => {
+        li.className = gfTaps[i] ? "ok" : i === next && prefs.igOpened ? "cur" : "";
+        li.querySelector(".n").innerHTML = gfTaps[i] ? CHECK : String(i + 1);
+        li.querySelector("button").setAttribute("aria-pressed", String(gfTaps[i]));
+      });
+      if (popped != null) { const li = body.querySelectorAll(".stk li")[popped]; li.classList.add("pop"); }
+      const say = all ? "Bravo, t'es un·e chef&nbsp;! Touche le bouton en bas 🎉"
+        : !prefs.igOpened ? "Première mission&nbsp;: on demande ta liste à Instagram. Touche le bouton, je te guide&nbsp;!"
+        : next === 0 ? "Coche chaque étape ici quand c'est fait, on avance ensemble 👇"
+        : `Super, encore ${TAPS.length - next > 1 ? TAPS.length - next + " étapes" : "une étape"}&nbsp;!`;
+      const el = $("guide-say");
+      if (el.innerHTML !== say) { el.innerHTML = say; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
+      $("gf-ig").className = "btn " + (prefs.igOpened ? "ghost" : "primary") + " big";
+      $("gf-done").className = "btn " + (all ? "cheer" : prefs.igOpened ? "primary" : "ghost") + " big";
+    };
+    sync();
+    $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); setTimeout(() => sync(), 400); };
+    body.querySelectorAll(".stk button").forEach((b) => b.onclick = () => { const i = +b.dataset.i; gfTaps[i] = !gfTaps[i]; if (navigator.vibrate) try { navigator.vibrate(10); } catch {} sync(gfTaps[i] ? i : null); });
     $("gf-done").onclick = () => { markRequested(); gfCheck(); };
   } else if (step === "get") {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
-    body.innerHTML = `
-      <p class="gf-step">${n}</p><h2 id="gf-title">Récupère ton fichier</h2>
-      <p class="lead">${since < 2 ? "Instagram prépare ta liste, en général en quelques minutes." : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Ça peut prendre jusqu'à quelques heures.`}</p>
-      <ol class="taps get">
-        <li><button type="button" tabindex="-1"><span class="n">1</span><span>Instagram te prévient par une notification ou un e-mail</span></button></li>
-        <li><button type="button" tabindex="-1"><span class="n">2</span><span>Touche <span class="ig">Télécharger</span> : le fichier arrive sur ton téléphone</span></button></li>
-        <li><button type="button" tabindex="-1"><span class="n">3</span><span>Reviens ici, touche <span class="ig w">Importer mon fichier</span> et choisis-le : il est tout en haut, dans <span class="ig w">Récents</span></span></button></li>
+    body.innerHTML = `${path}
+      ${guide(since < 2 ? "Instagram prépare ta liste. En général c'est prêt en quelques minutes, je patiente avec toi 👀" : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Parfois Instagram prend quelques heures, pas de panique&nbsp;!`)}
+      <h2 id="gf-title">Récupère ton fichier</h2>
+      <div class="letter" aria-hidden="true"><svg viewBox="0 0 120 92"><rect x="10" y="22" width="100" height="64" rx="10" fill="#fff" stroke="#ecdfe2" stroke-width="2"/><path d="M12 28 60 60l48-32" fill="none" stroke="#d4919b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="26" r="13" fill="#ef7f6a"/><text x="96" y="31" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="system-ui">1</text><circle class="dot" cx="10" cy="10" r="3" fill="#f2c45a"/><circle class="dot" cx="116" cy="70" r="2.5" fill="#ef7f6a"/><circle class="dot" cx="4" cy="60" r="2" fill="#d4919b"/></svg></div>
+      <ol class="stk read">
+        <li><button type="button" tabindex="-1"><span class="n">1</span><span>Instagram te prévient par une notification ou un e-mail</span><small>Tu peux fermer l'app en attendant, ta progression est gardée.</small></button></li>
+        <li><button type="button" tabindex="-1"><span class="n">2</span><span>Touche <span class="ig b">Télécharger</span></span><small>Le fichier arrive sur ton téléphone, dans Téléchargements.</small></button></li>
+        <li><button type="button" tabindex="-1"><span class="n">3</span><span>Reviens ici et touche <span class="ig">Importer mon fichier</span></span><small>Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser.</small></button></li>
       </ol>
       <div class="gf-foot">
-        <button class="btn primary big" id="gf-file" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer mon fichier</button>
+        <button class="btn cheer big" id="gf-file" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer mon fichier</button>
         <a class="btn ghost big" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Pas de notif ? Voir mes exports</a>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
@@ -1943,7 +2020,7 @@ function renderGuided() {
   } else {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
     body.innerHTML = `
-      <p class="gf-step">${n}</p><h2 id="gf-title">On guette ton Drive</h2>
+      ${path}${guide("Je surveille ton Drive. Dès que ta liste arrive, je l'importe 👀")}<h2 id="gf-title">On guette ton Drive</h2>
       <div class="gf-wait"><div class="radar" aria-hidden="true"></div>
         <b>${esc(gfStatus || "En attente de l'export d'Instagram…")}</b>
         <small>${since < 2 ? "Instagram met en général quelques minutes." : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Ça peut prendre jusqu'à quelques heures.`}<br>Tu peux fermer l'app : à ta prochaine ouverture, elle vérifie toute seule et importe dès que c'est là.</small></div>
@@ -2720,7 +2797,7 @@ render();
     if (driveBack === "drive-import") driveImport();
   } else {
     // Sans Drive : consignes « Exporter sur l'appareil », puis import du fichier téléchargé.
-    $("howto").querySelector(".steps").innerHTML = IG_TAPS_DEVICE.map((t) => `<li><span>${t}</span></li>`).join("")
+    $("howto").querySelector(".steps").innerHTML = IG_TAPS_DEVICE.map((x) => `<li><span>${x.t}</span></li>`).join("")
       + `<li><span>Quand Instagram te prévient, <span class="ig">Télécharger</span>, puis ici <b>Importer</b> → <b>Récents</b></span></li>`;
     const alt = $("howto").querySelector(".steps-alt"); if (alt) alt.hidden = true;
     $("howto").querySelector("summary span").textContent = (IG_TAPS_DEVICE.length + 1) + " étapes";
