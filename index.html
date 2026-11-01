@@ -614,6 +614,37 @@
   .path li.now { color: var(--ink); }
   .path li.now b { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; box-shadow: 0 3px 10px rgb(239 127 106 / .45); }
   .path li:not(.now) span { display: none; }
+  /* Guide en images : une étape à l'écran, la capture d'Instagram, le bouton entouré. */
+  .sh-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .sh-n { font: 500 13px var(--font); color: var(--muted); }
+  .sh-lost { background: none; border: 0; color: var(--link); font: 500 13px var(--font); text-decoration: underline; padding: 4px 0; cursor: pointer; }
+  .sh-dots { display: flex; gap: 4px; }
+  .sh-dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); transition: background .3s; }
+  .sh-dots i.on { background: var(--rose); }
+  .sh-dots i.now { background: #ef7f6a; }
+  .shot { position: relative; margin: 0 auto; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 10px 28px rgb(46 35 40 / .14), 0 0 0 1px var(--line); touch-action: pan-y; }
+  .shot img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+  .shot .sh-ring { position: absolute; border: 3px solid #ef7f6a; border-radius: 14px; box-shadow: 0 0 0 4px rgb(239 127 106 / .25), 0 0 0 999px rgb(46 35 40 / .18); pointer-events: none; }
+  .shot .tapme { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgb(239 127 106 / .85); box-shadow: 0 0 0 6px rgb(239 127 106 / .3); pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .shot .sh-ring { animation: ringpulse 1.6s ease-in-out infinite; }
+    .shot .tapme { animation: tapme 1.6s ease-in-out infinite; }
+    .shot.in { animation: shotin .35s cubic-bezier(.3,1.2,.5,1) both; }
+  }
+  @keyframes ringpulse { 50% { box-shadow: 0 0 0 9px rgb(239 127 106 / .12), 0 0 0 999px rgb(46 35 40 / .18); } }
+  @keyframes tapme { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(.7); opacity: 1; } }
+  @keyframes shotin { from { opacity: 0; transform: translateX(var(--from, 24px)); } }
+  .sh-say { margin: 0; text-align: center; font: 500 19px/1.35 var(--font); color: var(--ink); }
+  .sh-say .ig { display: inline-block; background: #0064e0; color: #fff; border-radius: 9px; padding: 2px 10px; font-weight: 500; margin: 2px 1px; }
+  .sh-tip { margin: -8px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
+  .sh-nav { display: flex; gap: 10px; }
+  .sh-nav .btn { flex: 1; }
+  .sh-nav .btn.prev { flex: 0 0 auto; padding-inline: 18px; }
+  .sh-swap { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); }
+  .sh-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sh-grid button { border: 0; padding: 0; background: none; cursor: pointer; font: 500 12px var(--font); color: var(--muted); display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .sh-grid img { width: 100%; aspect-ratio: 3/4; object-fit: cover; object-position: top; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); background: #fff; }
+  .sh-grid button.now img { box-shadow: 0 0 0 3px #ef7f6a; }
   .guide { display: flex; align-items: flex-end; gap: 12px; margin-top: 4px; }
   .guide-av { width: 64px; height: 64px; flex: none; border-radius: 30%; overflow: hidden; background: #d4919b; box-shadow: 0 8px 20px rgb(212 145 155 / .45); }
   .guide-av svg { width: 100%; height: 100%; display: block; }
@@ -1647,6 +1678,7 @@ try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } cat
 function savePrefs() { try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
 function markRequested() {
   prefs.requestedAt = new Date().toISOString();
+  prefs.getStep = 0; prefs.igStep = 0;
   savePrefs();
   render();
 }
@@ -1894,6 +1926,66 @@ const IG_TAPS_DRIVE = [
   { t: `Format <span class="ig">JSON</span> · Fréquence <span class="ig">Une fois</span>` },
   { t: `Touche <span class="ig b">Démarrer l'exportation</span>` },
 ];
+// Guide en images (mode sans Drive) : une seule étape à l'écran, la capture de l'écran d'Instagram et le bouton à toucher entouré.
+// SHOT[id] = [largeur/hauteur, zone entourée en % : x, y, largeur, hauteur]
+const SHOT = {"ig-01": [0.7934, 5, 65.1, 90, 8.6], "ig-02": [1.1442, 5.1, 68.5, 89.7, 19], "ig-03": [1.0134, 5.1, 60.7, 89.7, 14.1], "ig-04": [0.7731, 6, 17.9, 88.1, 12.3], "ig-05": [0.7831, 70.5, 45.8, 26.5, 5.2], "ig-06": [0.7831, 5, 68.2, 90, 10.1], "ig-07": [0.9136, 5, 87, 90, 10.2], "ig-08": [0.7731, 6, 30.4, 88.1, 12.3], "ig-09": [0.8094, 5.1, 82.7, 89.7, 11.3], "ig-10": [0.7731, 6, 42.9, 88.1, 12.3], "ig-11": [1.2231, 5.1, 73.8, 89.7, 17], "ig-12": [0.7731, 6, 89.6, 88.1, 8.5], "get-1": [0.8614, 9.6, 42.1, 82.1, 18.6], "get-2": [0.8614, 8.8, 81.6, 82.4, 7.4], "get-3": [1.3166, 4, 36.2, 29.6, 41.9]};
+const igc = (s) => `<span class="ig">${s}</span>`;
+const IG_SHOTS = [
+  { img: "ig-01", t: `Touche ${igc("Créer une exportation")}`, tip: "Commence par le bouton juste en dessous : il ouvre cette page." },
+  { img: "ig-02", t: `Touche ton compte Instagram`, tip: "Celui dont tu veux suivre les abonnés." },
+  { img: "ig-03", t: `Touche ${igc("Exporter sur l'appareil")}`, tip: "Le fichier arrivera directement sur ton téléphone." },
+  { img: "ig-04", t: `Touche ${igc("Personnaliser les informations")}` },
+  { img: "ig-05", t: `Touche ${igc("Tout effacer")}`, tip: "Il y en a un par rubrique : descends et touche-les tous." },
+  { img: "ig-06", t: `Coche ${igc("Followers et suivi(e)s")}`, tip: "Dans la rubrique Contacts. C'est la seule case utile." },
+  { img: "ig-07", t: `Touche ${igc("Enregistrer")}`, tip: "Tout en bas de la liste." },
+  { img: "ig-08", t: `Touche ${igc("Période")}` },
+  { img: "ig-09", t: `Choisis ${igc("Depuis le début")}`, tip: "Sinon Instagram ne donne qu'une année, et l'app croirait que des gens sont partis." },
+  { img: "ig-10", t: `Touche ${igc("Format")}` },
+  { img: "ig-11", t: `Choisis ${igc("JSON")}`, tip: "C'est le format que l'app sait lire." },
+  { img: "ig-12", t: `Touche ${igc("Démarrer l'exportation")}`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
+];
+const GET_SHOTS = [
+  { img: "get-1", t: `Attends cet e-mail d'Instagram`, tip: "Avant, tu en reçois un qui dit « en cours », c'est normal. Ça prend de quelques minutes à quelques heures : tu peux fermer l'app." },
+  { img: "get-2", t: `Touche ${igc("Télécharger")}`, tip: "Safari te demande de confirmer : touche encore Télécharger. Ton fichier reste disponible 4 jours." },
+  { img: "get-3", t: `Touche ton fichier Instagram`, tip: "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
+];
+const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Plus que quelques touches 💪", "Presque fini&nbsp;!"];
+let shDir = 1, shLost = false;
+function shotHTML(id, cls = "") {
+  const [r, x, y, w, h] = SHOT[id];
+  return `<figure class="shot ${cls}" id="sh-fig" style="aspect-ratio:${r};width:min(100%, calc(42svh * ${r}));--from:${shDir * 24}px">
+    <img src="guide/${id}.jpg" alt="" draggable="false"><i class="sh-ring" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i><i class="tapme" style="left:${x + w * (w > 50 ? .85 : .5)}%;top:${y + h / 2}%"></i></figure>`;
+}
+// Vue « une étape à la fois » partagée par la demande et la récupération.
+function shotsView(list, i, foot) {
+  if (shLost) return `<h2 id="gf-title">Quel écran ressemble au tien&nbsp;?</h2>
+    <div class="sh-grid">${list.map((x, k) => `<button type="button" data-go="${k}" class="${k === i ? "now" : ""}"><img src="guide/${x.img}.jpg" alt="" loading="lazy">Étape ${k + 1}</button>`).join("")}</div>
+    <div class="gf-foot"><button class="alt" id="sh-lost-x" type="button">Revenir à l'étape ${i + 1}</button></div>`;
+  const x = list[i];
+  return `<div class="sh-head"><span class="sh-n">Étape ${i + 1} sur ${list.length}</span><button class="sh-lost" id="sh-lost" type="button">Mon écran est différent</button></div>
+    <div class="sh-dots" aria-hidden="true">${list.map((_, k) => `<i class="${k < i ? "on" : k === i ? "now" : ""}"></i>`).join("")}</div>
+    ${shotHTML(x.img, "in")}
+    <p class="sh-say" id="gf-title">${x.t}</p>${x.tip ? `<p class="sh-tip">${x.tip}</p>` : ""}
+    <div class="gf-foot">${foot}</div>`;
+}
+function shotsWire(body, list, get, set) {
+  const go = (k) => { k = Math.max(0, Math.min(list.length - 1, k)); if (k === get()) return; shDir = k > get() ? 1 : -1; set(k); shLost = false; savePrefs(); renderGuided(); };
+  const fig = $("sh-fig");
+  if (fig) {
+    let x0 = null;
+    fig.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    fig.addEventListener("touchend", (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 45) go(get() + (dx < 0 ? 1 : -1)); });
+  }
+  const pv = $("sh-prev"), nx = $("sh-next"), lost = $("sh-lost"), lx = $("sh-lost-x");
+  if (pv) pv.onclick = () => go(get() - 1);
+  if (nx) nx.onclick = () => go(get() + 1);
+  if (lost) lost.onclick = () => { shLost = true; renderGuided(); };
+  if (lx) lx.onclick = () => { shLost = false; renderGuided(); };
+  body.querySelectorAll("[data-go]").forEach((b) => b.onclick = () => { shLost = false; shDir = 1; set(+b.dataset.go); savePrefs(); renderGuided(); });
+  // Précharge l'image suivante pour qu'elle s'affiche tout de suite.
+  const nxt = list[get() + 1]; if (nxt) new Image().src = `guide/${nxt.img}.jpg`;
+}
+const SWAP = `<p class="sh-swap">Pour passer d'Instagram à Zyeuto, glisse le doigt vers la droite sur la barre tout en bas de l'écran.</p>`;
 const ICON = {
   out: `<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
   drive: `<svg viewBox="0 0 24 24"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>`,
@@ -1982,7 +2074,7 @@ function renderGuided() {
   const path = at < 0 ? "" : `<ol class="path" aria-label="${n}">${order.concat(["end"]).map((k, i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"><b>${i < at ? "✓" : k === "end" ? "🎉" : i + 1}</b><span>${k === "end" ? "Tes stats" : LBL[k]}</span></li>`).join("")}</ol>`;
   const guide = (say) => `<div class="guide"><div class="guide-av" aria-hidden="true">${MASCOT}</div><p class="guide-say" id="guide-say">${say}</p></div>`;
   const body = $("gf-body");
-  if (body.dataset.step !== step) { body.dataset.step = step; body.style.animation = "none"; void body.offsetWidth; body.style.animation = ""; }
+  if (body.dataset.step !== step) { shLost = false; body.dataset.step = step; body.style.animation = "none"; void body.offsetWidth; body.style.animation = ""; }
   if (step === "welcome") {
     body.innerHTML = `
       <div class="wl">
@@ -2048,6 +2140,32 @@ function renderGuided() {
         <button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>
       </div>`;
     $("gf-drive").onclick = () => driveSignIn("drive-flow");
+  } else if (step === "insta" && !useDrive()) {
+    const i = prefs.igOpened ? Math.min(prefs.igStep || 0, IG_SHOTS.length - 1) : 0, last = i === IG_SHOTS.length - 1;
+    const foot = !prefs.igOpened
+      ? `<a class="btn cheer big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>${SWAP}
+         <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>`
+      : last
+      ? `<button class="btn cheer big" id="gf-done" type="button">C'est fait, j'ai touché « Démarrer »</button>
+         <div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button">Précédent</button><a class="btn ghost" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer" id="gf-ig">Rouvrir Instagram</a></div>`
+      : `<div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button"${i ? "" : " disabled"}>Précédent</button><button class="btn primary big" id="sh-next" type="button">C'est fait, la suite</button></div>${SWAP}`;
+    const say = shLost ? "Pas de panique, ça arrive&nbsp;!" : !prefs.igOpened
+      ? (gfRepeat ? "On remet ça&nbsp;? Même chemin que la dernière fois, je te montre tout 😉" : "On demande ta liste à Instagram. À chaque étape, je t'entoure où toucher&nbsp;!")
+      : last ? "Dernière touche&nbsp;! 🎉" : IG_CHEERS[Math.min(i, IG_CHEERS.length - 1)];
+    body.innerHTML = `${guide(say)}${shotsView(IG_SHOTS, i, foot)}`;
+    shotsWire(body, IG_SHOTS, () => prefs.igOpened ? prefs.igStep || 0 : 0, (k) => { prefs.igOpened = true; prefs.igStep = k; });
+    const igl = $("gf-ig");
+    if (igl) igl.onclick = () => { if (!prefs.igOpened) { prefs.igOpened = true; prefs.igStep = 0; } savePrefs(); gfLeftAt = Date.now(); };
+    // Retour d'Instagram : on passe à l'étape suivante (Précédent si on n'avait pas fini).
+    gfOnReturn = () => {
+      if (!prefs.igOpened || !gfLeftAt || Date.now() - gfLeftAt < 3000) return;
+      gfLeftAt = 0;
+      if ((prefs.igStep || 0) < IG_SHOTS.length - 1) { shDir = 1; prefs.igStep = (prefs.igStep || 0) + 1; shLost = false; savePrefs(); renderGuided(); }
+      const el = $("guide-say");
+      if (el) { el.innerHTML = (prefs.igStep === IG_SHOTS.length - 1 ? "Dernière touche&nbsp;! " : "Te revoilà&nbsp;! Voici la suite. ") + "Pas encore fait&nbsp;? Touche Précédent."; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
+    };
+    const dn = $("gf-done");
+    if (dn) dn.onclick = () => { prefs.getStep = 0; markRequested(); gfCheck(); };
   } else if (step === "insta") {
     const TAPS = useDrive() ? IG_TAPS_DRIVE : IG_TAPS_DEVICE;
     if (gfTaps.length !== TAPS.length) gfTaps = TAPS.map(() => false);
@@ -2103,22 +2221,26 @@ function renderGuided() {
     $("gf-done").onclick = () => { markRequested(); gfCheck(); };
   } else if (step === "get") {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
-    body.innerHTML = `${path}
-      ${guide(since < 2 ? "Instagram prépare ta liste. Tu vas recevoir deux e-mails&nbsp;: le premier dit que c'est en cours, le deuxième que c'est prêt 💌" : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Guette le deuxième e-mail d'Instagram, parfois ça prend quelques heures&nbsp;!`)}
-      <h2 id="gf-title">Récupère ton fichier</h2>
-      <div class="letter" aria-hidden="true"><svg viewBox="0 0 120 92"><rect x="10" y="22" width="100" height="64" rx="10" fill="#fff" stroke="#ecdfe2" stroke-width="2"/><path d="M12 28 60 60l48-32" fill="none" stroke="#d4919b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="26" r="13" fill="#ef7f6a"/><text x="96" y="31" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="system-ui">2</text><circle class="dot" cx="10" cy="10" r="3" fill="#f2c45a"/><circle class="dot" cx="116" cy="70" r="2.5" fill="#ef7f6a"/><circle class="dot" cx="4" cy="60" r="2" fill="#d4919b"/></svg></div>
-      <ol class="stk read">
-        <li><button type="button" tabindex="-1"><span class="n">1</span><span>Attends le deuxième e-mail d'Instagram</span><small>Le premier dit que ta demande est en cours, c'est normal. Le deuxième arrive quand c'est prêt. Tu peux fermer l'app en attendant.</small></button></li>
-        <li><button type="button" tabindex="-1"><span class="n">2</span><span>Touche <span class="ig">Télécharger sur Instagram</span> ci-dessous, puis <span class="ig b">Télécharger</span></span><small>Ton fichier reste disponible 4 jours.</small></button></li>
-        <li><button type="button" tabindex="-1"><span class="n">3</span><span>Reviens ici et touche <span class="ig">Importer mon fichier</span></span><small>Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser.</small></button></li>
-      </ol>
-      <div class="gf-foot">
-        <a class="btn primary big" id="gf-dl" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Télécharger sur Instagram</a>
-        <button class="btn cheer big" id="gf-file" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer mon fichier</button>
-        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
-      </div>`;
-    $("gf-file").onclick = startImport;
-    $("gf-back").onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
+    const i = Math.min(prefs.getStep || 0, GET_SHOTS.length - 1);
+    const say = shLost ? "Pas de panique&nbsp;!" : i === 0
+      ? (since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste et t'envoie un e-mail 💌" : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Guette cet e-mail, parfois ça prend quelques heures&nbsp;!`)
+      : i === 1 ? "Ta liste est prête&nbsp;! On va la chercher 🏃" : "Dernière ligne droite&nbsp;! 🎉";
+    const foot = i === 0
+      ? `<button class="btn primary big" id="sh-next" type="button">J'ai reçu cet e-mail</button><button class="alt" id="gf-back" type="button">Refaire la demande</button>`
+      : i === 1
+      ? `<a class="btn cheer big" id="gf-dl" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Télécharger sur Instagram</a>
+         <div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button">Précédent</button><button class="btn ghost" id="sh-next" type="button">C'est téléchargé</button></div>`
+      : `<button class="btn cheer big" id="gf-file" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer mon fichier</button>
+         <div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button">Précédent</button><a class="btn ghost" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">Retélécharger</a></div>`;
+    body.innerHTML = `${guide(say)}${shotsView(GET_SHOTS, i, foot)}`;
+    shotsWire(body, GET_SHOTS, () => prefs.getStep || 0, (k) => { prefs.getStep = k; });
+    // Après « Télécharger sur Instagram », au retour on est déjà sur la dernière étape.
+    const dl = $("gf-dl");
+    if (dl) dl.onclick = () => setTimeout(() => { prefs.getStep = 2; shDir = 1; savePrefs(); renderGuided(); }, 600);
+    const fl = $("gf-file");
+    if (fl) fl.onclick = startImport;
+    const gb = $("gf-back");
+    if (gb) gb.onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; gfTaps = []; savePrefs(); render(); };
   } else {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
     body.innerHTML = `
@@ -2146,7 +2268,7 @@ function renderGuided() {
       if (closes) { setRepeat(false); return render(); }
       if (step === "install") prefs.welcomed = false;
       else if (step === "how") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
-      else if (step === "get" || step === "wait") { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; }
+      else if (step === "get" || step === "wait") { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; gfTaps = []; }
       else if (step === "drive" || step === "insta") {
         if (driveReady()) { delete prefs.useDrive; prefs.igOpened = false; gfTaps = []; }
         else if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false;
@@ -2196,7 +2318,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-01-1525";
+const BUILD = "2026-11-01-1600";
 let updChecked = 0;
 async function checkUpdate() {
   if (Date.now() - updChecked < 30000 || !navigator.onLine) return false;
@@ -2214,7 +2336,8 @@ async function checkUpdate() {
   return false;
 }
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) return;
+  // Mode sans Drive : chaque départ vers Instagram compte, pour avancer d'une étape au retour.
+  if (document.hidden) { if (gfOn() && gfStep() === "insta" && !useDrive() && prefs.igOpened && !gfLeftAt) gfLeftAt = Date.now(); return; }
   checkUpdate();
   if (gfOn() && gfStep() === "insta" && gfOnReturn) return gfOnReturn();
   if (gfOn()) { renderGuided(); gfCheck(); }
