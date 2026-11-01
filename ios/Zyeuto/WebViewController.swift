@@ -27,6 +27,9 @@ final class WebViewController: UIViewController {
         content.addUserScript(WKUserScript(
             source: "window.ZYEUTO_APP = { version: 1 };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        // Ressenti d'app : pas de zoom, pas de sélection de texte ni de menu « Copier » à l'appui long
+        // (sauf dans les champs de saisie), pas de surlignage gris au toucher.
+        content.addUserScript(WKUserScript(source: Self.nativeFeel, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         content.add(WeakHandler(self), name: "zyeuto")
         config.userContentController = content
 
@@ -37,6 +40,11 @@ final class WebViewController: UIViewController {
         webView.scrollView.backgroundColor = bg
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.allowsBackForwardNavigationGestures = false
+        webView.allowsLinkPreview = false
+        webView.scrollView.bounces = false
+        webView.scrollView.showsVerticalScrollIndicator = false
+        webView.scrollView.showsHorizontalScrollIndicator = false
+        webView.scrollView.pinchGestureRecognizer?.isEnabled = false
         webView.navigationDelegate = self
         webView.uiDelegate = self
         view.addSubview(webView)
@@ -44,6 +52,19 @@ final class WebViewController: UIViewController {
         buildOfflineView()
         webView.load(URLRequest(url: Self.home))
     }
+
+    private static let nativeFeel = """
+    (function () {
+      var m = document.querySelector('meta[name=viewport]');
+      if (m) m.content = 'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover';
+      var st = document.createElement('style');
+      st.textContent = '*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}' +
+        'input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text}' +
+        '*{overscroll-behavior:none;scrollbar-width:none}' +
+        '::-webkit-scrollbar{display:none;width:0;height:0}';
+      document.head.appendChild(st);
+    })();
+    """
 
     // MARK: Fichier partagé
 
