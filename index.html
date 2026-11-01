@@ -487,13 +487,13 @@
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
     <div id="howto-slot-weekly"><details class="howto" id="howto">
-      <summary>Consignes<span>à faire une seule fois</span></summary>
+      <summary>Consignes<span>6 étapes</span></summary>
       <ol class="steps" aria-label="Les étapes dans Instagram">
       <li><span><b>Créer une exportation</b>, puis ton compte</span></li>
       <li><span><b>Exporter vers un service externe</b> → <b>Google Drive</b></span></li>
       <li><span>Coche seulement <b>Followers et suivi(e)s</b></span></li>
-      <li><span><b>Depuis le début</b> · <b>JSON</b> · fréquence au choix (ex. <b>toutes les semaines</b>)</span></li>
-      <li><span><b>Démarrer</b> : Instagram déposera tes exports tout seul dans ton Drive</span></li>
+      <li><span><b>Depuis le début</b> · <b>JSON</b> · fréquence <b>Une fois</b></span></li>
+      <li><span><b>Démarrer</b> : l'export arrive dans ton Drive en quelques minutes</span></li>
       <li><span id="step-import">Ensuite, ici : <b>Importer depuis Google Drive</b></span></li>
     </ol>
     <p class="steps-alt">Sans Google Drive : choisis <b>Exporter sur l'appareil</b>, puis importe le .zip reçu.</p>
@@ -549,6 +549,11 @@
   <section class="block needs-data">
     <h2>Imports</h2>
     <div class="scroll"><table id="imports"></table></div>
+    <div class="row" id="drop-row"><button class="btn ghost" id="drop-last">Supprimer le dernier import</button></div>
+    <div class="row" id="drop-confirm" hidden>
+      <button class="btn danger" id="drop-yes">Oui, le supprimer</button>
+      <button class="btn ghost" id="drop-no">Annuler</button>
+    </div>
   </section>
 
   <section class="block needs-data" id="reminders-block">
@@ -929,6 +934,11 @@ async function recordSnapshot(followers, following, takenAt, source) {
   if (last && new Date(takenAt) < new Date(last.takenAt)) {
     throw new Error(`Cet export est daté du ${fmtDate(takenAt)}, avant ton dernier import (${fmtDate(last.takenAt)}). Importe tes exports dans l'ordre.`);
   }
+  // Garde-fou : un export « programmé » d'Instagram ne contient que les nouveaux abonnés depuis l'export précédent.
+  // Le comparer à la liste complète ferait croire que presque tout le monde est parti.
+  if (last && last.count >= 20 && names.length < last.count * 0.5) {
+    throw new Error(`Cet export ne contient que ${nf(names.length)} abonné${names.length > 1 ? "s" : ""}, contre ${nf(last.count)} au dernier import. C'est un export partiel : Instagram n'y met que les nouveaux abonnés depuis l'export précédent. Rien n'a été enregistré. Refais un export « Une fois », période « Depuis le début ».`);
+  }
   // La liste des comptes suivis n'a pas d'historique : on garde la plus récente.
   if (following) { state.following = following; state.followingAt = takenAt; }
   if (last && last.hash === hash) return { status: "same", withFollowing: !!following };
@@ -938,7 +948,8 @@ async function recordSnapshot(followers, following, takenAt, source) {
   const follows = last ? names.filter((u) => !prev.has(u)).sort() : [];
   const id = (last ? last.id : 0) + 1;
   state.snapshots.push({ id, takenAt, source, count: names.length, hash, unfollows: unfollows.length, follows: follows.length });
-  for (const u of unfollows) state.events.push({ u, kind: "unfollow", at: takenAt, since: last.takenAt });
+  // ts = date d'abonnement, gardée pour pouvoir annuler l'import plus tard.
+  for (const u of unfollows) state.events.push({ u, kind: "unfollow", at: takenAt, since: last.takenAt, ts: state.followers[u] ?? null });
   for (const u of follows) state.events.push({ u, kind: "follow", at: takenAt, since: last.takenAt });
   state.followers = followers;
   return { status: last ? "ok" : "first", unfollows, follows, count: names.length };
@@ -1101,6 +1112,30 @@ function renderImports() {
         <td style="color:var(--up)">${first ? "–" : (s.follows ? "+" + s.follows : "0")}</td></tr>`;
     }).join("");
 }
+
+// Retire le dernier import : on reconstitue la liste d'avant à partir des départs et arrivées de cet import.
+async function dropLastImport() {
+  const last = state.snapshots.pop();
+  if (!last) return;
+  const evs = state.events.filter((e) => e.at === last.takenAt);
+  state.events = state.events.filter((e) => e.at !== last.takenAt);
+  if (!state.snapshots.length) state.followers = {};
+  else {
+    const f = { ...state.followers };
+    for (const e of evs) {
+      if (e.kind === "follow") delete f[e.u];
+      else f[e.u] = e.ts ?? null;
+    }
+    state.followers = f;
+  }
+  shown = PAGE;
+  render();
+  await save();
+  toast(`Import du ${fmtDate(last.takenAt)} supprimé.`, false);
+}
+$("drop-last").addEventListener("click", () => { $("drop-row").hidden = true; $("drop-confirm").hidden = false; });
+$("drop-no").addEventListener("click", () => { $("drop-row").hidden = false; $("drop-confirm").hidden = true; });
+$("drop-yes").addEventListener("click", async () => { $("drop-row").hidden = false; $("drop-confirm").hidden = true; await dropLastImport(); });
 
 const emptyState = () => ({ snapshots: [], events: [], followers: {} });
 const isState = (s) => s && Array.isArray(s.snapshots) && Array.isArray(s.events) && s.followers && typeof s.followers === "object";
@@ -1489,6 +1524,10 @@ async function driveFind(token, q) {
   const { files } = await (await driveApi(token, "files?" + params)).json();
   return files[0] || null;
 }
+async function driveFindAll(token, q) {
+  const params = new URLSearchParams({ q: q + " and trashed = false", orderBy: "modifiedTime desc", pageSize: "10", fields: "files(id,name,modifiedTime,parents,size)" });
+  return (await (await driveApi(token, "files?" + params)).json()).files || [];
+}
 async function driveDownload(token, f) {
   const blob = await (await driveApi(token, `files/${f.id}?alt=media`)).blob();
   // La date du fichier dans Drive = la date de l'export Instagram.
@@ -1500,11 +1539,14 @@ async function driveImport() {
   $("drive-import").disabled = true;
   driveMsg("Recherche du dernier export dans ton Drive…", true);
   try {
-    const followers = await driveFind(token, "name = 'followers_1.json'");
+    // Les exports programmés ne contiennent que les nouveaux abonnés : on prend le plus récent des exports complets.
+    const cands = await driveFindAll(token, "name = 'followers_1.json'");
+    const biggest = Math.max(0, ...cands.map((f) => Number(f.size) || 0));
+    const followers = cands.find((f) => (Number(f.size) || 0) >= biggest * 0.5) || null;
     if (!followers) return driveMsg("Aucun export Instagram dans ton Drive pour l'instant. Règle l'export automatique (Consignes), puis attends qu'il arrive.");
     const last = state.snapshots[state.snapshots.length - 1];
     if (last && Date.parse(followers.modifiedTime) <= Date.parse(last.takenAt) + 60000) {
-      return driveMsg(`Pas de nouvel export dans ton Drive : le dernier date du ${fmtDate(followers.modifiedTime)}, il est déjà importé.`);
+      return driveMsg(`Pas de nouvel export complet dans ton Drive : le dernier date du ${fmtDate(followers.modifiedTime)}, il est déjà importé. Demande un export « Une fois », période « Depuis le début ».`);
     }
     const parent = followers.parents && followers.parents[0];
     const following = parent ? await driveFind(token, `name = 'following.json' and '${parent}' in parents`) : null;
@@ -1960,7 +2002,7 @@ render();
   if (driveReady()) {
     $("drive-import").hidden = false;
     $("quick-import").lastChild.textContent = "Importer un fichier";
-    $("go-export").lastChild.textContent = "Régler l'export automatique";
+    $("go-export").lastChild.textContent = "Demander un export vers Drive";
     $("bar-file").hidden = true;
     if (driveCallback()) driveImport();
   }
