@@ -1,0 +1,96 @@
+{
+  "identifier" : "5A1C7E30",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "19.99",
+      "familyShareable" : true,
+      "internalID" : "6739000003",
+      "localizations" : [
+        {
+          "description" : "Mises à jour illimitées, pour toujours.",
+          "displayName" : "Zyeuto Plus à vie",
+          "locale" : "fr_FR"
+        }
+      ],
+      "productID" : "fr.zyeuto.plus.avie",
+      "referenceName" : "Zyeuto Plus à vie",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "fr_FR",
+    "_storefront" : "FRA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21500001",
+      "localizations" : [
+
+      ],
+      "name" : "Zyeuto Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "9.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "6739000001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, à l'année.",
+              "displayName" : "Zyeuto Plus annuel",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus.an",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Zyeuto Plus annuel",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1.99",
+          "familyShareable" : true,
+          "groupNumber" : 2,
+          "internalID" : "6739000002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, au mois.",
+              "displayName" : "Zyeuto Plus mensuel",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus.mois",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Zyeuto Plus mensuel",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

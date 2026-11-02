@@ -22,6 +22,7 @@
 		52BF06FAA93713B5B497B6F0 /* WebViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
 		6C653330D133F1749AF36F7D /* SceneDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		B61704CEFFC51F31BA771C8B /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		5C0A7E11D2B34F6A8E9B0C12 /* Zyeuto.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = Zyeuto.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +52,7 @@
 				52BF06FAA93713B5B497B6F0 /* WebViewController.swift */,
 				0990C69358715F182884B6C6 /* Assets.xcassets */,
 				0244CDA34711B5B70CD5DAF9 /* Info.plist */,
+				5C0A7E11D2B34F6A8E9B0C12 /* Zyeuto.storekit */,
 				A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Zyeuto;

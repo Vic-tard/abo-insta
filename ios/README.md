@@ -40,6 +40,25 @@ La page de confidentialité demandée par Apple : https://vic-tard.github.io/abo
 - Le mode Gmail n'est pas proposé dans l'app : Google refuse la connexion à l'intérieur d'une app.
 - Les liens (Instagram, profils) s'ouvrent dans Safari ou dans Instagram. Pour revenir, touche « ◀ Zyeuto » en haut à gauche.
 
+## Zyeuto Plus (achats intégrés)
+
+Gratuit : les deux premiers imports, puis une mise à jour par mois. Zyeuto Plus débloque les mises à jour illimitées :
+`fr.zyeuto.plus.mois` (1,99 €/mois), `fr.zyeuto.plus.an` (9,99 €/an), `fr.zyeuto.plus.avie` (19,99 € une fois).
+Sur le site (hors app), rien n'est vendu et il n'y a pas de limite.
+
+### Tester sans payer (faux magasin)
+
+Le fichier `Zyeuto/Zyeuto.storekit` est un faux App Store : les achats sont simulés, aucun argent n'est pris.
+Il est déjà branché sur le bouton ▶. Si l'écran Plus affiche « L'achat n'a pas pu se faire » :
+Product → Scheme → Edit Scheme… → Run → Options → StoreKit Configuration → choisir `Zyeuto.storekit`.
+
+Pour recommencer à zéro : Debug → StoreKit → Manage Transactions…, sélectionner les achats et les supprimer.
+
+### Pour de vrai (plus tard)
+
+Compte développeur Apple (99 €/an), puis dans App Store Connect : contrat « Apps payantes », banque et impôts,
+programme petites entreprises (15 %), et les trois produits avec exactement les mêmes identifiants.
+
 ## Pour la suite
 
 `Zyeuto.xcodeproj` a été généré avec le script Ruby `xcodeproj`. On peut aussi le modifier directement dans Xcode.
