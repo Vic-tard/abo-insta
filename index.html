@@ -455,6 +455,21 @@
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c1: #d0687e; --c2: #ad8a2c; --c3: #8072d0; --s1: #74384a; --s2: #8f4256; --s3: #b5596f; --s4: #d97f94; --s5: #f0b0bd; } }
   :root[data-theme="dark"] { --c1: #d0687e; --c2: #ad8a2c; --c3: #8072d0; --s1: #74384a; --s2: #8f4256; --s3: #b5596f; --s4: #d97f94; --s5: #f0b0bd; }
   body[data-mode="data"] .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  /* Mode démo : bandeau fixe en haut, sur l'accueil, les jeux et les graphiques */
+  .demo-bar { position: fixed; z-index: 16; left: 50%; translate: -50% 0; top: max(8px, env(safe-area-inset-top, 0px)); width: min(568px, calc(100% - 32px));
+    display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 999px; background: var(--rose-soft); color: var(--rose-ink);
+    box-shadow: 0 4px 14px rgb(46 35 40 / .10); font-size: 13px; }
+  .demo-bar[hidden] { display: none; }
+  .demo-bar .demo-tag { flex: none; background: var(--rose-ink); color: var(--surface); font: 600 11px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; }
+  .demo-bar span:not(.demo-tag) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--btn); color: var(--btn-ink); font: 600 13px var(--font); cursor: pointer; }
+  .demo-bar button:active { background: var(--btn-press); }
+  body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 54px); }
+  /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
+  .gf .alt.gf-demo { display: inline-flex; align-items: center; gap: 8px; align-self: center; text-decoration: none; padding: 11px 20px; border-radius: 999px;
+    background: var(--rose-soft); color: var(--rose-ink); font: 600 15px/1 var(--round); letter-spacing: .01em; transition: transform .15s; }
+  .gf .alt.gf-demo:active { transform: scale(.96); }
+  .gf .alt.gf-demo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
   .pg { position: fixed; inset: 0; z-index: 15; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     transition: transform .34s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
   .pg.dragging { transition: none; }
@@ -1698,6 +1713,7 @@
 <canvas id="confetti" aria-hidden="true"></canvas>
 
 <!-- Page de gauche : jeux, quiz et animations -->
+<div class="demo-bar" id="demo-bar" role="status" hidden><b class="demo-tag">Démo</b><span>Données inventées</span><button type="button" id="demo-quit">Quitter la démo</button></div>
 <div class="pg off" id="pg-games" role="region" aria-label="Mini-jeux" inert>
   <div class="wrap">
     <div class="pg-head center"><div><h1>Mini-jeux</h1><p>Chaque partie fait monter ton niveau de Zieutage</p></div></div>
@@ -1820,6 +1836,8 @@ const $ = (id) => document.getElementById(id);
 const PAGE = 3; // sur l'accueil, puis « Voir tout »
 let state = { snapshots: [], events: [], followers: {} };  // { snapshots: [...], events: [...], followers: {name: ts} }
 let loading = true;
+// Mode démo : fausses données en mémoire seulement. Les vraies (state, prefs) sont mises de côté et jamais écrites.
+let DEMO = false, realState = null, realPrefs = null;
 let tab = "unfollow";
 let shown = PAGE;
 let pending = null;      // export lu, en attente de confirmation
@@ -1872,6 +1890,7 @@ function setSync(kind, text) {
 function showStorageBanner(html) { $("storage-banner").innerHTML = html; $("storage-banner").hidden = !html; }
 
 async function save() {
+  if (DEMO) return;
   let ok = false;
   try { await store.set("state", state); ok = true; } catch {}
   lsSet(state);
@@ -2302,6 +2321,7 @@ $("file").addEventListener("change", (e) => {
   if (files.length) importFiles(files);
 });
 async function importFiles(files) {
+  leaveDemo(true);   // Le vrai fichier arrive : on quitte la démo, rien ne s'y mélange.
   openSheet("confirm");
   $("pv-err").hidden = true;
   $("pv-count").textContent = "Lecture…";
@@ -2426,6 +2446,7 @@ $("more").addEventListener("click", () => { shown += 40; renderList(); });
 
 // ---------- Copie / restauration ----------
 $("backup").addEventListener("click", async () => {
+  if (DEMO) return flash("C'est la démo : rien à sauvegarder. Tes vraies données ne sont pas touchées.", "err");
   if (!state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
   const data = JSON.stringify({ app: "zyeuto", version: 1, savedAt: new Date().toISOString(), state, avatar: avatar || undefined, zy: prefs.zy, games: prefs.games });
   const name = `zieuton-sauvegarde-${toDateInput(new Date())}.json`;
@@ -2467,6 +2488,7 @@ $("restore-file").addEventListener("change", async (e) => {
   const f = e.target.files[0];
   e.target.value = "";
   if (!f) return;
+  leaveDemo(true);
   let s, data;
   try {
     data = JSON.parse(await f.text());
@@ -2484,6 +2506,7 @@ $("restore-file").addEventListener("change", async (e) => {
   flash(`Historique restauré : ${s.snapshots.length} import${s.snapshots.length > 1 ? "s" : ""}.`, "ok");
 });
 $("reset").addEventListener("click", () => {
+  if (DEMO) return flash("C'est la démo : rien à effacer. Touche « Quitter » en haut pour en sortir.", "err");
   if (!state.snapshots.length) return flash("Il n'y a encore rien à effacer.", "err");
   $("reset-row").hidden = true; $("reset-confirm").hidden = false;
 });
@@ -2501,7 +2524,7 @@ $("reset-yes").addEventListener("click", async () => {
 const APP_URL = location.origin + location.pathname;
 let prefs = {};
 try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } catch {}
-function savePrefs() { try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
+function savePrefs() { if (DEMO) return; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
 function markRequested() {
   prefs.requestedAt = new Date().toISOString();
   delete prefs.readyAt;
@@ -2509,7 +2532,7 @@ function markRequested() {
   savePrefs();
   render();
 }
-$("go-export").addEventListener("click", markRequested);
+$("go-export").addEventListener("click", (e) => { if (DEMO) { e.preventDefault(); return leaveDemo(); } markRequested(); });
 $("start-export").addEventListener("click", markRequested);
 $("siri-btn").addEventListener("click", () => {
   const open = $("siri").hidden;
@@ -2830,6 +2853,7 @@ function metaStep(x) {
   };
 }
 function wkGo() {
+  if (DEMO) { haptic("light"); return leaveDemo(); }
   if (!reqPending() && !canUpdateFree()) { haptic("light"); return openPlus("update"); }
   if (!metaInApp()) return openRepeat();
   haptic("light");
@@ -3016,7 +3040,7 @@ function setRepeat(on) {
   gfRepeat = on; if (on) gfRepeatFrom = state.snapshots.length;
   try { on ? sessionStorage.setItem("abo-gf-repeat", String(gfRepeatFrom)) : sessionStorage.removeItem("abo-gf-repeat"); } catch {}
 }
-const gfOn = () => !loading && (gfRepeat || (!state.snapshots.length && !prefs.manualStart));
+const gfOn = () => !loading && !DEMO && (gfRepeat || (!state.snapshots.length && !prefs.manualStart));
 // Une demande est « en cours » si elle est plus récente que le dernier import.
 function reqPending() {
   const last = state.snapshots[state.snapshots.length - 1];
@@ -3260,6 +3284,18 @@ function renderGuided() {
     };
     body.prepend(bk);
   }
+  // « Voir la démo » : pour découvrir l'app tout de suite, sans attendre Instagram.
+  if (!gfRepeat && !state.snapshots.length && step !== "install") {
+    const foot = body.querySelector(".gf-foot");
+    if (foot) {
+      const d = document.createElement("button");
+      d.className = "alt gf-demo"; d.type = "button";
+      d.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>`
+        + (step === "welcome" ? "Jeter un œil à la démo" : step === "get" || step === "wait" ? "En attendant, voir la démo" : "Voir la démo");
+      d.onclick = () => { if (step === "welcome") { prefs.welcomed = true; savePrefs(); } enterDemo(); };
+      foot.append(d);
+    }
+  }
   const nd = $("gf-nodrive");
   if (nd) nd.onclick = () => { prefs.useDrive = false; delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
   const rs = $("gf-restore");
@@ -3301,7 +3337,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1745";
+const BUILD = "2026-11-02-1955";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -3442,6 +3478,7 @@ window.zyeutoPlus = (d) => {
   if (Array.isArray(d.products) && d.products.length) {
     prefs.plusPrices = Object.fromEntries(d.products.map((p) => [p.id, p.price]));
   }
+  if (DEMO) { realPrefs.plus = prefs.plus; if (prefs.plusPrices) realPrefs.plusPrices = prefs.plusPrices; try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch {} }
   savePrefs();
   renderPlusPrices(); renderPlusBlock();
   // Plus vient de s'activer (ou de s'arrêter) : le bonhomme change de couleur partout.
@@ -4817,6 +4854,113 @@ $("avatar-file").addEventListener("change", async (e) => {
   catch { toast("Cette image n'a pas pu être ouverte. Essaie une autre photo.", false); }
 });
 renderAvatar();
+
+// ---------- Mode démo ----------
+// Des abonnés inventés (tous les pseudos contiennent « demo ») pour découvrir l'app avant d'avoir son export.
+// Tout reste en mémoire : save() et savePrefs() n'écrivent rien pendant la démo, les vraies données sont mises de côté.
+const DEMO_FIRST = ("lea hugo ines lucas jade louis emma gabriel chloe arthur lina jules mila adam rose nathan alice leo anna raphael "
+  + "sarah noah julia tom manon enzo camille theo lou mael zoe ethan clara sacha eva paul nina victor romane axel "
+  + "margaux yanis louise malo agathe noe lena timeo celia ilyes elsa maxime juliette amine ambre baptiste lola "
+  + "gaspard iris marius capucine kylian salome aaron justine robin mathilde eden oceane milan apolline liam "
+  + "charlotte rayan elise samuel lisa naim maya tiago alix nolan esther lyam victoire bastien heloise oscar").split(" ");
+const DEMO_WORDS = ("photo travel food run art music skate surf film cafe paris lyon nantes bordeaux lille marseille "
+  + "studio daily life vibes style ink beauty sport yoga bike book").split(" ");
+function demoData() {
+  let seed = 20261102;
+  const rnd = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const one = (a) => a[rnd() * a.length | 0];
+  const used = new Set();
+  const nameOf = () => {
+    for (;;) {
+      const f = one(DEMO_FIRST), w = one(DEMO_WORDS), n = 10 + (rnd() * 89 | 0), k = rnd() * 7 | 0;
+      const u = [`${f}.demo`, `${f}_demo`, `demo.${f}`, `${f}.demo${n}`, `${f}_${w}.demo`, `${w}.demo.${f}`, `demo_${f}${n}`][k];
+      if (!used.has(u)) { used.add(u); return u; }
+    }
+  };
+  const now = Date.now(), DAY = 864e5, sec = (ms) => Math.floor(ms / 1000);
+  const days = [61, 51, 41, 31, 20, 10, 2];
+  const at = days.map((d) => new Date(now - d * DAY - 3 * 36e5).toISOString());
+  // Point de départ : 1 183 abonnés arrivés sur les 4 dernières années (plus nombreux récemment).
+  let followers = {};
+  for (let i = 0; i < 1183; i++) followers[nameOf()] = sec(now - days[0] * DAY - (rnd() ** 1.6) * 4 * 365 * DAY);
+  // Quelques anniversaires d'abonnement aujourd'hui et dans les jours qui viennent.
+  const names0 = Object.keys(followers);
+  [[1, 0], [2, 0], [3, 0], [1, 2], [2, 4], [4, 6]].forEach(([y, d], i) => {
+    const t = new Date(now); t.setFullYear(t.getFullYear() - y); t.setDate(t.getDate() + d); t.setHours(14, 0, 0, 0);
+    followers[names0[i * 37]] = sec(t.getTime());
+  });
+  const state = { snapshots: [], events: [], followers: {} };
+  const ups = [0, 26, 19, 31, 14, 23, 17], downs = [0, 9, 12, 6, 15, 8, 11];
+  at.forEach((takenAt, i) => {
+    let unfollows = [], follows = [];
+    if (i) {
+      const cur = Object.keys(followers);
+      while (unfollows.length < downs[i]) { const u = one(cur); if (!unfollows.includes(u)) unfollows.push(u); }
+      const from = Date.parse(at[i - 1]), to = Date.parse(takenAt);
+      const next = { ...followers };
+      for (const u of unfollows) delete next[u];
+      for (let k = 0; k < ups[i]; k++) { const u = nameOf(); next[u] = sec(from + rnd() * (to - from)); follows.push(u); }
+      for (const u of unfollows.sort()) state.events.push({ u, kind: "unfollow", at: takenAt, since: at[i - 1], ts: followers[u] ?? null });
+      for (const u of follows.sort()) state.events.push({ u, kind: "follow", at: takenAt, since: at[i - 1] });
+      followers = next;
+    }
+    state.snapshots.push({ id: i + 1, takenAt, source: "demo", count: Object.keys(followers).length, hash: "demo-" + (i + 1), unfollows: unfollows.length, follows: follows.length });
+  });
+  state.followers = followers;
+  // Comptes suivis : la plupart te suivent aussi (« Qui a craqué en premier » compare les dates), d'autres non.
+  const following = {};
+  for (const [u, t] of Object.entries(followers)) {
+    if (rnd() < 0.45) following[u] = Math.min(sec(now - DAY), t + Math.round((rnd() - 0.45) * 40 * 86400));
+  }
+  for (const e of state.events) if (e.kind === "unfollow" && rnd() < 0.5) following[e.u] = (e.ts || sec(now - 300 * DAY)) - 86400;
+  for (let i = 0; i < 64; i++) following[nameOf()] = sec(now - rnd() * 3 * 365 * DAY);
+  state.following = following; state.followingAt = at[at.length - 1];
+  const last = at[at.length - 1];
+  const prefs = {
+    welcomed: true, onboarded: true, useDrive: false, stayInSafari: true, installDismissed: true,
+    lastImportAt: last, backupAt: last, backupCount: at.length,
+    zy: { xp: 640, look: { hat: "cap" }, anni: {} }, games: { gone: { best: 4, wins: 6 } },
+  };
+  return { state, prefs };
+}
+const isDemoName = (u) => /(^|[._])demo([._\d]|$)/.test(u);
+function enterDemo() {
+  if (DEMO) return;
+  const d = demoData();
+  realState = state; realPrefs = prefs;
+  for (const k of ["theme", "plus", "plusPrices"]) if (k in realPrefs) d.prefs[k] = realPrefs[k];
+  DEMO = true; state = d.state; prefs = d.prefs;
+  document.body.classList.add("demo"); $("demo-bar").hidden = false;
+  undoState = null; $("toast").hidden = true;
+  tab = "unfollow"; shown = PAGE; selectTab(tab);
+  haptic("success");
+  render(); renderPlusBlock(); renderBackup(); checkTrophies();
+  setPage("home"); window.scrollTo(0, 0);
+  playIntro();
+}
+// quiet : sortie automatique (import d'un vrai fichier), sans rouvrir le parcours.
+function leaveDemo(quiet) {
+  if (!DEMO) return;
+  // Ce que la personne a réglé pendant la démo (thème, achat Plus) est gardé.
+  for (const k of ["theme", "plus", "plusPrices"]) if (k in prefs) realPrefs[k] = prefs[k];
+  DEMO = false; state = realState; prefs = realPrefs; realState = realPrefs = null;
+  savePrefs();
+  document.body.classList.remove("demo"); $("demo-bar").hidden = true;
+  undoState = null; $("toast").hidden = true; $("bilan").hidden = true;
+  tab = "unfollow"; shown = PAGE; selectTab(tab);
+  if (!quiet) haptic("light");
+  render(); renderPlusBlock(); renderBackup();
+  setPage("home"); window.scrollTo(0, 0);
+}
+$("demo-quit").addEventListener("click", () => leaveDemo());
+// Les pseudos de la démo sont inventés : on n'ouvre pas Instagram dessus.
+document.addEventListener("click", (e) => {
+  if (!DEMO) return;
+  const a = e.target.closest && e.target.closest('a[href^="https://www.instagram.com/"]');
+  if (!a) return;
+  const u = decodeURIComponent(new URL(a.href).pathname.split("/").filter(Boolean).pop() || "");
+  if (isDemoName(u)) { e.preventDefault(); toast("Compte inventé pour la démo : pas de profil Instagram.", false); }
+}, true);
 
 // ---------- Démarrage ----------
 setSync("wait", "Chargement…");
