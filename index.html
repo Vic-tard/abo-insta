@@ -1530,11 +1530,6 @@
       <div class="st-group" id="acct-list" hidden></div>
       <div class="st-group">
         <button class="st-row" id="acct-add" type="button"><span class="st-ic" style="background:#c9a24a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b id="acct-add-t">Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
-        <div id="acct-row"><button class="st-row" id="acct-switch" type="button"><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h13l-3.5-3.5M19 15H6l3.5 3.5"/></svg></span><span class="st-t"><b>Remplacer le compte affiché</b><small id="acct-sub"></small></span></button></div>
-        <div class="st-confirm" id="acct-confirm" hidden>
-          <p>L'historique et les résultats du compte affiché seront effacés, et Zieuton suivra le prochain compte que tu importes. Possible une fois par mois. Ton bonhomme et Plus sont gardés.</p>
-          <div class="row"><button class="btn danger" id="acct-yes" type="button">Oui, remplacer</button><button class="btn ghost" id="acct-no" type="button">Annuler</button></div>
-        </div>
       </div>
       <p class="st-foot">Zieuton suit un seul compte Instagram par téléphone. Chaque compte en plus coûte 0,99 €, une fois.</p>
     </div>
@@ -1874,7 +1869,6 @@
       <label for="pv-date">Date de l'export<input type="date" id="pv-date"></label>
       <div class="msg err" id="pv-err" hidden></div>
       <button class="btn primary" id="pv-add" type="button" hidden>Ajouter ce compte</button>
-      <button class="btn danger" id="pv-switch" type="button" hidden>Remplacer le compte actuel</button>
       <div class="row">
         <button class="btn primary" id="save">Enregistrer</button>
         <button class="btn ghost" id="cancel-confirm">Annuler</button>
@@ -2105,7 +2099,7 @@ async function hashNames(names) {
 // Sans ça, un seul Zieuton Plus servirait à suivre les comptes de toute une bande d'amis.
 // L'export d'Instagram ne contient pas le pseudo : on reconnaît le compte à ses abonnés.
 // prefs.acct garde une empreinte (les 512 plus petites valeurs de hachage des pseudos) : elle survit à « Tout effacer ».
-const ACCT_K = 512, ACCT_SAME = 0.4, ACCT_SWITCH_DAYS = 30;
+const ACCT_K = 512, ACCT_SAME = 0.4;
 function nameHash(s) {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
@@ -2147,15 +2141,6 @@ function knownAcct(names) {
   return accts().find((a) => a !== cur && sameAcct(a, print)) || null;
 }
 function rememberAccount(names) { if (DEMO || !names.length) return; const a = curAcct(); a.h = acctPrint(names); a.n = names.length; savePrefs(); }
-const nextSwitchAt = () => prefs.acctSwitchAt ? new Date(Date.parse(prefs.acctSwitchAt) + ACCT_SWITCH_DAYS * 864e5) : null;
-function canSwitchAccount() { const n = nextSwitchAt(); return !n || Date.now() >= n.getTime(); }
-// Changer de compte sans compte en plus : l'historique du compte affiché est effacé.
-function switchAccount() {
-  state = emptyState();
-  const a = curAcct(); a.h = []; a.n = 0;
-  prefs.acctSwitchAt = new Date().toISOString();
-  savePrefs();
-}
 async function parkState(id, s) {
   try { await store.set("acct:" + id, s); } catch {}
   try { localStorage.setItem("abo-state-" + id, JSON.stringify(s)); } catch {}
@@ -2191,10 +2176,9 @@ function otherAccountError(what, names) {
     : `${what} vient d'un autre compte Instagram que celui suivi ici. Rien n'a été enregistré. `
       + (accts().length < acctSlots()
         ? "Tu as une place libre : touche « Ajouter ce compte » pour le suivre en plus, sans rien effacer."
-        : "Pour le suivre en plus, sans rien perdre, ajoute un compte (0,99 €, à vie). "
-          + (canSwitchAccount()
-            ? "Ou remplace le compte actuel : son historique sera effacé (une fois par mois)."
-            : `Remplacer le compte actuel sera possible le ${fmtDate(nextSwitchAt().toISOString())}.`)));
+        : accts().length >= 1 + ACCT_IDS.length
+          ? `Tu suis déjà ${accts().length} comptes, le maximum.`
+          : "Zieuton suit un seul compte par téléphone. Pour suivre celui-ci en plus, sans rien perdre, ajoute un compte (0,99 €, à vie)."));
   e.otherAccount = known ? { known: known.id } : { add: accts().length < acctSlots() };
   return e;
 }
@@ -2208,7 +2192,6 @@ function renderAcct() {
   $("acct-add-t").textContent = free > 0 ? "Suivre un autre compte" : "Ajouter un compte";
   $("acct-add-s").textContent = free > 0 ? `${free} place${free > 1 ? "s" : ""} libre${free > 1 ? "s" : ""}, sans rien effacer` : list.length >= 1 + ACCT_IDS.length ? `${list.length} comptes au maximum` : "0,99 €, à vie. Sans rien effacer.";
   $("acct-add").hidden = list.length >= 1 + ACCT_IDS.length && free <= 0;
-  $("acct-sub").textContent = canSwitchAccount() ? "Efface l'historique du compte affiché" : `Possible à nouveau le ${fmtDate(nextSwitchAt().toISOString())}`;
 }
 
 // ---------- Comparaison ----------
@@ -2567,11 +2550,9 @@ async function commit(takenAt) {
     return false;
   }
 }
-// Import refusé (autre compte) : passer sur ce compte, l'ajouter (place libre ou achat), ou remplacer le compte actuel.
+// Import refusé (autre compte) : passer sur ce compte s'il est déjà suivi, sinon l'ajouter (place libre ou achat).
 function showSwitch(o) {
-  const add = $("pv-add"), sw = $("pv-switch");
-  add.hidden = !o; sw.hidden = !o || !!o.known || !canSwitchAccount();
-  sw.dataset.armed = ""; sw.textContent = "Remplacer le compte actuel";
+  const add = $("pv-add");
   add.dataset.known = o && o.known || "";
   if (o) add.textContent = o.known ? "Passer sur ce compte" : o.add ? "Ajouter ce compte" : "Ajouter ce compte · 0,99 €";
   add.hidden = !o || (!o.known && !o.add && accts().length >= 1 + ACCT_IDS.length);
@@ -2587,15 +2568,6 @@ $("pv-add").addEventListener("click", async () => {
   if (known) { await goAccount(known); return importPendingHere(); }
   if (accts().length < acctSlots()) { await addAccount(); return importPendingHere(); }
   buyAccount(async () => { await addAccount(); await importPendingHere(); });
-});
-$("pv-switch").addEventListener("click", async () => {
-  const b = $("pv-switch");
-  if (!pending || !canSwitchAccount()) return showSwitch(null);
-  if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Oui, effacer l'historique et remplacer"; return; }
-  switchAccount();
-  await save();
-  renderAcct();
-  await importPendingHere();
 });
 $("save").addEventListener("click", async () => {
   if (!pending) return;
@@ -2700,7 +2672,7 @@ $("restore-file").addEventListener("change", async (e) => {
     return flash("Ce fichier n'est pas une sauvegarde Zieuton.", "err");
   }
   const restoredNames = Object.keys(s.followers);
-  if (s.snapshots.length && isOtherAccount(restoredNames)) return flash("Cette sauvegarde vient d'un autre compte Instagram que celui affiché. Va dans Réglages → Mon compte : passe sur ce compte, ajoute-le, ou remplace le compte actuel, puis restaure à nouveau.", "err");
+  if (s.snapshots.length && isOtherAccount(restoredNames)) return flash("Cette sauvegarde vient d'un autre compte Instagram que celui affiché. Va dans Réglages → Mon compte : passe sur ce compte ou ajoute-le, puis restaure à nouveau.", "err");
   state = s;
   rememberAccount(restoredNames);
   if (typeof data.avatar === "string" && data.avatar.startsWith("data:image/")) setAvatar(data.avatar);
@@ -2721,20 +2693,6 @@ $("reset-yes").addEventListener("click", async () => {
   render();
   await save();
   flash("Historique effacé.", "ok");
-});
-$("acct-switch").addEventListener("click", () => {
-  if (DEMO) return toast("C'est la démo : touche « Quitter » en haut pour en sortir.", false);
-  if (!canSwitchAccount()) return toast(`Tu as déjà changé de compte récemment. Prochain changement possible le ${fmtDate(nextSwitchAt().toISOString())}.`, false);
-  $("acct-row").hidden = true; $("acct-confirm").hidden = false;
-});
-$("acct-no").addEventListener("click", () => { $("acct-row").hidden = false; $("acct-confirm").hidden = true; });
-$("acct-yes").addEventListener("click", async () => {
-  $("acct-row").hidden = false; $("acct-confirm").hidden = true;
-  switchAccount();
-  render();
-  await save();
-  renderAcct();
-  toast("C'est fait : importe l'export du compte à suivre.", false);
 });
 $("acct-list").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-acct]");
