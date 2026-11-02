@@ -11,12 +11,12 @@
       "localizations" : [
         {
           "description" : "Mises à jour illimitées, pour toujours.",
-          "displayName" : "Zyeuto Plus à vie",
+          "displayName" : "Zieuton Plus à vie",
           "locale" : "fr_FR"
         }
       ],
       "productID" : "fr.zyeuto.plus.avie",
-      "referenceName" : "Zyeuto Plus à vie",
+      "referenceName" : "Zieuton Plus à vie",
       "type" : "NonConsumable"
     }
   ],
@@ -34,7 +34,7 @@
       "localizations" : [
 
       ],
-      "name" : "Zyeuto Plus",
+      "name" : "Zieuton Plus",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -51,13 +51,13 @@
           "localizations" : [
             {
               "description" : "Mises à jour illimitées, à l'année.",
-              "displayName" : "Zyeuto Plus annuel",
+              "displayName" : "Zieuton Plus annuel",
               "locale" : "fr_FR"
             }
           ],
           "productID" : "fr.zyeuto.plus.an",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Zyeuto Plus annuel",
+          "referenceName" : "Zieuton Plus annuel",
           "subscriptionGroupID" : "21500001",
           "type" : "RecurringSubscription"
         },
@@ -76,13 +76,13 @@
           "localizations" : [
             {
               "description" : "Mises à jour illimitées, au mois.",
-              "displayName" : "Zyeuto Plus mensuel",
+              "displayName" : "Zieuton Plus mensuel",
               "locale" : "fr_FR"
             }
           ],
           "productID" : "fr.zyeuto.plus.mois",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Zyeuto Plus mensuel",
+          "referenceName" : "Zieuton Plus mensuel",
           "subscriptionGroupID" : "21500001",
           "type" : "RecurringSubscription"
         }

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "272AEFF1D577E3709962E864"
-               BuildableName = "Zyeuto.app"
-               BlueprintName = "Zyeuto"
-               ReferencedContainer = "container:Zyeuto.xcodeproj">
+               BuildableName = "Zieuton.app"
+               BlueprintName = "Zieuton"
+               ReferencedContainer = "container:Zieuton.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -43,13 +43,13 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "272AEFF1D577E3709962E864"
-            BuildableName = "Zyeuto.app"
-            BlueprintName = "Zyeuto"
-            ReferencedContainer = "container:Zyeuto.xcodeproj">
+            BuildableName = "Zieuton.app"
+            BlueprintName = "Zieuton"
+            ReferencedContainer = "container:Zieuton.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../Zyeuto/Zyeuto.storekit">
+         identifier = "../Zieuton/Zieuton.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
@@ -63,9 +63,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "272AEFF1D577E3709962E864"
-            BuildableName = "Zyeuto.app"
-            BlueprintName = "Zyeuto"
-            ReferencedContainer = "container:Zyeuto.xcodeproj">
+            BuildableName = "Zieuton.app"
+            BlueprintName = "Zieuton"
+            ReferencedContainer = "container:Zieuton.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

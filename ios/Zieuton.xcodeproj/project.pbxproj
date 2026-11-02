@@ -18,11 +18,11 @@
 		A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0244CDA34711B5B70CD5DAF9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0990C69358715F182884B6C6 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		3FDE7802CC4F26E6C18A72CF /* Zyeuto.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zyeuto.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3FDE7802CC4F26E6C18A72CF /* Zieuton.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zieuton.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52BF06FAA93713B5B497B6F0 /* WebViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
 		6C653330D133F1749AF36F7D /* SceneDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		B61704CEFFC51F31BA771C8B /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		5C0A7E11D2B34F6A8E9B0C12 /* Zyeuto.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = Zyeuto.storekit; sourceTree = "<group>"; };
+		5C0A7E11D2B34F6A8E9B0C12 /* Zieuton.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = Zieuton.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,7 +44,7 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		27EFE5874F3723790F24CC2A /* Zyeuto */ = {
+		27EFE5874F3723790F24CC2A /* Zieuton */ = {
 			isa = PBXGroup;
 			children = (
 				B61704CEFFC51F31BA771C8B /* AppDelegate.swift */,
@@ -52,11 +52,11 @@
 				52BF06FAA93713B5B497B6F0 /* WebViewController.swift */,
 				0990C69358715F182884B6C6 /* Assets.xcassets */,
 				0244CDA34711B5B70CD5DAF9 /* Info.plist */,
-				5C0A7E11D2B34F6A8E9B0C12 /* Zyeuto.storekit */,
+				5C0A7E11D2B34F6A8E9B0C12 /* Zieuton.storekit */,
 				A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */,
 			);
-			name = Zyeuto;
-			path = Zyeuto;
+			name = Zieuton;
+			path = Zieuton;
 			sourceTree = "<group>";
 		};
 		3384DD2D850E68130E711B01 = {
@@ -64,7 +64,7 @@
 			children = (
 				FC1923A138375BEC8BA7313A /* Products */,
 				0A258495621B01FDA8FC809A /* Frameworks */,
-				27EFE5874F3723790F24CC2A /* Zyeuto */,
+				27EFE5874F3723790F24CC2A /* Zieuton */,
 			);
 			sourceTree = "<group>";
 		};
@@ -78,7 +78,7 @@
 		FC1923A138375BEC8BA7313A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3FDE7802CC4F26E6C18A72CF /* Zyeuto.app */,
+				3FDE7802CC4F26E6C18A72CF /* Zieuton.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -86,9 +86,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		272AEFF1D577E3709962E864 /* Zyeuto */ = {
+		272AEFF1D577E3709962E864 /* Zieuton */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 92298F6DD67D41305BA26B6D /* Build configuration list for PBXNativeTarget "Zyeuto" */;
+			buildConfigurationList = 92298F6DD67D41305BA26B6D /* Build configuration list for PBXNativeTarget "Zieuton" */;
 			buildPhases = (
 				49AAFD03359E28A54F975DE8 /* Sources */,
 				AC39064590F81A7E2703917D /* Frameworks */,
@@ -98,9 +98,9 @@
 			);
 			dependencies = (
 			);
-			name = Zyeuto;
-			productName = Zyeuto;
-			productReference = 3FDE7802CC4F26E6C18A72CF /* Zyeuto.app */;
+			name = Zieuton;
+			productName = Zieuton;
+			productReference = 3FDE7802CC4F26E6C18A72CF /* Zieuton.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -112,7 +112,7 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = 4060F37CA5A841118024116E /* Build configuration list for PBXProject "Zyeuto" */;
+			buildConfigurationList = 4060F37CA5A841118024116E /* Build configuration list for PBXProject "Zieuton" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -127,7 +127,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				272AEFF1D577E3709962E864 /* Zyeuto */,
+				272AEFF1D577E3709962E864 /* Zieuton */,
 			);
 		};
 /* End PBXProject section */
@@ -229,12 +229,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Zyeuto/Info.plist;
+				INFOPLIST_FILE = Zieuton/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = fr.zyeuto.app;
-				PRODUCT_NAME = Zyeuto;
+				PRODUCT_NAME = Zieuton;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -252,12 +252,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Zyeuto/Info.plist;
+				INFOPLIST_FILE = Zieuton/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = fr.zyeuto.app;
-				PRODUCT_NAME = Zyeuto;
+				PRODUCT_NAME = Zieuton;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -321,7 +321,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4060F37CA5A841118024116E /* Build configuration list for PBXProject "Zyeuto" */ = {
+		4060F37CA5A841118024116E /* Build configuration list for PBXProject "Zieuton" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0B9916A737CCC4411ECAD9E0 /* Debug */,
@@ -330,7 +330,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		92298F6DD67D41305BA26B6D /* Build configuration list for PBXNativeTarget "Zyeuto" */ = {
+		92298F6DD67D41305BA26B6D /* Build configuration list for PBXNativeTarget "Zieuton" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				40D6E098557D407F215EE5FD /* Release */,
