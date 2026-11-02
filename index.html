@@ -636,41 +636,75 @@
   }
   @keyframes askedIn { from { transform: translateY(60px) scale(.96); opacity: 0; } }
 
-  /* Zyeuto Plus */
-  .plus-card { background: linear-gradient(160deg, #ffe7c2, #f5b26b 55%, #ec8f7c); gap: 6px; max-height: calc(100dvh - 32px); overflow-y: auto; }
-  .plus-tag { font: 800 12px var(--round); letter-spacing: .08em; text-transform: uppercase; background: #2e2328; color: #ffd9a0; border-radius: 999px; padding: 4px 10px; }
-  .plus-why { font-weight: 600; }
-  .plus-perks { list-style: none; margin: 6px 0 4px; padding: 0; text-align: left; display: grid; gap: 6px; width: 100%; }
-  .plus-perks li { display: flex; gap: 10px; align-items: center; font: 600 15px/1.3 var(--round); background: rgb(255 255 255 / .5); border-radius: 14px; padding: 9px 12px; }
-  .plus-perks li i { font-style: normal; flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #2e2328; color: #fff; font-size: 13px; }
-  .plus-plans { display: grid; gap: 8px; width: 100%; margin-top: 4px; }
-  .plus-plan { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 2px solid transparent; border-radius: 16px; background: rgb(255 255 255 / .6); padding: 11px 14px; font: 600 15px var(--round); color: #2e2328; cursor: pointer; text-align: left; }
-  .plus-plan b { font: 800 16px var(--round); display: block; }
-  .plus-plan small { color: rgb(46 35 40 / .72); font-size: 13px; }
-  .plus-plan .pr { font: 800 17px var(--round); white-space: nowrap; }
-  .plus-plan .badge { display: inline-block; margin-left: 6px; background: #3f7f68; color: #fff; border-radius: 999px; padding: 2px 8px; font: 800 11px var(--round); vertical-align: 2px; }
-  .plus-plan[aria-checked="true"] { border-color: #2e2328; background: #fff; }
-  .plus-buy { background: #2e2328 !important; margin-top: 4px; }
-  .plus-buy:disabled { opacity: .6; }
-  .plus-msg { font: 600 14px var(--round); color: #8a2f22; min-height: 0; }
-  .plus-links { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-  .plus-legal { font-size: 11.5px !important; line-height: 1.35 !important; color: rgb(46 35 40 / .7) !important; }
-  .plus-legal a { color: inherit; }
-  .plus-mini { display: flex; align-items: center; gap: 10px; width: 100%; margin: 10px 0 0; padding: 10px 12px; border: 1.5px dashed rgb(46 35 40 / .25); border-radius: 18px; background: rgb(255 231 194 / .55); color: #2e2328; text-align: left; cursor: pointer; font: inherit; }
+  /* Zyeuto Plus : noir et or, le côté premium */
+  :root { --gold: linear-gradient(135deg, #fff2bf 0%, #f4cd63 28%, #c98a20 55%, #f8dc7d 80%, #b47a1c 100%); --gold-ink: #2a1d08; --night: linear-gradient(160deg, #2b2023 0%, #1a1214 60%, #120c0d 100%); }
+  .gold-text { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .plus-tag, .plus-mini-tag { position: relative; overflow: hidden; font: 800 11.5px var(--round); letter-spacing: .14em; text-transform: uppercase; background: var(--gold); color: var(--gold-ink); border-radius: 999px; padding: 5px 11px; box-shadow: 0 2px 10px rgb(244 205 99 / .35), inset 0 1px 0 rgb(255 255 255 / .6); }
+  .plus-tag::after, .plus-mini-tag::after, .plus-buy::after, .plus-mini::after, .hc-plus::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / .55) 50%, transparent 65%); transform: translateX(-120%); pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .plus-tag::after, .plus-mini-tag::after, .plus-buy::after, .plus-mini::after, .hc-plus::after { animation: goldShine 3.6s ease-in-out infinite; }
+    .plus-mini::after { animation-delay: .6s; } .plus-buy::after { animation-delay: 1.2s; }
+    .plus-sparkle { animation: goldTwinkle 2.4s ease-in-out infinite; }
+    .plus-sparkle.b { animation-delay: .8s; } .plus-sparkle.c { animation-delay: 1.6s; }
+  }
+  @keyframes goldShine { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+  @keyframes goldTwinkle { 0%, 100% { opacity: .25; transform: scale(.7) rotate(0); } 50% { opacity: 1; transform: scale(1.1) rotate(20deg); } }
+
+  /* Petite carte (bienvenue, accueil) */
+  .plus-mini { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%; margin: 10px 0 0; padding: 12px 14px; border: 0; border-radius: 20px; background: var(--night); color: #f7ecd9; text-align: left; cursor: pointer; font: inherit;
+    box-shadow: 0 0 0 1.5px rgb(244 205 99 / .55), 0 10px 22px rgb(26 18 20 / .28); }
   .plus-mini[hidden] { display: none; }
   .wl-plus { margin: 14px auto 0; max-width: 420px; }
-  .plus-mini-tag { flex: none; font: 800 11px var(--round); letter-spacing: .08em; text-transform: uppercase; background: #2e2328; color: #ffd9a0; border-radius: 999px; padding: 4px 9px; }
-  .plus-mini-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-  .plus-mini-txt b { font: 700 14.5px/1.25 var(--round); }
-  .plus-mini-txt small { font-size: 12.5px; line-height: 1.3; color: rgb(46 35 40 / .72); }
-  .plus-mini-go { font: 700 20px var(--round); color: rgb(46 35 40 / .5); }
-  @media (prefers-color-scheme: dark) { .plus-mini { color: #f6e9e4; background: rgb(255 231 194 / .1); border-color: rgb(255 231 194 / .3); } .plus-mini-txt small, .plus-mini-go { color: rgb(246 233 228 / .7); } }
-  .plus-rules { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: grid; gap: 4px; text-align: left; }
-  .plus-rules li { display: flex; gap: 8px; align-items: baseline; font: 600 14px/1.3 var(--round); }
+  .plus-mini-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .plus-mini-txt b { font: 800 15px/1.25 var(--round); }
+  .plus-mini-txt small { font-size: 12.5px; line-height: 1.35; color: rgb(247 236 217 / .72); }
+  .plus-mini-go { font: 800 22px var(--round); }
+  .plus-mini.on .plus-mini-txt b { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* Grande fenêtre Plus */
+  .plus-card { position: relative; background: var(--night) !important; color: #f7ecd9 !important; gap: 7px; padding-top: 18px !important; max-height: calc(100dvh - 32px); overflow-y: auto;
+    box-shadow: 0 0 0 1.5px rgb(244 205 99 / .6), 0 24px 50px rgb(0 0 0 / .45) !important; }
+  .plus-card::before { content: ""; position: absolute; left: 50%; top: -120px; width: 340px; height: 260px; translate: -50% 0; background: radial-gradient(closest-side, rgb(244 205 99 / .35), transparent); pointer-events: none; }
+  .plus-card > * { position: relative; flex-shrink: 0; }
+  .plus-card h2 { font: 800 28px/1.1 var(--round) !important; background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .plus-card p { color: rgb(247 236 217 / .78) !important; }
+  .plus-card .asked-av { box-shadow: 0 0 0 3px #f4cd63, 0 0 28px rgb(244 205 99 / .55) !important; }
+  .plus-hero { position: relative; display: grid; place-items: center; margin: 4px 0 10px; }
+  .plus-card .asked-av { width: 72px !important; }
+  .plus-sparkle { position: absolute; font-size: 16px; color: #f8dc7d; pointer-events: none; }
+  .plus-sparkle.a { left: -22px; top: 8px; } .plus-sparkle.b { right: -20px; top: 30px; font-size: 12px; } .plus-sparkle.c { right: -6px; bottom: -6px; font-size: 10px; }
+  .plus-why { font-weight: 600; }
+  .plus-rules { list-style: none; margin: 4px 0 0; padding: 10px 12px; width: 100%; display: grid; gap: 5px; text-align: left; border-radius: 16px; background: rgb(255 255 255 / .05); border: 1px solid rgb(244 205 99 / .18); }
+  .plus-rules li { display: flex; gap: 8px; align-items: baseline; font: 600 14px/1.3 var(--round); color: #f7ecd9; }
   .plus-rules li b { flex: none; min-width: 74px; }
-  .plus-rules li.on { color: #2e2328; } .plus-rules li.off { color: rgb(46 35 40 / .55); text-decoration: line-through; }
-  .hc-plus { background: linear-gradient(160deg, #ffe7c2, #f5b26b); }
-  .hc-plus .btn.ghost { background: rgb(255 255 255 / .55); }
+  .plus-rules li.off { color: rgb(247 236 217 / .4); text-decoration: line-through; }
+  .plus-rules li.gold b, .plus-rules li.gold span { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .plus-perks { list-style: none; margin: 4px 0; padding: 0; text-align: left; display: grid; gap: 6px; width: 100%; }
+  .plus-perks li { display: flex; gap: 10px; align-items: center; font: 600 15px/1.3 var(--round); color: #f7ecd9; padding: 4px 2px; }
+  .plus-perks li i { font-style: normal; flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: var(--gold-ink); font-size: 14px; font-weight: 800; box-shadow: 0 2px 8px rgb(244 205 99 / .3); }
+  .plus-plans { display: grid; gap: 8px; width: 100%; margin-top: 4px; }
+  .plus-plan { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 1.5px solid rgb(247 236 217 / .14); border-radius: 16px; background: rgb(255 255 255 / .05); padding: 12px 14px; font: 600 15px var(--round); color: #f7ecd9; cursor: pointer; text-align: left; transition: border-color .15s, background .15s, transform .12s; }
+  .plus-plan:active { transform: scale(.98); }
+  .plus-plan b { font: 800 16px var(--round); display: block; }
+  .plus-plan small { color: rgb(247 236 217 / .6); font-size: 13px; }
+  .plus-plan .pr { font: 800 17px var(--round); white-space: nowrap; }
+  .plus-plan .badge { display: inline-block; margin-left: 6px; background: var(--gold); color: var(--gold-ink); border-radius: 999px; padding: 2px 8px; font: 800 11px var(--round); vertical-align: 2px; }
+  .plus-plan[aria-checked="true"] { border-color: #f4cd63; background: rgb(244 205 99 / .12); box-shadow: 0 0 18px rgb(244 205 99 / .18); }
+  .plus-plan[aria-checked="true"] .pr { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .plus-buy { position: relative; overflow: hidden; background: var(--gold) !important; color: var(--gold-ink) !important; margin-top: 4px; font-weight: 800 !important; box-shadow: 0 8px 22px rgb(244 205 99 / .3), inset 0 1px 0 rgb(255 255 255 / .6); }
+  .plus-buy:disabled { opacity: .6; }
+  .plus-msg { font: 600 14px var(--round); color: #ffb4a6 !important; }
+  .plus-links { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .plus-card .asked-stay { color: rgb(247 236 217 / .7); }
+  .plus-legal { font-size: 11.5px !important; line-height: 1.35 !important; color: rgb(247 236 217 / .5) !important; }
+  .plus-legal a { color: inherit; }
+
+  /* Bloc des réglages */
+  .hc-plus { background: var(--night) !important; color: #f7ecd9; box-shadow: 0 0 0 1.5px rgb(244 205 99 / .5), 0 8px 18px rgb(26 18 20 / .25) !important; }
+  .hc-plus h2 { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hc-plus .note { color: rgb(247 236 217 / .75) !important; }
+  .hc-plus .btn.primary { background: var(--gold); color: var(--gold-ink); font-weight: 800; }
+  .hc-plus .btn.ghost { background: rgb(255 255 255 / .08); color: #f7ecd9; border: 1px solid rgb(244 205 99 / .3); }
 
   .wk-redo { order: 9; align-self: center; border: 0; background: none; font: 600 13px var(--round); color: rgb(46 35 40 / .72); text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; cursor: pointer; }
   .wk-big svg { width: 22px; height: 22px; flex: none; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -1546,15 +1580,15 @@
 </div>
 <div class="asked" id="plus" hidden role="dialog" aria-modal="true" aria-labelledby="plus-t">
   <div class="asked-card plus-card">
-    <span class="zy-av asked-av" id="plus-av" aria-hidden="true"></span>
+    <span class="plus-hero"><span class="zy-av asked-av" id="plus-av" aria-hidden="true"></span><span class="plus-sparkle a">✦</span><span class="plus-sparkle b">✦</span><span class="plus-sparkle c">✦</span></span>
     <span class="plus-tag">Zyeuto Plus</span>
     <h2 id="plus-t">Zyeute quand tu veux</h2>
     <p class="plus-why" id="plus-why"></p>
     <ul class="plus-rules" id="plus-rules"></ul>
     <ul class="plus-perks">
-      <li><i>∞</i>Mises à jour illimitées, chaque semaine ou chaque jour</li>
-      <li><i>👀</i>Qui est parti, dès que tu en as envie</li>
-      <li><i>🔒</i>Sans pub, et tes données restent sur ton téléphone</li>
+      <li><i>∞</i>Mises à jour illimitées, quand tu veux</li>
+      <li><i>✦</i>Ton bonhomme en or, partout dans l'app</li>
+      <li><i>✓</i>Sans pub, tes données restent chez toi</li>
     </ul>
     <div class="plus-plans" role="radiogroup" aria-label="Formule">
       <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span><b>À l'année<span class="badge" id="plus-save">−58 %</span></b><small id="plus-an-sub">soit 0,83 € par mois</small></span><span class="pr" id="plus-an-pr">9,99 €</span></button>
@@ -3085,9 +3119,10 @@ function openPlus(why) {
     : why === "update"
       ? `Ta mise à jour gratuite du mois est déjà faite${next ? `. La prochaine : le ${fmtShort(next.toISOString())}` : ""}. Avec Plus, c'est quand tu veux.`
       : "C'est gratuit pour commencer. Ensuite, une mise à jour par mois, ou illimité avec Plus.";
-  $("plus-av").innerHTML = $("wk-av").innerHTML;
+  // Aperçu : ton bonhomme tel qu'il sera avec Plus, en or.
+  $("plus-av").innerHTML = avatarSVG(prefs.zy?.look || {}, true);
   $("plus-rules").innerHTML = freeRules().map((r) => `<li class="${r.used ? "off" : "on"}"><b>${r.k}</b><span>${r.t}${r.used ? " ✓" : ""}</span></li>`).join("")
-    + `<li class="on"><b>Plus</b><span>illimité, quand tu veux</span></li>`;
+    + `<li class="gold"><b>Plus</b><span>illimité, quand tu veux</span></li>`;
   selectPlan(plusPlan); renderPlusPrices(); plusMsg("");
   $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer";
   $("plus").hidden = false;
@@ -3111,7 +3146,8 @@ function renderPlusMini() {
   $("plus-mini").hidden = !storeApp();
   if (!storeApp()) return;
   const n = state.snapshots.length, next = nextFreeAt();
-  if (hasPlus()) { $("plus-mini-t").textContent = "Zyeuto Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, quand tu veux."; return; }
+  $("plus-mini").classList.toggle("on", hasPlus());
+  if (hasPlus()) { $("plus-mini-t").textContent = "Zyeuto Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton bonhomme en or."; return; }
   $("plus-mini-t").textContent = n === 0 ? "Gratuit pour commencer"
     : n === 1 ? "Ta comparaison est offerte"
     : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine mise à jour offerte le ${fmtShort(next.toISOString())}`;
@@ -3136,7 +3172,7 @@ function renderPlusBlock() {
 async function plusUnlocked() {
   $("plus").hidden = true;
   haptic("success"); confetti();
-  toast("Bienvenue dans Zyeuto Plus ! Mises à jour illimitées.", false);
+  toast("Bienvenue dans Zyeuto Plus ! Ton bonhomme est passé en or.", false);
   renderPlusBlock();
   // Un fichier attendait : on l'importe maintenant.
   if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
@@ -3151,6 +3187,8 @@ window.zyeutoPlus = (d) => {
   }
   savePrefs();
   renderPlusPrices(); renderPlusBlock();
+  // Plus vient de s'activer (ou de s'arrêter) : le bonhomme change de couleur partout.
+  if (was !== hasPlus()) { try { renderHomeZy(); renderZy(); render(); } catch {} }
   const r = d.result;
   if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
   if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked();
@@ -3797,19 +3835,23 @@ const LOOKS = [
 ];
 const SLOTS = { hat: "Chapeau", eyes: "Yeux", face: "Visage", wall: "Mur", bg: "Fond" };
 let avatarN = 0;
-function avatarSVG(look = {}) {
+// Avec Zyeuto Plus, le bonhomme de l'utilisateur passe en or (pas ceux des jeux).
+function plusGold() { try { return hasPlus(); } catch { return false; } }
+function avatarSVG(look = {}, gold = plusGold() && !Object.values(GAME_LOOKS).includes(look)) {
   const get = (slot) => LOOKS.find((x) => x.id === look[slot] && x.slot === slot);
   const hat = get("hat"), eyes = get("eyes"), face = get("face"), wall = get("wall"), bg = get("bg"), id = "av" + (++avatarN);
   const back = bg ? `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${bg.bg[0]}"/><stop offset="1" stop-color="${bg.bg[1]}"/></linearGradient></defs><rect width="100" height="100" fill="url(#${id})"/>${bg.stars ? `<g fill="#fff"><circle cx="12" cy="14" r="1"/><circle cx="86" cy="22" r="1.2"/><circle cx="20" cy="40" r=".8"/><circle cx="82" cy="46" r=".9"/></g>` : ""}` : `<rect width="100" height="100" fill="#d4919b"/>`;
-  return `<svg viewBox="0 0 100 100" aria-hidden="true">${back}
-  <circle cx="50" cy="58" r="30" fill="#fff"/>
+  const gid = id + "g", body = gold ? `url(#${gid})` : "#fff";
+  const goldDefs = gold ? `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c2"/><stop offset=".3" stop-color="#f3c853"/><stop offset=".65" stop-color="#c7891d"/><stop offset="1" stop-color="#eec25a"/></linearGradient></defs>` : "";
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">${goldDefs}${back}
+  <circle cx="50" cy="58" r="30" fill="${body}"/>${gold ? `<path d="M31 46a21 21 0 0 1 14-15" stroke="#fffbe6" stroke-width="3" stroke-linecap="round" fill="none" opacity=".75"/>` : ""}
   <ellipse cx="39.5" cy="48" rx="5.4" ry="6.4" fill="#2e2328"/><ellipse cx="60.5" cy="48" rx="5.4" ry="6.4" fill="#2e2328"/>
   <circle cx="41.4" cy="45.6" r="1.9" fill="#fff"/><circle cx="62.4" cy="45.6" r="1.9" fill="#fff"/>
   <ellipse cx="30" cy="57" rx="4.6" ry="2.8" fill="#f2b3bc"/><ellipse cx="70" cy="57" rx="4.6" ry="2.8" fill="#f2b3bc"/>
   ${face ? face.svg : ""}${eyes ? eyes.svg : ""}${hat ? (hat.dy ? `<g transform="translate(0 ${hat.dy})">${hat.svg}</g>` : hat.svg) : ""}
   <rect y="64" width="100" height="36" fill="${wall ? wall.color : "#2e2328"}"/>${wall?.pattern || ""}
-  <rect x="17" y="57" width="16" height="12" rx="6" fill="#fff"/><rect x="67" y="57" width="16" height="12" rx="6" fill="#fff"/>
-  <path d="M23 60v5M27.5 60v5M72.5 60v5M77 60v5" stroke="#e7d6d9" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+  <rect x="17" y="57" width="16" height="12" rx="6" fill="${body}"/><rect x="67" y="57" width="16" height="12" rx="6" fill="${body}"/>
+  <path d="M23 60v5M27.5 60v5M72.5 60v5M77 60v5" stroke="${gold ? "#b07a1e" : "#e7d6d9"}" stroke-width="1.4" stroke-linecap="round"/>${gold ? `<path d="M86 10l1.6 4.4L92 16l-4.4 1.6L86 22l-1.6-4.4L80 16l4.4-1.6z" fill="#fff2bf"/><path d="M13 78l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#f6d06a"/>` : ""}</svg>`;
 }
 
 function renderZy() {
