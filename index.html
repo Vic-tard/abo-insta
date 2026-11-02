@@ -2735,7 +2735,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0600";
+const BUILD = "2026-11-02-0610";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -3596,7 +3596,7 @@ function setPage(p) {
     if (open) el.classList.remove("off");
     el.style.transform = `translateX(${open ? 0 : REST[k]}%)`;
     el.inert = !open;
-    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); if (k === "stats") { watchStatCards(); countUp(); } }
+    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); if (k === "stats") { if (statsDirty) { statsDirty = false; renderStatsPage(); } watchStatCards(); countUp(); } }
   }
   document.documentElement.style.overflow = p === "home" ? "" : "hidden";
   $("pager").querySelectorAll("button").forEach((b) => b.dataset.page === p ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
@@ -4034,7 +4034,9 @@ function countUp() {
   requestAnimationFrame(tick);
 }
 const renderHome = render;
-render = function () { renderHome(); renderGamesPage(); renderStatsPage(); };
+// La page Graphiques ne se recalcule que quand on l'ouvre (plus léger pour les gros comptes).
+let statsDirty = true;
+render = function () { renderHome(); renderGamesPage(); statsDirty = true; if (page === "stats") { statsDirty = false; renderStatsPage(); } else setTimeout(() => { if (statsDirty) { statsDirty = false; renderStatsPage(); } }, 700); };
 
 // ---------- Photo de profil : réduite à 320 px et gardée sur le téléphone ----------
 const AVATAR_KEY = "abo-avatar";
