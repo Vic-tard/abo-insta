@@ -659,6 +659,145 @@
   .zy-ranks li.on { background: var(--ring); color: #2e2328; }
   .zy-ranks li.on b { color: #2e2328; }
   .yesno .g-opt { justify-content: center; }
+  /* Écran de quiz : couleurs du jeu, bonhomme, chrono */
+  #quiz.quiz-oldest { --g1: #f9df8a; --g2: #efae47; }
+  #quiz.quiz-first { --g1: #f9b0a0; --g2: #e9665a; }
+  #quiz.quiz-back { --g1: #f6cfd6; --g2: #cf7f8e; }
+  #quiz.bilan.fullpage { background: linear-gradient(170deg, var(--g1, #f6cfd6), var(--g2, #cf7f8e)); }
+  #quiz .card { background: transparent; color: #2e2328; gap: 14px; display: flex; flex-direction: column; overflow-y: auto; }
+  #quiz .fp-head { grid-template-columns: 76px 1fr 76px; }
+  #quiz .fp-head p { color: #2e2328; }
+  #quiz .fp-back { background: rgb(255 255 255 / .5); color: #2e2328; }
+  #quiz-score { justify-self: end; font: 800 13px/1 var(--round); white-space: nowrap; }
+  #quiz-score:not(:empty) { background: rgb(255 255 255 / .6); border-radius: 999px; padding: 7px 10px; }
+  #quiz .pips { gap: 6px; }
+  #quiz .pips i { flex: 1; height: 8px; border-radius: 99px; background: rgb(255 255 255 / .45); width: auto; }
+  #quiz .pips i.ok { background: #3e9e68; } #quiz .pips i.no { background: #d9534f; } #quiz .pips i.cur { background: #fff; }
+  .qz-hero { position: relative; display: flex; justify-content: center; padding-top: 4px; }
+  .qz-av { width: 108px; aspect-ratio: 1; border-radius: 26%; overflow: hidden; display: block; box-shadow: 0 14px 28px rgb(46 35 40 / .3); }
+  .qz-av svg { width: 100%; height: 100%; display: block; }
+  .qz-bub { position: absolute; left: calc(50% + 44px); top: -6px; background: #fff; color: #2e2328; font: 800 14px/1.2 var(--round); padding: 8px 12px; border-radius: 16px 16px 16px 4px;
+    box-shadow: 0 6px 16px rgb(0 0 0 / .15); white-space: nowrap; transform-origin: 0 100%; }
+  .qz-bub.ok { background: #3e9e68; color: #fff; } .qz-bub.no { background: #d9534f; color: #fff; }
+  .qz-time { height: 8px; border-radius: 99px; background: rgb(255 255 255 / .4); overflow: hidden; }
+  .qz-time i { display: block; height: 100%; width: 100%; background: #fff; border-radius: 99px; }
+  #quiz .quiz-body { display: flex; flex-direction: column; gap: 14px; }
+  #quiz .quiz-q { text-align: center; font: 800 23px/1.2 var(--round); color: #2e2328; }
+  #quiz .g-opts { gap: 10px; }
+  .qz-opt { position: relative; border: 0; background: #fff; color: #2e2328; border-radius: 18px; padding: 12px 44px 12px 12px; gap: 12px; font: 700 16px var(--round);
+    box-shadow: 0 6px 16px rgb(46 35 40 / .16); overflow: visible; }
+  .qz-opt i { width: 42px; height: 42px; color: #fff; font: 800 18px/1 var(--round); background: #d4919b; }
+  .qz-opt small { color: #8a7a80; }
+  .qz-opt:active:not(:disabled) { transform: scale(.97); }
+  .qz-opt.ok { background: #3e9e68; color: #fff; } .qz-opt.ok small { color: rgb(255 255 255 / .85); }
+  .qz-opt.miss { background: #d9534f; color: #fff; }
+  .qz-opt:disabled:not(.ok):not(.miss) { opacity: .55; }
+  .qz-opt .mark { position: absolute; right: 14px; top: 50%; translate: 0 -50%; font: 800 20px/1 var(--round); font-style: normal; }
+  .qz-opt.ok .mark::after { content: "✓"; } .qz-opt.miss .mark::after { content: "✗"; }
+  #quiz .yesno { gap: 12px; }
+  .qz-opt.big { flex-direction: column; justify-content: center; padding: 18px 8px; gap: 10px; min-height: 150px; }
+  .qz-opt.big .txt { align-items: center; max-width: 100%; }
+  .qz-opt.big .mark { top: 18px; right: 14px; translate: none; }
+  .qz-opt .bigi { width: 64px; height: 64px; font-size: 26px; display: grid; place-items: center; border-radius: 50%; }
+  .qz-opt .bigi.yes { background: #ef6f86; } .qz-opt .bigi.no { background: #8a7a80; }
+  .qz-opt .bigi svg { width: 34px; height: 34px; }
+  .qz-me { width: 64px; height: 64px; border-radius: 26%; overflow: hidden; display: block; }
+  .qz-me svg { width: 100%; height: 100%; display: block; }
+  .qz-float { position: absolute; right: 40px; top: 6px; font: 800 20px/1 var(--round); color: #fff; text-shadow: 0 2px 6px rgb(0 0 0 / .25); pointer-events: none; }
+  #quiz .g-msg { color: #2e2328; font-size: 15px; min-height: 0; }
+  #quiz .acts { margin-top: auto; }
+  .qz-go { width: 100%; border: 0; border-radius: 18px; padding: 16px; font: 800 18px var(--round); background: #2e2328; color: #fff; cursor: pointer; box-shadow: 0 6px 0 rgb(0 0 0 / .2); }
+  .qz-go:active { transform: translateY(3px); box-shadow: 0 3px 0 rgb(0 0 0 / .2); }
+  .qz-ghost { width: 100%; border: 0; border-radius: 18px; padding: 14px; font: 700 15px var(--round); background: rgb(255 255 255 / .5); color: #2e2328; cursor: pointer; }
+  .qz-intro { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .qz-intro p { margin: 0; font-size: 15px; }
+  .qz-big { font: 800 34px/1.1 var(--round) !important; }
+  .qz-rules { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+  .qz-rules li { background: rgb(255 255 255 / .6); border-radius: 18px; padding: 12px 4px; font-size: 12.5px; }
+  .qz-rules li b { display: block; font: 800 22px/1.1 var(--round); }
+  .qz-tip { font-size: 13px !important; opacity: .8; }
+  .qz-stars { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
+  .qz-stars span svg { width: 54px; height: 54px; display: block; fill: rgb(255 255 255 / .4); }
+  .qz-stars span:nth-child(2) svg { width: 70px; height: 70px; }
+  .qz-stars span.on svg { fill: #fff2a8; stroke: #d9a63a; stroke-width: 1; }
+  #quiz .score b { color: #2e2328; font-size: 64px; }
+  #quiz .score p { color: rgb(46 35 40 / .75); }
+  .qz-pts { font: 800 17px var(--round); background: #fff; border-radius: 999px; padding: 7px 16px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .qz-av.idle { animation: qzFloat 2.4s ease-in-out infinite; }
+    .qz-av.happy { animation: qzJump .6s cubic-bezier(.3,1.6,.5,1); }
+    .qz-av.sad { animation: qzSad .55s ease-in-out; }
+    .qz-av.party { animation: qzParty 1s cubic-bezier(.3,1.6,.5,1) 2; }
+    .qz-bub { animation: bubble .35s cubic-bezier(.3,1.6,.5,1) both; }
+    #quiz .quiz-body { animation: rise .35s both; }
+    .qz-opt { animation: qzIn .45s var(--d, 0ms) cubic-bezier(.3,1.5,.5,1) both; }
+    .qz-opt.ok { animation: pop .4s cubic-bezier(.3,1.7,.5,1); }
+    .qz-opt.miss { animation: shake .4s; }
+    .qz-float { animation: qzUp 1s ease-out forwards; }
+    .qz-stars span { animation: qzStar .55s var(--d) cubic-bezier(.3,1.8,.5,1) both; }
+    .qz-go { animation: rise .4s .2s both; }
+  }
+  @keyframes qzFloat { 50% { transform: translateY(-7px) rotate(-2deg); } }
+  @keyframes qzJump { 40% { transform: translateY(-22px) scale(1.06) rotate(4deg); } }
+  @keyframes qzSad { 20%, 60% { transform: translateX(-8px) rotate(-6deg); } 40%, 80% { transform: translateX(8px) rotate(6deg); } }
+  @keyframes qzParty { 30% { transform: translateY(-26px) rotate(-8deg) scale(1.08); } 60% { transform: translateY(0) rotate(6deg); } }
+  @keyframes qzIn { from { opacity: 0; transform: translateY(18px) scale(.92); } }
+  @keyframes qzUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-34px); } }
+  @keyframes qzStar { from { opacity: 0; transform: scale(.2) rotate(-40deg); } }
+  /* Cartes colorées de la page Mini-jeux */
+  .zy-level { background: linear-gradient(135deg, #4a2636, #8a4560) !important; color: #fff !important; box-shadow: 0 10px 24px rgb(74 38 54 / .3); }
+  .zy-level small, .zy-level .zy-sub { color: rgb(255 255 255 / .75) !important; }
+  .zy-level b em { color: #f6c95a !important; }
+  .zy-level .zy-bar { background: rgb(255 255 255 / .18); }
+  .zy-level .zy-bar i { background: linear-gradient(90deg, #f6c95a, #fff1b8); }
+  .zy-level .zy-av { box-shadow: 0 0 0 3px rgb(246 201 90 / .8); }
+  .zy-card.flashy { color: #2e2328; position: relative; overflow: hidden; box-shadow: 0 8px 18px rgb(46 35 40 / .12); border-radius: 24px; }
+  .zy-card.flashy::before { content: ""; position: absolute; right: -40px; top: -50px; width: 150px; height: 150px; border-radius: 50%; background: rgb(255 255 255 / .2); pointer-events: none; }
+  .zy-card.flashy > * { position: relative; }
+  .zy-card.flashy h2 { font: 800 19px/1.2 var(--round); }
+  .zy-card.flashy h2 span, .zy-card.flashy p { color: rgb(46 35 40 / .75); }
+  #zy-wheel-card { background: linear-gradient(160deg, #ffe0b8, #f7a96c); }
+  #zy-wheel-card h2 { justify-content: center; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
+  #zy-anni-card { background: linear-gradient(160deg, #ffc2cc, #ef7f8e); }
+  #zy-prono-card { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
+  #zy-prono-card .btn.primary, #zy-wheel-card .btn.primary { background: #2e2328; color: #fff; }
+  #zy-prono-card .btn.ghost { background: rgb(255 255 255 / .6); color: #2e2328; }
+  .goal.flashy { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); color: #2e2328; border-radius: 24px; box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
+  .goal.flashy span { color: rgb(46 35 40 / .75); }
+  .goal.flashy .track { background: rgb(255 255 255 / .55); }
+  .goal.flashy .track i { background: #2e2328; }
+  .zy-wheel-wrap { display: flex !important; flex-direction: column; align-items: center; gap: 14px; }
+  .zy-wheel-box { width: 200px !important; }
+  .zy-wheel-side { width: 100%; align-items: center; text-align: center; }
+  .zy-wheel-side .btn { width: 100%; }
+  .zy-wheel span { font-size: 13px !important; }
+  .zy-anni li { background: rgb(255 255 255 / .85); box-shadow: 0 4px 10px rgb(46 35 40 / .08); }
+  .zy-anni li span { color: #2e2328; }
+  .zy-anni li span small { color: #8a7a80; }
+  .zy-anni li i { background: linear-gradient(135deg, #f9df8a, #efae47); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 1px; flex-direction: column; line-height: 1; font-size: 15px; }
+  .zy-anni li i small { font: 700 8.5px/1 var(--round); }
+  .zy-anni li button { background: #2e2328; color: #fff; }
+  .zy-step { background: rgb(255 255 255 / .75); color: #2e2328; }
+  .zy-step small { color: #8a7a80; }
+  .zy-step button { background: #fff; color: #2e2328; box-shadow: 0 2px 6px rgb(46 35 40 / .12); }
+  /* Trophées : médailles simples, couleur selon la difficulté */
+  #trophy-sheet .card { gap: 14px; }
+  .t-hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .t-hero .t-cup { width: 84px; height: 84px; background: linear-gradient(135deg, #f9e08e, #d9a63a); box-shadow: 0 10px 24px rgb(201 138 30 / .35); }
+  .t-hero .t-cup svg { width: 56px; height: 56px; }
+  .t-hero b { font: 800 26px/1.1 var(--round); }
+  .t-hero span { color: var(--muted); font-size: 14px; }
+  .t-detail { margin: 0; min-height: 3.2em; text-align: center; font-size: 14px; color: var(--ink); background: var(--surface-2); border-radius: 16px; padding: 10px 14px; display: grid; place-items: center; }
+  .trophies { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 14px 8px !important; }
+  .trophy { background: none !important; padding: 0 !important; border: 0; cursor: pointer; font: inherit; gap: 6px !important; }
+  .trophy .medal { width: 58px !important; height: 58px !important; font: 800 14px/1 var(--round) !important; box-shadow: inset 0 -4px 0 rgb(0 0 0 / .12); }
+  .trophy b { font: 700 11.5px/1.2 var(--round) !important; text-align: center; }
+  .trophy:not(.on) .medal { background: var(--surface-2) !important; color: var(--muted) !important; box-shadow: inset 0 0 0 2px var(--line); }
+  .trophy.on.bronze .medal { background: linear-gradient(135deg, #f3c39a, #c07a45) !important; color: #4a2a12 !important; }
+  .trophy.on.silver .medal { background: linear-gradient(135deg, #f4f6fa, #aab2c0) !important; color: #3a404c !important; }
+  .trophy.on.gold .medal { background: linear-gradient(135deg, #fbe7a0, #dba63a) !important; color: #5a3a08 !important; }
+  .trophy.on.diamond .medal { background: linear-gradient(135deg, #e6dcff, #9c86e8) !important; color: #2e2160 !important; }
+  .trophy.sel .medal { outline: 3px solid var(--ink); outline-offset: 2px; }
   /* Écran de bienvenue : le petit bonhomme sort de derrière son mur */
   .wl { flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; position: relative; }
   .gf.welcome { background: radial-gradient(120% 60% at 50% 0%, var(--rose-soft), var(--bg) 70%); }
@@ -1068,8 +1207,10 @@
 </div>
 <div class="bilan fullpage" id="quiz" role="dialog" aria-modal="true" aria-labelledby="quiz-title" hidden>
   <div class="card">
-    <div class="fp-head"><button class="fp-back" id="quiz-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="quiz-title"></p><span></span></div>
+    <div class="fp-head"><button class="fp-back" id="quiz-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="quiz-title"></p><span id="quiz-score" aria-live="polite"></span></div>
     <div class="pips" id="quiz-pips" aria-hidden="true"></div>
+    <div class="qz-hero"><span class="qz-av" id="quiz-av"></span><span class="qz-bub" id="quiz-bub" aria-live="polite"></span></div>
+    <div class="qz-time" id="quiz-time" aria-hidden="true"><i id="quiz-timer"></i></div>
     <div class="quiz-body" id="quiz-body"></div>
     <p class="g-msg" id="quiz-msg" role="status"></p>
     <div class="acts" id="quiz-acts"></div>
@@ -1078,7 +1219,8 @@
 <div class="bilan fullpage" id="trophy-sheet" role="dialog" aria-modal="true" aria-labelledby="trophy-title" hidden>
   <div class="card">
     <div class="fp-head"><button class="fp-back" id="trophy-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="trophy-sum"></p><span></span></div>
-    <h2 id="trophy-title">Tes trophées</h2>
+    <div class="t-hero" id="trophy-hero"></div>
+    <p class="t-detail" id="trophy-detail" aria-live="polite"></p>
     <div class="trophies" id="trophy-grid"></div>
   </div>
 </div>
@@ -1098,11 +1240,11 @@
   <div class="wrap">
     <div class="pg-head center"><div><h1>Mini-jeux</h1><p>Chaque partie fait monter ton niveau de Zyeutage</p></div></div>
     <button class="zy-level" id="zy-level" type="button" aria-label="Mon niveau et mon bonhomme"></button>
-    <section class="zy-card" id="zy-wheel-card" aria-label="La roue du jour"></section>
-    <section class="zy-card" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
-    <section class="zy-card" id="zy-prono-card" aria-label="Mes pronostics"></section>
+    <section class="zy-card flashy" id="zy-wheel-card" aria-label="La roue du jour"></section>
+    <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
+    <section class="zy-card flashy" id="zy-prono-card" aria-label="Mes pronostics"></section>
     <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
-    <div class="goal" id="goal"></div>
+    <div class="goal flashy" id="goal"></div>
     <section class="games" id="games" aria-label="Mini-jeux">
     <button class="game-card g-oldest" id="tile-oldest" data-game="oldest" type="button"><span class="g-av" data-look="oldest"></span><span class="g-txt"><b>Le Vétéran</b><em>Qui te suit depuis le plus longtemps ?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
     <button class="game-card g-first" id="tile-first" data-game="first" type="button"><span class="g-av" data-look="first"></span><span class="g-txt"><b>Coup de foudre</b><em>Qui a craqué en premier, toi ou l'autre ?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
@@ -2461,7 +2603,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0300";
+const BUILD = "2026-11-02-0400";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -2778,91 +2920,179 @@ const GAME_LOOKS = {
   first: { eyes: "heart", face: "kiss", bg: "lilac" },
   back: { eyes: "star", face: "smile", bg: "sunset" },
 };
-let quiz = null;
+// ---------- Écran de quiz : couleurs du jeu, bonhomme qui réagit, chrono, série ----------
+const QUIZ_TIME = 12;
+const QUIZ_INFO = { oldest: "Trouve qui te suit depuis le plus longtemps.", first: "Toi ou l'autre : qui a suivi en premier ?", back: "Il te suit en retour, ou pas ?" };
+const AV_COLORS = ["#ef7f6a", "#f4a96a", "#e2b04a", "#d4919b", "#c27583", "#9b86d6", "#5fb592"];
+const avColor = (u) => { let h = 0; for (const c of u) h = (h * 31 + c.charCodeAt(0)) | 0; return AV_COLORS[Math.abs(h) % AV_COLORS.length]; };
+const ICON_YES = `<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.7a4.2 4.2 0 0 1 7.5 2.5c0 5.7-7.5 10.3-7.5 10.3z" fill="#fff"/></svg>`;
+const ICON_NO = `<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.7l-1.5 3.8 2.6 1.8-1.6 3.4 2.9-3.7-2.4-1.9 1.4-3.4a4.2 4.2 0 0 1 6.1 2.5c0 5.7-7.5 10.3-7.5 10.3z" fill="#fff"/></svg>`;
+const ICON_STAR = `<svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>`;
+let quiz = null, quizTimer = null;
+const replayAnim2 = (el) => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; };
+function setBub(t, kind) { const b = $("quiz-bub"); b.textContent = t; b.className = "qz-bub" + (kind ? " " + kind : ""); replayAnim2(b); }
+function setMood(m) { const a = $("quiz-av"); a.className = "qz-av"; void a.offsetWidth; a.className = "qz-av " + m; }
 function openQuiz(id) {
   if (GAMES[id].ready() !== true) return;
-  quiz = { id, n: 0, score: 0, used: new Set(), results: [] };
+  clearTimeout(quizTimer);
+  quiz = { id, n: 0, score: 0, streak: 0, pts: 0, used: new Set(), results: [] };
+  $("quiz").className = "bilan fullpage quiz-" + id;
   $("quiz-title").textContent = GAMES[id].title;
+  $("quiz-av").innerHTML = avatarSVG(GAME_LOOKS[id]);
+  setMood("idle"); setBub("Prêt ?");
+  $("quiz-score").textContent = "";
+  $("quiz-pips").hidden = true; $("quiz-time").hidden = true;
+  const best = stats(id).best;
+  $("quiz-body").innerHTML = `<div class="qz-intro"><p class="qz-big">${esc(GAMES[id].title)}</p><p>${esc(QUIZ_INFO[id])}</p>
+    <ul class="qz-rules"><li><b>5</b>questions</li><li><b>${QUIZ_TIME} s</b>par question</li><li><b>${best ? best + "/5" : "–"}</b>ton record</li></ul>
+    <p class="qz-tip">Réponds vite pour gagner un bonus, enchaîne 3 bonnes réponses pour la série.</p></div>`;
+  replayAnim2($("quiz-body"));
+  $("quiz-msg").textContent = "";
+  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-start">C'est parti !</button>`;
+  $("quiz-start").addEventListener("click", nextQuestion);
   $("quiz").hidden = false;
-  nextQuestion();
 }
 function renderPips() {
   $("quiz-pips").innerHTML = Array.from({ length: QUIZ_LEN }, (_, i) =>
     `<i class="${quiz.results[i] === true ? "ok" : quiz.results[i] === false ? "no" : i === quiz.n ? "cur" : ""}"></i>`).join("");
 }
 function nextQuestion() {
+  clearTimeout(quizTimer);
   const q = quiz.n < QUIZ_LEN ? GAMES[quiz.id].question(quiz.used) : null;
   if (!q) return endQuiz();
-  quiz.q = q;
+  quiz.q = q; quiz.t0 = Date.now(); quiz.done = false;
+  $("quiz-pips").hidden = false; $("quiz-time").hidden = false;
+  setMood("idle"); setBub(pick(["À toi !", "Facile ?", "Réfléchis bien…", "Vas-y !", "Hmm…", "Alors ?"]));
+  const opt = (a, label, sub, i, big) => `<button class="g-opt qz-opt${big ? " big" : ""}" type="button" data-a="${esc(a)}" style="--d:${i * 80}ms">${big || `<i style="background:${avColor(label)}">${esc(label[0])}</i>`}<span class="txt"><span>${esc(label)}</span>${sub ? `<small hidden>${esc(sub)}</small>` : ""}</span><em class="mark" aria-hidden="true"></em></button>`;
   const body = $("quiz-body");
   body.innerHTML = `<p class="quiz-q">${esc(q.q)}</p>` + (q.choices
-    ? `<div class="yesno">${q.choices.map((c) => `<button class="g-opt" type="button" data-a="${c.a}"><span>${esc(c.label)}</span></button>`).join("")}</div>`
-    : q.yesno
-    ? `<div class="yesno"><button class="g-opt" type="button" data-a="yes">Oui</button><button class="g-opt" type="button" data-a="no">Non</button></div>`
-    : `<div class="g-opts">${q.opts.map((o) => `<button class="g-opt" type="button" data-a="${esc(o.u)}"><i>${esc(o.u[0])}</i><span class="txt"><span>${esc(o.u)}</span>${o.sub ? `<small hidden>${esc(o.sub)}</small>` : ""}</span></button>`).join("")}</div>`);
-  body.style.animation = "none"; void body.offsetWidth; body.style.animation = "";
+    ? `<div class="yesno">${q.choices.map((c, i) => opt(c.a, c.label, "", i, c.a === "me" ? `<span class="qz-me">${avatarSVG(zy().look)}</span>` : `<i class="bigi" style="background:${avColor(c.label)}">${esc(c.label[0])}</i>`)).join("")}</div>`
+    : q.yesno ? `<div class="yesno">${opt("yes", "Oui", "", 0, `<i class="bigi yes">${ICON_YES}</i>`)}${opt("no", "Non", "", 1, `<i class="bigi no">${ICON_NO}</i>`)}</div>`
+    : `<div class="g-opts">${q.opts.map((o, i) => opt(o.u, o.u, o.sub, i)).join("")}</div>`);
+  replayAnim2(body);
   $("quiz-msg").textContent = "";
   $("quiz-acts").innerHTML = "";
   renderPips();
+  const bar = $("quiz-timer");
+  bar.style.transition = "none"; bar.style.width = "100%"; void bar.offsetWidth;
+  bar.style.transition = `width ${QUIZ_TIME}s linear`; bar.style.width = "0%";
+  quizTimer = setTimeout(() => answer(null), QUIZ_TIME * 1000);
 }
-$("quiz-body").addEventListener("click", (e) => {
-  const b = e.target.closest(".g-opt");
-  if (!b || b.disabled || !quiz) return;
-  const q = quiz.q, right = b.dataset.a === q.answer;
+function floatPts(b, text) {
+  if (!b) return;
+  const f = document.createElement("span");
+  f.className = "qz-float"; f.textContent = text;
+  b.appendChild(f); setTimeout(() => f.remove(), 1100);
+}
+function answer(b) {
+  if (!quiz || quiz.done) return;
+  quiz.done = true; clearTimeout(quizTimer);
+  const bar = $("quiz-timer"); bar.style.width = getComputedStyle(bar).width; bar.style.transition = "none";
+  const q = quiz.q, right = !!b && b.dataset.a === q.answer;
   $("quiz-body").querySelectorAll(".g-opt").forEach((o) => {
     o.disabled = true;
     if (o.dataset.a === q.answer) o.classList.add("ok");
     o.querySelector("small")?.removeAttribute("hidden");
   });
-  if (!right) { b.classList.add("miss"); haptic("error"); } else haptic("success");
+  if (b && !right) b.classList.add("miss");
   (q.opts || [{ u: q.u }]).forEach((o) => quiz.used.add(o.u));
   quiz.results[quiz.n] = right;
-  if (right) quiz.score++;
   quiz.n++;
+  if (right) {
+    quiz.score++; quiz.streak++;
+    const left = Math.max(0, QUIZ_TIME - (Date.now() - quiz.t0) / 1000);
+    const pts = 10 + Math.round(left / QUIZ_TIME * 5) + (quiz.streak >= 3 ? 5 : 0);
+    quiz.pts += pts;
+    gainXP(pts, "", true);
+    haptic("success"); setMood("happy");
+    setBub(quiz.streak >= 3 ? `Série de ${quiz.streak} !` : pick(["Bien vu !", "Trop fort !", "Exact !", "Bravo !", "Yes !"]), "ok");
+    floatPts(b, "+" + pts);
+  } else {
+    quiz.streak = 0; haptic("error"); setMood("sad");
+    setBub(b ? pick(["Oups…", "Raté !", "Aïe…", "Presque !"]) : "Trop tard !", "no");
+  }
+  $("quiz-score").textContent = quiz.streak >= 2 ? `Série ${quiz.streak}` : `${quiz.pts} pts`;
   renderPips();
-  if (right) gainXP(10, "Bonne réponse");
-  $("quiz-msg").textContent = q.reveal ? (right ? "Bien vu ! " : "Raté. ") + q.reveal
-    : right ? pick(["Bien vu !", "Exact !", "Bravo !", "Trop fort !"])
-    : q.yesno ? (q.answer === "yes" ? `Raté : ${q.u} te suit bien.` : `Raté : ${q.u} ne te suit pas.`)
-    : `Raté : c'était ${q.answer}.`;
-  $("quiz-acts").innerHTML = `<button class="btn primary" type="button" id="quiz-next">${quiz.n < QUIZ_LEN ? "Question suivante" : "Voir mon score"}</button>`;
+  $("quiz-msg").textContent = q.reveal ? q.reveal
+    : right ? "" : q.yesno ? (q.answer === "yes" ? `${q.u} te suit bien.` : `${q.u} ne te suit pas.`) : `C'était ${q.answer}.`;
+  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-next">${quiz.n < QUIZ_LEN ? "Question suivante" : "Voir mon score"}</button>`;
   $("quiz-next").addEventListener("click", nextQuestion);
-  $("quiz-next").focus({ preventScroll: true });
-});
+}
+$("quiz-body").addEventListener("click", (e) => { const b = e.target.closest(".g-opt"); if (b && !b.disabled) answer(b); });
 function endQuiz() {
+  clearTimeout(quizTimer);
   const st = stats(quiz.id), total = quiz.n, record = quiz.score > st.best;
   if (record) st.best = quiz.score;
   if (quiz.score === QUIZ_LEN) st.perfect = true;
+  st.played = (st.played || 0) + 1;
   savePrefs();
-  gainXP(10 + (quiz.score === total ? 20 : 0), quiz.score === total ? "Sans faute" : "Partie finie");
-  const line = quiz.score === total ? "Sans faute !" : quiz.score >= total - 1 ? "Presque parfait." : quiz.score >= total / 2 ? "Pas mal du tout." : "Tu connais tes abonnés ? Rejoue !";
-  $("quiz-body").innerHTML = `<div class="score"><b>${quiz.score}/${total}</b><p>${line}</p>${record ? `<span class="record">Nouveau record</span>` : `<p>Ton record : ${st.best}/${QUIZ_LEN}</p>`}</div>`;
+  const bonus = 10 + (quiz.score === total ? 20 : 0);
+  quiz.pts += bonus;
+  gainXP(bonus, "", true);
+  const stars = quiz.score === total ? 3 : quiz.score >= total - 1 ? 2 : quiz.score >= total / 2 ? 1 : 0;
+  const line = ["Tu connais tes abonnés ? Rejoue !", "Pas mal du tout.", "Presque parfait.", "Sans faute !"][stars];
+  $("quiz-pips").hidden = true; $("quiz-time").hidden = true;
+  setMood(stars >= 2 ? "party" : stars ? "happy" : "sad");
+  setBub(["On retente ?", "Pas mal !", "Bien joué !", "Incroyable !"][stars], stars ? "ok" : "");
+  $("quiz-score").textContent = "";
+  $("quiz-body").innerHTML = `<div class="score"><div class="qz-stars">${[0, 1, 2].map((i) => `<span class="${i < stars ? "on" : ""}" style="--d:${250 + i * 200}ms">${ICON_STAR}</span>`).join("")}</div>
+    <b>${quiz.score}/${total}</b><p>${line}</p><span class="qz-pts">+${nf(quiz.pts)} points</span>
+    ${record ? `<span class="record">Nouveau record</span>` : `<p>Ton record : ${st.best}/${QUIZ_LEN}</p>`}</div>`;
+  replayAnim2($("quiz-body"));
   $("quiz-msg").textContent = "";
-  $("quiz-acts").innerHTML = `<button class="btn primary" type="button" id="quiz-again">Rejouer</button><button class="btn ghost" type="button" id="quiz-done">Fermer</button>`;
+  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-again">Rejouer</button><button class="qz-ghost" type="button" id="quiz-done">Retour aux mini-jeux</button>`;
   $("quiz-again").addEventListener("click", () => openQuiz(quiz.id));
   $("quiz-done").addEventListener("click", closeQuiz);
-  if (record || quiz.score === total) confetti();
+  if (stars >= 2 || record) confetti();
 }
-function closeQuiz() { $("quiz").hidden = true; quiz = null; renderGames(); checkTrophies(); }
+function closeQuiz() { clearTimeout(quizTimer); $("quiz").hidden = true; quiz = null; renderGames(); checkTrophies(); }
 $("quiz-close").addEventListener("click", closeQuiz);
 document.querySelectorAll("[data-game]").forEach((t) => t.addEventListener("click", () => openQuiz(t.dataset.game)));
 
 // ---------- Trophées : calculés depuis l'historique, donc aussi pour les anciens imports ----------
+// Trophées : plus ils sont durs, plus ils rapportent de points.
+const importRun = (s, days = 10) => { let run = s.length ? 1 : 0, best = run; for (let i = 1; i < s.length; i++) { run = (Date.parse(s[i].takenAt) - Date.parse(s[i - 1].takenAt)) <= days * 864e5 ? run + 1 : 1; best = Math.max(best, run); } return best; };
+const greenRun = (s) => { let run = 0, best = 0; for (const x of s.slice(1)) { run = x.follows > x.unfollows ? run + 1 : 0; best = Math.max(best, run); } return best; };
+const gstat = (k) => Object.values(prefs.games || {}).reduce((a, g) => a + (g[k] || 0), 0);
+const zs = (k) => prefs.zy?.[k] || 0;
 const TROPHIES = [
-  { id: "first", m: "1", name: "Premier import", how: "Fais ton premier import", test: (s) => s.length >= 1 },
-  { id: "duo", m: "2", name: "Premier bilan", how: "Fais un deuxième import", test: (s) => s.length >= 2 },
-  { id: "five", m: "5", name: "Habitué", how: "Fais 5 imports", test: (s) => s.length >= 5 },
-  { id: "ten", m: "10", name: "Fidèle au poste", how: "Fais 10 imports", test: (s) => s.length >= 10 },
-  { id: "streak", m: "4×", name: "4 semaines de suite", how: "Importe 4 semaines d'affilée", test: (s) => {
-      let run = 1; for (let i = 1; i < s.length; i++) { run = (Date.parse(s[i].takenAt) - Date.parse(s[i - 1].takenAt)) <= 10 * 864e5 ? run + 1 : 1; if (run >= 4) return true; } return false; } },
-  { id: "zero", m: "0", name: "Personne n'est parti", how: "Un bilan sans aucun départ", test: (s) => s.slice(1).some((x) => !x.unfollows) },
-  { id: "boom", m: "+10", name: "Belle semaine", how: "Gagne 10 abonnés d'un coup", test: (s) => s.slice(1).some((x) => x.follows - x.unfollows >= 10) },
-  ...GROWTH_CAPS.slice(0, 7).map((g) => ({ id: "g" + g, m: "+" + (g >= 1000 ? g / 1000 + "k" : g), name: `${nf(g)} abonnés en plus`, how: `Gagne ${nf(g)} abonnés depuis ton premier import`, test: (s) => bestGrowth(s) >= g })),
-  { id: "perfect", m: "5/5", name: "Sans faute", how: "Fais 5/5 à un quiz", test: () => Object.values(prefs.games || {}).some((g) => g.perfect) },
-  { id: "detective", m: "?", name: "Détective", how: "Trouve 5 fois qui est parti", test: () => (prefs.games?.gone?.wins || 0) >= 5 },
-  { id: "seer", m: "3×", name: "Voyant", how: "Gagne 3 paris d'affilée", test: () => (prefs.bet?.best || 0) >= 3 },
-  { id: "all", m: "★", name: "Expert", how: "Joue aux 3 quiz", test: () => ["oldest", "back", "first"].every((g) => prefs.games?.[g]?.best > 0) },
+  { id: "first", m: "1", name: "Premier import", how: "Fais ton premier import", pts: 30, test: (s) => s.length >= 1 },
+  { id: "duo", m: "2", name: "Premier bilan", how: "Fais un deuxième import", pts: 50, test: (s) => s.length >= 2 },
+  { id: "five", m: "5", name: "Habitué", how: "Fais 5 imports", pts: 100, test: (s) => s.length >= 5 },
+  { id: "ten", m: "10", name: "Fidèle", how: "Fais 10 imports", pts: 250, test: (s) => s.length >= 10 },
+  { id: "i25", m: "25", name: "Accro", how: "Fais 25 imports", pts: 700, test: (s) => s.length >= 25 },
+  { id: "i50", m: "50", name: "Inarrêtable", how: "Fais 50 imports", pts: 1800, test: (s) => s.length >= 50 },
+  { id: "streak", m: "4×", name: "4 semaines", how: "Importe 4 semaines d'affilée", pts: 200, test: (s) => importRun(s) >= 4 },
+  { id: "streak8", m: "8×", name: "2 mois non-stop", how: "Importe 8 semaines d'affilée", pts: 600, test: (s) => importRun(s) >= 8 },
+  { id: "streak26", m: "26×", name: "6 mois non-stop", how: "Importe 26 semaines d'affilée", pts: 2500, test: (s) => importRun(s) >= 26 },
+  { id: "zero", m: "0", name: "Personne n'est parti", how: "Un bilan sans aucun départ", pts: 100, test: (s) => s.slice(1).some((x) => !x.unfollows) },
+  { id: "boom", m: "↑", name: "Belle semaine", how: "Gagne 10 abonnés en un seul import", pts: 150, test: (s) => s.slice(1).some((x) => x.follows - x.unfollows >= 10) },
+  { id: "boom50", m: "↑↑", name: "Explosion", how: "Gagne 50 abonnés en un seul import", pts: 700, test: (s) => s.slice(1).some((x) => x.follows - x.unfollows >= 50) },
+  { id: "green3", m: "3↑", name: "En forme", how: "3 bilans positifs d'affilée", pts: 300, test: (s) => greenRun(s) >= 3 },
+  ...[[10, 50], [50, 150], [100, 300], [250, 600], [500, 1000], [1000, 1800], [2500, 3500], [5000, 6000], [10000, 10000]].map(([g, pts]) =>
+    ({ id: "g" + g, m: "+" + (g >= 1000 ? g / 1000 + "k" : g), name: `+${nf(g)} abonnés`, how: `Gagne ${nf(g)} abonnés depuis ton premier import`, pts, test: (s) => bestGrowth(s) >= g })),
+  { id: "all", m: "3", name: "Touche-à-tout", how: "Joue aux 3 mini-jeux", pts: 80, test: () => ["oldest", "back", "first"].every((g) => prefs.games?.[g]?.best > 0) },
+  { id: "perfect", m: "5/5", name: "Sans faute", how: "Fais 5/5 à un mini-jeu", pts: 100, test: () => Object.values(prefs.games || {}).some((g) => g.perfect) },
+  { id: "perfect3", m: "★★★", name: "Triple sans faute", how: "Fais 5/5 aux 3 mini-jeux", pts: 700, test: () => ["oldest", "back", "first"].every((g) => prefs.games?.[g]?.perfect) },
+  { id: "p10", m: "10", name: "Joueur", how: "Joue 10 parties", pts: 100, test: () => gstat("played") >= 10 },
+  { id: "p50", m: "50", name: "Gamer", how: "Joue 50 parties", pts: 500, test: () => gstat("played") >= 50 },
+  { id: "p100", m: "100", name: "Maître du jeu", how: "Joue 100 parties", pts: 1500, test: () => gstat("played") >= 100 },
+  { id: "detective", m: "?", name: "Détective", how: "Trouve 5 fois qui est parti dans le bilan", pts: 150, test: () => (prefs.games?.gone?.wins || 0) >= 5 },
+  { id: "seer", m: "3×", name: "Voyant", how: "Gagne 3 paris d'affilée", pts: 200, test: () => (prefs.bet?.best || 0) >= 3 },
+  { id: "seer5", m: "5×", name: "Médium", how: "Gagne 5 paris d'affilée", pts: 700, test: () => (prefs.bet?.best || 0) >= 5 },
+  { id: "prono", m: "≈", name: "Bon pronostic", how: "Tombe presque juste à un pronostic", pts: 150, test: () => zs("pronoGood") >= 1 },
+  { id: "pronoExact", m: "=", name: "Boule de cristal", how: "Pronostic exact, au chiffre près", pts: 900, test: () => zs("pronoExact") >= 1 },
+  { id: "spin1", m: "1", name: "Premier tour", how: "Tourne la roue du jour", pts: 20, test: () => zs("spins") >= 1 },
+  { id: "spin7", m: "7", name: "Tourneur", how: "Tourne la roue 7 jours", pts: 150, test: () => zs("spins") >= 7 },
+  { id: "spin30", m: "30", name: "Roue libre", how: "Tourne la roue 30 jours", pts: 800, test: () => zs("spins") >= 30 },
+  { id: "jackpot", m: "100", name: "Jackpot", how: "Tombe sur 100 à la roue", pts: 300, test: () => zs("jackpots") >= 1 },
+  { id: "anni1", m: "1", name: "Joyeux anniv'", how: "Fête un anniversaire d'abonnement", pts: 30, test: () => zs("anniN") >= 1 },
+  { id: "anni10", m: "10", name: "Fêtard", how: "Fête 10 anniversaires", pts: 300, test: () => zs("anniN") >= 10 },
+  { id: "anni5y", m: "5 ans", name: "Vieille amitié", how: "Fête un abonné qui te suit depuis 5 ans", pts: 600, test: () => zs("anniMax") >= 5 },
+  { id: "style3", m: "3", name: "Styliste", how: "Porte 3 accessoires en même temps", pts: 100, test: () => Object.values(prefs.zy?.look || {}).filter(Boolean).length >= 3 },
+  { id: "style5", m: "5", name: "Défilé", how: "Habille ton bonhomme dans les 5 catégories", pts: 400, test: () => Object.values(prefs.zy?.look || {}).filter(Boolean).length >= 5 },
 ];
+const tierOf = (pts) => pts >= 2000 ? "diamond" : pts >= 500 ? "gold" : pts >= 150 ? "silver" : "bronze";
 function trophyStatus() { return TROPHIES.map((t) => ({ ...t, on: !!t.test(state.snapshots) })); }
 
 let unlockQueue = [], unlockTimer = null, freshTrophies = new Set();
@@ -2875,8 +3105,8 @@ function checkTrophies() {
   prefs.trophies.push(...fresh.map((t) => t.id));
   savePrefs();
   fresh.forEach((t) => freshTrophies.add(t.id));
-  unlockQueue.push(...fresh);
-  zy().xp += 25 * fresh.length; savePrefs();
+  unlockQueue.push(...fresh.map((t) => ({ ...t, name: `${t.name} · +${nf(t.pts)} points` })));
+  gainXP(fresh.reduce((a, t) => a + t.pts, 0), "", true);
   if (!unlockTimer) showUnlock();
   renderGames();
 }
@@ -2898,11 +3128,20 @@ $("unlock").addEventListener("click", () => {
 });
 function openTrophies() {
   const t = trophyStatus(), n = t.filter((x) => x.on).length;
-  $("trophy-sum").textContent = `${n} sur ${t.length} débloqués`;
-  $("trophy-grid").innerHTML = t.map((x) => `<div class="trophy${x.on ? " on" : ""}${freshTrophies.has(x.id) ? " new" : ""}"><span class="medal" aria-hidden="true">${esc(x.m)}</span><b>${esc(x.name)}</b>${x.on ? "" : `<span>${esc(x.how)}</span>`}</div>`).join("");
+  $("trophy-sum").textContent = "Trophées";
+  $("trophy-hero").innerHTML = `<span class="t-cup">${$("tile-trophies").querySelector(".t-cup svg").outerHTML}</span><b id="trophy-title">${n} sur ${t.length}</b><span>Plus un trophée est dur, plus il rapporte de points.</span>`;
+  $("trophy-detail").textContent = "Touche un trophée pour voir comment l'avoir.";
+  $("trophy-grid").innerHTML = t.map((x) => `<button type="button" class="trophy ${tierOf(x.pts)}${x.on ? " on" : ""}${freshTrophies.has(x.id) ? " new" : ""}" data-t="${x.id}"><span class="medal" aria-hidden="true">${esc(x.m)}</span><b>${esc(x.name)}</b></button>`).join("");
   freshTrophies.clear();
   $("trophy-sheet").hidden = false;
 }
+$("trophy-grid").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-t]"); if (!b) return;
+  const x = TROPHIES.find((t) => t.id === b.dataset.t), on = b.classList.contains("on");
+  $("trophy-grid").querySelectorAll(".sel").forEach((o) => o.classList.remove("sel")); b.classList.add("sel");
+  $("trophy-detail").textContent = `${x.name} : ${x.how.charAt(0).toLowerCase() + x.how.slice(1)}. ${on ? "Gagné, " : ""}+${nf(x.pts)} points.`;
+  haptic("selection");
+});
 $("tile-trophies").addEventListener("click", openTrophies);
 $("trophy-close").addEventListener("click", () => { $("trophy-sheet").hidden = true; });
 document.addEventListener("keydown", (e) => {
@@ -2934,13 +3173,13 @@ function zy() {
   return prefs.zy;
 }
 let xpTimer = null;
-function gainXP(n, why) {
+function gainXP(n, why, quiet) {
   const z = zy(), before = levelOf(z.xp).lvl;
   z.xp += n;
   savePrefs();
   const pop = $("xp-pop");
   pop.textContent = `+${n} points${why ? " · " + why : ""}`;
-  pop.hidden = true; void pop.offsetWidth; pop.hidden = false;
+  if (!quiet) { pop.hidden = true; void pop.offsetWidth; pop.hidden = false; }
   clearTimeout(xpTimer); xpTimer = setTimeout(() => { pop.hidden = true; }, 1900);
   const after = levelOf(z.xp).lvl;
   if (after > before) {
@@ -3043,7 +3282,7 @@ $("zy-look").addEventListener("click", (e) => {
   if (!it || it.disabled) return;
   zy().look[it.dataset.s] = it.dataset.item; savePrefs();
   haptic("selection");
-  openLook(it.dataset.s); renderZy();
+  openLook(it.dataset.s); renderZy(); checkTrophies();
 });
 $("zy-close").addEventListener("click", () => { $("zy-sheet").hidden = true; });
 
@@ -3062,7 +3301,7 @@ function renderWheel() {
   if (wheelBusy) return;
   card.innerHTML = `<h2>La roue du jour<span>${done ? "Reviens demain" : "1 tour par jour"}</span></h2>
     <div class="zy-wheel-wrap"><div class="zy-wheel-box"><div class="zy-wheel" id="zy-wheel" style="transform:rotate(${wheelTurn}deg);background:conic-gradient(${WHEEL.map((w, i) => `${WHEEL_COLORS[w.pts]} ${wheelStarts[i]}deg ${wheelStarts[i] + w.deg}deg`).join(",")})">${WHEEL.map((w, i) =>
-      `<span style="transform:rotate(${wheelStarts[i] + w.deg / 2 - 90}deg) translate(${w.pts === 100 ? 40 : 44}px,-50%)">${w.pts}</span>`).join("")}</div></div>
+      `<span style="transform:rotate(${wheelStarts[i] + w.deg / 2 - 90}deg) translate(${w.pts === 100 ? 52 : 58}px,-50%)">${w.pts}</span>`).join("")}</div></div>
     <div class="zy-wheel-side"><p class="zy-res" id="zy-wheel-res">${done ? esc(z.spunText || "Déjà tournée aujourd'hui.") : "Tente ta chance : jusqu'à 100 points."}</p>
     <button class="btn primary" type="button" id="zy-spin" ${done ? "disabled" : ""}>${done ? "Demain !" : "Tourner"}</button></div></div>`;
   $("zy-spin").addEventListener("click", spinWheel);
@@ -3081,12 +3320,12 @@ function spinWheel() {
   el.style.transform = `rotate(${wheelTurn}deg)`;
   const done = () => {
     const text = w.pts === 100 ? "Jackpot : +100 points !" : `+${w.pts} points !`;
-    z.spun = todayKey(); z.spunText = text; savePrefs();
+    z.spun = todayKey(); z.spunText = text; z.spins = (z.spins || 0) + 1; if (w.pts === 100) z.jackpots = (z.jackpots || 0) + 1; savePrefs();
     $("zy-wheel-res").textContent = text;
     btn.textContent = "Demain !";
     wheelBusy = false;
     if (w.pts >= 50) confetti();
-    gainXP(w.pts, "Roue du jour");
+    gainXP(w.pts, "Roue du jour"); checkTrophies();
   };
   if (calm()) setTimeout(done, 50); else el.addEventListener("transitionend", done, { once: true });
 }
@@ -3120,19 +3359,19 @@ function renderAnni() {
     ? `<h2>Anniversaires du jour<span>${today.length}</span></h2>
        <ul class="zy-anni">${today.slice(0, 6).map((a) => {
          const done = z.anni[a.u + "|" + y];
-         return `<li><i>${a.years}</i><span>${esc(a.u)}<small>te suit depuis ${ansText(a.years)} aujourd'hui</small></span><button type="button" data-anni="${esc(a.u)}" data-y="${a.years}" ${done ? "disabled" : ""}>${done ? "Fêté" : "Fêter"}</button></li>`;
+         return `<li><i>${a.years}<small>${a.years > 1 ? "ans" : "an"}</small></i><span>${esc(a.u)}<small>te suit depuis ${ansText(a.years)} aujourd'hui</small></span><button type="button" data-anni="${esc(a.u)}" data-y="${a.years}" ${done ? "disabled" : ""}>${done ? "Fêté" : "Fêter"}</button></li>`;
        }).join("")}</ul>${today.length > 6 ? `<p>Et ${today.length - 6} autres aujourd'hui.</p>` : ""}`
     : `<h2>Anniversaires d'abonnement</h2>
-       <ul class="zy-anni">${soon.slice(0, 3).map((a) => `<li><i>${a.years}</i><span>${esc(a.u)}<small>${ansText(a.years)} ${a.days === 1 ? "demain" : `dans ${a.days} jours`}</small></span></li>`).join("")}</ul>
+       <ul class="zy-anni">${soon.slice(0, 3).map((a) => `<li><i>${a.years}<small>${a.years > 1 ? "ans" : "an"}</small></i><span>${esc(a.u)}<small>${ansText(a.years)} ${a.days === 1 ? "demain" : `dans ${a.days} jours`}</small></span></li>`).join("")}</ul>
        <p>Le jour J, tu pourras le fêter et gagner des points.</p>`;
 }
 $("zy-anni-card").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-anni]");
   if (!b || b.disabled) return;
   const u = b.dataset.anni, n = +b.dataset.y, z = zy();
-  z.anni[u + "|" + new Date().getFullYear()] = 1; savePrefs();
+  z.anni[u + "|" + new Date().getFullYear()] = 1; z.anniN = (z.anniN || 0) + 1; z.anniMax = Math.max(z.anniMax || 0, n); savePrefs();
   confetti();
-  gainXP(5, "Anniversaire");
+  gainXP(5, "Anniversaire"); checkTrophies();
   const text = `Ça fait ${ansText(n)} aujourd'hui que @${u} me suit 🎂`;
   try { if (navigator.share) await navigator.share({ text }); } catch {}
 });
@@ -3180,6 +3419,7 @@ function settleProno(r) {
   const up = r.follows.length, down = r.unfollows.length, err = Math.abs(p.up - up) + Math.abs(p.down - down);
   const tol = Math.max(2, Math.round((up + down) * 0.1));
   const pts = err === 0 ? 300 : Math.max(10, Math.round(240 * Math.max(0, 1 - err / (tol * 5))));
+  const z = zy(); if (err === 0) z.pronoExact = (z.pronoExact || 0) + 1; if (err <= tol) z.pronoGood = (z.pronoGood || 0) + 1; savePrefs();
   return { pts, text: `${err === 0 ? "Pronostic parfait" : err <= tol ? "Pronostic presque juste" : "Pronostic"} : tu avais dit +${nf(p.up)} / −${nf(p.down)}, c'était +${nf(up)} / −${nf(down)}. +${pts} points.`, ok: err <= tol };
 }
 
