@@ -636,6 +636,29 @@
   }
   @keyframes askedIn { from { transform: translateY(60px) scale(.96); opacity: 0; } }
 
+  /* Zyeuto Plus */
+  .plus-card { background: linear-gradient(160deg, #ffe7c2, #f5b26b 55%, #ec8f7c); gap: 6px; max-height: calc(100dvh - 32px); overflow-y: auto; }
+  .plus-tag { font: 800 12px var(--round); letter-spacing: .08em; text-transform: uppercase; background: #2e2328; color: #ffd9a0; border-radius: 999px; padding: 4px 10px; }
+  .plus-why { font-weight: 600; }
+  .plus-perks { list-style: none; margin: 6px 0 4px; padding: 0; text-align: left; display: grid; gap: 6px; width: 100%; }
+  .plus-perks li { display: flex; gap: 10px; align-items: center; font: 600 15px/1.3 var(--round); background: rgb(255 255 255 / .5); border-radius: 14px; padding: 9px 12px; }
+  .plus-perks li i { font-style: normal; flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #2e2328; color: #fff; font-size: 13px; }
+  .plus-plans { display: grid; gap: 8px; width: 100%; margin-top: 4px; }
+  .plus-plan { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 2px solid transparent; border-radius: 16px; background: rgb(255 255 255 / .6); padding: 11px 14px; font: 600 15px var(--round); color: #2e2328; cursor: pointer; text-align: left; }
+  .plus-plan b { font: 800 16px var(--round); display: block; }
+  .plus-plan small { color: rgb(46 35 40 / .72); font-size: 13px; }
+  .plus-plan .pr { font: 800 17px var(--round); white-space: nowrap; }
+  .plus-plan .badge { display: inline-block; margin-left: 6px; background: #3f7f68; color: #fff; border-radius: 999px; padding: 2px 8px; font: 800 11px var(--round); vertical-align: 2px; }
+  .plus-plan[aria-checked="true"] { border-color: #2e2328; background: #fff; }
+  .plus-buy { background: #2e2328 !important; margin-top: 4px; }
+  .plus-buy:disabled { opacity: .6; }
+  .plus-msg { font: 600 14px var(--round); color: #8a2f22; min-height: 0; }
+  .plus-links { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .plus-legal { font-size: 11.5px !important; line-height: 1.35 !important; color: rgb(46 35 40 / .7) !important; }
+  .plus-legal a { color: inherit; }
+  .hc-plus { background: linear-gradient(160deg, #ffe7c2, #f5b26b); }
+  .hc-plus .btn.ghost { background: rgb(255 255 255 / .55); }
+
   .wk-redo { order: 9; align-self: center; border: 0; background: none; font: 600 13px var(--round); color: rgb(46 35 40 / .72); text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; cursor: pointer; }
   .wk-big svg { width: 22px; height: 22px; flex: none; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) { .wk-av { animation: qzFloat 2.8s ease-in-out infinite; } }
@@ -1287,6 +1310,16 @@
     <p class="siri" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ». Le rappel arrivera dans l'app Rappels.</p>
   </section>
 
+  <section class="block hcard hc-plus" id="plus-block" hidden>
+    <h2>Zyeuto Plus</h2>
+    <p class="note" id="plus-status"></p>
+    <div class="row">
+      <button class="btn primary" id="plus-open" type="button">Découvrir Plus</button>
+      <button class="btn ghost" id="plus-manage" type="button" hidden>Gérer mon abonnement</button>
+      <button class="btn ghost" id="plus-restore" type="button">Restaurer mes achats</button>
+    </div>
+  </section>
+
   <section class="block hcard hc-backup">
     <h2>Sauvegarde</h2>
     <p class="note needs-data">Ton historique reste sur ce téléphone, rien n'est envoyé sur internet. Après chaque import, garde une copie dans Fichiers ou iCloud Drive : si le téléphone efface les données du site, tu la restaures en deux touches.</p>
@@ -1491,6 +1524,31 @@
     <button class="asked-go games" id="asked-games" type="button">Jouer aux mini-jeux</button>
     <button class="asked-go stats" id="asked-stats" type="button">Explorer mes graphiques</button>
     <button class="asked-stay" id="asked-stay" type="button">Rester sur l'accueil</button>
+  </div>
+</div>
+<div class="asked" id="plus" hidden role="dialog" aria-modal="true" aria-labelledby="plus-t">
+  <div class="asked-card plus-card">
+    <span class="zy-av asked-av" id="plus-av" aria-hidden="true"></span>
+    <span class="plus-tag">Zyeuto Plus</span>
+    <h2 id="plus-t">Zyeute quand tu veux</h2>
+    <p class="plus-why" id="plus-why"></p>
+    <ul class="plus-perks">
+      <li><i>∞</i>Mises à jour illimitées, chaque semaine ou chaque jour</li>
+      <li><i>👀</i>Qui est parti, dès que tu en as envie</li>
+      <li><i>🔒</i>Sans pub, et tes données restent sur ton téléphone</li>
+    </ul>
+    <div class="plus-plans" role="radiogroup" aria-label="Formule">
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span><b>À l'année<span class="badge" id="plus-save">−58 %</span></b><small id="plus-an-sub">soit 0,83 € par mois</small></span><span class="pr" id="plus-an-pr">9,99 €</span></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.mois"><span><b>Au mois</b><small>sans engagement</small></span><span class="pr" id="plus-mois-pr">1,99 €</span></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.avie"><span><b>À vie</b><small>un seul paiement, pour toujours</small></span><span class="pr" id="plus-avie-pr">19,99 €</span></button>
+    </div>
+    <button class="asked-go plus-buy" id="plus-buy" type="button">Continuer</button>
+    <p class="plus-msg" id="plus-msg" hidden></p>
+    <div class="plus-links">
+      <button class="asked-stay" id="plus-later" type="button">Plus tard</button>
+      <button class="asked-stay" id="plus-restore2" type="button">Restaurer mes achats</button>
+    </div>
+    <p class="plus-legal">Les formules au mois et à l'année se renouvellent toutes seules. Tu peux arrêter quand tu veux dans Réglages, ton nom, Abonnements. <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Conditions d'utilisation</a></p>
   </div>
 </div>
 <nav class="pager" id="pager" aria-label="Pages">
@@ -2040,6 +2098,16 @@ async function commit(takenAt) {
   const prev = state.snapshots[state.snapshots.length - 1];
   try {
     const r = await recordSnapshot(pending.followers, pending.following, takenAt, pending.source);
+    // Version gratuite : une mise à jour par mois. Le fichier est gardé, il s'importe dès que Plus est pris.
+    if (r.status === "ok" && !canUpdateFree()) {
+      state = JSON.parse(before);
+      plusWaiting = { pending, takenAt };
+      $("sheet").hidden = true;
+      openPlus("import");
+      return true;
+    }
+    const freeBefore = prefs.lastFreeAt;
+    if (r.status === "ok" && !hasPlus()) prefs.lastFreeAt = new Date().toISOString();
     prefs.lastImportAt = new Date().toISOString(); savePrefs();
     closeSheet();
     // Premier import : « Pas en retour » est le seul résultat disponible tout de suite.
@@ -2048,12 +2116,13 @@ async function commit(takenAt) {
     selectTab(tab);
     shown = PAGE;
     render();
+    renderPlusBlock();
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (r.status === "same") {
       toast(r.withFollowing ? "Aucun départ ni arrivée depuis le dernier import. « Pas en retour » et « Fans » sont à jour." : "Liste identique au dernier import : rien de nouveau.", false);
       await save(); return true;
     }
-    undoState = { state: JSON.parse(before) };
+    undoState = { state: JSON.parse(before), freeBefore };
     toast(r.status === "first"
       ? `${nf(r.count)} abonnés enregistrés. C'est ton départ.`
       : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
@@ -2091,11 +2160,15 @@ function toast(text, canUndo) {
 }
 $("undo").addEventListener("click", async () => {
   if (!undoState) return;
-  state = undoState.state; undoState = null;
+  state = undoState.state;
+  // Import annulé : la mise à jour gratuite du mois n'est pas consommée.
+  if ("freeBefore" in undoState) { if (undoState.freeBefore) prefs.lastFreeAt = undoState.freeBefore; else delete prefs.lastFreeAt; savePrefs(); }
+  undoState = null;
   $("bilan").hidden = true;
   $("toast").hidden = true;
   shown = PAGE;
   render();
+  renderPlusBlock();
   toast("Import annulé.", false);
   await save();
 });
@@ -2467,6 +2540,7 @@ function metaStep(x) {
   };
 }
 function wkGo() {
+  if (!reqPending() && !canUpdateFree()) { haptic("light"); return openPlus("update"); }
   if (!metaInApp()) return openRepeat();
   haptic("light");
   if (!reqPending()) {
@@ -2944,6 +3018,116 @@ let sharedBusy = false;
 const nativePost = (msg) => { try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch {} };
 // Petite vibration dans l'app iPhone : "success", "error", "light", "medium", "selection".
 const haptic = (kind) => { if (nativeApp) nativePost({ type: "haptic", kind }); };
+
+// ---------- Zyeuto Plus ----------
+// Gratuit : les deux premiers imports (le point de départ et la première comparaison), puis une mise à jour par mois.
+// Plus (au mois, à l'année ou à vie) : mises à jour illimitées. L'achat passe par l'App Store, dans l'app iPhone seulement.
+const FREE_EVERY_DAYS = 30;
+const PLUS_PLANS = { "fr.zyeuto.plus.an": "à l'année", "fr.zyeuto.plus.mois": "au mois", "fr.zyeuto.plus.avie": "à vie" };
+const storeApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 4;
+const hasPlus = () => !!(prefs.plus && prefs.plus.active);
+const nextFreeAt = () => prefs.lastFreeAt ? new Date(Date.parse(prefs.lastFreeAt) + FREE_EVERY_DAYS * 864e5) : null;
+function canUpdateFree() {
+  // Sur le site (hors app), rien n'est vendu : pas de limite pour l'instant.
+  if (!storeApp() || hasPlus() || state.snapshots.length < 2) return true;
+  const next = nextFreeAt();
+  return !next || Date.now() >= next.getTime();
+}
+let plusWaiting = null, plusPlan = "fr.zyeuto.plus.an", plusBusy = false;
+function plusPrice(id) { return (prefs.plusPrices || {})[id]; }
+function renderPlusPrices() {
+  const an = plusPrice("fr.zyeuto.plus.an"), mois = plusPrice("fr.zyeuto.plus.mois"), avie = plusPrice("fr.zyeuto.plus.avie");
+  if (an) $("plus-an-pr").textContent = an;
+  if (mois) $("plus-mois-pr").textContent = mois;
+  if (avie) $("plus-avie-pr").textContent = avie;
+  // « soit x € par mois » et l'économie, calculés sur les vrais prix du magasin quand on les a.
+  const num = (t) => t ? parseFloat(t.replace(/[^0-9,.]/g, "").replace(",", ".")) : NaN;
+  const a = num(an || "9,99"), m = num(mois || "1,99");
+  if (a && m) {
+    $("plus-an-sub").textContent = `soit ${(a / 12).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € par mois`;
+    $("plus-save").textContent = `−${Math.round((1 - a / (m * 12)) * 100)} %`;
+  }
+}
+function selectPlan(id) {
+  plusPlan = id;
+  document.querySelectorAll(".plus-plan").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.plan === id)));
+}
+function plusMsg(text) {
+  // Fenêtre fermée (bouton des réglages) : le message s'affiche sous la sauvegarde.
+  if (text && $("plus").hidden) return flash(text, "err");
+  $("plus-msg").textContent = text || ""; $("plus-msg").hidden = !text;
+}
+function openPlus(why) {
+  const next = nextFreeAt();
+  $("plus-why").textContent = why === "import"
+    ? `Ton fichier est prêt, mais ta mise à jour gratuite du mois est déjà faite. Avec Plus, il s'importe tout de suite.`
+    : why === "update"
+      ? `Ta mise à jour gratuite du mois est déjà faite${next ? `. La prochaine : le ${fmtShort(next.toISOString())}` : ""}. Avec Plus, c'est quand tu veux.`
+      : "Gratuit : une mise à jour par mois. Avec Plus, c'est quand tu veux.";
+  $("plus-av").innerHTML = $("wk-av").innerHTML;
+  selectPlan(plusPlan); renderPlusPrices(); plusMsg("");
+  $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer";
+  $("plus").hidden = false;
+  nativePost({ type: "plus", action: "get" });
+}
+function closePlus() {
+  $("plus").hidden = true;
+  // Fenêtre fermée sans acheter : le fichier en attente n'est pas importé.
+  if (plusWaiting && !hasPlus()) { plusWaiting = null; toast("Pas d'import cette fois. Ta prochaine mise à jour gratuite arrive bientôt.", false); }
+}
+function renderPlusBlock() {
+  $("plus-block").hidden = !storeApp();
+  if (!storeApp()) return;
+  const on = hasPlus();
+  const next = nextFreeAt();
+  $("plus-status").textContent = on
+    ? `Tu as Zyeuto Plus ${PLUS_PLANS[prefs.plus.plan] || ""} : mises à jour illimitées. Merci !`
+    : canUpdateFree()
+      ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
+      : `Version gratuite : une mise à jour par mois. La prochaine gratuite : le ${fmtShort(next.toISOString())}.`;
+  $("plus-open").hidden = on;
+  $("plus-manage").hidden = !on || prefs.plus.plan === "fr.zyeuto.plus.avie";
+}
+async function plusUnlocked() {
+  $("plus").hidden = true;
+  haptic("success"); confetti();
+  toast("Bienvenue dans Zyeuto Plus ! Mises à jour illimitées.", false);
+  renderPlusBlock();
+  // Un fichier attendait : on l'importe maintenant.
+  if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
+}
+// Réponses de l'app iPhone : état de l'achat, prix du magasin, résultat d'un achat.
+window.zyeutoPlus = (d) => {
+  if (!d || typeof d !== "object") return;
+  const was = hasPlus();
+  prefs.plus = { active: !!d.active, plan: d.plan || "" };
+  if (Array.isArray(d.products) && d.products.length) {
+    prefs.plusPrices = Object.fromEntries(d.products.map((p) => [p.id, p.price]));
+  }
+  savePrefs();
+  renderPlusPrices(); renderPlusBlock();
+  const r = d.result;
+  if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
+  if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked();
+  if (r === "none") return plusMsg("Aucun achat Zyeuto Plus trouvé sur ce compte Apple.");
+  if (r === "pending") return plusMsg("Achat en attente : il doit encore être accepté (par exemple par un parent). Plus s'activera tout seul.");
+  if (r === "error") return plusMsg("L'achat n'a pas pu se faire. Vérifie ta connexion et réessaie.");
+  if (!was && hasPlus() && !$("plus").hidden) plusUnlocked();
+};
+document.querySelectorAll(".plus-plan").forEach((b) => b.addEventListener("click", () => { haptic("selection"); selectPlan(b.dataset.plan); }));
+$("plus-buy").addEventListener("click", () => {
+  if (plusBusy) return;
+  plusBusy = true; plusMsg("");
+  $("plus-buy").disabled = true; $("plus-buy").textContent = "Un instant…";
+  nativePost({ type: "plus", action: "buy", id: plusPlan });
+});
+const plusRestore = () => { plusMsg(""); nativePost({ type: "plus", action: "restore" }); };
+$("plus-restore2").addEventListener("click", plusRestore);
+$("plus-restore").addEventListener("click", plusRestore);
+$("plus-later").addEventListener("click", closePlus);
+$("plus").addEventListener("click", (e) => { if (e.target === $("plus")) closePlus(); });
+$("plus-open").addEventListener("click", () => openPlus());
+$("plus-manage").addEventListener("click", () => nativePost({ type: "plus", action: "manage" }));
 window.zyeutoFile = {
   begin(name) { sharedBusy = true; this.name = name || "export.zip"; this.parts = []; },
   add(b64) {
@@ -4340,6 +4524,7 @@ render();
   if (gfOn() && gfStep()) gfCheck();
   else if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
+  renderPlusBlock();
 })();
 </script>
 </body>
