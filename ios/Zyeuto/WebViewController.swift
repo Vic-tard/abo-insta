@@ -91,6 +91,12 @@ final class WebViewController: UIViewController {
         webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('open'); true")
     }
 
+    /// Notification « C'est demandé » touchée : retour à l'accueil, sur la carte « En préparation ».
+    func showHome() {
+        guard pageReady, presentedViewController == nil else { return }
+        webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('home'); true")
+    }
+
     // MARK: Écran d'ouverture (le bonhomme)
 
     private func buildSplash() {
@@ -1084,7 +1090,7 @@ final class ExportWatcher: NSObject {
         center.removeDeliveredNotifications(withIdentifiers: Id.all)
         center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             guard granted, let self else { return }
-            self.notify(Id.asked, "C'est demandé ✓", "Instagram prépare ta liste, en général en moins de 10 minutes. Je te préviens dès que ton fichier est prêt.", after: 1)
+            self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive dans 5 à 10 minutes.", after: 1)
             self.notify(Id.reminder, "Ton fichier devrait être prêt", "Instagram a sans doute fini. Touche pour le récupérer et mettre Zyeuto à jour.", after: 12 * 60)
             self.notify(Id.lastDay, "Dernier jour pour ton fichier Instagram", "Il ne reste qu'un jour pour le télécharger. Touche pour mettre Zyeuto à jour.", after: 3 * 86400)
         }

@@ -2482,6 +2482,8 @@ window.zyeutoMeta = (ev) => {
     if (reqPending() && !prefs.readyAt) { prefs.readyAt = new Date().toISOString(); savePrefs(); haptic("success"); renderWeekly(); }
     return;
   }
+  // Notification « C'est demandé » touchée : retour à l'accueil, sur la carte « En préparation ».
+  if (ev === "home") { $("asked").hidden = true; setPage("home"); scrollTo({ top: 0, behavior: "smooth" }); return; }
   // Notification touchée : on file directement sur « Télécharger ».
   if (ev === "open") {
     if (reqPending()) { $("asked").hidden = true; setPage("home"); scrollTo({ top: 0 }); wkGo(); }
@@ -2931,7 +2933,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1450";
+const BUILD = "2026-11-02-1455";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
