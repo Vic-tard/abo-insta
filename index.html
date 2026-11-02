@@ -405,7 +405,37 @@
   .pager button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 
   /* Page Jeux : tuiles en grille au lieu du carrousel */
-  .pg .games { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow: visible; margin: 0; padding: 0; }
+  .pg .games { display: flex; flex-direction: column; gap: 12px; overflow: visible; margin: 0; padding: 0; }
+  .game-card { display: grid; grid-template-columns: 72px 1fr auto; gap: 14px; align-items: center; text-align: left; border: 0; border-radius: 24px; padding: 12px 16px 12px 12px;
+    color: #2e2328; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 8px 18px rgb(46 35 40 / .12); font: 13px/1.3 var(--font); }
+  .game-card::before { content: ""; position: absolute; right: -30px; top: -40px; width: 130px; height: 130px; border-radius: 50%; background: rgb(255 255 255 / .18); }
+  .g-oldest { background: linear-gradient(135deg, #f7da7f, #f0b552); }
+  .g-first { background: linear-gradient(135deg, #f7a593, #ec7262); }
+  .g-back { background: linear-gradient(135deg, #f4c9d0, #d68b98); }
+  .g-av { width: 72px; aspect-ratio: 1; border-radius: 24%; overflow: hidden; box-shadow: 0 6px 14px rgb(46 35 40 / .22); transform: rotate(-4deg); display: block; }
+  .g-av svg { width: 100%; height: 100%; display: block; }
+  .g-first .g-av { transform: rotate(3deg); }
+  .g-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; position: relative; }
+  .g-txt b { font: 800 19px/1.1 var(--round); }
+  .g-txt em { font-style: normal; font-size: 13px; opacity: .85; }
+  .g-txt small { align-self: flex-start; margin-top: 3px; font: 700 11.5px/1 var(--round); background: rgb(255 255 255 / .55); border-radius: 999px; padding: 5px 9px; }
+  .g-go { font: 800 30px/1 var(--round); opacity: .55; position: relative; }
+  .game-card:active { transform: scale(.98); }
+  .game-card:disabled { cursor: default; filter: grayscale(.85); opacity: .6; box-shadow: none; }
+  @media (prefers-reduced-motion: no-preference) { .pg.anim .game-card { animation: rise .45s both; } .pg.anim .game-card:nth-child(2) { animation-delay: .07s; } .pg.anim .game-card:nth-child(3) { animation-delay: .14s; } }
+  .trophy-line { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; text-align: left; border: 0; border-radius: 24px; padding: 14px 16px; cursor: pointer; position: relative; overflow: hidden;
+    background: linear-gradient(120deg, #c98a1e, #f2c45a 45%, #f9e08e 60%, #e0a93a); color: #3b2414; box-shadow: 0 10px 24px rgb(201 138 30 / .35), inset 0 0 0 1.5px rgb(255 255 255 / .4); font: 13px/1.3 var(--font); }
+  .trophy-line::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / .55) 50%, transparent 65%); transform: translateX(-130%); }
+  @media (prefers-reduced-motion: no-preference) { .pg.anim .trophy-line::after { animation: shine 1.4s .6s ease-out; } }
+  .t-cup { width: 56px; height: 56px; border-radius: 50%; background: rgb(59 36 20 / .18); display: grid; place-items: center; }
+  .t-cup svg { width: 38px; height: 38px; }
+  .t-txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .t-txt b { font: 800 20px/1.1 var(--round); letter-spacing: .02em; }
+  .t-txt small { font-size: 12.5px; font-weight: 600; opacity: .8; }
+  .t-bar { height: 7px; border-radius: 99px; background: rgb(59 36 20 / .18); overflow: hidden; }
+  .t-bar i { display: block; height: 100%; border-radius: 99px; background: #fff8e0; }
+  .t-medals { display: flex; }
+  .t-medals i { width: 30px; height: 30px; border-radius: 50%; margin-left: -8px; display: grid; place-items: center; font: 800 10px/1 var(--round); font-style: normal; background: #fff3c4; color: #8a5a10; box-shadow: 0 0 0 2px #e0a93a; }
   .pg .tile { min-height: 118px; padding: 14px; justify-content: flex-start; }
   .replay { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center; text-align: left; border: 0; border-radius: 20px; padding: 16px; cursor: pointer;
     background: var(--ring); color: #2e2328; font: 13px/1.35 var(--font); position: relative; overflow: hidden; }
@@ -1073,12 +1103,12 @@
     <section class="zy-card" id="zy-prono-card" aria-label="Mes pronostics"></section>
     <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
     <div class="goal" id="goal"></div>
-    <section class="games" id="games" aria-label="Jeux et trophées">
-    <button class="tile" id="tile-oldest" data-game="oldest" type="button"><span class="ico">1er</span><b>Le plus ancien</b><small></small></button>
-    <button class="tile" id="tile-first" data-game="first" type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/></svg></span><b>Qui a craqué en premier ?</b><small></small></button>
-    <button class="tile" id="tile-back" data-game="back" type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></span><b>Il te suit ou pas ?</b><small></small></button>
-    <button class="tile" id="tile-trophies" type="button"><span class="ico"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7"/></svg></span><b>Trophées</b><small id="trophy-count"></small></button>
+    <section class="games" id="games" aria-label="Mini-jeux">
+    <button class="game-card g-oldest" id="tile-oldest" data-game="oldest" type="button"><span class="g-av" data-look="oldest"></span><span class="g-txt"><b>Le Vétéran</b><em>Qui te suit depuis le plus longtemps ?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
+    <button class="game-card g-first" id="tile-first" data-game="first" type="button"><span class="g-av" data-look="first"></span><span class="g-txt"><b>Coup de foudre</b><em>Qui a craqué en premier, toi ou l'autre ?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
+    <button class="game-card g-back" id="tile-back" data-game="back" type="button"><span class="g-av" data-look="back"></span><span class="g-txt"><b>Ça match ?</b><em>Il te suit en retour, ou pas ?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
   </section>
+    <button class="trophy-line" id="tile-trophies" type="button"><span class="t-cup" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M15 8h18v11a9 9 0 0 1-18 0z" fill="#fff6d8"/><path d="M15 11H9a6 6 0 0 0 6 8M33 11h6a6 6 0 0 1-6 8" fill="none" stroke="#fff6d8" stroke-width="3" stroke-linecap="round"/><path d="M21 27h6v6h-6z" fill="#fff6d8"/><rect x="15" y="33" width="18" height="6" rx="2" fill="#fff6d8"/><path d="M19 12v6" stroke="#e8b442" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="t-txt"><b>Trophées</b><small id="trophy-count"></small><span class="t-bar"><i id="trophy-bar"></i></span></span><span class="t-medals" id="trophy-medals" aria-hidden="true"></span></button>
   </div>
 </div>
 <!-- Page de droite : graphiques -->
@@ -2431,7 +2461,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0200";
+const BUILD = "2026-11-02-0300";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -2685,7 +2715,7 @@ function stats(id) { prefs.games = prefs.games || {}; return prefs.games[id] || 
 // Chaque jeu dit s'il est jouable (sinon pourquoi) et fabrique une question.
 const GAMES = {
   oldest: {
-    title: "Le plus ancien",
+    title: "Le Vétéran",
     ready() { return Object.values(state.followers).filter(Boolean).length >= 6 || "Pas assez d'abonnés datés dans ton export."; },
     question(used) {
       const pool = Object.entries(state.followers).filter(([u, t]) => t && !used.has(u));
@@ -2697,7 +2727,7 @@ const GAMES = {
     },
   },
   first: {
-    title: "Qui a craqué en premier ?",
+    title: "Coup de foudre",
     pool() {
       if (!state.following) return [];
       return Object.entries(state.following).filter(([u, t]) => t && state.followers[u] && Math.abs(t - state.followers[u]) > 3600);
@@ -2713,7 +2743,7 @@ const GAMES = {
     },
   },
   back: {
-    title: "Il te suit ou pas ?",
+    title: "Ça match ?",
     ready() { return (state.following && Object.keys(state.following).length >= 4) || "Réimporte un export avec « Followers et suivi(e)s » pour y jouer."; },
     question(used) {
       const fol = Object.keys(state.following).filter((u) => !used.has(u));
@@ -2734,11 +2764,20 @@ function renderGames() {
     tile.querySelector("small").textContent = ok !== true ? (id === "gone" ? "Après un départ" : id === "back" || id === "first" ? "Réimporte le .zip" : "Bientôt") : best ? `Record : ${best}/${QUIZ_LEN}` : "Jamais joué";
     tile.title = ok === true ? "" : ok;
   }
-  const t = trophyStatus();
-  $("trophy-count").textContent = `${t.filter((x) => x.on).length} sur ${t.length}`;
+  const t = trophyStatus(), on = t.filter((x) => x.on);
+  $("trophy-count").textContent = `${on.length} sur ${t.length} débloqués`;
+  $("trophy-bar").style.width = (on.length / t.length * 100).toFixed(1) + "%";
+  $("trophy-medals").innerHTML = on.slice(-3).map((x) => `<i>${esc(x.m)}</i>`).join("");
+  document.querySelectorAll("[data-look]").forEach((el) => { if (!el.firstChild) el.innerHTML = avatarSVG(GAME_LOOKS[el.dataset.look]); });
   renderZy();
 }
 
+// Le bonhomme déguisé de chaque mini-jeu.
+const GAME_LOOKS = {
+  oldest: { hat: "tophat", eyes: "monocle", face: "mustache" },
+  first: { eyes: "heart", face: "kiss", bg: "lilac" },
+  back: { eyes: "star", face: "smile", bg: "sunset" },
+};
 let quiz = null;
 function openQuiz(id) {
   if (GAMES[id].ready() !== true) return;
@@ -2876,8 +2915,8 @@ document.addEventListener("keydown", (e) => {
 // ---------- Niveau de Zyeutage : les points gagnés dans tous les jeux font monter de niveau ----------
 // prefs.zy = { xp, look: { hat, eyes, wall }, spun: "AAAA-MM-JJ", anni: { "pseudo|année": 1 } }
 const RANKS = [[1, "Curieux"], [5, "Fouineur"], [10, "Détective"], [15, "Espion"], [20, "Légende"]];
-// Points pour passer du niveau lvl au suivant : chaque niveau demande 20 % de plus que le précédent.
-const xpStep = (lvl) => Math.round(70 * 1.2 ** (lvl - 1) / 10) * 10;
+// Points pour passer du niveau lvl au suivant : 150 au départ, puis 25 % de plus à chaque niveau.
+const xpStep = (lvl) => Math.round(150 * 1.25 ** (lvl - 1) / 10) * 10;
 function levelOf(xp) {
   let lvl = 1, floor = 0;
   while (xp >= floor + xpStep(lvl)) { floor += xpStep(lvl); lvl++; }
@@ -3093,7 +3132,7 @@ $("zy-anni-card").addEventListener("click", async (e) => {
   const u = b.dataset.anni, n = +b.dataset.y, z = zy();
   z.anni[u + "|" + new Date().getFullYear()] = 1; savePrefs();
   confetti();
-  gainXP(15, "Anniversaire");
+  gainXP(5, "Anniversaire");
   const text = `Ça fait ${ansText(n)} aujourd'hui que @${u} me suit 🎂`;
   try { if (navigator.share) await navigator.share({ text }); } catch {}
 });
@@ -3106,13 +3145,13 @@ function renderProno() {
   card.hidden = false;
   if (p && !pronoDraft) {
     card.innerHTML = `<h2>Mes pronostics<span>En attente</span></h2>
-      <p>Au prochain import, tu as dit <b>+${nf(p.up)}</b> arrivée${p.up > 1 ? "s" : ""} et <b>−${nf(p.down)}</b> départ${p.down > 1 ? "s" : ""}. Plus tu tombes juste, plus tu gagnes (jusqu'à 100 points).</p>
+      <p>Au prochain import, tu as dit <b>+${nf(p.up)}</b> arrivée${p.up > 1 ? "s" : ""} et <b>−${nf(p.down)}</b> départ${p.down > 1 ? "s" : ""}. Plus tu tombes juste, plus tu gagnes (jusqu'à 300 points).</p>
       <button class="btn ghost" type="button" id="prono-edit">Changer</button>`;
     $("prono-edit").addEventListener("click", () => { pronoDraft = { up: p.up, down: p.down }; renderProno(); });
     return;
   }
   const d = pronoDraft || (pronoDraft = { up: 0, down: 0 });
-  card.innerHTML = `<h2>Mes pronostics<span>Jusqu'à 100 points</span></h2>
+  card.innerHTML = `<h2>Mes pronostics<span>Jusqu'à 300 points</span></h2>
     <p>Combien d'arrivées et de départs au prochain import ?</p>
     <div class="zy-steps">${[["up", "Arrivées", "+"], ["down", "Départs", "−"]].map(([k, l, sgn]) =>
       `<div class="zy-step"><small>${l}</small><div><button type="button" data-p="${k}" data-d="-1" aria-label="Moins">−</button><b>${d[k] ? sgn : ""}${nf(d[k])}</b><button type="button" data-p="${k}" data-d="1" aria-label="Plus">+</button></div></div>`).join("")}</div>
@@ -3140,7 +3179,7 @@ function settleProno(r) {
   delete prefs.prono; savePrefs();
   const up = r.follows.length, down = r.unfollows.length, err = Math.abs(p.up - up) + Math.abs(p.down - down);
   const tol = Math.max(2, Math.round((up + down) * 0.1));
-  const pts = err === 0 ? 100 : Math.max(5, Math.round(80 * Math.max(0, 1 - err / (tol * 5))));
+  const pts = err === 0 ? 300 : Math.max(10, Math.round(240 * Math.max(0, 1 - err / (tol * 5))));
   return { pts, text: `${err === 0 ? "Pronostic parfait" : err <= tol ? "Pronostic presque juste" : "Pronostic"} : tu avais dit +${nf(p.up)} / −${nf(p.down)}, c'était +${nf(up)} / −${nf(down)}. +${pts} points.`, ok: err <= tol };
 }
 
