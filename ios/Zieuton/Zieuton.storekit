@@ -1,8 +1,6 @@
 {
   "identifier" : "5A1C7E30",
-  "nonRenewingSubscriptions" : [
-
-  ],
+  "nonRenewingSubscriptions" : [],
   "products" : [
     {
       "displayPrice" : "19.99",
@@ -18,31 +16,68 @@
       "productID" : "fr.zyeuto.plus.avie",
       "referenceName" : "Zieuton Plus à vie",
       "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "6739000010",
+      "localizations" : [
+        {
+          "description" : "Suivre un compte Instagram de plus dans Zieuton, sans rien effacer.",
+          "displayName" : "Compte Instagram n°2",
+          "locale" : "fr_FR"
+        }
+      ],
+      "productID" : "fr.zyeuto.compte2",
+      "referenceName" : "Compte Instagram 2",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "6739000011",
+      "localizations" : [
+        {
+          "description" : "Suivre un compte Instagram de plus dans Zieuton, sans rien effacer.",
+          "displayName" : "Compte Instagram n°3",
+          "locale" : "fr_FR"
+        }
+      ],
+      "productID" : "fr.zyeuto.compte3",
+      "referenceName" : "Compte Instagram 3",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "6739000012",
+      "localizations" : [
+        {
+          "description" : "Suivre un compte Instagram de plus dans Zieuton, sans rien effacer.",
+          "displayName" : "Compte Instagram n°4",
+          "locale" : "fr_FR"
+        }
+      ],
+      "productID" : "fr.zyeuto.compte4",
+      "referenceName" : "Compte Instagram 4",
+      "type" : "NonConsumable"
     }
   ],
   "settings" : {
     "_failTransactionsEnabled" : false,
     "_locale" : "fr_FR",
     "_storefront" : "FRA",
-    "_storeKitErrors" : [
-
-    ]
+    "_storeKitErrors" : []
   },
   "subscriptionGroups" : [
     {
       "id" : "21500001",
-      "localizations" : [
-
-      ],
+      "localizations" : [],
       "name" : "Zieuton Plus",
       "subscriptions" : [
         {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
+          "adHocOffers" : [],
+          "codeOffers" : [],
           "displayPrice" : "9.99",
           "familyShareable" : true,
           "groupNumber" : 1,
@@ -62,12 +97,8 @@
           "type" : "RecurringSubscription"
         },
         {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
+          "adHocOffers" : [],
+          "codeOffers" : [],
           "displayPrice" : "1.99",
           "familyShareable" : true,
           "groupNumber" : 2,

@@ -307,6 +307,7 @@
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .st-gold #plus-open b { color: #f4cd63; } }
   :root[data-theme="dark"] .st-gold #plus-open b { color: #f4cd63; }
   .st-note { margin: 0; padding: 4px 14px 14px 56px; font-size: 14px; color: var(--muted); }
+  .st-ic > b { color: #fff; font: 700 14px var(--round); }
   .st-foot { margin: -14px 8px 22px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
   .st-confirm { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .st-confirm p { margin: 0; font-size: 14px; color: var(--ink); }
@@ -1524,6 +1525,14 @@
       <button class="st-row" id="st-look-btn" type="button"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1-3.5 3.8-5.5 7-5.5s6 2 7 5.5"/></svg></span><span class="st-t"><b>Mon bonhomme</b><small id="st-zy-sub">Ses accessoires et ton niveau</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <a class="st-row" id="st-ig-open" href="#" target="_blank" rel="noopener noreferrer" hidden><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg></span><span class="st-t"><b>Voir mon profil Instagram</b></span><span class="st-go" aria-hidden="true">›</span></a>
     </div>
+    <div id="acct-group" hidden>
+      <div class="st-label">Comptes Instagram suivis</div>
+      <div class="st-group" id="acct-list" hidden></div>
+      <div class="st-group">
+        <button class="st-row" id="acct-add" type="button"><span class="st-ic" style="background:#c9a24a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b id="acct-add-t">Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
+      </div>
+      <p class="st-foot">Zieuton suit un seul compte Instagram par téléphone. Chaque compte en plus coûte 0,99 €, une fois.</p>
+    </div>
     <div class="st-label">Connexion</div>
     <div class="st-group">
       <div class="st-row st-static" ><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="st-t"><b>Aucun compte à créer</b><small>Pas d'e-mail, pas de mot de passe. Tout reste sur ce téléphone.</small></span></div>
@@ -1859,6 +1868,7 @@
       <p class="note" id="pv-source"></p>
       <label for="pv-date">Date de l'export<input type="date" id="pv-date"></label>
       <div class="msg err" id="pv-err" hidden></div>
+      <button class="btn primary" id="pv-add" type="button" hidden>Ajouter ce compte</button>
       <div class="row">
         <button class="btn primary" id="save">Enregistrer</button>
         <button class="btn ghost" id="cancel-confirm">Annuler</button>
@@ -2085,18 +2095,121 @@ async function hashNames(names) {
   }
 }
 
+// ---------- Un seul compte Instagram par téléphone ----------
+// Sans ça, un seul Zieuton Plus servirait à suivre les comptes de toute une bande d'amis.
+// L'export d'Instagram ne contient pas le pseudo : on reconnaît le compte à ses abonnés.
+// prefs.acct garde une empreinte (les 512 plus petites valeurs de hachage des pseudos) : elle survit à « Tout effacer ».
+const ACCT_K = 512, ACCT_SAME = 0.4;
+function nameHash(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return h >>> 0;
+}
+const acctPrint = (names) => [...new Set(names.map(nameHash))].sort((a, b) => a - b).slice(0, ACCT_K);
+// Part des abonnés en commun, de 0 (aucun) à 1 (les mêmes). Même compte d'un mois sur l'autre : 0,8 à 1.
+// Deux amis qui ont beaucoup d'abonnés en commun restent bien en dessous de 0,4.
+function acctLikeness(a, b) {
+  const sa = new Set(a), sb = new Set(b);
+  const union = [...new Set([...a, ...b])].sort((x, y) => x - y).slice(0, ACCT_K);
+  return union.length ? union.filter((h) => sa.has(h) && sb.has(h)).length / union.length : 1;
+}
+// Comme la limite gratuite : seulement dans l'app, là où Plus est vendu.
+const acctLockOn = () => storeApp();
+// Plusieurs comptes : chaque compte en plus s'achète (0,99 €, à vie). prefs.accts = [{ id, h, n }], prefs.acctCur = id du compte affiché.
+// Le compte affiché vit dans « state » comme avant ; les autres sont rangés à part (« acct:<id> »).
+const ACCT_IDS = ["fr.zyeuto.compte2", "fr.zyeuto.compte3", "fr.zyeuto.compte4"];
+const acctSlots = () => 1 + Math.min(ACCT_IDS.length, prefs.extraAccounts || 0);
+function accts() {
+  if (!Array.isArray(prefs.accts)) {
+    // Ancienne empreinte unique (ou rien encore) : un seul compte.
+    prefs.accts = [{ id: "a1", h: prefs.acct ? prefs.acct.h : [], n: prefs.acct ? prefs.acct.n : 0 }];
+    prefs.acctCur = "a1"; delete prefs.acct;
+  }
+  return prefs.accts;
+}
+const curAcct = () => accts().find((a) => a.id === prefs.acctCur) || accts()[0];
+const acctIndex = (a) => accts().indexOf(a) + 1;
+const sameAcct = (a, print) => a.n >= 10 && acctLikeness(a.h, print) >= ACCT_SAME;
+function isOtherAccount(names) {
+  const cur = curAcct();
+  if (!acctLockOn() || !(cur.n >= 10)) return false;
+  return acctLikeness(cur.h, acctPrint(names)) < ACCT_SAME;
+}
+// Un autre compte déjà suivi sur ce téléphone qui correspond à cet export.
+function knownAcct(names) {
+  const print = acctPrint(names), cur = curAcct();
+  return accts().find((a) => a !== cur && sameAcct(a, print)) || null;
+}
+function rememberAccount(names) { if (DEMO || !names.length) return; const a = curAcct(); a.h = acctPrint(names); a.n = names.length; savePrefs(); }
+async function parkState(id, s) {
+  try { await store.set("acct:" + id, s); } catch {}
+  try { localStorage.setItem("abo-state-" + id, JSON.stringify(s)); } catch {}
+}
+async function unparkState(id) {
+  let s = null;
+  try { s = await store.get("acct:" + id); } catch {}
+  if (!isState(s)) { try { s = JSON.parse(localStorage.getItem("abo-state-" + id) || "null"); } catch {} }
+  return isState(s) ? s : emptyState();
+}
+// Passer sur un autre compte suivi : rien n'est effacé.
+async function goAccount(id) {
+  if (DEMO || id === prefs.acctCur) return;
+  await parkState(prefs.acctCur, state);
+  state = await unparkState(id);
+  prefs.acctCur = id; savePrefs();
+  await save(); render(); renderPlusBlock();
+}
+// Nouveau compte (s'il reste une place achetée) : le compte affiché est rangé, on part de zéro.
+async function addAccount() {
+  if (DEMO || accts().length >= acctSlots()) return false;
+  await parkState(prefs.acctCur, state);
+  const id = "a" + (Math.max(0, ...accts().map((a) => parseInt(a.id.slice(1)) || 0)) + 1);
+  accts().push({ id, h: [], n: 0 });
+  prefs.acctCur = id; state = emptyState(); savePrefs();
+  await save(); render();
+  return true;
+}
+function otherAccountError(what, names) {
+  const known = names && knownAcct(names);
+  const e = new Error(known
+    ? `${what} est celui de ton compte ${acctIndex(known)}. Touche « Passer sur ce compte » pour l'y importer.`
+    : `${what} vient d'un autre compte Instagram que celui suivi ici. Rien n'a été enregistré. `
+      + (accts().length < acctSlots()
+        ? "Tu as une place libre : touche « Ajouter ce compte » pour le suivre en plus, sans rien effacer."
+        : accts().length >= 1 + ACCT_IDS.length
+          ? `Tu suis déjà ${accts().length} comptes, le maximum.`
+          : "Zieuton suit un seul compte par téléphone. Pour suivre celui-ci en plus, sans rien perdre, ajoute un compte (0,99 €, à vie)."));
+  e.otherAccount = known ? { known: known.id } : { add: accts().length < acctSlots() };
+  return e;
+}
+function renderAcct() {
+  $("acct-group").hidden = !acctLockOn() || DEMO;
+  if ($("acct-group").hidden) return;
+  const list = accts(), multi = list.length > 1;
+  $("acct-list").hidden = !multi;
+  $("acct-list").innerHTML = multi ? list.map((a) => `<button class="st-row acct-item${a.id === prefs.acctCur ? " on" : ""}" type="button" data-acct="${a.id}"><span class="st-ic" style="background:${a.id === prefs.acctCur ? "#c27583" : "#b9aeb2"}"><b>${acctIndex(a)}</b></span><span class="st-t"><b>Compte ${acctIndex(a)}${a.id === prefs.acctCur ? " · affiché" : ""}</b><small>${a.n ? nf(a.n) + " abonnés" : "Pas encore importé"}</small></span>${a.id === prefs.acctCur ? "" : '<span class="st-go" aria-hidden="true">›</span>'}</button>`).join("") : "";
+  const free = acctSlots() - list.length;
+  $("acct-add-t").textContent = free > 0 ? "Suivre un autre compte" : "Ajouter un compte";
+  $("acct-add-s").textContent = free > 0 ? `${free} place${free > 1 ? "s" : ""} libre${free > 1 ? "s" : ""}, sans rien effacer` : list.length >= 1 + ACCT_IDS.length ? `${list.length} comptes au maximum` : "0,99 €, à vie. Sans rien effacer.";
+  $("acct-add").hidden = list.length >= 1 + ACCT_IDS.length && free <= 0;
+}
+
 // ---------- Comparaison ----------
 async function recordSnapshot(followers, following, takenAt, source) {
   const names = Object.keys(followers);
   const hash = await hashNames(names);
   const last = state.snapshots[state.snapshots.length - 1];
-  if (last && new Date(takenAt) < new Date(last.takenAt)) {
-    throw new Error(`Cet export est daté du ${fmtDate(takenAt)}, avant ton dernier import (${fmtDate(last.takenAt)}). Importe tes exports dans l'ordre.`);
-  }
+  // Un autre compte déjà suivi sur ce téléphone : on le dit tout de suite.
+  const other = isOtherAccount(names);
+  if (other && knownAcct(names)) throw otherAccountError("Cet export", names);
   // Garde-fou : un export « programmé » d'Instagram ne contient que les nouveaux abonnés depuis l'export précédent.
   // Le comparer à la liste complète ferait croire que presque tout le monde est parti.
   if (last && last.count >= 20 && names.length < last.count * 0.5) {
-    throw new Error(`Cet export ne contient que ${nf(names.length)} abonné${names.length > 1 ? "s" : ""}, contre ${nf(last.count)} au dernier import. C'est un export partiel : Instagram n'y met que les nouveaux abonnés depuis l'export précédent. Rien n'a été enregistré. Refais un export « Une fois », période « Depuis le début ».`);
+    throw new Error(`Cet export ne contient que ${nf(names.length)} abonné${names.length > 1 ? "s" : ""}, contre ${nf(last.count)} au dernier import. C'est un export partiel : Instagram n'y met que les nouveaux abonnés depuis l'export précédent. Rien n'a été enregistré. Refais un export « Une fois », période « Depuis le début ».${acctLockOn() ? " Si c'est l'export d'un autre compte Instagram : Réglages → Mon compte → Ajouter un compte." : ""}`);
+  }
+  if (other) throw otherAccountError("Cet export", names);
+  if (last && new Date(takenAt) < new Date(last.takenAt)) {
+    throw new Error(`Cet export est daté du ${fmtDate(takenAt)}, avant ton dernier import (${fmtDate(last.takenAt)}). Importe tes exports dans l'ordre.`);
   }
   // La liste des comptes suivis n'a pas d'historique : on garde la plus récente.
   if (following) { state.following = following; state.followingAt = takenAt; }
@@ -2124,6 +2237,7 @@ const profileUrl = (u) => `https://www.instagram.com/${encodeURIComponent(u)}/`;
 function render() {
   renderMode();
   renderWeekly();
+  renderAcct();
   const snaps = state.snapshots;
   const last = snaps[snaps.length - 1];
   const compared = snaps.length >= 2;
@@ -2365,6 +2479,7 @@ async function importFiles(files) {
   $("pv-radar").hidden = false;
   $("pv-source").textContent = "";
   $("save").disabled = true;
+  showSwitch(null);
   try {
     pending = await readExport(files).finally(() => { $("pv-radar").hidden = true; });
     // Import direct, sans écran de confirmation : on peut annuler juste après.
@@ -2396,6 +2511,7 @@ async function commit(takenAt) {
       openPlus("import");
       return true;
     }
+    rememberAccount(Object.keys(pending.followers));
     const freeBefore = prefs.lastFreeAt;
     if (r.status === "ok" && !hasPlus()) prefs.lastFreeAt = new Date().toISOString();
     prefs.lastImportAt = new Date().toISOString(); savePrefs();
@@ -2430,9 +2546,29 @@ async function commit(takenAt) {
     $("save").disabled = false;
     $("pv-err").textContent = err.message;
     $("pv-err").hidden = false;
+    showSwitch(err.otherAccount || null);
     return false;
   }
 }
+// Import refusé (autre compte) : passer sur ce compte s'il est déjà suivi, sinon l'ajouter (place libre ou achat).
+function showSwitch(o) {
+  const add = $("pv-add");
+  add.dataset.known = o && o.known || "";
+  if (o) add.textContent = o.known ? "Passer sur ce compte" : o.add ? "Ajouter ce compte" : "Ajouter ce compte · 0,99 €";
+  add.hidden = !o || (!o.known && !o.add && accts().length >= 1 + ACCT_IDS.length);
+}
+// Le fichier en attente est importé dans le compte qui vient d'être choisi.
+async function importPendingHere() {
+  showSwitch(null);
+  if (pending) await commit(pending.date.toISOString());
+}
+$("pv-add").addEventListener("click", async () => {
+  if (!pending) return;
+  const known = $("pv-add").dataset.known;
+  if (known) { await goAccount(known); return importPendingHere(); }
+  if (accts().length < acctSlots()) { await addAccount(); return importPendingHere(); }
+  buyAccount(async () => { await addAccount(); await importPendingHere(); });
+});
 $("save").addEventListener("click", async () => {
   if (!pending) return;
   const v = $("pv-date").value;
@@ -2535,7 +2671,10 @@ $("restore-file").addEventListener("change", async (e) => {
   } catch {
     return flash("Ce fichier n'est pas une sauvegarde Zieuton.", "err");
   }
+  const restoredNames = Object.keys(s.followers);
+  if (s.snapshots.length && isOtherAccount(restoredNames)) return flash("Cette sauvegarde vient d'un autre compte Instagram que celui affiché. Va dans Réglages → Mon compte : passe sur ce compte ou ajoute-le, puis restaure à nouveau.", "err");
   state = s;
+  rememberAccount(restoredNames);
   if (typeof data.avatar === "string" && data.avatar.startsWith("data:image/")) setAvatar(data.avatar);
   if (data.zy && typeof data.zy.xp === "number") { prefs.zy = data.zy; if (data.games) prefs.games = data.games; savePrefs(); }
   render();
@@ -2554,6 +2693,21 @@ $("reset-yes").addEventListener("click", async () => {
   render();
   await save();
   flash("Historique effacé.", "ok");
+});
+$("acct-list").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-acct]");
+  if (!b || b.dataset.acct === prefs.acctCur) return;
+  haptic("selection");
+  await goAccount(b.dataset.acct);
+  renderAcct();
+  toast(`Compte ${acctIndex(curAcct())} affiché.`, false);
+});
+$("acct-add").addEventListener("click", () => {
+  if (DEMO) return toast("C'est la démo : touche « Quitter » en haut pour en sortir.", false);
+  const ready = async () => { await addAccount(); renderAcct(); toast(`Compte ${acctIndex(curAcct())} ajouté : importe son export pour commencer.`, false); };
+  if (accts().length < acctSlots()) return ready();
+  if (accts().length >= 1 + ACCT_IDS.length) return;
+  buyAccount(ready);
 });
 
 // ---------- Nouvel export ----------
@@ -3402,7 +3556,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-2010";
+const BUILD = "2026-11-02-2300";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -3535,9 +3689,28 @@ async function plusUnlocked() {
   // Un fichier attendait : on l'importe maintenant.
   if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
 }
+// Compte Instagram en plus : un achat à vie (0,99 €) par compte, au plus 3 en plus.
+let acctBuying = null;
+function buyAccount(then) {
+  if (!storeApp() || acctBuying) return;
+  const id = ACCT_IDS[Math.min(ACCT_IDS.length - 1, prefs.extraAccounts || 0)];
+  acctBuying = then;
+  toast("Un instant…", false);
+  nativePost({ type: "plus", action: "buy", id });
+}
 // Réponses de l'app iPhone : état de l'achat, prix du magasin, résultat d'un achat.
 window.zyeutoPlus = (d) => {
   if (!d || typeof d !== "object") return;
+  if (typeof d.accounts === "number") { prefs.extraAccounts = Math.max(0, d.accounts - 1); if (DEMO) realPrefs.extraAccounts = prefs.extraAccounts; savePrefs(); try { renderAcct(); } catch {} }
+  if (acctBuying && d.result) {
+    const then = acctBuying; acctBuying = null;
+    if (Array.isArray(d.products) && d.products.length) prefs.plusPrices = Object.fromEntries(d.products.map((p) => [p.id, p.price]));
+    savePrefs();
+    if (d.result === "ok" && accts().length < acctSlots()) { haptic("success"); confetti(); return then(); }
+    toast(d.result === "pending" ? "Achat en attente : il doit encore être accepté." : d.result === "cancel" ? "Achat annulé." : "L'achat n'a pas pu se faire. Réessaie.", false);
+    renderAcct();
+    return;
+  }
   const was = hasPlus();
   prefs.plus = { active: !!d.active, plan: d.plan || "" };
   if (Array.isArray(d.products) && d.products.length) {
@@ -3551,6 +3724,7 @@ window.zyeutoPlus = (d) => {
   const r = d.result;
   if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
   if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked();
+  if (r === "restored" && !hasPlus()) return plusMsg("Tes comptes Instagram en plus sont restaurés. Aucun Zieuton Plus trouvé sur ce compte Apple.");
   if (r === "none") return plusMsg("Aucun achat Zieuton Plus trouvé sur ce compte Apple.");
   if (r === "pending") return plusMsg("Achat en attente : il doit encore être accepté (par exemple par un parent). Plus s'activera tout seul.");
   if (r === "error") return plusMsg("L'achat n'a pas pu se faire. Vérifie ta connexion et réessaie.");
@@ -5056,6 +5230,9 @@ render();
   // Demande à Safari de ne pas effacer les données du site.
   try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch {}
 
+  // Les historiques d'avant le verrou : le compte suivi est celui déjà importé.
+  if (!curAcct().n && state.snapshots.length) rememberAccount(Object.keys(state.followers));
+  renderAcct();
   loading = false;
   $("quick-import").disabled = false;
   $("bar-file").disabled = false;
