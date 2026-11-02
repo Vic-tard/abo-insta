@@ -22,6 +22,9 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Photo de profil : iOS propose « Prendre une photo », il faut dire pourquoi. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Zyeuto utilise l'appareil photo seulement si tu prends ta photo de profil. Elle reste sur ton iPhone.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!-- Zyeuto apparaît dans le menu Partager des fichiers .zip et .json (export Instagram). -->
