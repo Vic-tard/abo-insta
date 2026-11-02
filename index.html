@@ -617,6 +617,23 @@
   .wk-steps li.done i { background: #3f7f68; }
   .wk-big { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 58px; border: 0; border-radius: 18px; background: #2e2328; color: #fff; font: 700 18px/1.1 var(--round); cursor: pointer; padding: 0 16px; transition: transform .12s; }
   .wk-big:active { transform: scale(.97); }
+  .asked { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgb(46 35 40 / .45); padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .asked[hidden] { display: none; }
+  .asked-card { width: 100%; max-width: 420px; border-radius: 28px; padding: 22px 18px 14px; text-align: center; color: #2e2328; background: linear-gradient(160deg, #ffe0b8, #f7a96c); box-shadow: 0 18px 40px rgb(46 35 40 / .3); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .asked-card h2 { margin: 4px 0 0; font: 800 26px/1.15 var(--round); }
+  .asked-card p { margin: 0; font-size: 15px; line-height: 1.4; color: rgb(46 35 40 / .8); }
+  .asked-card .asked-sub { margin-top: 8px; font: 700 15px var(--round); color: #2e2328; }
+  .asked-av { width: 84px !important; border-radius: 24px; box-shadow: 0 6px 14px rgb(46 35 40 / .2); }
+  .asked-go { display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; padding: 0 16px; width: 100%; min-height: 54px; border: 0; border-radius: 18px; font: 700 17px var(--round); color: #fff; cursor: pointer; }
+  .asked-go.games { background: linear-gradient(135deg, #8072d0, #6a5aa8); }
+  .asked-go.stats { background: #2e2328; }
+  .asked-stay { border: 0; background: none; font: 600 14px var(--round); color: rgb(46 35 40 / .75); padding: 10px; cursor: pointer; }
+  @media (prefers-reduced-motion: no-preference) {
+    .asked:not([hidden]) .asked-card { animation: askedIn .45s cubic-bezier(.3,1.4,.5,1); }
+    .asked:not([hidden]) .asked-av { animation: qzFloat 2.6s ease-in-out infinite; }
+  }
+  @keyframes askedIn { from { transform: translateY(60px) scale(.96); opacity: 0; } }
+
   .wk-redo { order: 9; align-self: center; border: 0; background: none; font: 600 13px var(--round); color: rgb(46 35 40 / .72); text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; cursor: pointer; }
   .wk-big svg { width: 22px; height: 22px; flex: none; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) { .wk-av { animation: qzFloat 2.8s ease-in-out infinite; } }
@@ -1460,6 +1477,18 @@
     <section class="block st-card st-day" id="g-day-block"><h2 id="g-day-title">Le jour où ils s'abonnent</h2><p class="sub">Touche un jour pour voir qui.</p><div class="chart" id="g-day"></div></section>
     <section class="block st-card st-hour" id="g-hour-block"><h2 id="g-hour-title">L'heure où ils s'abonnent</h2><p class="sub">Touche une heure pour voir qui.</p><div class="chart" id="g-hour"></div></section>
     <section class="block st-card st-stay" id="g-stay-block"><h2>Combien de temps ils sont restés</h2><p class="sub">Pour les comptes partis, le temps entre leur abonnement et leur départ. Touche une barre pour voir qui.</p><div class="chart" id="g-stay"></div></section>
+  </div>
+</div>
+<!-- Après la demande faite dans Instagram (app iPhone) : on propose de quoi patienter. -->
+<div class="asked" id="asked" hidden role="dialog" aria-modal="true" aria-labelledby="asked-t">
+  <div class="asked-card">
+    <span class="zy-av asked-av" id="asked-av" aria-hidden="true"></span>
+    <h2 id="asked-t">C'est demandé&nbsp;!</h2>
+    <p>Instagram prépare ta liste. En général, c'est prêt en quelques minutes&nbsp;: je te préviens dès que c'est le cas.</p>
+    <p class="asked-sub">En attendant&nbsp;?</p>
+    <button class="asked-go games" id="asked-games" type="button">Jouer aux mini-jeux</button>
+    <button class="asked-go stats" id="asked-stats" type="button">Explorer mes graphiques</button>
+    <button class="asked-stay" id="asked-stay" type="button">Rester sur l'accueil</button>
   </div>
 </div>
 <nav class="pager" id="pager" aria-label="Pages">
@@ -2443,8 +2472,17 @@ function wkGo() {
 }
 // Réponses de l'app iPhone : « requested » quand la demande est faite dans Instagram.
 window.zyeutoMeta = (ev) => {
-  if (ev === "requested") { markRequested(); haptic("success"); scrollTo({ top: 0, behavior: "smooth" }); }
+  if (ev === "requested") {
+    markRequested(); haptic("success"); scrollTo({ top: 0 });
+    $("asked-av").innerHTML = $("wk-av").innerHTML;
+    $("asked").hidden = false;
+  }
 };
+const closeAsked = (p) => { $("asked").hidden = true; if (p) setPage(p); };
+$("asked-games").addEventListener("click", () => closeAsked("games"));
+$("asked-stats").addEventListener("click", () => closeAsked("stats"));
+$("asked-stay").addEventListener("click", () => closeAsked());
+$("asked").addEventListener("click", (e) => { if (e.target === $("asked")) closeAsked(); });
 $("wk-go").addEventListener("click", wkGo);
 $("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
 // La carte passe toute seule à « Ton export est prêt » au bout de quelques minutes.
@@ -2878,7 +2916,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0900";
+const BUILD = "2026-11-02-0930";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
