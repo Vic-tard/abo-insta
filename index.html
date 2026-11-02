@@ -662,6 +662,9 @@
   .plus-mini-txt b { font: 800 15px/1.25 var(--round); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .plus-mini-tag { flex: none; }
   .plus-mini-txt small { font-size: 12.5px; line-height: 1.35; color: rgb(247 236 217 / .72); }
+  .plus-mini-bar { display: block; height: 5px; margin-top: 6px; border-radius: 99px; background: rgb(247 236 217 / .12); overflow: hidden; }
+  .plus-mini-bar[hidden] { display: none; }
+  .plus-mini-bar i { display: block; height: 100%; border-radius: inherit; background: var(--gold); transition: width .6s ease; }
   .plus-mini-go { flex: none; font: 800 22px var(--round); opacity: .8; }
   .plus-mini.on .plus-mini-txt b { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
@@ -1310,7 +1313,7 @@
   </section>
   <button class="plus-mini" id="plus-mini" type="button" hidden>
     <span class="plus-mini-tag">Plus</span>
-    <span class="plus-mini-txt"><b id="plus-mini-t">Gratuit pour commencer</b><small id="plus-mini-s"></small></span>
+    <span class="plus-mini-txt"><b id="plus-mini-t">Gratuit pour commencer</b><small id="plus-mini-s"></small><span class="plus-mini-bar" id="plus-mini-bar" hidden><i></i></span></span>
     <span class="plus-mini-go" aria-hidden="true">›</span>
   </button>
 
@@ -3071,7 +3074,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1610";
+const BUILD = "2026-11-02-1615";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -3084,11 +3087,29 @@ const haptic = (kind) => { if (nativeApp) nativePost({ type: "haptic", kind }); 
 // ---------- Zyeuto Plus ----------
 // Gratuit : les deux premiers imports (le point de départ et la première comparaison), puis une mise à jour par mois.
 // Plus (au mois, à l'année ou à vie) : mises à jour illimitées. L'achat passe par l'App Store, dans l'app iPhone seulement.
-const FREE_EVERY_DAYS = 30;
 const PLUS_PLANS = { "fr.zyeuto.plus.an": "à l'année", "fr.zyeuto.plus.mois": "au mois", "fr.zyeuto.plus.avie": "à vie" };
 const storeApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 4;
 const hasPlus = () => !!(prefs.plus && prefs.plus.active);
-const nextFreeAt = () => prefs.lastFreeAt ? new Date(Date.parse(prefs.lastFreeAt) + FREE_EVERY_DAYS * 864e5) : null;
+// Un mois de calendrier après la dernière mise à jour gratuite (30 ou 31 jours selon le mois ; le 31 janvier donne le 28 ou 29 février).
+function nextFreeAt() {
+  if (!prefs.lastFreeAt) return null;
+  const from = new Date(prefs.lastFreeAt), d = new Date(from);
+  d.setMonth(d.getMonth() + 1);
+  if (d.getDate() !== from.getDate()) d.setDate(0);
+  return d;
+}
+// Compte à rebours jusqu'à la prochaine mise à jour offerte : « 29 jours », puis « 5 h », puis « 12 min ».
+function freeLeft(next) {
+  const ms = Math.max(0, next.getTime() - Date.now());
+  if (ms >= 864e5) { const j = Math.ceil(ms / 864e5); return `${j} jour${j > 1 ? "s" : ""}`; }
+  if (ms >= 36e5) return `${Math.ceil(ms / 36e5)} h`;
+  return `${Math.max(1, Math.ceil(ms / 6e4))} min`;
+}
+// Part du mois déjà écoulée (la barre se vide petit à petit).
+function freeLeftPart(next) {
+  const from = Date.parse(prefs.lastFreeAt), total = next.getTime() - from;
+  return total > 0 ? Math.min(1, Math.max(0, (next.getTime() - Date.now()) / total)) : 0;
+}
 function canUpdateFree() {
   // Sur le site (hors app), rien n'est vendu : pas de limite pour l'instant.
   if (!storeApp() || hasPlus() || state.snapshots.length < 2) return true;
@@ -3146,7 +3167,7 @@ function freeRules() {
   return [
     { k: "1er import", t: "ton point de départ", used: n >= 1 },
     { k: "2e import", t: "ta première comparaison", used: n >= 2 },
-    { k: "Ensuite", t: n < 2 || monthOk ? "1 mise à jour par mois" : `1 par mois, prochaine le ${fmtShort(next.toISOString())}`, used: false },
+    { k: "Ensuite", t: n < 2 || monthOk ? "1 mise à jour par mois" : `1 par mois, prochaine dans ${freeLeft(next)}`, used: false },
   ];
 }
 function renderPlusMini() {
@@ -3154,12 +3175,16 @@ function renderPlusMini() {
   if (!storeApp()) return;
   const n = state.snapshots.length, next = nextFreeAt();
   $("plus-mini").classList.toggle("on", hasPlus());
-  if (hasPlus()) { $("plus-mini-t").textContent = "Zyeuto Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton bonhomme en or."; return; }
+  if (hasPlus()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = "Zyeuto Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton bonhomme en or."; return; }
   $("plus-mini-t").textContent = n === 0 ? "Gratuit pour commencer"
     : n === 1 ? "Ta comparaison est offerte"
-    : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine offerte le ${fmtShort(next.toISOString())}`;
+    : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine offerte dans ${freeLeft(next)}`;
   $("plus-mini-s").textContent = n < 2 ? "Ensuite 1 par mois, ou illimité avec Plus" : "Avec Plus, c'est illimité";
+  const waiting = n >= 2 && !canUpdateFree();
+  $("plus-mini-bar").hidden = !waiting;
+  if (waiting) $("plus-mini-bar").firstElementChild.style.width = `${Math.round(freeLeftPart(next) * 100)}%`;
 }
+setInterval(() => { if (storeApp() && !hasPlus() && !document.hidden) renderPlusBlock(); }, 60e3);
 function renderPlusBlock() {
   renderPlusMini();
   $("plus-block").hidden = !storeApp();
@@ -3170,7 +3195,7 @@ function renderPlusBlock() {
     ? `Tu as Zyeuto Plus ${PLUS_PLANS[prefs.plus.plan] || ""} : mises à jour illimitées. Merci !`
     : canUpdateFree()
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
-      : `Version gratuite : une mise à jour par mois. La prochaine gratuite : le ${fmtShort(next.toISOString())}`;
+      : `Version gratuite : une mise à jour par mois. La prochaine gratuite dans ${freeLeft(next)}`;
   $("plus-open").hidden = on;
   $("plus-manage").hidden = !on || prefs.plus.plan === "fr.zyeuto.plus.avie";
 }
