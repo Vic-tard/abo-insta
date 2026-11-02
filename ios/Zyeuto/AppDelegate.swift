@@ -31,7 +31,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationC
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let id = response.notification.request.identifier
         DispatchQueue.main.async {
-            if id != "zy-asked" { WebViewController.current?.openExport() }
+            if id == "zy-asked" { WebViewController.current?.showHome() }
+            else { WebViewController.current?.openExport() }
             completionHandler()
         }
     }
