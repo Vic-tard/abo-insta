@@ -17,6 +17,8 @@
 <style>
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; }
+  /* L'écran ne glisse jamais de gauche à droite : les ronds décoratifs et les rangées défilantes restent dans l'écran. */
+  html, body { overflow-x: hidden; overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   /* Layout : une colonne — en-tête avec compteurs, onglets soulignés, liste d'abonnés. Fond rose poudré calme, couleurs vives seulement pour les moments forts. */
   :root {
     --bg: #faf5f5; --surface: #ffffff; --surface-2: #f4eaec; --surface-2-press: #eadbde;
@@ -2933,7 +2935,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1455";
+const BUILD = "2026-11-02-1500";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
