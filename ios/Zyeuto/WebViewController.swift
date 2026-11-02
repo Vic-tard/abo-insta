@@ -427,6 +427,13 @@ final class MetaViewController: UIViewController {
     /// « Commencer l'exportation » touché : on attend qu'Instagram ait bien pris la demande.
     private var sentAt: Date?
     private var finished = false
+    /// Tant qu'Instagram n'a pas dit sur quel écran il est, le bandeau patiente (évite d'afficher l'étape 1 sur la page de connexion).
+    private var pageKnown = false
+    /// Derniers moments où chaque cadre de la page a vu : la connexion, « Commencer l'exportation », « Créer une exportation ».
+    private var seenLogin = Date.distantPast
+    private var seenStart = Date.distantPast
+    private var seenCreate = Date.distantPast
+    private var sawStart = false
     private var webView: WKWebView!
     private let banner = UIView()
     private let gradient = CAGradientLayer()
@@ -457,13 +464,46 @@ final class MetaViewController: UIViewController {
     }
 
     /// Écoute les touches sur la page d'Instagram et envoie seulement le texte du bouton touché.
-    private static let tapWatcher = """
-    document.addEventListener('click', function (e) {
-      var el = e.target && e.target.closest ? e.target.closest('button,a,label,[role=button],[role=link],[role=radio],[role=checkbox],[role=menuitem],[role=option],[tabindex]') : null;
-      var t = ((el || e.target).innerText || (el || e.target).getAttribute && (el || e.target).getAttribute('aria-label') || '').trim();
-      if (t) window.webkit.messageHandlers.zyeutoTap.postMessage(t.slice(0, 300));
-    }, true);
-    """
+    /// Et toutes les 0,7 s, chaque cadre de la page dit ce qu'il affiche : écran de connexion,
+    /// bouton « Commencer l'exportation », bouton « Créer une exportation » (rien d'autre n'est lu).
+    private func watcherScript() -> String {
+        let json: ([String]) -> String = { list in
+            (try? JSONSerialization.data(withJSONObject: list.map { $0.replacingOccurrences(of: "’", with: "'").lowercased() }))
+                .flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
+        }
+        let start = json(steps.last(where: { $0.final })?.wait ?? [])
+        let create = json(steps.first?.wait ?? [])
+        return """
+        (function () {
+          document.addEventListener('click', function (e) {
+            var el = e.target && e.target.closest ? e.target.closest('button,a,label,[role=button],[role=link],[role=radio],[role=checkbox],[role=menuitem],[role=option],[tabindex]') : null;
+            var n = el || e.target;
+            var t = (n.innerText || (n.getAttribute && n.getAttribute('aria-label')) || '').trim();
+            if (t) window.webkit.messageHandlers.zyeutoTap.postMessage(t.slice(0, 300));
+          }, true);
+          var START = \(start), CREATE = \(create);
+          var vis = function (el) {
+            var r = el.getBoundingClientRect();
+            if (r.width <= 0 || r.height <= 0) return false;
+            var x = r.left + r.width / 2, y = r.top + r.height / 2;
+            if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return false;
+            var top = document.elementFromPoint(x, y);
+            return !!top && (top === el || el.contains(top) || top.contains(el));
+          };
+          var has = function (names) {
+            if (!names.length) return false;
+            return Array.prototype.some.call(document.querySelectorAll('button,a,[role=button],[tabindex]'), function (el) {
+              var t = (el.innerText || '').trim().replace(/’/g, "'").toLowerCase();
+              return names.indexOf(t) >= 0 && vis(el);
+            });
+          };
+          setInterval(function () {
+            var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username]'), vis);
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, start: has(START), create: has(CREATE) });
+          }, 700);
+        })();
+        """
+    }
 
     init(url: URL, requesting: Bool, steps: [Step]) {
         self.url = url
@@ -505,8 +545,9 @@ final class MetaViewController: UIViewController {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default() // on reste connecté à Instagram d'une fois sur l'autre
         let content = WKUserContentController()
-        content.addUserScript(WKUserScript(source: Self.tapWatcher, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+        content.addUserScript(WKUserScript(source: watcherScript(), injectionTime: .atDocumentEnd, forMainFrameOnly: false))
         content.add(WeakHandler(self), name: "zyeutoTap")
+        content.add(WeakHandler(self), name: "zyeutoState")
         config.userContentController = content
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
@@ -542,8 +583,8 @@ final class MetaViewController: UIViewController {
         ])
         showStep(animated: false)
         webView.load(URLRequest(url: url))
-        // Toutes les secondes : page de connexion à l'écran ? demande bien partie ?
-        watchTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in self?.watch() }
+        // Toutes les 0,5 s : on fait le point avec ce que les cadres de la page ont signalé.
+        watchTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.watch() }
     }
 
     override func viewDidLayoutSubviews() {
@@ -555,6 +596,7 @@ final class MetaViewController: UIViewController {
         super.viewDidDisappear(animated)
         watchTimer?.invalidate()
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoTap")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoState")
     }
 
     // MARK: Bandeau (compact : la page d'Instagram garde la place)
@@ -703,6 +745,9 @@ final class MetaViewController: UIViewController {
     // MARK: Étapes
 
     private var currentStep: Step {
+        if !pageKnown {
+            return Step(verb: "Un instant,", target: "Instagram s'ouvre…")
+        }
         if downloading {
             return Step(verb: "Presque fini :", target: "Zyeuto récupère ton fichier…", tip: "Ne ferme pas cet écran.")
         }
@@ -713,15 +758,18 @@ final class MetaViewController: UIViewController {
                 : Step(verb: "Instagram vérifie que c'est toi :", target: "tape ton mot de passe",
                        tip: "Chez Instagram, comme d'habitude. Zyeuto ne le voit jamais.")
         }
-        if sentAt != nil {
-            return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…", tip: "Zyeuto vérifie que c'est bien parti.")
+        if let sent = sentAt {
+            return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…",
+                        tip: Date().timeIntervalSince(sent) > 15
+                            ? "Rien ne bouge ? Touche encore « Commencer l'exportation » sur la page."
+                            : "Zyeuto vérifie que c'est bien parti.")
         }
         return steps[index]
     }
 
     private func showStep(animated: Bool = true) {
         let step = currentStep
-        let normal = !(loginShown || downloading || sentAt != nil)
+        let normal = pageKnown && !(loginShown || downloading || sentAt != nil)
         let apply = {
             let say = NSMutableAttributedString()
             if !step.verb.isEmpty {
@@ -786,39 +834,37 @@ final class MetaViewController: UIViewController {
         }
     }
 
-    /// Toutes les secondes : la page de connexion est-elle affichée ? Et après « Commencer l'exportation »,
-    /// Instagram a-t-il bien quitté l'écran de demande (sinon, c'est qu'il manque quelque chose) ?
+    /// Un cadre de la page dit ce qu'il affiche.
+    private func received(state: [String: Any], mainFrame: Bool) {
+        let now = Date()
+        if state["login"] as? Bool == true { seenLogin = now }
+        if state["start"] as? Bool == true { seenStart = now; sawStart = true }
+        if state["create"] as? Bool == true { seenCreate = now }
+        if mainFrame && !pageKnown {
+            pageKnown = true
+            loginShown = state["login"] as? Bool == true || (webView.url?.absoluteString.lowercased() ?? "").contains("login")
+            showStep()
+        }
+    }
+
+    /// Fait le point : écran de connexion ? demande bien partie ?
     private func watch() {
-        guard !downloading, !finished else { return }
-        let final = steps.last(where: { $0.final })?.wait ?? []
-        let names = (try? JSONSerialization.data(withJSONObject: final)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
-        let js = """
-        (function () {
-          var vis = function (el) { var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
-          var pwd = Array.prototype.some.call(document.querySelectorAll('input[type=password]'), vis);
-          var names = \(names);
-          var btn = Array.prototype.some.call(document.querySelectorAll('button,[role=button],a'), function (el) {
-            var t = (el.innerText || '').trim().replace(/’/g, "'").toLowerCase();
-            return vis(el) && names.some(function (n) { return t === n.toLowerCase(); });
-          });
-          return [pwd, btn];
-        })()
-        """
-        webView.evaluateJavaScript(js) { [weak self] result, _ in
-            guard let self, let r = result as? [Bool], r.count == 2 else { return }
-            let login = r[0], startStillThere = r[1]
-            if login != self.loginShown { self.loginShown = login; self.showStep() }
-            // Demande envoyée, pas de mot de passe demandé, et le bouton « Commencer l'exportation » a disparu :
-            // Instagram a pris la demande.
-            if let sent = self.sentAt, !login {
-                if !startStillThere, Date().timeIntervalSince(sent) > 1.5 {
-                    self.finishRequest()
-                } else if startStillThere, Date().timeIntervalSince(sent) > 6 {
-                    // Toujours sur l'écran de demande : quelque chose n'est pas passé, on repropose l'étape.
-                    self.sentAt = nil
-                    self.showStep()
-                }
-            }
+        guard pageKnown, !downloading, !finished else { return }
+        let now = Date()
+        let onLoginURL = (webView.url?.absoluteString.lowercased() ?? "").contains("login")
+        let login = now.timeIntervalSince(seenLogin) < 1.6 || onLoginURL
+        let startVisible = now.timeIntervalSince(seenStart) < 1.6
+        let createVisible = now.timeIntervalSince(seenCreate) < 1.6
+        if login != loginShown { loginShown = login; showStep() }
+        guard requesting, !login else { return }
+        // « Commencer l'exportation » a été touché, et Instagram a quitté cet écran (retour à « Créer une exportation »,
+        // ou le bouton a disparu) : la demande est partie. Si la touche n'a pas été vue, le retour à l'accueil
+        // d'Instagram juste après l'écran final suffit aussi.
+        if let sent = sentAt {
+            if now.timeIntervalSince(sent) > 1.5, createVisible || !startVisible { finishRequest() }
+            else if now.timeIntervalSince(sent) > 15 { showStep(animated: false) }
+        } else if sawStart, index >= steps.count - 1, createVisible, !startVisible {
+            finishRequest()
         }
     }
 
@@ -860,8 +906,11 @@ final class MetaViewController: UIViewController {
 
 extension MetaViewController: WKScriptMessageHandler {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "zyeutoTap", let text = message.body as? String else { return }
-        tapped(text)
+        if message.name == "zyeutoState", let state = message.body as? [String: Any] {
+            received(state: state, mainFrame: message.frameInfo.isMainFrame)
+        } else if message.name == "zyeutoTap", let text = message.body as? String {
+            tapped(text)
+        }
     }
 }
 
@@ -883,6 +932,12 @@ extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // Au cas où la page ne dit rien (page d'erreur…), le bandeau n'attend pas indéfiniment.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self, !self.pageKnown else { return }
+            self.pageKnown = true
+            self.showStep()
+        }
         watch()
     }
 
