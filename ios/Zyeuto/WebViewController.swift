@@ -273,8 +273,11 @@ extension WebViewController: WKScriptMessageHandler {
         guard presentedViewController == nil,
               let url = URL(string: body["url"] as? String ?? "https://accountscenter.instagram.com/info_and_permissions/dyi/")
         else { return }
-        let steps = (body["steps"] as? [[String: Any]] ?? []).map {
-            MetaViewController.Step(text: $0["t"] as? String ?? "", tip: $0["tip"] as? String ?? "")
+        let steps = (body["steps"] as? [[String: Any]] ?? []).map { d in
+            MetaViewController.Step(
+                verb: d["verb"] as? String ?? "", target: d["target"] as? String ?? "",
+                after: d["after"] as? String ?? "", tip: d["tip"] as? String ?? "",
+                look: d["look"] as? String ?? "")
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
         meta.onRequested = { [weak self] in
@@ -395,12 +398,19 @@ extension WebViewController: WKDownloadDelegate {
 
 // MARK: Instagram dans Zyeuto (bouton « Mettre à jour »)
 
-/// Affiche la page officielle d'export d'Instagram, avec un bandeau Zyeuto qui dit où toucher.
+/// Affiche la page officielle d'export d'Instagram, avec un bandeau Zyeuto qui dit où toucher,
+/// montre le vrai bouton à chercher (capture du guide) et suit la connexion à Instagram.
 /// Les touches sur la page d'Instagram, c'est l'utilisateur qui les fait : Zyeuto ne clique jamais à sa place
 /// et ne lit jamais le mot de passe (il est tapé sur la page d'Instagram).
 /// Quand le fichier est téléchargé, il est transmis à Zyeuto, qui l'importe tout seul.
 final class MetaViewController: UIViewController {
-    struct Step { let text: String; let tip: String }
+    struct Step {
+        var verb = ""      // « Touche », « Choisis »…
+        var target = ""    // le nom exact du bouton d'Instagram
+        var after = ""     // la suite (« puis « Enregistrer » »)
+        var tip = ""
+        var look = ""      // à quoi ressemble le bouton chez Instagram : button, row, link, radio, check
+    }
 
     var onRequested: (() -> Void)?
     var onFile: ((URL) -> Void)?
@@ -409,30 +419,45 @@ final class MetaViewController: UIViewController {
     private let requesting: Bool
     private let steps: [Step]
     private var index = 0
+    private var loginShown = false
+    private var downloading = false
     private var webView: WKWebView!
-    private let stepLabel = UILabel()
+    private let banner = UIView()
+    private let gradient = CAGradientLayer()
+    private let avatar = UIImageView()
+    private let verbLabel = UILabel()
+    private let targetLabel = UILabel()
+    private let afterLabel = UILabel()
     private let tipLabel = UILabel()
+    private let replica = UIView()      // le bouton d'Instagram, redessiné en grand
+    private let replicaBox = UIView()   // entouré comme dans le guide
     private let progress = UIProgressView(progressViewStyle: .bar)
     private let prevButton = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
+    private let buttons = UIStackView()
     private let loading = UIActivityIndicatorView(style: .medium)
     private var downloads: [ObjectIdentifier: URL] = [:]
     private var loadingObservation: NSKeyValueObservation?
+    private var loginTimer: Timer?
 
-    private static let ink = UIColor { $0.userInterfaceStyle == .dark ? UIColor(white: 0.95, alpha: 1)
-        : UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1) }
-    private static let rose = UIColor { $0.userInterfaceStyle == .dark
-        ? UIColor(red: 0x3a / 255, green: 0x23 / 255, blue: 0x2a / 255, alpha: 1)
-        : UIColor(red: 0xf6 / 255, green: 0xe2 / 255, blue: 0xe5 / 255, alpha: 1) }
-    private static let roseInk = UIColor { $0.userInterfaceStyle == .dark
-        ? UIColor(red: 0xf0 / 255, green: 0xb3 / 255, blue: 0xbd / 255, alpha: 1)
-        : UIColor(red: 0x8e / 255, green: 0x45 / 255, blue: 0x52 / 255, alpha: 1) }
+    // Couleurs Zyeuto, les mêmes en clair et en sombre (le bandeau reprend la carte « Mettre à jour »).
+    private static let ink = UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1)
+    private static let coral = UIColor(red: 0xef / 255, green: 0x7f / 255, blue: 0x6a / 255, alpha: 1)
     private static let accent = UIColor(red: 0xc2 / 255, green: 0x5a / 255, blue: 0x6f / 255, alpha: 1)
+    private static let peachTop = UIColor(red: 0xff / 255, green: 0xe9 / 255, blue: 0xcf / 255, alpha: 1)
+    private static let peachBottom = UIColor(red: 0xfb / 255, green: 0xc4 / 255, blue: 0x93 / 255, alpha: 1)
+    private static let metaBlue = UIColor(red: 0x00 / 255, green: 0x64 / 255, blue: 0xe0 / 255, alpha: 1)
+
+    private static func rounded(_ size: CGFloat, _ weight: UIFont.Weight) -> UIFont {
+        let font = UIFont.systemFont(ofSize: size, weight: weight)
+        guard let d = font.fontDescriptor.withDesign(.rounded) else { return font }
+        return UIFont(descriptor: d, size: size)
+    }
 
     init(url: URL, requesting: Bool, steps: [Step]) {
         self.url = url
         self.requesting = requesting
-        self.steps = steps.isEmpty ? [Step(text: "Suis les étapes d'Instagram", tip: "")] : steps
+        self.steps = steps.isEmpty ? [Step(target: "Suis les étapes d'Instagram")] : steps
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) non utilisé") }
@@ -444,52 +469,20 @@ final class MetaViewController: UIViewController {
         // Barre du haut : retour à Zyeuto, et l'adresse officielle d'Instagram bien visible.
         let back = UIButton(type: .system)
         back.setTitle("◀ Zyeuto", for: .normal)
-        back.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        back.titleLabel?.font = Self.rounded(17, .semibold)
         back.tintColor = Self.accent
         back.addAction(UIAction { [weak self] _ in self?.close() }, for: .touchUpInside)
         let title = UILabel()
         title.numberOfLines = 2
         title.textAlignment = .center
-        let t = NSMutableAttributedString(string: "Instagram\n", attributes: [.font: UIFont.systemFont(ofSize: 14, weight: .semibold), .foregroundColor: UIColor.label])
-        t.append(NSAttributedString(string: "🔒 accountscenter.instagram.com", attributes: [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: UIColor.secondaryLabel]))
+        let t = NSMutableAttributedString(string: "Instagram\n", attributes: [.font: Self.rounded(15, .semibold), .foregroundColor: UIColor.label])
+        t.append(NSAttributedString(string: "🔒 accountscenter.instagram.com", attributes: [.font: UIFont.systemFont(ofSize: 10.5), .foregroundColor: UIColor.secondaryLabel]))
         title.attributedText = t
         let top = UIView()
-        [back, title, loading].forEach { $0.translatesAutoresizingMaskIntoConstraints = false; top.addSubview($0) }
         loading.hidesWhenStopped = true
+        for v in [back, title, loading] as [UIView] { v.translatesAutoresizingMaskIntoConstraints = false; top.addSubview(v) }
 
-        // Bandeau Zyeuto : l'étape à faire, une barre qui avance, Précédent / Suivant.
-        let banner = UIView()
-        banner.backgroundColor = Self.rose
-        stepLabel.font = .systemFont(ofSize: 16, weight: .semibold)
-        stepLabel.textColor = Self.roseInk
-        stepLabel.numberOfLines = 0
-        tipLabel.font = .systemFont(ofSize: 13)
-        tipLabel.textColor = Self.ink.withAlphaComponent(0.75)
-        tipLabel.numberOfLines = 0
-        progress.progressTintColor = Self.accent
-        progress.trackTintColor = Self.accent.withAlphaComponent(0.18)
-        progress.layer.cornerRadius = 2
-        progress.clipsToBounds = true
-        prevButton.setTitle("Précédent", for: .normal)
-        prevButton.tintColor = Self.roseInk
-        prevButton.titleLabel?.font = .systemFont(ofSize: 15)
-        prevButton.addAction(UIAction { [weak self] _ in self?.go(-1) }, for: .touchUpInside)
-        var next = UIButton.Configuration.filled()
-        next.baseBackgroundColor = Self.ink
-        next.baseForegroundColor = .systemBackground
-        next.cornerStyle = .capsule
-        next.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
-        nextButton.configuration = next
-        nextButton.addAction(UIAction { [weak self] _ in self?.nextTapped() }, for: .touchUpInside)
-        let buttons = UIStackView(arrangedSubviews: [prevButton, UIView(), nextButton])
-        buttons.alignment = .center
-        let texts = UIStackView(arrangedSubviews: [progress, stepLabel, tipLabel, buttons])
-        texts.axis = .vertical
-        texts.spacing = 6
-        texts.setCustomSpacing(10, after: progress)
-        texts.setCustomSpacing(10, after: tipLabel)
-        texts.translatesAutoresizingMaskIntoConstraints = false
-        banner.addSubview(texts)
+        buildBanner()
 
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default() // on reste connecté à Instagram d'une fois sur l'autre
@@ -504,16 +497,13 @@ final class MetaViewController: UIViewController {
             }
         }
 
-        for v in [top, banner, webView as UIView] {
-            v.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview(v)
-        }
+        for v in [top, webView as UIView, banner] { v.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(v) }
         let g = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate([
             top.topAnchor.constraint(equalTo: g.topAnchor),
             top.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             top.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            top.heightAnchor.constraint(equalToConstant: 48),
+            top.heightAnchor.constraint(equalToConstant: 50),
             back.leadingAnchor.constraint(equalTo: top.leadingAnchor, constant: 14),
             back.centerYAnchor.constraint(equalTo: top.centerYAnchor),
             title.centerXAnchor.constraint(equalTo: top.centerXAnchor),
@@ -521,43 +511,232 @@ final class MetaViewController: UIViewController {
             loading.trailingAnchor.constraint(equalTo: top.trailingAnchor, constant: -16),
             loading.centerYAnchor.constraint(equalTo: top.centerYAnchor),
             banner.topAnchor.constraint(equalTo: top.bottomAnchor),
-            banner.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            banner.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            texts.topAnchor.constraint(equalTo: banner.topAnchor, constant: 10),
-            texts.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
-            texts.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 16),
-            texts.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -16),
-            progress.heightAnchor.constraint(equalToConstant: 4),
-            webView.topAnchor.constraint(equalTo: banner.bottomAnchor),
+            banner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            banner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            webView.topAnchor.constraint(equalTo: banner.bottomAnchor, constant: 8),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         showStep(animated: false)
         webView.load(URLRequest(url: url))
+        // Page de connexion d'Instagram à l'écran ? Le bandeau le dit (on regarde seulement s'il y a un champ mot de passe).
+        loginTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in self?.checkLogin() }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        gradient.frame = banner.bounds
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        loginTimer?.invalidate()
+    }
+
+    // MARK: Bandeau
+
+    private func buildBanner() {
+        banner.layer.cornerRadius = 22
+        banner.layer.cornerCurve = .continuous
+        banner.layer.shadowColor = UIColor.black.cgColor
+        banner.layer.shadowOpacity = 0.14
+        banner.layer.shadowRadius = 10
+        banner.layer.shadowOffset = CGSize(width: 0, height: 4)
+        gradient.colors = [Self.peachTop.cgColor, Self.peachBottom.cgColor]
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1, y: 1)
+        gradient.cornerRadius = 22
+        gradient.cornerCurve = .continuous
+        banner.layer.insertSublayer(gradient, at: 0)
+
+        avatar.image = Data(base64Encoded: WebViewController.logoPNG).flatMap { UIImage(data: $0, scale: 3) }
+        avatar.layer.cornerRadius = 13
+        avatar.layer.cornerCurve = .continuous
+        avatar.clipsToBounds = true
+
+        verbLabel.font = Self.rounded(15, .medium)
+        verbLabel.textColor = Self.ink.withAlphaComponent(0.7)
+        targetLabel.font = Self.rounded(21, .heavy)
+        targetLabel.textColor = Self.ink
+        targetLabel.numberOfLines = 0
+        targetLabel.adjustsFontSizeToFitWidth = true
+        targetLabel.minimumScaleFactor = 0.75
+        afterLabel.font = Self.rounded(15, .semibold)
+        afterLabel.textColor = Self.ink
+        afterLabel.numberOfLines = 0
+        tipLabel.font = Self.rounded(14, .regular)
+        tipLabel.textColor = Self.ink.withAlphaComponent(0.78)
+        tipLabel.numberOfLines = 0
+
+        // Le bouton à chercher, redessiné comme chez Instagram et entouré comme dans le guide.
+        replicaBox.layer.cornerRadius = 16
+        replicaBox.layer.cornerCurve = .continuous
+        replicaBox.layer.borderWidth = 3
+        replicaBox.layer.borderColor = Self.coral.cgColor
+        replicaBox.backgroundColor = UIColor.white.withAlphaComponent(0.55)
+        replica.translatesAutoresizingMaskIntoConstraints = false
+        replicaBox.addSubview(replica)
+        NSLayoutConstraint.activate([
+            replica.topAnchor.constraint(equalTo: replicaBox.topAnchor, constant: 7),
+            replica.bottomAnchor.constraint(equalTo: replicaBox.bottomAnchor, constant: -7),
+            replica.leadingAnchor.constraint(equalTo: replicaBox.leadingAnchor, constant: 7),
+            replica.trailingAnchor.constraint(equalTo: replicaBox.trailingAnchor, constant: -7),
+        ])
+
+        // Une barre qui avance (pas de « étape 3 sur 12 », ça fait moins peur).
+        progress.progressTintColor = Self.ink
+        progress.trackTintColor = Self.ink.withAlphaComponent(0.12)
+        progress.layer.cornerRadius = 2.5
+        progress.clipsToBounds = true
+        progress.translatesAutoresizingMaskIntoConstraints = false
+        progress.heightAnchor.constraint(equalToConstant: 5).isActive = true
+
+        prevButton.setTitle("Précédent", for: .normal)
+        prevButton.tintColor = Self.ink.withAlphaComponent(0.75)
+        prevButton.titleLabel?.font = Self.rounded(16, .medium)
+        prevButton.addAction(UIAction { [weak self] _ in self?.go(-1) }, for: .touchUpInside)
+        var next = UIButton.Configuration.filled()
+        next.baseBackgroundColor = Self.ink
+        next.baseForegroundColor = .white
+        next.cornerStyle = .capsule
+        next.contentInsets = NSDirectionalEdgeInsets(top: 11, leading: 22, bottom: 11, trailing: 22)
+        next.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
+            var a = a; a.font = MetaViewController.rounded(17, .bold); return a
+        }
+        nextButton.configuration = next
+        nextButton.addAction(UIAction { [weak self] _ in self?.nextTapped() }, for: .touchUpInside)
+        buttons.axis = .horizontal
+        buttons.alignment = .center
+        buttons.addArrangedSubview(prevButton)
+        buttons.addArrangedSubview(UIView())
+        buttons.addArrangedSubview(nextButton)
+
+        let words = UIStackView(arrangedSubviews: [verbLabel, targetLabel, afterLabel])
+        words.axis = .vertical
+        words.spacing = 1
+        let head = UIStackView(arrangedSubviews: [avatar, words])
+        head.spacing = 12
+        head.alignment = .center
+        avatar.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 46), avatar.heightAnchor.constraint(equalToConstant: 46)])
+
+        let all = UIStackView(arrangedSubviews: [progress, head, replicaBox, tipLabel, buttons])
+        all.axis = .vertical
+        all.spacing = 11
+        all.setCustomSpacing(12, after: progress)
+        all.translatesAutoresizingMaskIntoConstraints = false
+        banner.addSubview(all)
+        NSLayoutConstraint.activate([
+            all.topAnchor.constraint(equalTo: banner.topAnchor, constant: 14),
+            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -12),
+            all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 14),
+            all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
+        ])
+    }
+
+    /// Redessine le bouton d'Instagram : bouton bleu, ligne avec flèche, lien bleu, bouton radio ou case à cocher.
+    private func drawReplica(_ step: Step) {
+        replica.subviews.forEach { $0.removeFromSuperview() }
+        let label = UILabel()
+        label.text = step.target.prefix(1).uppercased() + step.target.dropFirst()
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
+        let row = UIView()
+        row.layer.cornerRadius = step.look == "button" ? 22 : 12
+        row.layer.cornerCurve = .continuous
+        var parts: [UIView] = [label]
+        switch step.look {
+        case "button":
+            row.backgroundColor = Self.metaBlue
+            label.textColor = .white
+            label.font = .systemFont(ofSize: 16, weight: .semibold)
+            label.textAlignment = .center
+        case "link":
+            row.backgroundColor = .white
+            let left = UILabel()
+            left.text = "Rubrique"
+            left.font = .systemFont(ofSize: 15)
+            left.textColor = .systemGray
+            label.textColor = Self.metaBlue
+            label.font = .systemFont(ofSize: 15, weight: .semibold)
+            label.textAlignment = .right
+            parts = [left, label]
+        default:
+            row.backgroundColor = .white
+            label.textColor = .black
+            label.font = .systemFont(ofSize: 16, weight: .medium)
+            let mark = UIImageView(image: UIImage(systemName:
+                step.look == "radio" ? "largecircle.fill.circle" : step.look == "check" ? "checkmark.square.fill" : "chevron.right"))
+            mark.tintColor = step.look == "row" || step.look.isEmpty ? .systemGray2 : Self.metaBlue
+            mark.contentMode = .scaleAspectFit
+            mark.setContentHuggingPriority(.required, for: .horizontal)
+            parts = [label, mark]
+        }
+        let line = UIStackView(arrangedSubviews: parts)
+        line.spacing = 10
+        line.alignment = .center
+        line.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(line)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        replica.addSubview(row)
+        NSLayoutConstraint.activate([
+            row.topAnchor.constraint(equalTo: replica.topAnchor),
+            row.bottomAnchor.constraint(equalTo: replica.bottomAnchor),
+            row.leadingAnchor.constraint(equalTo: replica.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: replica.trailingAnchor),
+            row.heightAnchor.constraint(equalToConstant: 44),
+            line.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
+            line.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -16),
+            line.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+        ])
     }
 
     // MARK: Étapes
 
     private var isLast: Bool { index == steps.count - 1 }
 
+    private var currentStep: Step {
+        if loginShown {
+            return index == 0
+                ? Step(verb: "D'abord", target: "Connecte-toi à Instagram",
+                       tip: "Ton mot de passe se tape chez Instagram : Zyeuto ne le voit jamais. Tu ne le feras qu'une fois.")
+                : Step(verb: "Instagram vérifie que c'est toi", target: "Tape ton mot de passe",
+                       tip: "Chez Instagram, comme d'habitude. Zyeuto ne le voit jamais.")
+        }
+        if downloading {
+            return Step(verb: "C'est presque fini", target: "Zyeuto récupère ton fichier…", tip: "Ne ferme pas cet écran.")
+        }
+        return steps[index]
+    }
+
     private func showStep(animated: Bool = true) {
-        let step = steps[index]
+        let step = currentStep
         let apply = {
-            self.stepLabel.text = step.text
+            self.verbLabel.text = step.verb
+            self.verbLabel.isHidden = step.verb.isEmpty
+            self.targetLabel.text = step.target
+            self.afterLabel.text = step.after
+            self.afterLabel.isHidden = step.after.isEmpty
             self.tipLabel.text = step.tip
             self.tipLabel.isHidden = step.tip.isEmpty
-            self.prevButton.isHidden = self.index == 0
+            self.replicaBox.isHidden = step.look.isEmpty
+            if !step.look.isEmpty { self.drawReplica(step) }
+            let special = self.loginShown || self.downloading
+            self.buttons.isHidden = special
+            self.prevButton.alpha = self.index == 0 ? 0 : 1
+            self.prevButton.isEnabled = self.index > 0
+            self.progress.isHidden = special || self.steps.count < 2
+            var c = self.nextButton.configuration
+            c?.title = self.isLast ? (self.requesting ? "C'est fait ✓" : "Fermer") : "Suivant"
+            self.nextButton.configuration = c
         }
-        if animated, let box = stepLabel.superview {
-            UIView.transition(with: box, duration: 0.2, options: .transitionCrossDissolve, animations: apply)
+        progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
+        if animated {
+            UIView.transition(with: banner, duration: 0.25, options: .transitionCrossDissolve, animations: apply)
         } else {
             apply()
         }
-        progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
-        var c = nextButton.configuration
-        c?.title = isLast ? (requesting ? "C'est fait" : "Fermer") : "Suivant"
-        nextButton.configuration = c
     }
 
     private func go(_ delta: Int) {
@@ -571,6 +750,15 @@ final class MetaViewController: UIViewController {
     private func nextTapped() {
         guard isLast else { return go(1) }
         if requesting { finishRequest() } else { dismiss(animated: true) }
+    }
+
+    private func checkLogin() {
+        guard !downloading else { return }
+        webView.evaluateJavaScript("!!document.querySelector('input[type=password]')") { [weak self] result, _ in
+            guard let self, let login = result as? Bool, login != self.loginShown else { return }
+            self.loginShown = login
+            self.showStep()
+        }
     }
 
     private func finishRequest() {
@@ -628,6 +816,10 @@ extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
         decisionHandler(isFile && response.isForMainFrame ? .download : .allow)
     }
 
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        checkLogin()
+    }
+
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
         download.delegate = self
     }
@@ -667,10 +859,8 @@ extension MetaViewController: WKDownloadDelegate {
         let file = dir.appendingPathComponent(suggestedFilename.isEmpty ? "instagram.zip" : suggestedFilename)
         downloads[ObjectIdentifier(download)] = file
         DispatchQueue.main.async {
-            self.stepLabel.text = "Zyeuto récupère ton fichier…"
-            self.tipLabel.text = "Ne ferme pas cet écran, c'est presque fini."
-            self.tipLabel.isHidden = false
-            self.progress.setProgress(1, animated: true)
+            self.downloading = true
+            self.showStep()
         }
         completionHandler(file)
     }
@@ -685,6 +875,7 @@ extension MetaViewController: WKDownloadDelegate {
 
     func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
         downloads.removeValue(forKey: ObjectIdentifier(download))
+        downloading = false
         showStep(animated: false)
         failed("Le téléchargement n'a pas abouti. Vérifie ta connexion et touche encore « Télécharger ».")
     }
