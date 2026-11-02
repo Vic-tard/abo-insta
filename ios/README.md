@@ -20,7 +20,18 @@ Les mises à jour du site arrivent dans l'app sans la réinstaller.
    Puis clique encore sur ▶.
 
 Avec un identifiant Apple gratuit, l'app marche 7 jours : il suffit de recliquer sur ▶ pour la prolonger.
-Le compte développeur payant (99 €/an) n'est utile que pour la publier sur l'App Store.
+Le compte développeur payant (99 €/an) sert pour TestFlight (faire tester par d'autres) et l'App Store.
+
+## Envoyer une version sur TestFlight (compte développeur payant)
+
+1. Dans « Signing & Capabilities », choisis l'équipe payante (ton nom, sans « Personal Team »).
+2. Tout en haut au milieu, à la place de l'iPhone, choisis « Any iOS Device (arm64) ».
+3. Menu Product → Archive. Quand c'est fini, la fenêtre Organizer s'ouvre.
+4. Distribute App → App Store Connect → Distribute (laisser Xcode gérer le numéro de version).
+5. Dix à trente minutes plus tard, la version apparaît dans App Store Connect → Zyeuto → TestFlight.
+
+À chaque nouvelle version : refaire 2 à 4. Xcode augmente le numéro de build tout seul.
+La page de confidentialité demandée par Apple : https://vic-tard.github.io/abo-insta/confidentialite.html
 
 ## Bon à savoir
 

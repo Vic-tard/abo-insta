@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1C0FFEE0000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */; };
 		3D7F2C78C24B9D40B41C0EC4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0990C69358715F182884B6C6 /* Assets.xcassets */; };
 		64B7D6440962251FE4DC5FE4 /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52BF06FAA93713B5B497B6F0 /* WebViewController.swift */; };
 		DD488DC059AF0DEA85E48D23 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61704CEFFC51F31BA771C8B /* AppDelegate.swift */; };
@@ -14,6 +15,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0244CDA34711B5B70CD5DAF9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0990C69358715F182884B6C6 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3FDE7802CC4F26E6C18A72CF /* Zyeuto.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zyeuto.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -51,6 +53,7 @@
 				0990C69358715F182884B6C6 /* Assets.xcassets */,
 				0244CDA34711B5B70CD5DAF9 /* Info.plist */,
 				5C0A7E11D2B34F6A8E9B0C12 /* Zyeuto.storekit */,
+				A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Zyeuto;
 			path = Zyeuto;
@@ -135,6 +138,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D7F2C78C24B9D40B41C0EC4 /* Assets.xcassets in Resources */,
+				A1C0FFEE0000000000000001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
