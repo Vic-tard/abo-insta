@@ -585,6 +585,71 @@
   @media (prefers-reduced-motion: no-preference) { #who-sheet:not([hidden]) .who-hero { animation: pop .4s .1s cubic-bezier(.3,1.4,.5,1) both; } #who-sheet:not([hidden]) #who-list li { animation: rise .35s both; } }
   #who-list li .who small { white-space: normal; }
 
+  /* Accueil au style des Mini-jeux et des Graphiques */
+  .hcard, .weekly, .tabs-wrap { --ink: #2e2328; --muted: rgb(46 35 40 / .72); --surface: #fff; --surface-2: rgb(255 255 255 / .62); --surface-2-press: rgb(255 255 255 / .85);
+    --line: rgb(46 35 40 / .12); --link: #2e2328; --down: #c4412f; --up: #17794d; --btn: #2e2328; --btn-ink: #fff; --btn-press: #4a3a40; color: #2e2328; }
+  .hcard { border-top: 0 !important; padding: 16px !important; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
+  .hcard::before, .weekly::before, .tabs-wrap::before { content: ""; position: absolute; right: -40px; top: -50px; width: 150px; height: 150px; border-radius: 50%; background: rgb(255 255 255 / .2); pointer-events: none; }
+  .hcard > *, .weekly > *, .tabs-wrap > * { position: relative; }
+  .hcard h2, .tabs-wrap h2 { font: 800 19px/1.2 var(--round); margin: 0; }
+  .hc-imports { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
+  .hc-imports th, .hc-imports td { border-top-color: rgb(255 255 255 / .55); }
+  .hc-remind { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); }
+  .hc-remind .reminders a, .hc-remind .reminders button { background: rgb(255 255 255 / .62); border-radius: 999px; padding: 8px 14px; font-weight: 700; }
+  .hc-backup { background: linear-gradient(160deg, #ffc2cc, #ef7f8e); }
+  .hc-backup .btn.danger { background: rgb(255 255 255 / .45); }
+  .hcard .btn.ghost, .hcard .btn.danger { font-weight: 700; }
+  .weekly { position: relative; overflow: hidden; background: linear-gradient(160deg, #ffe0b8, #f7a96c) !important; border-radius: 24px !important; padding: 12px 12px 12px 14px !important; box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
+  .weekly .wk-toggle .t { font: 800 17px/1.2 var(--round); }
+  .weekly .wk-toggle .due { color: rgb(46 35 40 / .72); }
+  .weekly .howto, .weekly .steps-alt { color: #2e2328; }
+  .weekly .btn.ghost { background: rgb(255 255 255 / .62) !important; }
+  .weekly .wk-toggle .t { white-space: nowrap; }
+  .weekly .wk-toggle .chev { display: none; }
+  .wk-av { width: 38px !important; flex: none; border-radius: 12px; box-shadow: 0 3px 8px rgb(46 35 40 / .18); }
+  @media (prefers-reduced-motion: no-preference) { .wk-av { animation: qzFloat 2.8s ease-in-out infinite; } }
+  .home-hero { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px 14px; border-radius: 24px; color: #fff;
+    background: linear-gradient(135deg, #4a2636, #8a4560); box-shadow: 0 10px 24px rgb(74 38 54 / .3); margin-top: 26px; }
+  .home-hero::before { content: ""; position: absolute; right: -50px; bottom: -70px; width: 170px; height: 170px; border-radius: 50%; background: rgb(255 255 255 / .07); pointer-events: none; }
+  .home-hero .ring { background: linear-gradient(135deg, #f6c95a, #fff1b8); }
+  .home-hero .ring-in { background: #6a3449; }
+  .home-hero .stat b { font: 800 26px/1.2 var(--round); color: #fff; }
+  .home-hero .stat > span { color: rgb(255 255 255 / .78); font-weight: 600; }
+  .home-hero .stat.down b { color: #ffb4a6; }
+  .home-hero .stat.up b { color: #9fe8c4; }
+  .home-hero .caption { margin: 0; color: rgb(255 255 255 / .75); }
+  .home-hero .caption strong { color: #fff; }
+  .hh-zy { position: absolute; right: 18px; top: -30px; width: 54px; height: 54px; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 3px rgb(246 201 90 / .9), 0 6px 14px rgb(0 0 0 / .2); z-index: 1; }
+  .hh-zy svg { width: 100%; height: 100%; display: block; }
+  .hh-bub { position: absolute; right: 80px; top: -24px; background: #fff; color: #2e2328; font: 800 12px/1 var(--round); padding: 7px 10px; border-radius: 12px 12px 3px 12px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / .15); white-space: nowrap; z-index: 1; }
+  .hh-bub:empty { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .hh-zy { animation: qzFloat 2.6s ease-in-out infinite; }
+    .hh-bub { animation: pop .45s .4s cubic-bezier(.3,1.6,.5,1) both; transform-origin: 100% 100%; }
+    .home-hero { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; }
+  }
+  .tabs-wrap { position: relative; overflow: hidden; border-radius: 24px; padding: 14px; box-shadow: 0 8px 18px rgb(46 35 40 / .12); transition: background .3s; }
+  .tabs-wrap[data-tab="unfollow"] { background: linear-gradient(160deg, #ffc9bd, #ec7262); }
+  .tabs-wrap[data-tab="follow"] { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); }
+  .tabs-wrap[data-tab="notback"] { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
+  .tabs-wrap[data-tab="fans"] { background: linear-gradient(160deg, #ffe0b8, #f7a96c); }
+  .tabs-wrap[data-tab="recent"] { background: linear-gradient(160deg, #ffc2cc, #ef7f8e); }
+  .tabs-wrap .tabs { box-shadow: none; margin: 0 -14px; padding: 0 14px; gap: 6px; }
+  .tabs-wrap .tabs button { flex: none; border: 0; border-radius: 999px; padding: 8px 13px; background: rgb(255 255 255 / .55); color: #2e2328; font: 700 13.5px var(--round); }
+  .tabs-wrap .tabs button[aria-selected="true"] { background: #2e2328; color: #fff; }
+  .tabs-wrap .tabs .n { font-weight: 600; opacity: .75; }
+  .tabs-wrap input[type=search] { background: rgb(255 255 255 / .7); }
+  .tabs-wrap .search svg { stroke: rgb(46 35 40 / .6); }
+  .tabs-wrap ul.people { gap: 8px; }
+  .tabs-wrap ul.people li { background: rgb(255 255 255 / .88); border-radius: 18px; padding: 8px 10px; box-shadow: 0 4px 10px rgb(46 35 40 / .08); }
+  .tabs-wrap ul.people li.empty { background: rgb(255 255 255 / .6); text-align: center; padding: 18px 14px; display: flex !important; flex-direction: column; align-items: center; gap: 10px; color: #2e2328; font-weight: 600; }
+  .tabs-wrap ul.people li.empty .zy-av { width: 64px; }
+  @media (prefers-reduced-motion: no-preference) { .tabs-wrap ul.people li.empty .zy-av { animation: qzFloat 2.4s ease-in-out infinite; } }
+  .tabs-wrap .people .btn.ghost { background: #2e2328; color: #fff; border-radius: 999px; font-weight: 700; }
+  .tabs-wrap .note, .tabs-wrap .more { color: #2e2328; }
+  .tabs-wrap .more { font-weight: 700; align-self: center; background: rgb(255 255 255 / .6); border-radius: 999px; padding: 8px 16px; }
+
   /* Partie de quiz */
   /* Mini-jeux en plein écran : flèche retour, ou glisser vers la droite */
   .bilan.fullpage { background: var(--bg); padding: 0; align-items: stretch; }
@@ -1104,7 +1169,7 @@
 
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
     <div class="wk-bar">
-      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span><span class="t" id="weekly-title">Nouvel export</span><small class="due" id="due"></small></span></button>
+      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="t" id="weekly-title">Nouvel export</span><small class="due" id="due"></small></span></button>
       <button class="btn primary pill" id="wk-go" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12M13 7l5 5-5 5"/></svg><span id="wk-go-t">C'est parti</span></button>
       <button class="btn primary pill" id="drive-import" hidden>
@@ -1136,6 +1201,8 @@
   <div class="banner install" id="install-banner" hidden><strong>Installe l'app :</strong> touche <b>Partager</b> puis « <b>Sur l'écran d'accueil</b> ». Elle s'ouvrira en plein écran, comme une vraie app.<button class="x" id="install-x" aria-label="Fermer">✕</button></div>
   <div class="banner" id="storage-banner" hidden></div>
 
+  <div class="home-hero needs-data">
+  <span class="hh-zy" id="hh-zy" aria-hidden="true"></span><span class="hh-bub" id="hh-bub" aria-hidden="true"></span>
   <section class="needs-data profile" aria-label="Résumé">
     <button class="ring avatar-btn" id="avatar-btn" type="button" aria-label="Choisir ta photo de profil"><span class="ring-in"><span class="ring-core" id="avatar-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></span></span><span class="avatar-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
     <div class="stats">
@@ -1145,9 +1212,10 @@
     </div>
   </section>
   <p class="needs-data caption" id="caption">Chargement…</p>
+  </div>
 
 
-  <section class="needs-data tabs-wrap">
+  <section class="needs-data tabs-wrap" id="list-card" data-tab="unfollow">
     <div class="tabs" role="tablist" aria-label="Listes">
       <button role="tab" id="tab-unfollow" data-tab="unfollow" aria-selected="true">Départs</button>
       <button role="tab" id="tab-follow" data-tab="follow" aria-selected="false">Arrivées</button>
@@ -1165,7 +1233,7 @@
   </section>
 
 
-  <section class="block needs-data">
+  <section class="block needs-data hcard hc-imports">
     <h2>Imports</h2>
     <div class="scroll"><table id="imports"></table></div>
     <div class="row" id="drop-row"><button class="btn ghost" id="drop-last">Supprimer le dernier import</button></div>
@@ -1175,7 +1243,7 @@
     </div>
   </section>
 
-  <section class="block needs-data" id="reminders-block">
+  <section class="block needs-data hcard hc-remind" id="reminders-block">
     <h2>Un rappel, si tu veux</h2>
     <div class="reminders">
       <a id="gcal" href="#" target="_blank" rel="noopener noreferrer">Rappel Google Agenda</a>
@@ -1184,7 +1252,7 @@
     <p class="siri" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ». Le rappel arrivera dans l'app Rappels.</p>
   </section>
 
-  <section class="block">
+  <section class="block hcard hc-backup">
     <h2>Sauvegarde</h2>
     <p class="note needs-data">Ton historique reste sur ce téléphone, rien n'est envoyé sur internet. Après chaque import, garde une copie dans Fichiers ou iCloud Drive : si le téléphone efface les données du site, tu la restaures en deux touches.</p>
     <p class="note only-empty">Tu as déjà utilisé l'app sur un autre téléphone ? Restaure la copie que tu avais gardée.</p>
@@ -1742,7 +1810,8 @@ function renderList() {
     : tab === "recent" ? "Importe ton export pour voir tes abonnés."
     : n < 2 ? "Il faut deux imports pour comparer. Refais un export dès que tu en as envie."
     : tab === "unfollow" ? "Personne n'est parti. 🎉" : "Aucun nouvel abonné détecté.";
-  $("people").innerHTML = html || `<li class="empty" style="display:block">${empty}</li>`;
+  $("list-card").dataset.tab = tab;
+  $("people").innerHTML = html || `<li class="empty"><span class="zy-av">${avatarSVG(prefs.zy?.look || {})}</span><span>${empty}</span></li>`;
   $("more").hidden = rows.length <= shown;
   $("more").textContent = `Voir plus (${rows.length - shown} restants)`;
 }
@@ -2735,7 +2804,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0610";
+const BUILD = "2026-11-02-0700";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -3761,7 +3830,7 @@ function renderStatsPage() {
     ? `<em class="st-chip ${net > 0 ? "up" : net < 0 ? "down" : ""}">${net > 0 ? "+" : net < 0 ? "−" : ""}${nf(Math.abs(net))} depuis le ${fmtShort(first.takenAt)}</em>`
     : `<em class="st-chip">Le solde arrive au 2ᵉ import</em>`;
   $("st-hero").innerHTML = `<span class="zy-av">${avatarSVG(zy().look)}</span><span class="st-bub">${quip}</span>
-    <div class="st-who"><small>Tes abonnés</small><b id="st-count" data-n="${last.count}">${nf(last.count)}</b>${chip}</div>`;
+    <div class="st-who"><small>Tes abonnés</small><b id="sh-count" data-n="${last.count}">${nf(last.count)}</b>${chip}</div>`;
   const old = stamps.filter((t) => (now - t) / DAY >= 365).length;
   $("kpis").innerHTML = [
     rel && followingN
@@ -4027,16 +4096,26 @@ function watchStatCards() {
   cards.forEach((c) => statSeen.observe(c));
 }
 function countUp() {
-  const el = $("st-count"); if (!el) return;
+  const el = $("sh-count"); if (!el) return;
   const n = +el.dataset.n, t0 = performance.now(), dur = 900;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches || n < 2) return;
   const tick = (t) => { const k = Math.min(1, (t - t0) / dur); el.textContent = nf(Math.round(n * (1 - (1 - k) ** 3))); if (k < 1) requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
 }
+function renderHomeZy() {
+  const look = prefs.zy?.look || {};
+  $("hh-zy").innerHTML = avatarSVG(look);
+  $("wk-av").innerHTML = avatarSVG(look);
+  const s = state.snapshots, last = s[s.length - 1];
+  let quip = "";
+  if (s.length === 1) quip = "C'est ton départ !";
+  else if (last) quip = !last.unfollows && last.follows ? "Que des arrivées !" : !last.unfollows ? "Personne n'est parti !" : last.follows > last.unfollows ? "Ça grimpe !" : last.follows === last.unfollows ? "Match nul !" : "Oups, des départs…";
+  $("hh-bub").textContent = quip;
+}
 const renderHome = render;
 // La page Graphiques ne se recalcule que quand on l'ouvre (plus léger pour les gros comptes).
 let statsDirty = true;
-render = function () { renderHome(); renderGamesPage(); statsDirty = true; if (page === "stats") { statsDirty = false; renderStatsPage(); } else setTimeout(() => { if (statsDirty) { statsDirty = false; renderStatsPage(); } }, 700); };
+render = function () { renderHome(); renderHomeZy(); renderGamesPage(); statsDirty = true; if (page === "stats") { statsDirty = false; renderStatsPage(); } else setTimeout(() => { if (statsDirty) { statsDirty = false; renderStatsPage(); } }, 700); };
 
 // ---------- Photo de profil : réduite à 320 px et gardée sur le téléphone ----------
 const AVATAR_KEY = "abo-avatar";
