@@ -2404,22 +2404,35 @@ $("drive-import").addEventListener("click", driveImport);
 // Dans l'app iPhone (version 2 et plus) : Instagram s'ouvre dans Zyeuto, avec un bandeau qui guide,
 // et le fichier téléchargé est importé tout seul. Ailleurs : le parcours guidé habituel.
 const metaInApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 2 && !useDrive();
-const plainTap = (h) => h.replace(/<span class="ig[^"]*">(.*?)<\/span>/g, "« $1 »").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ");
+const plainTap = (h) => h.replace(/<span class="ig[^"]*">(.*?)<\/span>/g, "« $1 »").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+// À quoi ressemble le bouton chez Instagram (le bandeau de l'app le redessine en grand).
+const META_LOOK = { "ig-01": "button", "ig-02": "row", "ig-03": "row", "ig-04": "row", "ig-05": "link", "ig-06": "check", "ig-07": "button",
+  "ig-08": "row", "ig-09": "radio", "ig-10": "row", "ig-11": "radio", "ig-12": "button", "get-2": "button" };
+// Une étape du guide → bandeau de l'app : le verbe en petit, le nom exact du bouton en gros, la vraie capture du bouton.
+function metaStep(x) {
+  const m = x.t.match(/^(.*?)<span class="ig[^"]*">(.*?)<\/span>(.*)$/);
+  return {
+    // Sans nom de bouton (« Touche ton compte… ») : le premier mot sert de verbe.
+    verb: m ? plainTap(m[1]) : plainTap(x.t).split(" ")[0], target: m ? plainTap(m[2]) : plainTap(x.t).split(" ").slice(1).join(" "),
+    after: m ? plainTap(m[3]).replace(/^,\s*/, "") : "",
+    tip: plainTap(x.tip || x.why || ""),
+    look: META_LOOK[x.img] || "",
+  };
+}
 function wkGo() {
   if (!metaInApp()) return openRepeat();
   haptic("light");
   if (!reqPending()) {
-    nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL,
-      steps: IG_TAPS_DEVICE.map((x) => ({ t: plainTap(x.t), tip: x.tip ? plainTap(x.tip) : "" })) });
+    nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep) });
   } else {
-    nativePost({ type: "meta", mode: "get", url: IG_EXPORT_URL,
-      steps: [{ t: "Touche « Télécharger » à côté de ton export", tip: "Pas encore là ? Instagram n'a pas fini : reviens un peu plus tard." },
-              { t: "Instagram peut te redemander ton mot de passe", tip: "Tu le tapes chez Instagram, jamais dans Zyeuto. Ensuite, Zyeuto importe tout seul." }] });
+    const dl = metaStep(GET_SHOTS[1]);
+    dl.tip = "À côté de ton export. Pas encore là ? Instagram n'a pas fini : reviens un peu plus tard. Ensuite, Zyeuto importe tout seul.";
+    nativePost({ type: "meta", mode: "get", url: IG_EXPORT_URL, steps: [dl] });
   }
 }
 // Réponses de l'app iPhone : « requested » quand la demande est faite dans Instagram.
 window.zyeutoMeta = (ev) => {
-  if (ev === "requested") { markRequested(); haptic("success"); flash("C'est demandé ! Zyeuto te prévient quand c'est sans doute prêt.", "ok"); }
+  if (ev === "requested") { markRequested(); haptic("success"); scrollTo({ top: 0, behavior: "smooth" }); }
 };
 $("wk-go").addEventListener("click", wkGo);
 // La carte passe toute seule à « Ton export est prêt » au bout de quelques minutes.
@@ -2853,7 +2866,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0800";
+const BUILD = "2026-11-02-0830";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
