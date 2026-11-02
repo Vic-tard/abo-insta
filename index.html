@@ -465,7 +465,11 @@
   .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--btn); color: var(--btn-ink); font: 600 13px var(--font); cursor: pointer; }
   .demo-bar button:active { background: var(--btn-press); }
   body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 54px); }
-  .gf .gf-demo { color: var(--rose-ink); }
+  /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
+  .gf .alt.gf-demo { display: inline-flex; align-items: center; gap: 8px; align-self: center; text-decoration: none; padding: 11px 20px; border-radius: 999px;
+    background: var(--rose-soft); color: var(--rose-ink); font: 600 15px/1 var(--round); letter-spacing: .01em; transition: transform .15s; }
+  .gf .alt.gf-demo:active { transform: scale(.96); }
+  .gf .alt.gf-demo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
   .pg { position: fixed; inset: 0; z-index: 15; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     transition: transform .34s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
   .pg.dragging { transition: none; }
@@ -3286,7 +3290,8 @@ function renderGuided() {
     if (foot) {
       const d = document.createElement("button");
       d.className = "alt gf-demo"; d.type = "button";
-      d.textContent = step === "welcome" ? "Voir une démo d'abord" : step === "get" || step === "wait" ? "En attendant, voir la démo" : "Voir la démo";
+      d.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>`
+        + (step === "welcome" ? "Jeter un œil à la démo" : step === "get" || step === "wait" ? "En attendant, voir la démo" : "Voir la démo");
       d.onclick = () => { if (step === "welcome") { prefs.welcomed = true; savePrefs(); } enterDemo(); };
       foot.append(d);
     }
@@ -3332,7 +3337,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1915";
+const BUILD = "2026-11-02-1955";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
