@@ -1492,6 +1492,7 @@
     </div>
 
     <div class="st-group">
+      <button class="st-row" type="button" id="st-demo-row"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="st-t"><b id="st-demo-t">Voir la démo</b><small id="st-demo-s">L'app avec des abonnés inventés. Tes données ne bougent pas.</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" type="button" data-open="st-help"><span class="st-ic" style="background:#a993e6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/></svg></span><span class="st-t"><b>Aide et confidentialité</b></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
 
@@ -4994,7 +4995,7 @@ function enterDemo() {
   realState = state; realPrefs = prefs;
   for (const k of ["theme", "plus", "plusPrices"]) if (k in realPrefs) d.prefs[k] = realPrefs[k];
   DEMO = true; state = d.state; prefs = d.prefs;
-  document.body.classList.add("demo"); $("demo-bar").hidden = false;
+  document.body.classList.add("demo"); $("demo-bar").hidden = false; renderDemoRow();
   undoState = null; $("toast").hidden = true;
   tab = "unfollow"; shown = PAGE; selectTab(tab);
   haptic("success");
@@ -5009,7 +5010,7 @@ function leaveDemo(quiet) {
   for (const k of ["theme", "plus", "plusPrices"]) if (k in prefs) realPrefs[k] = prefs[k];
   DEMO = false; state = realState; prefs = realPrefs; realState = realPrefs = null;
   savePrefs();
-  document.body.classList.remove("demo"); $("demo-bar").hidden = true;
+  document.body.classList.remove("demo"); $("demo-bar").hidden = true; renderDemoRow();
   undoState = null; $("toast").hidden = true; $("bilan").hidden = true;
   tab = "unfollow"; shown = PAGE; selectTab(tab);
   if (!quiet) haptic("light");
@@ -5017,6 +5018,15 @@ function leaveDemo(quiet) {
   setPage("home"); window.scrollTo(0, 0);
 }
 $("demo-quit").addEventListener("click", () => leaveDemo());
+// Réglages → « Voir la démo » (ou « Quitter la démo ») : on referme les Réglages, puis on bascule.
+$("st-demo-row").addEventListener("click", () => {
+  ST_PAGES.forEach((id) => { if (!$(id).hidden) closeStPage(id); });
+  setTimeout(() => DEMO ? leaveDemo() : enterDemo(), 200);
+});
+function renderDemoRow() {
+  $("st-demo-t").textContent = DEMO ? "Quitter la démo" : "Voir la démo";
+  $("st-demo-s").textContent = DEMO ? "Revenir à tes vraies données." : "L'app avec des abonnés inventés. Tes données ne bougent pas.";
+}
 // Les pseudos de la démo sont inventés : on n'ouvre pas Instagram dessus.
 document.addEventListener("click", (e) => {
   if (!DEMO) return;
