@@ -1037,7 +1037,7 @@ extension MetaViewController: WKDownloadDelegate {
 /// Pour savoir si le fichier est prêt, Zyeuto ouvre en cachette la page « Exporter vos informations »
 /// (la même session Instagram que dans l'app, jamais le mot de passe) et compte les boutons « Télécharger ».
 /// Il ne touche rien sur la page : il la lit, c'est tout.
-/// Quand Zyeuto est ouvert : vérification toutes les 45 s. Zyeuto fermé : iOS le réveille de temps en temps
+/// Quand Zyeuto est ouvert : vérification toutes les 30 s. Zyeuto fermé : iOS le réveille de temps en temps
 /// (quand il veut) ; sinon un rappel part au bout de 12 minutes (en vrai, Instagram met 4 à 8 minutes).
 final class ExportWatcher: NSObject {
     static let shared = ExportWatcher()
@@ -1138,7 +1138,7 @@ final class ExportWatcher: NSObject {
 
     // MARK: Vérifications
 
-    /// Zyeuto revient au premier plan : on vérifie tout de suite, puis toutes les 45 s.
+    /// Zyeuto revient au premier plan : on vérifie tout de suite, puis toutes les 30 s.
     func appBecameActive() {
         UNUserNotificationCenter.current().setBadgeCount(0, withCompletionHandler: nil)
         guard isWaiting else { return }
@@ -1148,14 +1148,14 @@ final class ExportWatcher: NSObject {
 
     private func startTimer() {
         guard timer == nil, isWaiting else { return }
-        timer = Timer.scheduledTimer(withTimeInterval: 45, repeats: true) { [weak self] _ in self?.tick() }
+        timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in self?.tick() }
     }
 
     private func tick() {
         guard isWaiting else { timer?.invalidate(); timer = nil; return }
         guard UIApplication.shared.applicationState == .active, let r = requestedAt else { return }
-        // Pas avant 1 min 30 : la page d'Instagram doit avoir enregistré la demande.
-        guard Date().timeIntervalSince(r) > 90 else { return }
+        // Pas avant 30 s : la page d'Instagram doit avoir enregistré la demande.
+        guard Date().timeIntervalSince(r) > 30 else { return }
         check { _ in }
     }
 
@@ -1208,23 +1208,14 @@ final class ExportWatcher: NSObject {
         if body["pending"] as? Bool == true { seen.pending = true }
         if body["login"] as? Bool == true { seen.login = true }
         // Nouveau bouton « Télécharger » : pas besoin d'attendre la fin.
-        if seen.dl > store.integer(forKey: Key.before), store.bool(forKey: Key.baselineChecked) { conclude() }
+        if seen.dl > store.integer(forKey: Key.before) { conclude() }
     }
 
     private func conclude() {
         guard let finish = finishCheck else { return }
         let before = store.integer(forKey: Key.before)
-        let sinceRequest = requestedAt.map { Date().timeIntervalSince($0) } ?? 0
-        // Première vérification juste après la demande (Instagram met au moins 4 minutes) :
-        // elle sert de point de départ, au cas où des exports plus anciens sont encore téléchargeables.
-        if !store.bool(forKey: Key.baselineChecked) {
-            store.set(true, forKey: Key.baselineChecked)
-            if sinceRequest < 3 * 60, !seen.login {
-                store.set(max(before, seen.dl), forKey: Key.before)
-                finish(.pending)
-                return
-            }
-        }
+        // Point de départ : le nombre de « Télécharger » vus dans Instagram au moment de la demande
+        // (exports plus anciens encore téléchargeables). Instagram peut finir en à peine une minute.
         if seen.login { finish(.unknown) }
         else if seen.dl > before { finish(.ready) }
         else { finish(seen.pending ? .pending : .unknown) }
