@@ -607,6 +607,17 @@
   .weekly .wk-toggle .t { white-space: nowrap; }
   .weekly .wk-toggle .chev { display: none; }
   .wk-av { width: 38px !important; flex: none; border-radius: 12px; box-shadow: 0 3px 8px rgb(46 35 40 / .18); }
+  .weekly .wk-av { width: 54px !important; border-radius: 16px; }
+  .weekly .wk-toggle .t { font-size: 22px !important; }
+  .wk-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+  .wk-steps li { display: flex; align-items: center; gap: 5px; background: rgb(255 255 255 / .55); border-radius: 999px; padding: 5px 10px 5px 5px; font-size: 12.5px; color: rgb(46 35 40 / .8); }
+  .wk-steps i { width: 17px; height: 17px; border-radius: 50%; background: #2e2328; color: #fff; font: 700 10px/17px var(--font); text-align: center; font-style: normal; }
+  .wk-steps li.on { background: #2e2328; color: #fff; }
+  .wk-steps li.on i { background: #fff; color: #2e2328; }
+  .wk-steps li.done i { background: #3f7f68; }
+  .wk-big { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 58px; border: 0; border-radius: 18px; background: #2e2328; color: #fff; font: 700 18px/1.1 var(--round); cursor: pointer; padding: 0 16px; transition: transform .12s; }
+  .wk-big:active { transform: scale(.97); }
+  .wk-big svg { width: 22px; height: 22px; flex: none; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) { .wk-av { animation: qzFloat 2.8s ease-in-out infinite; } }
   .home-hero { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px 14px; border-radius: 24px; color: #fff;
     background: linear-gradient(135deg, #4a2636, #8a4560); box-shadow: 0 10px 24px rgb(74 38 54 / .3); margin-top: 26px; }
@@ -1169,14 +1180,17 @@
 
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
     <div class="wk-bar">
-      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="t" id="weekly-title">Nouvel export</span><small class="due" id="due"></small></span></button>
-      <button class="btn primary pill" id="wk-go" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12M13 7l5 5-5 5"/></svg><span id="wk-go-t">C'est parti</span></button>
+      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="t" id="weekly-title">Mettre à jour</span><small class="due" id="due"></small></span></button>
       <button class="btn primary pill" id="drive-import" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>Drive</button>
       <button class="btn primary pill" id="bar-file" type="button" disabled hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer</button>
     </div>
+    <!-- Bouton « Mettre à jour » : 3 étapes, la carte suit où on en est (demandé, prêt). -->
+    <ol class="wk-steps" id="wk-steps" aria-label="Les étapes">
+      <li><i>1</i>Demander</li><li><i>2</i>Attendre</li><li><i>3</i>Télécharger</li>
+    </ol>
+    <button class="wk-big" id="wk-go" type="button"><svg id="wk-go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span id="wk-go-t">C'est parti</span></button>
     <div class="wk-more" id="wk-more" hidden>
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
@@ -2187,6 +2201,7 @@ function gcalUrl() {
 }
 $("gcal").href = gcalUrl();
 
+const READY_AFTER_MIN = 10;
 function daysSince(iso) { return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000); }
 function renderWeekly() {
   const last = hasRealData() ? state.snapshots[state.snapshots.length - 1] : null;
@@ -2199,7 +2214,19 @@ function renderWeekly() {
     due.textContent = n === 0 ? "Importé aujourd'hui" : `Dernier il y a ${n} j`;
     due.className = "due";
   }
-  $("wk-go-t").textContent = reqPending() ? (useDrive() ? "Vérifier" : "Importer") : "C'est parti";
+  // Carte « Mettre à jour » : 1 Demander → 2 Attendre → 3 Télécharger.
+  const pend = reqPending();
+  const mins = pend && prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
+  const ready = pend && mins >= READY_AFTER_MIN;
+  const at = !pend ? 0 : ready ? 2 : 1;
+  $("wk-steps").querySelectorAll("li").forEach((li, i) => {
+    li.className = i < at ? "done" : i === at ? "on" : "";
+    li.querySelector("i").textContent = i < at ? "✓" : String(i + 1);
+  });
+  $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : "En préparation";
+  if (pend) { due.textContent = mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
+  $("wk-go-t").textContent = !pend ? "C'est parti" : useDrive() ? "Vérifier mon Drive" : "Récupérer et mettre à jour";
+  $("wk-go-i").innerHTML = pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
   if (useDrive()) $("go-export").className = "btn ghost"; else $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
   $("quick-import").className = "btn " + (waiting && !useDrive() ? "primary" : "ghost");
@@ -2374,7 +2401,29 @@ async function driveImport() {
   }
 }
 $("drive-import").addEventListener("click", driveImport);
-$("wk-go").addEventListener("click", openRepeat);
+// Dans l'app iPhone (version 2 et plus) : Instagram s'ouvre dans Zyeuto, avec un bandeau qui guide,
+// et le fichier téléchargé est importé tout seul. Ailleurs : le parcours guidé habituel.
+const metaInApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 2 && !useDrive();
+const plainTap = (h) => h.replace(/<span class="ig[^"]*">(.*?)<\/span>/g, "« $1 »").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ");
+function wkGo() {
+  if (!metaInApp()) return openRepeat();
+  haptic("light");
+  if (!reqPending()) {
+    nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL,
+      steps: IG_TAPS_DEVICE.map((x) => ({ t: plainTap(x.t), tip: x.tip ? plainTap(x.tip) : "" })) });
+  } else {
+    nativePost({ type: "meta", mode: "get", url: IG_EXPORT_URL,
+      steps: [{ t: "Touche « Télécharger » à côté de ton export", tip: "Pas encore là ? Instagram n'a pas fini : reviens un peu plus tard." },
+              { t: "Instagram peut te redemander ton mot de passe", tip: "Tu le tapes chez Instagram, jamais dans Zyeuto. Ensuite, Zyeuto importe tout seul." }] });
+  }
+}
+// Réponses de l'app iPhone : « requested » quand la demande est faite dans Instagram.
+window.zyeutoMeta = (ev) => {
+  if (ev === "requested") { markRequested(); haptic("success"); flash("C'est demandé ! Zyeuto te prévient quand c'est sans doute prêt.", "ok"); }
+};
+$("wk-go").addEventListener("click", wkGo);
+// La carte passe toute seule à « Ton export est prêt » au bout de quelques minutes.
+setInterval(() => { if (!document.hidden && reqPending()) renderWeekly(); }, 30000);
 
 // ---------- Parcours guidé du premier export ----------
 // Tant qu'aucun import n'est fait, l'app n'affiche que ce parcours : une étape à la fois, un seul gros bouton.
@@ -2804,7 +2853,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0700";
+const BUILD = "2026-11-02-0800";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
