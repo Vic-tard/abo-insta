@@ -1,6 +1,6 @@
 import UIKit
 
-/// Reçoit les fichiers envoyés à Zyeuto depuis le menu Partager (ou « Ouvrir dans… »).
+/// Reçoit les fichiers envoyés à Zieuton depuis le menu Partager (ou « Ouvrir dans… »).
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
     private let web = WebViewController()
@@ -20,7 +20,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         URLContexts.forEach { web.receive(fileAt: $0.url) }
     }
 
-    // Zyeuto passe en arrière-plan : on demande à iOS de le réveiller pour guetter le fichier Instagram.
+    // Zieuton passe en arrière-plan : on demande à iOS de le réveiller pour guetter le fichier Instagram.
     func sceneDidEnterBackground(_ scene: UIScene) {
         ExportWatcher.shared.scheduleBackgroundCheck()
     }

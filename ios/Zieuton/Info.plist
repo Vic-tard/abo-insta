@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>fr</string>
 	<key>CFBundleDisplayName</key>
-	<string>Zyeuto</string>
+	<string>Zieuton</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,10 +24,10 @@
 	<true/>
 	<!-- Photo de profil : iOS propose « Prendre une photo », il faut dire pourquoi. -->
 	<key>NSCameraUsageDescription</key>
-	<string>Zyeuto utilise l'appareil photo seulement si tu prends ta photo de profil. Elle reste sur ton iPhone.</string>
+	<string>Zieuton utilise l'appareil photo seulement si tu prends ta photo de profil. Elle reste sur ton iPhone.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<!-- Zyeuto apparaît dans le menu Partager des fichiers .zip et .json (export Instagram). -->
+	<!-- Zieuton apparaît dans le menu Partager des fichiers .zip et .json (export Instagram). -->
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -45,7 +45,7 @@
 			</array>
 		</dict>
 	</array>
-	<!-- Zyeuto fermé : iOS le réveille de temps en temps pour voir si le fichier Instagram est prêt. -->
+	<!-- Zieuton fermé : iOS le réveille de temps en temps pour voir si le fichier Instagram est prêt. -->
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

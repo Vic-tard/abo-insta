@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Zyeuto ne piste personne et ne collecte aucune donnée : tout reste sur l'iPhone. -->
+	<!-- Zieuton ne piste personne et ne collecte aucune donnée : tout reste sur l'iPhone. -->
 	<key>NSPrivacyTracking</key>
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>

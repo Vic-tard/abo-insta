@@ -5,9 +5,9 @@ import UserNotifications
 final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Notifications de l'export Instagram : visibles même quand Zyeuto est ouvert, et touchables.
+        // Notifications de l'export Instagram : visibles même quand Zieuton est ouvert, et touchables.
         UNUserNotificationCenter.current().delegate = self
-        // Zyeuto fermé : iOS peut le réveiller pour voir si le fichier Instagram est prêt.
+        // Zieuton fermé : iOS peut le réveiller pour voir si le fichier Instagram est prêt.
         ExportWatcher.registerBackgroundTask()
         return true
     }
@@ -20,7 +20,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationC
         return config
     }
 
-    // Zyeuto ouvert : la notification s'affiche quand même en haut de l'écran.
+    // Zieuton ouvert : la notification s'affiche quand même en haut de l'écran.
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .list, .sound])

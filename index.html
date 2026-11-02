@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Zyeuto</title>
+<title>Zieuton</title>
 <meta name="description" content="Vois qui se désabonne de ton Instagram, à partir de l'export officiel.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Zyeuto">
+<meta name="apple-mobile-web-app-title" content="Zieuton">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#faf5f5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#161112" media="(prefers-color-scheme: dark)">
@@ -706,7 +706,7 @@
   }
   @keyframes askedIn { from { transform: translateY(60px) scale(.96); opacity: 0; } }
 
-  /* Zyeuto Plus : noir et or, le côté premium */
+  /* Zieuton Plus : noir et or, le côté premium */
   :root { --gold: linear-gradient(135deg, #fff2bf 0%, #f4cd63 28%, #c98a20 55%, #f8dc7d 80%, #b47a1c 100%); --gold-ink: #2a1d08; --night: linear-gradient(160deg, #2b2023 0%, #1a1214 60%, #120c0d 100%); }
   .gold-text { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .plus-tag, .plus-mini-tag { position: relative; overflow: hidden; font: 800 11.5px var(--round); letter-spacing: .14em; text-transform: uppercase; background: var(--gold); color: var(--gold-ink); border-radius: 999px; padding: 5px 11px; box-shadow: 0 2px 10px rgb(244 205 99 / .35), inset 0 1px 0 rgb(255 255 255 / .6); }
@@ -926,7 +926,7 @@
   .gf-share svg { width: 20px; height: 20px; fill: none; stroke: #0a84ff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) { .gf-body { animation: rise .3s both; } .gf-share { animation: nudge 1.6s ease-in-out infinite; } }
 
-  /* Niveau de Zyeutage : carte du niveau, roue, anniversaires, pronostics, bonhomme à habiller */
+  /* Niveau de Zieutage : carte du niveau, roue, anniversaires, pronostics, bonhomme à habiller */
   .zy-level { display: grid; grid-template-columns: 76px 1fr; gap: 6px 14px; align-items: center; text-align: left; border: 0; border-radius: 22px; padding: 14px; cursor: pointer;
     background: var(--surface-2); color: var(--ink); font: 13px/1.35 var(--font); }
   .zy-level:active { background: var(--surface-2-press); }
@@ -1299,7 +1299,7 @@
   <div class="top">
     <div class="brand">
       <img src="icone-v5-180.png" alt="" width="28" height="28" style="border-radius:7px;display:block">
-      <h1>Zyeuto</h1>
+      <h1>Zieuton</h1>
     </div>
     <div class="top-actions">
       <button class="sync needs-data" id="sync" type="button" hidden></button>
@@ -1451,7 +1451,7 @@
     </button>
 
     <div class="st-group">
-      <div id="plus-block" hidden><button class="st-row" type="button" data-open="st-plus"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Zyeuto Plus</b><small id="st-plus-sub"></small></span><span class="st-go" aria-hidden="true">›</span></button></div>
+      <div id="plus-block" hidden><button class="st-row" type="button" data-open="st-plus"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Zieuton Plus</b><small id="st-plus-sub"></small></span><span class="st-go" aria-hidden="true">›</span></button></div>
       <button class="st-row" type="button" data-open="st-look"><span class="st-ic" style="background:#6b5a8e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Apparence</b><small id="st-look-sub">Automatique</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
 
@@ -1502,9 +1502,9 @@
 <div class="st-page" id="st-plus" role="dialog" aria-modal="true" aria-labelledby="st-plus-t" hidden>
   <div class="st-in">
     <button class="st-back" type="button" data-close="st-plus">‹ Réglages</button>
-    <h1 id="st-plus-t">Zyeuto Plus</h1>
+    <h1 id="st-plus-t">Zieuton Plus</h1>
 
-    <div class="st-plus-hero"><span class="plus-tag">Zyeuto Plus</span><p id="plus-status"></p></div>
+    <div class="st-plus-hero"><span class="plus-tag">Zieuton Plus</span><p id="plus-status"></p></div>
     <div class="st-group st-gold">
       <button class="st-row" id="plus-open" type="button"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Découvrir Plus</b><small>Mises à jour illimitées, bonhomme en or</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" id="plus-manage" type="button" hidden><span class="st-ic st-ic-none"></span><span class="st-t"><b>Gérer mon abonnement</b></span><span class="st-go" aria-hidden="true">›</span></button>
@@ -1535,7 +1535,7 @@
       <button class="st-row" id="siri-btn" type="button" aria-expanded="false" aria-controls="siri"><span class="st-ic" style="background:#ef7f6a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V7a3 3 0 0 1 3-3zM6 11a6 6 0 0 0 12 0M12 17v3"/></svg></span><span class="st-t"><b>Rappel avec Siri</b><small>Dans l'app Rappels de l'iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <p class="st-note" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ».</p>
     </div>
-    <p class="st-foot">Quand tu demandes ton fichier à Instagram, Zyeuto te prévient aussi tout seul dès qu'il est prêt.</p>
+    <p class="st-foot">Quand tu demandes ton fichier à Instagram, Zieuton te prévient aussi tout seul dès qu'il est prêt.</p>
   </div>
 </div>
 <div class="st-page" id="st-backup" role="dialog" aria-modal="true" aria-labelledby="st-backup-t" hidden>
@@ -1569,7 +1569,7 @@
 <!-- Parcours guidé du premier export : remplace tout l'écran tant qu'aucun import n'est fait -->
 <div class="gf" id="gf" role="dialog" aria-modal="true" aria-labelledby="gf-title" hidden>
   <div class="gf-in">
-    <div class="gf-head"><img src="icone-v5-180.png" alt=""><b>Zyeuto</b><button class="help-btn" id="gf-help" type="button" aria-label="Comment ça marche">?</button></div>
+    <div class="gf-head"><img src="icone-v5-180.png" alt=""><b>Zieuton</b><button class="help-btn" id="gf-help" type="button" aria-label="Comment ça marche">?</button></div>
     <div class="gf-prog" id="gf-prog" aria-hidden="true"></div>
     <div class="gf-body" id="gf-body"></div>
   </div>
@@ -1700,7 +1700,7 @@
 <!-- Page de gauche : jeux, quiz et animations -->
 <div class="pg off" id="pg-games" role="region" aria-label="Mini-jeux" inert>
   <div class="wrap">
-    <div class="pg-head center"><div><h1>Mini-jeux</h1><p>Chaque partie fait monter ton niveau de Zyeutage</p></div></div>
+    <div class="pg-head center"><div><h1>Mini-jeux</h1><p>Chaque partie fait monter ton niveau de Zieutage</p></div></div>
     <button class="zy-level" id="zy-level" type="button" aria-label="Mon niveau et mon bonhomme"></button>
     <section class="zy-card flashy" id="zy-wheel-card" aria-label="La roue du jour"></section>
     <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
@@ -1756,8 +1756,8 @@
   <div class="asked-card plus-card">
     <button class="plus-x" id="plus-x" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <span class="plus-hero"><span class="zy-av asked-av" id="plus-av" aria-hidden="true"></span><span class="plus-sparkle a">✦</span><span class="plus-sparkle b">✦</span><span class="plus-sparkle c">✦</span></span>
-    <span class="plus-tag">Zyeuto Plus</span>
-    <h2 id="plus-t">Zyeute quand tu veux</h2>
+    <span class="plus-tag">Zieuton Plus</span>
+    <h2 id="plus-t">Zieute quand tu veux</h2>
     <p class="plus-why" id="plus-why"></p>
     <ul class="plus-rules" id="plus-rules"></ul>
     <ul class="plus-perks">
@@ -2428,7 +2428,7 @@ $("more").addEventListener("click", () => { shown += 40; renderList(); });
 $("backup").addEventListener("click", async () => {
   if (!state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
   const data = JSON.stringify({ app: "zyeuto", version: 1, savedAt: new Date().toISOString(), state, avatar: avatar || undefined, zy: prefs.zy, games: prefs.games });
-  const name = `zyeuto-sauvegarde-${toDateInput(new Date())}.json`;
+  const name = `zieuton-sauvegarde-${toDateInput(new Date())}.json`;
   const file = new File([data], name, { type: "application/json" });
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -2474,7 +2474,7 @@ $("restore-file").addEventListener("change", async (e) => {
     s = data && (data.app === "zyeuto" || data.app === "abo-insta") && data.state;
     if (!isState(s)) throw new Error();
   } catch {
-    return flash("Ce fichier n'est pas une sauvegarde Zyeuto.", "err");
+    return flash("Ce fichier n'est pas une sauvegarde Zieuton.", "err");
   }
   state = s;
   if (typeof data.avatar === "string" && data.avatar.startsWith("data:image/")) setAvatar(data.avatar);
@@ -2518,7 +2518,7 @@ $("siri-btn").addEventListener("click", () => {
 });
 
 // Bandeau « installer » : seulement sur iPhone/iPad dans Safari, hors app installée.
-// Dans l'app iPhone Zyeuto, la page est affichée par l'app (pas de Safari, pas d'écran d'accueil).
+// Dans l'app iPhone Zieuton, la page est affichée par l'app (pas de Safari, pas d'écran d'accueil).
 const nativeApp = !!window.ZYEUTO_APP;
 const standalone = nativeApp || window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -2533,11 +2533,11 @@ function gcalUrl() {
   const day = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const q = new URLSearchParams({
     action: "TEMPLATE",
-    text: "Exporter Instagram (Zyeuto)",
+    text: "Exporter Instagram (Zieuton)",
     dates: `${day}T180000/${day}T181000`,
     ctz: "Europe/Paris",
     recur: "RRULE:FREQ=WEEKLY",
-    details: `Ouvre Zyeuto et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur mon appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
+    details: `Ouvre Zieuton et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur mon appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
   });
   return "https://calendar.google.com/calendar/render?" + q.toString().replace(/\+/g, "%20");
 }
@@ -2560,7 +2560,7 @@ function renderWeekly() {
   // Carte « Mettre à jour » : 1 Demander → 2 Attendre → 3 Télécharger.
   const pend = reqPending();
   const mins = pend && prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
-  // Dans l'app iPhone (version 3), Zyeuto regarde lui-même la page d'Instagram et dit quand le fichier est là.
+  // Dans l'app iPhone (version 3), Zieuton regarde lui-même la page d'Instagram et dit quand le fichier est là.
   const ready = pend && (!!prefs.readyAt || mins >= READY_AFTER_MIN);
   // L'app arrête de guetter (et retire ses rappels) dès qu'il n'y a plus d'export en attente.
   if (nativeApp && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend }); } catch {} }
@@ -2688,7 +2688,7 @@ function renderSettings() {
   if (me.ig) $("st-ig-open").href = profileUrl(me.ig);
   $("st-plus-sub").textContent = hasPlus() ? "Activé, merci !" : $("plus-mini-t").textContent;
   $("st-drive").hidden = !(typeof driveToken === "function" && driveToken());
-  const ver = `Zyeuto · version du ${BUILD.slice(8, 10)}/${BUILD.slice(5, 7)}/${BUILD.slice(0, 4)}`;
+  const ver = `Zieuton · version du ${BUILD.slice(8, 10)}/${BUILD.slice(5, 7)}/${BUILD.slice(0, 4)}`;
   $("st-ver").textContent = ver; $("st-ver2").textContent = ver;
 }
 for (const [id, k, clean] of [["st-name", "name", (v) => v.trim()], ["st-ig", "ig", (v) => v.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase()]]) {
@@ -2803,7 +2803,7 @@ async function driveImport() {
   }
 }
 $("drive-import").addEventListener("click", driveImport);
-// Dans l'app iPhone (version 2 et plus) : Instagram s'ouvre dans Zyeuto, avec un bandeau qui guide,
+// Dans l'app iPhone (version 2 et plus) : Instagram s'ouvre dans Zieuton, avec un bandeau qui guide,
 // et le fichier téléchargé est importé tout seul. Ailleurs : le parcours guidé habituel.
 const metaInApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 2 && !useDrive();
 const plainTap = (h) => h.replace(/<span class="ig[^"]*">(.*?)<\/span>/g, "« $1 »").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
@@ -2837,7 +2837,7 @@ function wkGo() {
     nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep) });
   } else {
     const dl = metaStep(GET_SHOTS[1]);
-    dl.tip = "À côté de ton export. Pas encore là ? Instagram n'a pas fini : reviens un peu plus tard. Ensuite, Zyeuto importe tout seul.";
+    dl.tip = "À côté de ton export. Pas encore là ? Instagram n'a pas fini : reviens un peu plus tard. Ensuite, Zieuton importe tout seul.";
     nativePost({ type: "meta", mode: "get", url: IG_EXPORT_URL, steps: [dl] });
   }
 }
@@ -2916,7 +2916,7 @@ const IG_SHOTS = [
 const GET_SHOTS = [
   { img: "get-1", why: "Instagram met un peu de temps à rassembler ta liste.", t: `Attends cet e-mail d'Instagram`, tip: "Avant, tu en reçois un qui dit « en cours », c'est normal. Ça prend de quelques minutes à quelques heures : tu peux fermer l'app." },
   { img: "get-2", why: "Ton fichier arrive sur ton téléphone. Rien ne passe par un serveur.", t: `Touche ${igc("Télécharger")}`, tip: "Safari te demande de confirmer : touche encore Télécharger. Ton fichier reste disponible 4 jours." },
-  { img: "get-3", why: "L'app lit ta liste sur ton téléphone et trouve qui est parti et qui est arrivé.", t: `Touche ton fichier Instagram`, tip: nativeApp ? "Il est tout en haut, dans Récents. Encore plus simple : dans Safari, touche le fichier téléchargé, puis Partager et Zyeuto." : "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
+  { img: "get-3", why: "L'app lit ta liste sur ton téléphone et trouve qui est parti et qui est arrivé.", t: `Touche ton fichier Instagram`, tip: nativeApp ? "Il est tout en haut, dans Récents. Encore plus simple : dans Safari, touche le fichier téléchargé, puis Partager et Zieuton." : "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
 ];
 const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Maintenant, on fait le tri 🧹", "Tout effacer, puis la seule case qui compte&nbsp;: ça ne supprime rien&nbsp;!", "Et on enregistre&nbsp;!", "Plus que quelques touches 💪", "Le plus important&nbsp;: depuis le début&nbsp;!", "On y est presque&nbsp;!", "JSON, c'est ma langue 😄", "Dernière touche&nbsp;! 🎉"];
 let shDir = 1, shLost = false;
@@ -2958,12 +2958,12 @@ function shotsWire(body, list, get, set) {
 // Comment revenir au guide depuis Instagram : ça dépend d'où l'app est ouverte (test réel : sans ça, on reste bloqué dans Instagram).
 const TABS_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="13" height="13" rx="2.5"/><path d="M16 19.5a1.5 1.5 0 0 1-1.5 1.5H5a2 2 0 0 1-2-2V9.5A1.5 1.5 0 0 1 4.5 8"/></svg>`;
 const BACK_HOW = nativeApp
-  ? `Après chaque étape, touche « ◀ Zyeuto » tout en haut à gauche de l'écran.`
+  ? `Après chaque étape, touche « ◀ Zieuton » tout en haut à gauche de l'écran.`
   : standalone
   ? `Après chaque étape, glisse le doigt vers la droite sur la petite barre tout en bas de l'écran.`
   : isIOS
-  ? `Instagram s'ouvre dans un autre onglet. Après chaque étape, touche ${TABS_ICON} en bas de Safari, puis Zyeuto.`
-  : `Instagram s'ouvre dans un autre onglet. Après chaque étape, reviens sur l'onglet Zyeuto.`;
+  ? `Instagram s'ouvre dans un autre onglet. Après chaque étape, touche ${TABS_ICON} en bas de Safari, puis Zieuton.`
+  : `Instagram s'ouvre dans un autre onglet. Après chaque étape, reviens sur l'onglet Zieuton.`;
 const SWAP = `<p class="sh-swap">${BACK_HOW}</p>`;
 const SWAP_BIG = `<div class="sh-back"><b>Pour revenir ici</b><span>${BACK_HOW}</span></div>`;
 const ICON = {
@@ -3304,14 +3304,14 @@ async function gfCheck() {
 const BUILD = "2026-11-02-1745";
 let updChecked = 0;
 
-// ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
+// ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
 // L'app envoie le fichier par morceaux (base64), puis on l'importe comme un fichier choisi à la main.
 let sharedBusy = false;
 const nativePost = (msg) => { try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch {} };
 // Petite vibration dans l'app iPhone : "success", "error", "light", "medium", "selection".
 const haptic = (kind) => { if (nativeApp) nativePost({ type: "haptic", kind }); };
 
-// ---------- Zyeuto Plus ----------
+// ---------- Zieuton Plus ----------
 // Gratuit : les deux premiers imports (le point de départ et la première comparaison), puis une mise à jour par mois.
 // Plus (au mois, à l'année ou à vie) : mises à jour illimitées. L'achat passe par l'App Store, dans l'app iPhone seulement.
 const PLUS_PLANS = { "fr.zyeuto.plus.an": "à l'année", "fr.zyeuto.plus.mois": "au mois", "fr.zyeuto.plus.avie": "à vie" };
@@ -3402,7 +3402,7 @@ function renderPlusMini() {
   if (!storeApp()) return;
   const n = state.snapshots.length, next = nextFreeAt();
   $("plus-mini").classList.toggle("on", hasPlus());
-  if (hasPlus()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = "Zyeuto Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton bonhomme en or."; return; }
+  if (hasPlus()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = "Zieuton Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton bonhomme en or."; return; }
   $("plus-mini-t").textContent = n === 0 ? "Gratuit pour commencer"
     : n === 1 ? "Ta comparaison est offerte"
     : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine offerte dans ${freeLeft(next)}`;
@@ -3419,7 +3419,7 @@ function renderPlusBlock() {
   const on = hasPlus();
   const next = nextFreeAt();
   $("plus-status").textContent = on
-    ? `Tu as Zyeuto Plus ${PLUS_PLANS[prefs.plus.plan] || ""} : mises à jour illimitées. Merci !`
+    ? `Tu as Zieuton Plus ${PLUS_PLANS[prefs.plus.plan] || ""} : mises à jour illimitées. Merci !`
     : canUpdateFree()
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
       : `Version gratuite : une mise à jour par mois. La prochaine gratuite dans ${freeLeft(next)}`;
@@ -3429,7 +3429,7 @@ function renderPlusBlock() {
 async function plusUnlocked() {
   $("plus").hidden = true;
   haptic("success"); confetti();
-  toast("Bienvenue dans Zyeuto Plus ! Ton bonhomme est passé en or.", false);
+  toast("Bienvenue dans Zieuton Plus ! Ton bonhomme est passé en or.", false);
   renderPlusBlock();
   // Un fichier attendait : on l'importe maintenant.
   if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
@@ -3449,7 +3449,7 @@ window.zyeutoPlus = (d) => {
   const r = d.result;
   if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
   if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked();
-  if (r === "none") return plusMsg("Aucun achat Zyeuto Plus trouvé sur ce compte Apple.");
+  if (r === "none") return plusMsg("Aucun achat Zieuton Plus trouvé sur ce compte Apple.");
   if (r === "pending") return plusMsg("Achat en attente : il doit encore être accepté (par exemple par un parent). Plus s'activera tout seul.");
   if (r === "error") return plusMsg("L'achat n'a pas pu se faire. Vérifie ta connexion et réessaie.");
   if (!was && hasPlus() && !$("plus").hidden) plusUnlocked();
@@ -4009,7 +4009,7 @@ document.addEventListener("keydown", (e) => {
   if (!$("zy-sheet").hidden) $("zy-sheet").hidden = true;
 });
 
-// ---------- Niveau de Zyeutage : les points gagnés dans tous les jeux font monter de niveau ----------
+// ---------- Niveau de Zieutage : les points gagnés dans tous les jeux font monter de niveau ----------
 // prefs.zy = { xp, look: { hat, eyes, wall }, spun: "AAAA-MM-JJ", anni: { "pseudo|année": 1 } }
 const RANKS = [[1, "Curieux"], [5, "Fouineur"], [10, "Détective"], [15, "Espion"], [20, "Légende"]];
 // Points pour passer du niveau lvl au suivant : 150 au départ, puis 25 % de plus à chaque niveau.
@@ -4093,7 +4093,7 @@ const LOOKS = [
 ];
 const SLOTS = { hat: "Chapeau", eyes: "Yeux", face: "Visage", wall: "Mur", bg: "Fond" };
 let avatarN = 0;
-// Avec Zyeuto Plus, le bonhomme de l'utilisateur passe en or (pas ceux des jeux).
+// Avec Zieuton Plus, le bonhomme de l'utilisateur passe en or (pas ceux des jeux).
 function plusGold() { try { return hasPlus(); } catch { return false; } }
 function avatarSVG(look = {}, gold = plusGold() && !Object.values(GAME_LOOKS).includes(look)) {
   const get = (slot) => LOOKS.find((x) => x.id === look[slot] && x.slot === slot);
@@ -4116,7 +4116,7 @@ function renderZy() {
   if (!$("zy-level")) return;
   const z = zy(), L = levelOf(z.xp), rank = rankOf(L.lvl), next = RANKS.find(([l]) => l > L.lvl);
   $("zy-level").innerHTML = `<span class="zy-av">${avatarSVG(z.look)}</span>
-    <small>Niveau de Zyeutage</small>
+    <small>Niveau de Zieutage</small>
     <b>Niveau ${L.lvl} · <em>${rank}</em></b>
     <span class="zy-bar"><i style="--w:${(L.into / L.need * 100).toFixed(1)}%"></i></span>
     <span class="zy-sub">${nf(L.into)} / ${nf(L.need)} points${next ? ` · ${next[1]} au niveau ${next[0]}` : ""}</span>`;
