@@ -1397,11 +1397,16 @@ private extension WebViewController {
 @MainActor
 final class PlusStore {
     static let shared = PlusStore()
-    static let ids = ["fr.zyeuto.plus.an", "fr.zyeuto.plus.mois", "fr.zyeuto.plus.avie"]
+    static let plusIds = ["fr.zyeuto.plus.an", "fr.zyeuto.plus.mois", "fr.zyeuto.plus.avie"]
+    /// Comptes Instagram en plus (achats uniques à 0,99 €) : un Zieuton = un compte, sauf achat.
+    static let accountIds = ["fr.zyeuto.compte2", "fr.zyeuto.compte3", "fr.zyeuto.compte4"]
+    static let ids = plusIds + accountIds
 
     private(set) var products: [Product] = []
     /// L'achat en cours de validité (nil = version gratuite).
     private(set) var active: String?
+    /// Nombre de comptes Instagram en plus achetés (0 à 3).
+    private(set) var extraAccounts = 0
     var onChange: (() -> Void)?
     private var updates: Task<Void, Never>?
 
@@ -1427,12 +1432,16 @@ final class PlusStore {
 
     func refresh() async {
         var found: String?
+        var accounts = Set<String>()
         for await result in Transaction.currentEntitlements {
-            guard case .verified(let t) = result, t.revocationDate == nil, Self.ids.contains(t.productID) else { continue }
+            guard case .verified(let t) = result, t.revocationDate == nil else { continue }
+            if Self.accountIds.contains(t.productID) { accounts.insert(t.productID); continue }
+            guard Self.plusIds.contains(t.productID) else { continue }
             // L'achat à vie l'emporte sur un abonnement encore en cours.
             if found == nil || t.productID == "fr.zyeuto.plus.avie" { found = t.productID }
         }
         if found != active { active = found }
+        extraAccounts = accounts.count
         onChange?()
     }
 
@@ -1459,7 +1468,7 @@ final class PlusStore {
     func restore() async -> Bool {
         try? await AppStore.sync()
         await refresh()
-        return active != nil
+        return active != nil || extraAccounts > 0
     }
 
     /// L'état en JSON pour la page : acheté ou non, et les prix affichés par l'App Store.
@@ -1467,6 +1476,7 @@ final class PlusStore {
         var dict: [String: Any] = [
             "active": active != nil,
             "plan": active ?? "",
+            "accounts": 1 + extraAccounts,
             "products": products.map { p -> [String: Any] in
                 var unit = ""
                 if let period = p.subscription?.subscriptionPeriod.unit { unit = period == .year ? "year" : period == .month ? "month" : "" }
