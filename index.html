@@ -2194,6 +2194,7 @@ try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } cat
 function savePrefs() { try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
 function markRequested() {
   prefs.requestedAt = new Date().toISOString();
+  delete prefs.readyAt;
   prefs.getStep = 0; prefs.igStep = 0;
   savePrefs();
   render();
@@ -2233,6 +2234,7 @@ function gcalUrl() {
 $("gcal").href = gcalUrl();
 
 const READY_AFTER_MIN = 10;
+var lastPendingSent = null;
 function daysSince(iso) { return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000); }
 function renderWeekly() {
   const last = hasRealData() ? state.snapshots[state.snapshots.length - 1] : null;
@@ -2248,7 +2250,10 @@ function renderWeekly() {
   // Carte « Mettre à jour » : 1 Demander → 2 Attendre → 3 Télécharger.
   const pend = reqPending();
   const mins = pend && prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
-  const ready = pend && mins >= READY_AFTER_MIN;
+  // Dans l'app iPhone (version 3), Zyeuto regarde lui-même la page d'Instagram et dit quand le fichier est là.
+  const ready = pend && (!!prefs.readyAt || mins >= READY_AFTER_MIN);
+  // L'app arrête de guetter (et retire ses rappels) dès qu'il n'y a plus d'export en attente.
+  if (nativeApp && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend }); } catch {} }
   const at = !pend ? 0 : ready ? 2 : 1;
   $("wk-steps").querySelectorAll("li").forEach((li, i) => {
     li.className = i < at ? "done" : i === at ? "on" : "";
@@ -2472,6 +2477,16 @@ function wkGo() {
 }
 // Réponses de l'app iPhone : « requested » quand la demande est faite dans Instagram.
 window.zyeutoMeta = (ev) => {
+  // Fichier vu prêt par l'app : la carte passe à « Ton export est prêt ».
+  if (ev === "ready") {
+    if (reqPending() && !prefs.readyAt) { prefs.readyAt = new Date().toISOString(); savePrefs(); haptic("success"); renderWeekly(); }
+    return;
+  }
+  // Notification touchée : on file directement sur « Télécharger ».
+  if (ev === "open") {
+    if (reqPending()) { $("asked").hidden = true; setPage("home"); scrollTo({ top: 0 }); wkGo(); }
+    return;
+  }
   if (ev === "requested") {
     markRequested(); haptic("success"); scrollTo({ top: 0 });
     $("asked-av").innerHTML = $("wk-av").innerHTML;
@@ -2916,7 +2931,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0930";
+const BUILD = "2026-11-02-1400";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------

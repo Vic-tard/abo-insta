@@ -42,6 +42,15 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Zyeuto fermé : iOS le réveille de temps en temps pour voir si le fichier Instagram est prêt. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>fr.zyeuto.app.check</string>
+	</array>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<false/>
 	<key>UIApplicationSceneManifest</key>
