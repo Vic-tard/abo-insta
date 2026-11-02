@@ -277,7 +277,8 @@ extension WebViewController: WKScriptMessageHandler {
             MetaViewController.Step(
                 verb: d["verb"] as? String ?? "", target: d["target"] as? String ?? "",
                 after: d["after"] as? String ?? "", tip: d["tip"] as? String ?? "",
-                look: d["look"] as? String ?? "")
+                look: d["look"] as? String ?? "",
+                wait: d["wait"] as? [String] ?? [], final: d["final"] as? Bool ?? false)
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
         meta.onRequested = { [weak self] in
@@ -398,10 +399,10 @@ extension WebViewController: WKDownloadDelegate {
 
 // MARK: Instagram dans Zyeuto (bouton « Mettre à jour »)
 
-/// Affiche la page officielle d'export d'Instagram, avec un bandeau Zyeuto qui dit où toucher,
-/// montre le vrai bouton à chercher (capture du guide) et suit la connexion à Instagram.
-/// Les touches sur la page d'Instagram, c'est l'utilisateur qui les fait : Zyeuto ne clique jamais à sa place
-/// et ne lit jamais le mot de passe (il est tapé sur la page d'Instagram).
+/// Affiche la page officielle d'export d'Instagram, avec un petit bandeau Zyeuto qui dit où toucher.
+/// Le bandeau suit ce qui se passe : il regarde quel bouton tu viens de toucher (son texte seulement)
+/// et passe tout seul à l'étape suivante ; la demande n'est notée « faite » que quand tu as vraiment
+/// touché « Commencer l'exportation ». Zyeuto ne clique jamais à ta place et ne lit jamais ton mot de passe.
 /// Quand le fichier est téléchargé, il est transmis à Zyeuto, qui l'importe tout seul.
 final class MetaViewController: UIViewController {
     struct Step {
@@ -410,6 +411,8 @@ final class MetaViewController: UIViewController {
         var after = ""     // la suite (« puis « Enregistrer » »)
         var tip = ""
         var look = ""      // à quoi ressemble le bouton chez Instagram : button, row, link, radio, check
+        var wait: [String] = [] // textes de bouton qui terminent l'étape quand on les touche
+        var final = false  // l'étape qui envoie la demande
     }
 
     var onRequested: (() -> Void)?
@@ -421,29 +424,28 @@ final class MetaViewController: UIViewController {
     private var index = 0
     private var loginShown = false
     private var downloading = false
+    /// « Commencer l'exportation » touché : on attend qu'Instagram ait bien pris la demande.
+    private var sentAt: Date?
+    private var finished = false
     private var webView: WKWebView!
     private let banner = UIView()
     private let gradient = CAGradientLayer()
     private let avatar = UIImageView()
-    private let verbLabel = UILabel()
-    private let targetLabel = UILabel()
-    private let afterLabel = UILabel()
+    private let sayLabel = UILabel()
     private let tipLabel = UILabel()
-    private let replica = UIView()      // le bouton d'Instagram, redessiné en grand
-    private let replicaBox = UIView()   // entouré comme dans le guide
+    private let replica = UIView()
+    private let replicaBox = UIView()
     private let progress = UIProgressView(progressViewStyle: .bar)
     private let prevButton = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
-    private let buttons = UIStackView()
     private let loading = UIActivityIndicatorView(style: .medium)
     private var downloads: [ObjectIdentifier: URL] = [:]
     private var loadingObservation: NSKeyValueObservation?
-    private var loginTimer: Timer?
+    private var watchTimer: Timer?
 
     // Couleurs Zyeuto, les mêmes en clair et en sombre (le bandeau reprend la carte « Mettre à jour »).
     private static let ink = UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1)
     private static let coral = UIColor(red: 0xef / 255, green: 0x7f / 255, blue: 0x6a / 255, alpha: 1)
-    private static let accent = UIColor(red: 0xc2 / 255, green: 0x5a / 255, blue: 0x6f / 255, alpha: 1)
     private static let peachTop = UIColor(red: 0xff / 255, green: 0xe9 / 255, blue: 0xcf / 255, alpha: 1)
     private static let peachBottom = UIColor(red: 0xfb / 255, green: 0xc4 / 255, blue: 0x93 / 255, alpha: 1)
     private static let metaBlue = UIColor(red: 0x00 / 255, green: 0x64 / 255, blue: 0xe0 / 255, alpha: 1)
@@ -453,6 +455,15 @@ final class MetaViewController: UIViewController {
         guard let d = font.fontDescriptor.withDesign(.rounded) else { return font }
         return UIFont(descriptor: d, size: size)
     }
+
+    /// Écoute les touches sur la page d'Instagram et envoie seulement le texte du bouton touché.
+    private static let tapWatcher = """
+    document.addEventListener('click', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('button,a,label,[role=button],[role=link],[role=radio],[role=checkbox],[role=menuitem],[role=option],[tabindex]') : null;
+      var t = ((el || e.target).innerText || (el || e.target).getAttribute && (el || e.target).getAttribute('aria-label') || '').trim();
+      if (t) window.webkit.messageHandlers.zyeutoTap.postMessage(t.slice(0, 300));
+    }, true);
+    """
 
     init(url: URL, requesting: Bool, steps: [Step]) {
         self.url = url
@@ -466,12 +477,19 @@ final class MetaViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
 
-        // Barre du haut : retour à Zyeuto, et l'adresse officielle d'Instagram bien visible.
-        let back = UIButton(type: .system)
-        back.setTitle("◀ Zyeuto", for: .normal)
-        back.titleLabel?.font = Self.rounded(17, .semibold)
-        back.tintColor = Self.accent
-        back.addAction(UIAction { [weak self] _ in self?.close() }, for: .touchUpInside)
+        // Barre du haut : bouton retour en pastille, et l'adresse officielle d'Instagram bien visible.
+        var backConfig = UIButton.Configuration.filled()
+        backConfig.image = UIImage(systemName: "chevron.left", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold))
+        backConfig.imagePadding = 6
+        backConfig.title = "Zyeuto"
+        backConfig.baseBackgroundColor = Self.peachTop
+        backConfig.baseForegroundColor = Self.ink
+        backConfig.cornerStyle = .capsule
+        backConfig.contentInsets = NSDirectionalEdgeInsets(top: 7, leading: 11, bottom: 7, trailing: 14)
+        backConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
+            var a = a; a.font = MetaViewController.rounded(15, .bold); return a
+        }
+        let back = UIButton(configuration: backConfig, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
         let title = UILabel()
         title.numberOfLines = 2
         title.textAlignment = .center
@@ -486,6 +504,10 @@ final class MetaViewController: UIViewController {
 
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default() // on reste connecté à Instagram d'une fois sur l'autre
+        let content = WKUserContentController()
+        content.addUserScript(WKUserScript(source: Self.tapWatcher, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+        content.add(WeakHandler(self), name: "zyeutoTap")
+        config.userContentController = content
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -503,25 +525,25 @@ final class MetaViewController: UIViewController {
             top.topAnchor.constraint(equalTo: g.topAnchor),
             top.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             top.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            top.heightAnchor.constraint(equalToConstant: 50),
-            back.leadingAnchor.constraint(equalTo: top.leadingAnchor, constant: 14),
+            top.heightAnchor.constraint(equalToConstant: 48),
+            back.leadingAnchor.constraint(equalTo: top.leadingAnchor, constant: 12),
             back.centerYAnchor.constraint(equalTo: top.centerYAnchor),
             title.centerXAnchor.constraint(equalTo: top.centerXAnchor),
             title.centerYAnchor.constraint(equalTo: top.centerYAnchor),
             loading.trailingAnchor.constraint(equalTo: top.trailingAnchor, constant: -16),
             loading.centerYAnchor.constraint(equalTo: top.centerYAnchor),
-            banner.topAnchor.constraint(equalTo: top.bottomAnchor),
-            banner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-            banner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
-            webView.topAnchor.constraint(equalTo: banner.bottomAnchor, constant: 8),
+            banner.topAnchor.constraint(equalTo: top.bottomAnchor, constant: 2),
+            banner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
+            banner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            webView.topAnchor.constraint(equalTo: banner.bottomAnchor, constant: 6),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         showStep(animated: false)
         webView.load(URLRequest(url: url))
-        // Page de connexion d'Instagram à l'écran ? Le bandeau le dit (on regarde seulement s'il y a un champ mot de passe).
-        loginTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in self?.checkLogin() }
+        // Toutes les secondes : page de connexion à l'écran ? demande bien partie ?
+        watchTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in self?.watch() }
     }
 
     override func viewDidLayoutSubviews() {
@@ -531,107 +553,93 @@ final class MetaViewController: UIViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        loginTimer?.invalidate()
+        watchTimer?.invalidate()
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoTap")
     }
 
-    // MARK: Bandeau
+    // MARK: Bandeau (compact : la page d'Instagram garde la place)
 
     private func buildBanner() {
-        banner.layer.cornerRadius = 22
+        banner.layer.cornerRadius = 18
         banner.layer.cornerCurve = .continuous
         banner.layer.shadowColor = UIColor.black.cgColor
-        banner.layer.shadowOpacity = 0.14
-        banner.layer.shadowRadius = 10
-        banner.layer.shadowOffset = CGSize(width: 0, height: 4)
+        banner.layer.shadowOpacity = 0.12
+        banner.layer.shadowRadius = 8
+        banner.layer.shadowOffset = CGSize(width: 0, height: 3)
         gradient.colors = [Self.peachTop.cgColor, Self.peachBottom.cgColor]
         gradient.startPoint = CGPoint(x: 0, y: 0)
         gradient.endPoint = CGPoint(x: 1, y: 1)
-        gradient.cornerRadius = 22
+        gradient.cornerRadius = 18
         gradient.cornerCurve = .continuous
         banner.layer.insertSublayer(gradient, at: 0)
 
         avatar.image = Data(base64Encoded: WebViewController.logoPNG).flatMap { UIImage(data: $0, scale: 3) }
-        avatar.layer.cornerRadius = 13
+        avatar.layer.cornerRadius = 10
         avatar.layer.cornerCurve = .continuous
         avatar.clipsToBounds = true
+        avatar.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 34), avatar.heightAnchor.constraint(equalToConstant: 34)])
 
-        verbLabel.font = Self.rounded(15, .medium)
-        verbLabel.textColor = Self.ink.withAlphaComponent(0.7)
-        targetLabel.font = Self.rounded(21, .heavy)
-        targetLabel.textColor = Self.ink
-        targetLabel.numberOfLines = 0
-        targetLabel.adjustsFontSizeToFitWidth = true
-        targetLabel.minimumScaleFactor = 0.75
-        afterLabel.font = Self.rounded(15, .semibold)
-        afterLabel.textColor = Self.ink
-        afterLabel.numberOfLines = 0
-        tipLabel.font = Self.rounded(14, .regular)
-        tipLabel.textColor = Self.ink.withAlphaComponent(0.78)
-        tipLabel.numberOfLines = 0
+        sayLabel.numberOfLines = 2
+        sayLabel.adjustsFontSizeToFitWidth = true
+        sayLabel.minimumScaleFactor = 0.8
+        tipLabel.font = Self.rounded(13, .regular)
+        tipLabel.textColor = Self.ink.withAlphaComponent(0.75)
+        tipLabel.numberOfLines = 2
+
+        // Précédent / Suivant en petites pastilles : le bandeau avance tout seul, elles servent seulement en secours.
+        for (b, name) in [(prevButton, "chevron.left"), (nextButton, "chevron.right")] {
+            var c = UIButton.Configuration.filled()
+            c.image = UIImage(systemName: name, withConfiguration: UIImage.SymbolConfiguration(pointSize: 12, weight: .bold))
+            c.baseBackgroundColor = UIColor.white.withAlphaComponent(0.6)
+            c.baseForegroundColor = Self.ink
+            c.cornerStyle = .capsule
+            c.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 9, bottom: 8, trailing: 9)
+            b.configuration = c
+        }
+        prevButton.addAction(UIAction { [weak self] _ in self?.go(-1) }, for: .touchUpInside)
+        nextButton.addAction(UIAction { [weak self] _ in self?.go(1) }, for: .touchUpInside)
+        prevButton.accessibilityLabel = "Étape précédente"
+        nextButton.accessibilityLabel = "Étape suivante"
+
+        let head = UIStackView(arrangedSubviews: [avatar, sayLabel, prevButton, nextButton])
+        head.spacing = 8
+        head.setCustomSpacing(10, after: avatar)
+        head.alignment = .center
+        sayLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         // Le bouton à chercher, redessiné comme chez Instagram et entouré comme dans le guide.
-        replicaBox.layer.cornerRadius = 16
+        replicaBox.layer.cornerRadius = 13
         replicaBox.layer.cornerCurve = .continuous
-        replicaBox.layer.borderWidth = 3
+        replicaBox.layer.borderWidth = 2.5
         replicaBox.layer.borderColor = Self.coral.cgColor
-        replicaBox.backgroundColor = UIColor.white.withAlphaComponent(0.55)
+        replicaBox.backgroundColor = UIColor.white.withAlphaComponent(0.5)
         replica.translatesAutoresizingMaskIntoConstraints = false
         replicaBox.addSubview(replica)
         NSLayoutConstraint.activate([
-            replica.topAnchor.constraint(equalTo: replicaBox.topAnchor, constant: 7),
-            replica.bottomAnchor.constraint(equalTo: replicaBox.bottomAnchor, constant: -7),
-            replica.leadingAnchor.constraint(equalTo: replicaBox.leadingAnchor, constant: 7),
-            replica.trailingAnchor.constraint(equalTo: replicaBox.trailingAnchor, constant: -7),
+            replica.topAnchor.constraint(equalTo: replicaBox.topAnchor, constant: 4),
+            replica.bottomAnchor.constraint(equalTo: replicaBox.bottomAnchor, constant: -4),
+            replica.leadingAnchor.constraint(equalTo: replicaBox.leadingAnchor, constant: 4),
+            replica.trailingAnchor.constraint(equalTo: replicaBox.trailingAnchor, constant: -4),
         ])
 
-        // Une barre qui avance (pas de « étape 3 sur 12 », ça fait moins peur).
         progress.progressTintColor = Self.ink
         progress.trackTintColor = Self.ink.withAlphaComponent(0.12)
-        progress.layer.cornerRadius = 2.5
+        progress.layer.cornerRadius = 2
         progress.clipsToBounds = true
         progress.translatesAutoresizingMaskIntoConstraints = false
-        progress.heightAnchor.constraint(equalToConstant: 5).isActive = true
+        progress.heightAnchor.constraint(equalToConstant: 4).isActive = true
 
-        prevButton.setTitle("Précédent", for: .normal)
-        prevButton.tintColor = Self.ink.withAlphaComponent(0.75)
-        prevButton.titleLabel?.font = Self.rounded(16, .medium)
-        prevButton.addAction(UIAction { [weak self] _ in self?.go(-1) }, for: .touchUpInside)
-        var next = UIButton.Configuration.filled()
-        next.baseBackgroundColor = Self.ink
-        next.baseForegroundColor = .white
-        next.cornerStyle = .capsule
-        next.contentInsets = NSDirectionalEdgeInsets(top: 11, leading: 22, bottom: 11, trailing: 22)
-        next.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
-            var a = a; a.font = MetaViewController.rounded(17, .bold); return a
-        }
-        nextButton.configuration = next
-        nextButton.addAction(UIAction { [weak self] _ in self?.nextTapped() }, for: .touchUpInside)
-        buttons.axis = .horizontal
-        buttons.alignment = .center
-        buttons.addArrangedSubview(prevButton)
-        buttons.addArrangedSubview(UIView())
-        buttons.addArrangedSubview(nextButton)
-
-        let words = UIStackView(arrangedSubviews: [verbLabel, targetLabel, afterLabel])
-        words.axis = .vertical
-        words.spacing = 1
-        let head = UIStackView(arrangedSubviews: [avatar, words])
-        head.spacing = 12
-        head.alignment = .center
-        avatar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 46), avatar.heightAnchor.constraint(equalToConstant: 46)])
-
-        let all = UIStackView(arrangedSubviews: [progress, head, replicaBox, tipLabel, buttons])
+        let all = UIStackView(arrangedSubviews: [progress, head, replicaBox, tipLabel])
         all.axis = .vertical
-        all.spacing = 11
-        all.setCustomSpacing(12, after: progress)
+        all.spacing = 8
         all.translatesAutoresizingMaskIntoConstraints = false
         banner.addSubview(all)
         NSLayoutConstraint.activate([
-            all.topAnchor.constraint(equalTo: banner.topAnchor, constant: 14),
-            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -12),
-            all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 14),
-            all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
+            all.topAnchor.constraint(equalTo: banner.topAnchor, constant: 10),
+            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
+            all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 12),
+            all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
         ])
     }
 
@@ -643,20 +651,20 @@ final class MetaViewController: UIViewController {
         label.adjustsFontSizeToFitWidth = true
         label.minimumScaleFactor = 0.7
         let row = UIView()
-        row.layer.cornerRadius = step.look == "button" ? 22 : 12
+        row.layer.cornerRadius = step.look == "button" ? 17 : 9
         row.layer.cornerCurve = .continuous
         var parts: [UIView] = [label]
         switch step.look {
         case "button":
             row.backgroundColor = Self.metaBlue
             label.textColor = .white
-            label.font = .systemFont(ofSize: 16, weight: .semibold)
+            label.font = .systemFont(ofSize: 15, weight: .semibold)
             label.textAlignment = .center
         case "link":
             row.backgroundColor = .white
             let left = UILabel()
             left.text = "Rubrique"
-            left.font = .systemFont(ofSize: 15)
+            left.font = .systemFont(ofSize: 14)
             left.textColor = .systemGray
             label.textColor = Self.metaBlue
             label.font = .systemFont(ofSize: 15, weight: .semibold)
@@ -665,10 +673,10 @@ final class MetaViewController: UIViewController {
         default:
             row.backgroundColor = .white
             label.textColor = .black
-            label.font = .systemFont(ofSize: 16, weight: .medium)
+            label.font = .systemFont(ofSize: 15, weight: .medium)
             let mark = UIImageView(image: UIImage(systemName:
                 step.look == "radio" ? "largecircle.fill.circle" : step.look == "check" ? "checkmark.square.fill" : "chevron.right"))
-            mark.tintColor = step.look == "row" || step.look.isEmpty ? .systemGray2 : Self.metaBlue
+            mark.tintColor = step.look == "row" ? .systemGray2 : Self.metaBlue
             mark.contentMode = .scaleAspectFit
             mark.setContentHuggingPriority(.required, for: .horizontal)
             parts = [label, mark]
@@ -685,51 +693,55 @@ final class MetaViewController: UIViewController {
             row.bottomAnchor.constraint(equalTo: replica.bottomAnchor),
             row.leadingAnchor.constraint(equalTo: replica.leadingAnchor),
             row.trailingAnchor.constraint(equalTo: replica.trailingAnchor),
-            row.heightAnchor.constraint(equalToConstant: 44),
-            line.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 16),
-            line.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -16),
+            row.heightAnchor.constraint(equalToConstant: 34),
+            line.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 14),
+            line.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -14),
             line.centerYAnchor.constraint(equalTo: row.centerYAnchor),
         ])
     }
 
     // MARK: Étapes
 
-    private var isLast: Bool { index == steps.count - 1 }
-
     private var currentStep: Step {
+        if downloading {
+            return Step(verb: "Presque fini :", target: "Zyeuto récupère ton fichier…", tip: "Ne ferme pas cet écran.")
+        }
         if loginShown {
-            return index == 0
-                ? Step(verb: "D'abord", target: "Connecte-toi à Instagram",
+            return index == 0 && sentAt == nil
+                ? Step(verb: "D'abord,", target: "connecte-toi à Instagram",
                        tip: "Ton mot de passe se tape chez Instagram : Zyeuto ne le voit jamais. Tu ne le feras qu'une fois.")
-                : Step(verb: "Instagram vérifie que c'est toi", target: "Tape ton mot de passe",
+                : Step(verb: "Instagram vérifie que c'est toi :", target: "tape ton mot de passe",
                        tip: "Chez Instagram, comme d'habitude. Zyeuto ne le voit jamais.")
         }
-        if downloading {
-            return Step(verb: "C'est presque fini", target: "Zyeuto récupère ton fichier…", tip: "Ne ferme pas cet écran.")
+        if sentAt != nil {
+            return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…", tip: "Zyeuto vérifie que c'est bien parti.")
         }
         return steps[index]
     }
 
     private func showStep(animated: Bool = true) {
         let step = currentStep
+        let normal = !(loginShown || downloading || sentAt != nil)
         let apply = {
-            self.verbLabel.text = step.verb
-            self.verbLabel.isHidden = step.verb.isEmpty
-            self.targetLabel.text = step.target
-            self.afterLabel.text = step.after
-            self.afterLabel.isHidden = step.after.isEmpty
+            let say = NSMutableAttributedString()
+            if !step.verb.isEmpty {
+                say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(15, .medium), .foregroundColor: Self.ink.withAlphaComponent(0.7)]))
+            }
+            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink]))
+            if !step.after.isEmpty {
+                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(15, .semibold), .foregroundColor: Self.ink]))
+            }
+            self.sayLabel.attributedText = say
             self.tipLabel.text = step.tip
             self.tipLabel.isHidden = step.tip.isEmpty
-            self.replicaBox.isHidden = step.look.isEmpty
-            if !step.look.isEmpty { self.drawReplica(step) }
-            let special = self.loginShown || self.downloading
-            self.buttons.isHidden = special
-            self.prevButton.alpha = self.index == 0 ? 0 : 1
+            self.replicaBox.isHidden = step.look.isEmpty || !normal
+            if normal && !step.look.isEmpty { self.drawReplica(step) }
+            self.progress.isHidden = !normal || self.steps.count < 2
+            self.prevButton.isHidden = !normal || self.steps.count < 2
+            self.nextButton.isHidden = !normal || self.steps.count < 2
             self.prevButton.isEnabled = self.index > 0
-            self.progress.isHidden = special || self.steps.count < 2
-            var c = self.nextButton.configuration
-            c?.title = self.isLast ? (self.requesting ? "C'est fait ✓" : "Fermer") : "Suivant"
-            self.nextButton.configuration = c
+            // Pas de « Suivant » sur la dernière étape : c'est le vrai bouton d'Instagram qui valide.
+            self.nextButton.isEnabled = self.index < self.steps.count - 1
         }
         progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
         if animated {
@@ -747,34 +759,81 @@ final class MetaViewController: UIViewController {
         showStep()
     }
 
-    private func nextTapped() {
-        guard isLast else { return go(1) }
-        if requesting { finishRequest() } else { dismiss(animated: true) }
+    private static func norm(_ s: String) -> String {
+        s.replacingOccurrences(of: "’", with: "'").folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 
-    private func checkLogin() {
-        guard !downloading else { return }
-        webView.evaluateJavaScript("!!document.querySelector('input[type=password]')") { [weak self] result, _ in
-            guard let self, let login = result as? Bool, login != self.loginShown else { return }
-            self.loginShown = login
-            self.showStep()
+    /// Un bouton vient d'être touché sur la page d'Instagram : on regarde s'il termine l'étape en cours
+    /// (ou l'une des deux suivantes, si on a été plus vite que le bandeau).
+    private func tapped(_ text: String) {
+        guard !finished, !downloading else { return }
+        let t = Self.norm(text)
+        let last = min(steps.count - 1, index + 2)
+        guard index <= last else { return }
+        for i in index...last {
+            let step = steps[i]
+            guard step.wait.contains(where: { t.contains(Self.norm($0)) }) else { continue }
+            if step.final, requesting {
+                index = i
+                sentAt = Date()
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            } else {
+                index = min(steps.count - 1, i + 1)
+                UISelectionFeedbackGenerator().selectionChanged()
+            }
+            showStep()
+            return
+        }
+    }
+
+    /// Toutes les secondes : la page de connexion est-elle affichée ? Et après « Commencer l'exportation »,
+    /// Instagram a-t-il bien quitté l'écran de demande (sinon, c'est qu'il manque quelque chose) ?
+    private func watch() {
+        guard !downloading, !finished else { return }
+        let final = steps.last(where: { $0.final })?.wait ?? []
+        let names = (try? JSONSerialization.data(withJSONObject: final)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
+        let js = """
+        (function () {
+          var vis = function (el) { var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+          var pwd = Array.prototype.some.call(document.querySelectorAll('input[type=password]'), vis);
+          var names = \(names);
+          var btn = Array.prototype.some.call(document.querySelectorAll('button,[role=button],a'), function (el) {
+            var t = (el.innerText || '').trim().replace(/’/g, "'").toLowerCase();
+            return vis(el) && names.some(function (n) { return t === n.toLowerCase(); });
+          });
+          return [pwd, btn];
+        })()
+        """
+        webView.evaluateJavaScript(js) { [weak self] result, _ in
+            guard let self, let r = result as? [Bool], r.count == 2 else { return }
+            let login = r[0], startStillThere = r[1]
+            if login != self.loginShown { self.loginShown = login; self.showStep() }
+            // Demande envoyée, pas de mot de passe demandé, et le bouton « Commencer l'exportation » a disparu :
+            // Instagram a pris la demande.
+            if let sent = self.sentAt, !login {
+                if !startStillThere, Date().timeIntervalSince(sent) > 1.5 {
+                    self.finishRequest()
+                } else if startStillThere, Date().timeIntervalSince(sent) > 6 {
+                    // Toujours sur l'écran de demande : quelque chose n'est pas passé, on repropose l'étape.
+                    self.sentAt = nil
+                    self.showStep()
+                }
+            }
         }
     }
 
     private func finishRequest() {
+        guard !finished else { return }
+        finished = true
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         let done = onRequested
-        dismiss(animated: true) { done?() }
-    }
-
-    /// Retour à Zyeuto : si on est arrivé au bout de la demande, on vérifie qu'elle a bien été faite.
-    private func close() {
-        guard requesting, index >= steps.count - 2 else { return dismiss(animated: true) }
-        let alert = UIAlertController(title: "As-tu touché « Commencer l'exportation » ?",
-                                      message: "Si oui, Zyeuto te prévient quand ton export est sans doute prêt.", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Pas encore", style: .cancel) { [weak self] _ in self?.dismiss(animated: true) })
-        alert.addAction(UIAlertAction(title: "Oui", style: .default) { [weak self] _ in self?.finishRequest() })
-        present(alert, animated: true)
+        // On laisse une seconde pour voir la confirmation d'Instagram.
+        sayLabel.attributedText = NSAttributedString(string: "C'est parti ! Instagram prépare ta liste.",
+                                                     attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink])
+        tipLabel.text = "Zyeuto te prévient quand c'est sans doute prêt."
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
+            self?.dismiss(animated: true) { done?() }
+        }
     }
 
     /// Rappel 10 minutes après la demande (lors du premier vrai test, l'export était prêt en 8 minutes).
@@ -799,6 +858,13 @@ final class MetaViewController: UIViewController {
     }
 }
 
+extension MetaViewController: WKScriptMessageHandler {
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.name == "zyeutoTap", let text = message.body as? String else { return }
+        tapped(text)
+    }
+}
+
 extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -817,7 +883,7 @@ extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        checkLogin()
+        watch()
     }
 
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {

@@ -617,6 +617,7 @@
   .wk-steps li.done i { background: #3f7f68; }
   .wk-big { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 58px; border: 0; border-radius: 18px; background: #2e2328; color: #fff; font: 700 18px/1.1 var(--round); cursor: pointer; padding: 0 16px; transition: transform .12s; }
   .wk-big:active { transform: scale(.97); }
+  .wk-redo { order: 9; align-self: center; border: 0; background: none; font: 600 13px var(--round); color: rgb(46 35 40 / .72); text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; cursor: pointer; }
   .wk-big svg { width: 22px; height: 22px; flex: none; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) { .wk-av { animation: qzFloat 2.8s ease-in-out infinite; } }
   .home-hero { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px 14px; border-radius: 24px; color: #fff;
@@ -1190,6 +1191,7 @@
     <ol class="wk-steps" id="wk-steps" aria-label="Les étapes">
       <li><i>1</i>Demander</li><li><i>2</i>Attendre</li><li><i>3</i>Télécharger</li>
     </ol>
+    <button class="wk-redo" id="wk-redo" type="button" hidden>Pas fait&nbsp;? Recommencer la demande</button>
     <button class="wk-big" id="wk-go" type="button"><svg id="wk-go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span id="wk-go-t">C'est parti</span></button>
     <div class="wk-more" id="wk-more" hidden>
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
@@ -2225,6 +2227,7 @@ function renderWeekly() {
   });
   $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : "En préparation";
   if (pend) { due.textContent = mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
+  $("wk-redo").hidden = !pend;
   $("wk-go-t").textContent = !pend ? "C'est parti" : useDrive() ? "Vérifier mon Drive" : "Récupérer et mettre à jour";
   $("wk-go-i").innerHTML = pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
@@ -2408,6 +2411,13 @@ const plainTap = (h) => h.replace(/<span class="ig[^"]*">(.*?)<\/span>/g, "« $1
 // À quoi ressemble le bouton chez Instagram (le bandeau de l'app le redessine en grand).
 const META_LOOK = { "ig-01": "button", "ig-02": "row", "ig-03": "row", "ig-04": "row", "ig-05": "link", "ig-06": "check", "ig-07": "button",
   "ig-08": "row", "ig-09": "radio", "ig-10": "row", "ig-11": "radio", "ig-12": "button", "get-2": "button" };
+// Boutons d'Instagram qui terminent chaque étape quand on les touche : le bandeau de l'app avance alors tout seul.
+// « Tout effacer » se touche 8 fois : l'étape se termine quand on coche « Followers et suivi(e)s ».
+const META_WAIT = { "ig-01": ["Créer une exportation", "Create export"], "ig-02": ["Instagram"],
+  "ig-03": ["Exporter sur mon appareil", "Export to device"], "ig-04": ["Personnaliser les informations", "Customize information"],
+  "ig-06": ["Followers et suivi(e)s", "Followers and following"], "ig-07": ["Enregistrer", "Save"], "ig-08": ["Période", "Date range"],
+  "ig-09": ["Enregistrer", "Save"], "ig-10": ["Format"], "ig-11": ["Enregistrer", "Save"],
+  "ig-12": ["Commencer l'exportation", "Start export"], "get-2": ["Télécharger", "Download"] };
 // Une étape du guide → bandeau de l'app : le verbe en petit, le nom exact du bouton en gros, la vraie capture du bouton.
 function metaStep(x) {
   const m = x.t.match(/^(.*?)<span class="ig[^"]*">(.*?)<\/span>(.*)$/);
@@ -2417,6 +2427,7 @@ function metaStep(x) {
     after: m ? plainTap(m[3]).replace(/^,\s*/, "") : "",
     tip: plainTap(x.tip || x.why || ""),
     look: META_LOOK[x.img] || "",
+    wait: META_WAIT[x.img] || [], final: x.img === "ig-12",
   };
 }
 function wkGo() {
@@ -2435,6 +2446,7 @@ window.zyeutoMeta = (ev) => {
   if (ev === "requested") { markRequested(); haptic("success"); scrollTo({ top: 0, behavior: "smooth" }); }
 };
 $("wk-go").addEventListener("click", wkGo);
+$("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
 // La carte passe toute seule à « Ton export est prêt » au bout de quelques minutes.
 setInterval(() => { if (!document.hidden && reqPending()) renderWeekly(); }, 30000);
 
@@ -2866,7 +2878,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0830";
+const BUILD = "2026-11-02-0900";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
