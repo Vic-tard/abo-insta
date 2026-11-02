@@ -1,9 +1,14 @@
 import UIKit
 import WebKit
 import UserNotifications
+import BackgroundTasks
 
 /// Affiche l'app web Zyeuto et lui transmet les fichiers partagés.
 final class WebViewController: UIViewController {
+    /// L'écran Zyeuto ouvert (pour les notifications touchées).
+    static weak var current: WebViewController?
+    /// Une notification a été touchée avant que la page soit prête : on ouvre Instagram dès qu'elle l'est.
+    private var openWhenReady = false
     static let home = URL(string: "https://vic-tard.github.io/abo-insta/")!
     private static let chunkSize = 512 * 1024
 
@@ -38,7 +43,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 2 };",
+            source: "window.ZYEUTO_APP = { version: 3 };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Ressenti d'app : pas de zoom, pas de sélection de texte ni de menu « Copier » à l'appui long
         // (sauf dans les champs de saisie), pas de surlignage gris au toucher.
@@ -66,7 +71,24 @@ final class WebViewController: UIViewController {
         buildSplash()
         webView.load(URLRequest(url: Self.home))
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
-                                               object: nil, queue: .main) { [weak self] _ in self?.retryOnline() }
+                                               object: nil, queue: .main) { [weak self] _ in
+            self?.retryOnline()
+            ExportWatcher.shared.appBecameActive()
+        }
+        Self.current = self
+        // Fichier Instagram repéré prêt : la carte « Mettre à jour » passe à « Ton export est prêt ».
+        ExportWatcher.shared.onReady = { [weak self] in
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('ready'); true")
+        }
+        ExportWatcher.shared.appBecameActive()
+    }
+
+    /// Notification touchée : on ouvre Instagram sur « Télécharger » (ou dès que la page est prête).
+    func openExport() {
+        guard pageReady else { openWhenReady = true; return }
+        openWhenReady = false
+        guard presentedViewController == nil else { return }
+        webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('open'); true")
     }
 
     // MARK: Écran d'ouverture (le bonhomme)
@@ -249,6 +271,10 @@ extension WebViewController: WKScriptMessageHandler {
             pageReady = true
             sending = false
             flush()
+            if ExportWatcher.shared.isReady {
+                webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('ready'); true")
+            }
+            if openWhenReady { openExport() }
         case "received":
             if !pending.isEmpty { pending.removeFirst() }
             sending = false
@@ -263,6 +289,9 @@ extension WebViewController: WKScriptMessageHandler {
             }
         case "meta":
             openMeta(body)
+        case "exportState":
+            // La page n'attend plus d'export (fichier importé, demande annulée) : on arrête de guetter.
+            if body["pending"] as? Bool == false { ExportWatcher.shared.clear() }
         default:
             break
         }
@@ -281,9 +310,9 @@ extension WebViewController: WKScriptMessageHandler {
                 wait: d["wait"] as? [String] ?? [], final: d["final"] as? Bool ?? false)
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
-        meta.onRequested = { [weak self] in
+        meta.onRequested = { [weak self] downloadsBefore in
             self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested'); true")
-            MetaViewController.scheduleReminder()
+            ExportWatcher.shared.requested(downloadsBefore: downloadsBefore)
         }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
         meta.modalPresentationStyle = .fullScreen
@@ -415,8 +444,11 @@ final class MetaViewController: UIViewController {
         var final = false  // l'étape qui envoie la demande
     }
 
-    var onRequested: (() -> Void)?
+    /// La demande est partie (avec le nombre d'exports déjà téléchargeables avant elle).
+    var onRequested: ((Int) -> Void)?
     var onFile: ((URL) -> Void)?
+    /// Nombre de boutons « Télécharger » vus sur la page (exports déjà prêts avant la nouvelle demande).
+    private(set) var downloadsSeen = 0
 
     private let url: URL
     private let requesting: Bool
@@ -499,7 +531,7 @@ final class MetaViewController: UIViewController {
           };
           setInterval(function () {
             var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username]'), vis);
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, start: has(START), create: has(CREATE) });
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -840,6 +872,7 @@ final class MetaViewController: UIViewController {
         if state["login"] as? Bool == true { seenLogin = now }
         if state["start"] as? Bool == true { seenStart = now; sawStart = true }
         if state["create"] as? Bool == true { seenCreate = now }
+        if !finished, let dl = state["dl"] as? Int { downloadsSeen = max(downloadsSeen, dl) }
         if mainFrame && !pageKnown {
             pageKnown = true
             loginShown = state["login"] as? Bool == true || (webView.url?.absoluteString.lowercased() ?? "").contains("login")
@@ -873,27 +906,13 @@ final class MetaViewController: UIViewController {
         finished = true
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         let done = onRequested
+        let before = downloadsSeen
         // On laisse une seconde pour voir la confirmation d'Instagram.
         sayLabel.attributedText = NSAttributedString(string: "C'est parti ! Instagram prépare ta liste.",
                                                      attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink])
-        tipLabel.text = "Zyeuto te prévient quand c'est sans doute prêt."
+        tipLabel.text = "Zyeuto te prévient dès que ton fichier est prêt."
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
-            self?.dismiss(animated: true) { done?() }
-        }
-    }
-
-    /// Rappel 10 minutes après la demande (lors du premier vrai test, l'export était prêt en 8 minutes).
-    static func scheduleReminder() {
-        let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
-            guard granted else { return }
-            let content = UNMutableNotificationContent()
-            content.title = "Ton export est sans doute prêt"
-            content.body = "Touche pour le récupérer et mettre tes données à jour."
-            content.sound = .default
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10 * 60, repeats: false)
-            center.removePendingNotificationRequests(withIdentifiers: ["zyeuto-export"])
-            center.add(UNNotificationRequest(identifier: "zyeuto-export", content: content, trigger: trigger))
+            self?.dismiss(animated: true) { done?(before) }
         }
     }
 
@@ -989,7 +1008,7 @@ extension MetaViewController: WKDownloadDelegate {
     func downloadDidFinish(_ download: WKDownload) {
         guard let file = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["zyeuto-export"])
+        ExportWatcher.shared.downloaded()
         let deliver = onFile
         dismiss(animated: true) { deliver?(file) }
     }
@@ -999,6 +1018,258 @@ extension MetaViewController: WKDownloadDelegate {
         downloading = false
         showStep(animated: false)
         failed("Le téléchargement n'a pas abouti. Vérifie ta connexion et touche encore « Télécharger ».")
+    }
+}
+
+// MARK: Notifications de l'export Instagram
+
+/// Suit l'export Instagram du début à la fin et prévient par notification, comme les e-mails d'Instagram :
+/// 1. « C'est demandé » (l'e-mail « Votre demande de téléchargement Meta est en cours »),
+/// 2. « Ton fichier est prêt » (l'e-mail « Votre téléchargement d'informations Meta est prêt »),
+/// 3. « Dernier jour » (le fichier n'est téléchargeable que 4 jours).
+///
+/// Pour savoir si le fichier est prêt, Zyeuto ouvre en cachette la page « Exporter vos informations »
+/// (la même session Instagram que dans l'app, jamais le mot de passe) et compte les boutons « Télécharger ».
+/// Il ne touche rien sur la page : il la lit, c'est tout.
+/// Quand Zyeuto est ouvert : vérification toutes les 45 s. Zyeuto fermé : iOS le réveille de temps en temps
+/// (quand il veut) ; sinon un rappel part au bout de 12 minutes (en vrai, Instagram met 4 à 8 minutes).
+final class ExportWatcher: NSObject {
+    static let shared = ExportWatcher()
+    static let taskID = "fr.zyeuto.app.check"
+    static let exportURL = URL(string: "https://accountscenter.instagram.com/info_and_permissions/dyi/")!
+
+    /// Expression JS : nombre de boutons « Télécharger » affichés par la page (ou le cadre).
+    static let countScript = """
+    Array.prototype.filter.call(document.querySelectorAll('button,a,[role=button]'), function (el) { \
+    var t = (el.innerText || '').trim().toLowerCase(); var r = el.getBoundingClientRect(); \
+    return (t === 'télécharger' || t === 'download') && r.width > 0 && r.height > 0; }).length
+    """
+
+    private enum Key {
+        static let requested = "zy.export.requestedAt", ready = "zy.export.readyAt", before = "zy.export.downloadsBefore"
+        static let baselineChecked = "zy.export.baselineChecked"
+    }
+    private enum Id {
+        static let asked = "zy-asked", ready = "zy-ready", reminder = "zy-reminder", lastDay = "zy-last-day"
+        static let all = [asked, ready, reminder, lastDay, "zyeuto-export"]
+    }
+
+    var onReady: (() -> Void)?
+    private let store = UserDefaults.standard
+    private var requestedAt: Date? { store.object(forKey: Key.requested) as? Date }
+    private var readyAt: Date? { store.object(forKey: Key.ready) as? Date }
+    /// Une demande est en cours (moins de 4 jours) et le fichier n'a pas encore été vu prêt.
+    var isWaiting: Bool {
+        guard let r = requestedAt, readyAt == nil else { return false }
+        return Date().timeIntervalSince(r) < 4 * 86400
+    }
+    var isReady: Bool { requestedAt != nil && readyAt != nil }
+
+    private var timer: Timer?
+    private var checker: WKWebView?
+    private var finishCheck: ((Outcome) -> Void)?
+    private var seen = (dl: 0, pending: false, login: false)
+    private enum Outcome { case ready, pending, unknown }
+
+    // MARK: Étapes
+
+    /// La demande vient de partir dans Instagram.
+    func requested(downloadsBefore: Int) {
+        store.set(Date(), forKey: Key.requested)
+        store.removeObject(forKey: Key.ready)
+        store.set(downloadsBefore, forKey: Key.before)
+        store.set(false, forKey: Key.baselineChecked)
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: Id.all)
+        center.removeDeliveredNotifications(withIdentifiers: Id.all)
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
+            guard granted, let self else { return }
+            self.notify(Id.asked, "C'est demandé ✓", "Instagram prépare ta liste, en général en moins de 10 minutes. Je te préviens dès que ton fichier est prêt.", after: 1)
+            self.notify(Id.reminder, "Ton fichier devrait être prêt", "Instagram a sans doute fini. Touche pour le récupérer et mettre Zyeuto à jour.", after: 12 * 60)
+            self.notify(Id.lastDay, "Dernier jour pour ton fichier Instagram", "Il ne reste qu'un jour pour le télécharger. Touche pour mettre Zyeuto à jour.", after: 3 * 86400)
+        }
+        DispatchQueue.main.async {
+            self.startTimer()
+            self.scheduleBackgroundCheck()
+        }
+    }
+
+    /// Le fichier a été téléchargé dans Zyeuto : plus rien à guetter.
+    func downloaded() { clear() }
+
+    func clear() {
+        guard requestedAt != nil else { return }
+        for k in [Key.requested, Key.ready, Key.before, Key.baselineChecked] { store.removeObject(forKey: k) }
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: Id.all)
+        center.removeDeliveredNotifications(withIdentifiers: Id.all)
+        timer?.invalidate(); timer = nil
+        UNUserNotificationCenter.current().setBadgeCount(0, withCompletionHandler: nil)
+    }
+
+    private func markReady() {
+        guard isWaiting else { return }
+        store.set(Date(), forKey: Key.ready)
+        timer?.invalidate(); timer = nil
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [Id.reminder, Id.lastDay])
+        center.removeDeliveredNotifications(withIdentifiers: [Id.asked])
+        notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour le récupérer : Zyeuto se met à jour tout seul. Tu as 4 jours.", after: 1, badge: true)
+        notify(Id.lastDay, "Dernier jour pour ton fichier Instagram", "Il ne reste qu'un jour pour le télécharger. Touche pour mettre Zyeuto à jour.", after: 3 * 86400)
+        DispatchQueue.main.async { self.onReady?() }
+    }
+
+    private func notify(_ id: String, _ title: String, _ body: String, after seconds: TimeInterval, badge: Bool = false) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        content.threadIdentifier = "zyeuto-export"
+        if badge { content.badge = 1 }
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+    }
+
+    // MARK: Vérifications
+
+    /// Zyeuto revient au premier plan : on vérifie tout de suite, puis toutes les 45 s.
+    func appBecameActive() {
+        UNUserNotificationCenter.current().setBadgeCount(0, withCompletionHandler: nil)
+        guard isWaiting else { return }
+        startTimer()
+        tick()
+    }
+
+    private func startTimer() {
+        guard timer == nil, isWaiting else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: 45, repeats: true) { [weak self] _ in self?.tick() }
+    }
+
+    private func tick() {
+        guard isWaiting else { timer?.invalidate(); timer = nil; return }
+        guard UIApplication.shared.applicationState == .active, let r = requestedAt else { return }
+        // Pas avant 1 min 30 : la page d'Instagram doit avoir enregistré la demande.
+        guard Date().timeIntervalSince(r) > 90 else { return }
+        check { _ in }
+    }
+
+    /// Ouvre la page d'Instagram en cachette et regarde si un nouveau « Télécharger » est apparu.
+    private func check(_ done: @escaping (Bool) -> Void) {
+        guard checker == nil, isWaiting else { done(false); return }
+        seen = (0, false, false)
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = .default()
+        let content = WKUserContentController()
+        let script = """
+        (function () { setInterval(function () {
+          var txt = (document.body && document.body.innerText || '').toLowerCase();
+          window.webkit.messageHandlers.zyeutoCheck.postMessage({
+            dl: \(Self.countScript),
+            pending: /en attente|pending|en préparation|in progress|preparing/.test(txt),
+            login: !!document.querySelector('input[type=password]')
+          });
+        }, 800); })();
+        """
+        content.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+        content.add(CheckHandler(self), name: "zyeutoCheck")
+        config.userContentController = content
+        let web = WKWebView(frame: CGRect(x: 0, y: 0, width: 390, height: 1400), configuration: config)
+        web.isUserInteractionEnabled = false
+        // Placée derrière l'écran de Zyeuto (invisible) : la page d'Instagram s'affiche normalement.
+        WebViewController.current?.view.window?.insertSubview(web, at: 0)
+        checker = web
+        finishCheck = { [weak self] outcome in
+            guard let self else { return }
+            self.checker?.stopLoading()
+            self.checker?.removeFromSuperview()
+            self.checker?.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoCheck")
+            self.checker = nil
+            self.finishCheck = nil
+            if outcome == .ready { self.markReady() }
+            if outcome == .pending, let r = self.requestedAt, Date().timeIntervalSince(r) > 10 * 60 {
+                // Instagram prend son temps : on repousse le rappel au lieu d'annoncer un fichier pas encore là.
+                self.notify(Id.reminder, "Ton fichier devrait être prêt", "Instagram a sans doute fini. Touche pour le récupérer et mettre Zyeuto à jour.", after: 10 * 60)
+            }
+            done(outcome == .ready)
+        }
+        web.load(URLRequest(url: Self.exportURL))
+        // La page met quelques secondes à afficher la liste : on conclut au bout de 12 s.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 12) { [weak self] in self?.conclude() }
+    }
+
+    fileprivate func received(_ body: [String: Any]) {
+        if let dl = body["dl"] as? Int { seen.dl = max(seen.dl, dl) }
+        if body["pending"] as? Bool == true { seen.pending = true }
+        if body["login"] as? Bool == true { seen.login = true }
+        // Nouveau bouton « Télécharger » : pas besoin d'attendre la fin.
+        if seen.dl > store.integer(forKey: Key.before), store.bool(forKey: Key.baselineChecked) { conclude() }
+    }
+
+    private func conclude() {
+        guard let finish = finishCheck else { return }
+        let before = store.integer(forKey: Key.before)
+        let sinceRequest = requestedAt.map { Date().timeIntervalSince($0) } ?? 0
+        // Première vérification juste après la demande (Instagram met au moins 4 minutes) :
+        // elle sert de point de départ, au cas où des exports plus anciens sont encore téléchargeables.
+        if !store.bool(forKey: Key.baselineChecked) {
+            store.set(true, forKey: Key.baselineChecked)
+            if sinceRequest < 3 * 60, !seen.login {
+                store.set(max(before, seen.dl), forKey: Key.before)
+                finish(.pending)
+                return
+            }
+        }
+        if seen.login { finish(.unknown) }
+        else if seen.dl > before { finish(.ready) }
+        else { finish(seen.pending ? .pending : .unknown) }
+    }
+
+    // MARK: Zyeuto fermé : réveil par iOS
+
+    /// Vrai si l'Info.plist autorise le réveil par iOS (sinon iOS fermerait l'app : on s'en passe).
+    private static var backgroundAllowed: Bool {
+        (Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String])?.contains(taskID) == true
+    }
+
+    static func registerBackgroundTask() {
+        guard backgroundAllowed else { return }
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: taskID, using: nil) { task in
+            guard let task = task as? BGAppRefreshTask else { return }
+            DispatchQueue.main.async { shared.handle(task) }
+        }
+    }
+
+    /// Demande à iOS de réveiller Zyeuto dans quelques minutes (iOS choisit le moment exact).
+    func scheduleBackgroundCheck() {
+        guard isWaiting, Self.backgroundAllowed else { return }
+        let request = BGAppRefreshTaskRequest(identifier: Self.taskID)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 4 * 60)
+        try? BGTaskScheduler.shared.submit(request)
+    }
+
+    private func handle(_ task: BGAppRefreshTask) {
+        scheduleBackgroundCheck()
+        var completed = false
+        let complete = { (ok: Bool) in
+            guard !completed else { return }
+            completed = true
+            task.setTaskCompleted(success: ok)
+        }
+        task.expirationHandler = { [weak self] in
+            DispatchQueue.main.async {
+                self?.finishCheck?(.unknown)
+                complete(false)
+            }
+        }
+        check { _ in complete(true) }
+    }
+}
+
+private final class CheckHandler: NSObject, WKScriptMessageHandler {
+    weak var watcher: ExportWatcher?
+    init(_ watcher: ExportWatcher) { self.watcher = watcher }
+    func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
+        if let body = m.body as? [String: Any] { watcher?.received(body) }
     }
 }
 
