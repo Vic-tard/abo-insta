@@ -2443,13 +2443,13 @@ $("drive-import").addEventListener("click", driveImport);
 const metaInApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 2 && !useDrive();
 const plainTap = (h) => h.replace(/<span class="ig[^"]*">(.*?)<\/span>/g, "« $1 »").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
 // À quoi ressemble le bouton chez Instagram (le bandeau de l'app le redessine en grand).
-const META_LOOK = { "ig-01": "button", "ig-02": "row", "ig-03": "row", "ig-04": "row", "ig-05": "link", "ig-06": "check", "ig-07": "button",
+const META_LOOK = { "ig-01": "button", "ig-02": "row", "ig-03": "row", "ig-04": "row", "ig-05": "link", "ig-07": "button",
   "ig-08": "row", "ig-09": "radio", "ig-10": "row", "ig-11": "radio", "ig-12": "button", "get-2": "button" };
 // Boutons d'Instagram qui terminent chaque étape quand on les touche : le bandeau de l'app avance alors tout seul.
 // « Tout effacer » se touche 8 fois : l'étape se termine quand on coche « Followers et suivi(e)s ».
 const META_WAIT = { "ig-01": ["Créer une exportation", "Create export"], "ig-02": ["Instagram"],
   "ig-03": ["Exporter sur mon appareil", "Export to device"], "ig-04": ["Personnaliser les informations", "Customize information"],
-  "ig-06": ["Followers et suivi(e)s", "Followers and following"], "ig-07": ["Enregistrer", "Save"], "ig-08": ["Période", "Date range"],
+  "ig-05": ["Followers et suivi(e)s", "Followers and following"], "ig-07": ["Enregistrer", "Save"], "ig-08": ["Période", "Date range"],
   "ig-09": ["Enregistrer", "Save"], "ig-10": ["Format"], "ig-11": ["Enregistrer", "Save"],
   "ig-12": ["Commencer l'exportation", "Start export"], "get-2": ["Télécharger", "Download"] };
 // Une étape du guide → bandeau de l'app : le verbe en petit, le nom exact du bouton en gros, la vraie capture du bouton.
@@ -2536,8 +2536,8 @@ const IG_SHOTS = [
   { img: "ig-02", why: "Instagram regroupe tes comptes Meta : on veut seulement celui d'Instagram.", t: `Touche ton compte marqué Instagram`, tip: "Pas celui marqué Facebook ou Threads." },
   { img: "ig-03", why: "Ta liste arrivera sur ton téléphone, sans passer par personne d'autre.", t: `Touche ${igc("Exporter sur mon appareil")}`, tip: "Le fichier arrivera directement sur ton téléphone." },
   { img: "ig-04", why: "Par défaut, Instagram exporte tout (photos, messages…). On garde seulement l'utile.", t: `Touche ${igc("Personnaliser les informations")}` },
-  { img: "ig-05", why: "Moins de données, c'est un export beaucoup plus rapide. Ça ne supprime rien de ton compte.", t: `Touche ${igc("Tout effacer")}`, tip: "Il y en a 8, un par rubrique : descends et touche-les tous." },
-  { img: "ig-06", why: "C'est la liste de tes abonnés et de tes abonnements : tout ce dont l'app a besoin.", t: `Coche ${igc("Followers et suivi(e)s")}`, tip: "Dans la rubrique Contacts. C'est la seule case utile." },
+  // Une seule étape pour cette page : on vide toutes les rubriques ET on coche la seule case utile (même écran chez Instagram).
+  { img: "ig-05", why: "Moins de données, c'est un export beaucoup plus rapide. Ça ne supprime rien de ton compte.", t: `Touche ${igc("Tout effacer")}, puis coche ${igc("Followers et suivi(e)s")}`, tip: "Sur cette même page : touche les 8 « Tout effacer » (un par rubrique), puis coche « Followers et suivi(e)s » dans la rubrique Contacts." },
   { img: "ig-07", why: "Pour valider ton choix.", t: `Touche ${igc("Enregistrer")}`, tip: "Tout en bas de la liste." },
   { img: "ig-08", why: "Par défaut, Instagram ne donne que la dernière année.", t: `Touche ${igc("Période")}` },
   { img: "ig-09", why: "Avec la liste complète, l'app ne prend pas un ancien abonné pour un départ.", t: `Choisis ${igc("Depuis le début")}, puis ${igc("Enregistrer")}` },
@@ -2550,7 +2550,7 @@ const GET_SHOTS = [
   { img: "get-2", why: "Ton fichier arrive sur ton téléphone. Rien ne passe par un serveur.", t: `Touche ${igc("Télécharger")}`, tip: "Safari te demande de confirmer : touche encore Télécharger. Ton fichier reste disponible 4 jours." },
   { img: "get-3", why: "L'app lit ta liste sur ton téléphone et trouve qui est parti et qui est arrivé.", t: `Touche ton fichier Instagram`, tip: nativeApp ? "Il est tout en haut, dans Récents. Encore plus simple : dans Safari, touche le fichier téléchargé, puis Partager et Zyeuto." : "Il est tout en haut, dans Récents. Pas besoin de l'ouvrir ni de le décompresser." },
 ];
-const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Maintenant, on fait le tri 🧹", "Tout effacer, sans crainte&nbsp;: ça ne supprime rien, ça décoche juste&nbsp;!", "La seule case qui compte 👇", "Et on enregistre&nbsp;!", "Plus que quelques touches 💪", "Le plus important&nbsp;: depuis le début&nbsp;!", "On y est presque&nbsp;!", "JSON, c'est ma langue 😄", "Dernière touche&nbsp;! 🎉"];
+const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Maintenant, on fait le tri 🧹", "Tout effacer, puis la seule case qui compte&nbsp;: ça ne supprime rien&nbsp;!", "Et on enregistre&nbsp;!", "Plus que quelques touches 💪", "Le plus important&nbsp;: depuis le début&nbsp;!", "On y est presque&nbsp;!", "JSON, c'est ma langue 😄", "Dernière touche&nbsp;! 🎉"];
 let shDir = 1, shLost = false;
 function shotHTML(id, cls = "") {
   const [r, x, y, w, h] = SHOT[id];
@@ -2931,7 +2931,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1400";
+const BUILD = "2026-11-02-1450";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
