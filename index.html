@@ -159,6 +159,7 @@
   .btn:focus-visible, .tabs button:focus-visible, a:focus-visible, .more:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row .btn { flex: 1 1 140px; }
+  .hcard .row .btn { flex: 1 1 auto; white-space: nowrap; }
   .note { font-size: 14px; color: var(--muted); margin: 0; }
   .msg { font-size: 14px; border-radius: 10px; padding: 10px 12px; }
   .msg.ok { background: var(--up-soft); color: var(--up); }
@@ -651,52 +652,55 @@
   @keyframes goldTwinkle { 0%, 100% { opacity: .25; transform: scale(.7) rotate(0); } 50% { opacity: 1; transform: scale(1.1) rotate(20deg); } }
 
   /* Petite carte (bienvenue, accueil) */
-  .plus-mini { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%; margin: 10px 0 0; padding: 12px 14px; border: 0; border-radius: 20px; background: var(--night); color: #f7ecd9; text-align: left; cursor: pointer; font: inherit;
+  .plus-mini { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; padding: 12px 14px 12px 12px; border: 0; border-radius: 20px; background: var(--night); color: #f7ecd9; text-align: left; cursor: pointer; font: inherit;
     box-shadow: 0 0 0 1.5px rgb(244 205 99 / .55), 0 10px 22px rgb(26 18 20 / .28); }
   .plus-mini[hidden] { display: none; }
   .wl-plus { margin: 14px auto 0; max-width: 420px; }
   .plus-mini-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-  .plus-mini-txt b { font: 800 15px/1.25 var(--round); }
+  .plus-mini-txt b { font: 800 15px/1.25 var(--round); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plus-mini-tag { flex: none; }
   .plus-mini-txt small { font-size: 12.5px; line-height: 1.35; color: rgb(247 236 217 / .72); }
-  .plus-mini-go { font: 800 22px var(--round); }
+  .plus-mini-go { flex: none; font: 800 22px var(--round); opacity: .8; }
   .plus-mini.on .plus-mini-txt b { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
   /* Grande fenêtre Plus */
-  .plus-card { position: relative; background: var(--night) !important; color: #f7ecd9 !important; gap: 7px; padding-top: 18px !important; max-height: calc(100dvh - 32px); overflow-y: auto;
+  .plus-card { position: relative; background: var(--night) !important; color: #f7ecd9 !important; gap: 10px; padding: 18px 16px 12px !important; max-height: calc(100dvh - 32px); overflow-y: auto;
     box-shadow: 0 0 0 1.5px rgb(244 205 99 / .6), 0 24px 50px rgb(0 0 0 / .45) !important; }
   .plus-card::before { content: ""; position: absolute; left: 50%; top: -120px; width: 340px; height: 260px; translate: -50% 0; background: radial-gradient(closest-side, rgb(244 205 99 / .35), transparent); pointer-events: none; }
   .plus-card > * { position: relative; flex-shrink: 0; }
-  .plus-card h2 { font: 800 28px/1.1 var(--round) !important; background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .plus-card > .plus-x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgb(255 255 255 / .08); cursor: pointer; z-index: 2; }
+  .plus-x svg { width: 16px; height: 16px; fill: none; stroke: rgb(247 236 217 / .8); stroke-width: 2.4; stroke-linecap: round; }
+  .plus-card h2 { margin: 0 !important; font: 800 26px/1.1 var(--round) !important; background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .plus-card p { color: rgb(247 236 217 / .78) !important; }
   .plus-card .asked-av { box-shadow: 0 0 0 3px #f4cd63, 0 0 28px rgb(244 205 99 / .55) !important; }
-  .plus-hero { position: relative; display: grid; place-items: center; margin: 4px 0 10px; }
-  .plus-card .asked-av { width: 72px !important; }
+  .plus-hero { position: relative; display: grid; place-items: center; margin: 2px 0; }
+  .plus-card .asked-av { width: 60px !important; border-radius: 18px; }
   .plus-sparkle { position: absolute; font-size: 16px; color: #f8dc7d; pointer-events: none; }
   .plus-sparkle.a { left: -22px; top: 8px; } .plus-sparkle.b { right: -20px; top: 30px; font-size: 12px; } .plus-sparkle.c { right: -6px; bottom: -6px; font-size: 10px; }
-  .plus-why { font-weight: 600; }
-  .plus-rules { list-style: none; margin: 4px 0 0; padding: 10px 12px; width: 100%; display: grid; gap: 5px; text-align: left; border-radius: 16px; background: rgb(255 255 255 / .05); border: 1px solid rgb(244 205 99 / .18); }
-  .plus-rules li { display: flex; gap: 8px; align-items: baseline; font: 600 14px/1.3 var(--round); color: #f7ecd9; }
-  .plus-rules li b { flex: none; min-width: 74px; }
+  .plus-why { font-size: 14.5px !important; padding: 0 6px; }
+  .plus-rules { list-style: none; margin: 0; padding: 10px 14px; width: 100%; display: grid; gap: 4px; text-align: left; border-radius: 16px; background: rgb(255 255 255 / .05); border: 1px solid rgb(244 205 99 / .18); }
+  .plus-rules li { display: grid; grid-template-columns: 84px 1fr; gap: 10px; align-items: baseline; font: 600 14px/1.3 var(--round); color: #f7ecd9; }
   .plus-rules li.off { color: rgb(247 236 217 / .4); text-decoration: line-through; }
   .plus-rules li.gold b, .plus-rules li.gold span { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .plus-perks { list-style: none; margin: 4px 0; padding: 0; text-align: left; display: grid; gap: 6px; width: 100%; }
-  .plus-perks li { display: flex; gap: 10px; align-items: center; font: 600 15px/1.3 var(--round); color: #f7ecd9; padding: 4px 2px; }
-  .plus-perks li i { font-style: normal; flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: var(--gold-ink); font-size: 14px; font-weight: 800; box-shadow: 0 2px 8px rgb(244 205 99 / .3); }
-  .plus-plans { display: grid; gap: 8px; width: 100%; margin-top: 4px; }
-  .plus-plan { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 1.5px solid rgb(247 236 217 / .14); border-radius: 16px; background: rgb(255 255 255 / .05); padding: 12px 14px; font: 600 15px var(--round); color: #f7ecd9; cursor: pointer; text-align: left; transition: border-color .15s, background .15s, transform .12s; }
-  .plus-plan:active { transform: scale(.98); }
-  .plus-plan b { font: 800 16px var(--round); display: block; }
-  .plus-plan small { color: rgb(247 236 217 / .6); font-size: 13px; }
-  .plus-plan .pr { font: 800 17px var(--round); white-space: nowrap; }
-  .plus-plan .badge { display: inline-block; margin-left: 6px; background: var(--gold); color: var(--gold-ink); border-radius: 999px; padding: 2px 8px; font: 800 11px var(--round); vertical-align: 2px; }
+  .plus-perks { list-style: none; margin: 0; padding: 0 2px; text-align: left; display: grid; gap: 8px; width: 100%; }
+  .plus-perks li { display: flex; gap: 12px; align-items: center; font: 600 15px/1.3 var(--round); color: #f7ecd9; }
+  .plus-perks li i { font-style: normal; flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: var(--gold-ink); font-size: 13px; font-weight: 800; box-shadow: 0 2px 8px rgb(244 205 99 / .3); }
+  .plus-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; margin-top: 8px; }
+  .plus-plan { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; min-width: 0; border: 1.5px solid rgb(247 236 217 / .14); border-radius: 16px; background: rgb(255 255 255 / .05); padding: 16px 6px 12px; color: #f7ecd9; cursor: pointer; text-align: center; transition: border-color .15s, background .15s, transform .12s; }
+  .plus-plan:active { transform: scale(.97); }
+  .plus-plan b { font: 700 14px var(--round); }
+  .plus-plan small { color: rgb(247 236 217 / .6); font-size: 11.5px; line-height: 1.25; }
+  .plus-plan .pr { font: 800 19px var(--round); white-space: nowrap; }
+  .plus-plan .badge { position: absolute; top: -9px; left: 50%; translate: -50% 0; background: var(--gold); color: var(--gold-ink); border-radius: 999px; padding: 2px 8px; font: 800 11px/1.3 var(--round); white-space: nowrap; }
   .plus-plan[aria-checked="true"] { border-color: #f4cd63; background: rgb(244 205 99 / .12); box-shadow: 0 0 18px rgb(244 205 99 / .18); }
   .plus-plan[aria-checked="true"] .pr { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .plus-buy { position: relative; overflow: hidden; background: var(--gold) !important; color: var(--gold-ink) !important; margin-top: 4px; font-weight: 800 !important; box-shadow: 0 8px 22px rgb(244 205 99 / .3), inset 0 1px 0 rgb(255 255 255 / .6); }
+  .plus-buy { position: relative; overflow: hidden; background: var(--gold) !important; color: var(--gold-ink) !important; margin-top: 2px; font-weight: 800 !important; box-shadow: 0 8px 22px rgb(244 205 99 / .3), inset 0 1px 0 rgb(255 255 255 / .6); }
   .plus-buy:disabled { opacity: .6; }
   .plus-msg { font: 600 14px var(--round); color: #ffb4a6 !important; }
-  .plus-links { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .plus-links { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: -4px; }
+  .plus-links .asked-stay { padding: 6px 10px; }
   .plus-card .asked-stay { color: rgb(247 236 217 / .7); }
-  .plus-legal { font-size: 11.5px !important; line-height: 1.35 !important; color: rgb(247 236 217 / .5) !important; }
+  .plus-legal { font-size: 11px !important; line-height: 1.35 !important; padding: 0 4px; color: rgb(247 236 217 / .5) !important; }
   .plus-legal a { color: inherit; }
 
   /* Bloc des réglages */
@@ -1580,20 +1584,21 @@
 </div>
 <div class="asked" id="plus" hidden role="dialog" aria-modal="true" aria-labelledby="plus-t">
   <div class="asked-card plus-card">
+    <button class="plus-x" id="plus-x" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <span class="plus-hero"><span class="zy-av asked-av" id="plus-av" aria-hidden="true"></span><span class="plus-sparkle a">✦</span><span class="plus-sparkle b">✦</span><span class="plus-sparkle c">✦</span></span>
     <span class="plus-tag">Zyeuto Plus</span>
     <h2 id="plus-t">Zyeute quand tu veux</h2>
     <p class="plus-why" id="plus-why"></p>
     <ul class="plus-rules" id="plus-rules"></ul>
     <ul class="plus-perks">
-      <li><i>∞</i>Mises à jour illimitées, quand tu veux</li>
-      <li><i>✦</i>Ton bonhomme en or, partout dans l'app</li>
-      <li><i>✓</i>Sans pub, tes données restent chez toi</li>
+      <li><i>∞</i>Mises à jour illimitées</li>
+      <li><i>✦</i>Ton bonhomme en or</li>
+      <li><i>✓</i>Sans pub, tes données chez toi</li>
     </ul>
     <div class="plus-plans" role="radiogroup" aria-label="Formule">
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span><b>À l'année<span class="badge" id="plus-save">−58 %</span></b><small id="plus-an-sub">soit 0,83 € par mois</small></span><span class="pr" id="plus-an-pr">9,99 €</span></button>
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.mois"><span><b>Au mois</b><small>sans engagement</small></span><span class="pr" id="plus-mois-pr">1,99 €</span></button>
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.avie"><span><b>À vie</b><small>un seul paiement, pour toujours</small></span><span class="pr" id="plus-avie-pr">19,99 €</span></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span class="badge" id="plus-save">−58 %</span><b>À l'année</b><span class="pr" id="plus-an-pr">9,99 €</span><small id="plus-an-sub">soit 0,83 €/mois</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.mois"><b>Au mois</b><span class="pr" id="plus-mois-pr">1,99 €</span><small>sans engagement</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.avie"><b>À vie</b><span class="pr" id="plus-avie-pr">19,99 €</span><small>un seul paiement</small></button>
     </div>
     <button class="asked-go plus-buy" id="plus-buy" type="button">Continuer</button>
     <p class="plus-msg" id="plus-msg" hidden></p>
@@ -2829,7 +2834,7 @@ function renderGuided() {
           <li><i><svg viewBox="0 0 24 24"><path d="M5 12h12M13 7l5 5-5 5"/></svg></i>Je te guide<br>pas à pas</li>
           <li><i><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></i>Tout reste<br>chez toi</li>
         </ul>
-        ${storeApp() ? `<button class="plus-mini wl-plus" id="wl-plus" type="button"><span class="plus-mini-tag">Plus</span><span class="plus-mini-txt"><b>Gratuit pour commencer</b><small>Ton 1er import, puis un 2e pour comparer. Ensuite 1 mise à jour par mois, ou illimité avec Zyeuto Plus.</small></span><span class="plus-mini-go" aria-hidden="true">›</span></button>` : ""}
+        ${storeApp() ? `<button class="plus-mini wl-plus" id="wl-plus" type="button"><span class="plus-mini-tag">Plus</span><span class="plus-mini-txt"><b>Gratuit pour commencer</b><small>Puis 1 mise à jour par mois, ou illimité avec Plus</small></span><span class="plus-mini-go" aria-hidden="true">›</span></button>` : ""}
         <div class="gf-foot"><button class="btn primary big" id="gf-go" type="button">C'est parti</button></div>
       </div>`;
     $("gf-go").onclick = () => { prefs.welcomed = true; savePrefs(); render(); };
@@ -3064,7 +3069,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1500";
+const BUILD = "2026-11-02-1610";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -3099,7 +3104,7 @@ function renderPlusPrices() {
   const num = (t) => t ? parseFloat(t.replace(/[^0-9,.]/g, "").replace(",", ".")) : NaN;
   const a = num(an || "9,99"), m = num(mois || "1,99");
   if (a && m) {
-    $("plus-an-sub").textContent = `soit ${(a / 12).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € par mois`;
+    $("plus-an-sub").textContent = `soit ${(a / 12).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/mois`;
     $("plus-save").textContent = `−${Math.round((1 - a / (m * 12)) * 100)} %`;
   }
 }
@@ -3117,12 +3122,12 @@ function openPlus(why) {
   $("plus-why").textContent = why === "import"
     ? `Ton fichier est prêt, mais ta mise à jour gratuite du mois est déjà faite. Avec Plus, il s'importe tout de suite.`
     : why === "update"
-      ? `Ta mise à jour gratuite du mois est déjà faite${next ? `. La prochaine : le ${fmtShort(next.toISOString())}` : ""}. Avec Plus, c'est quand tu veux.`
+      ? "Ta mise à jour gratuite du mois est déjà faite. Avec Plus, pas besoin d'attendre."
       : "C'est gratuit pour commencer. Ensuite, une mise à jour par mois, ou illimité avec Plus.";
   // Aperçu : ton bonhomme tel qu'il sera avec Plus, en or.
   $("plus-av").innerHTML = avatarSVG(prefs.zy?.look || {}, true);
   $("plus-rules").innerHTML = freeRules().map((r) => `<li class="${r.used ? "off" : "on"}"><b>${r.k}</b><span>${r.t}${r.used ? " ✓" : ""}</span></li>`).join("")
-    + `<li class="gold"><b>Plus</b><span>illimité, quand tu veux</span></li>`;
+    + `<li class="gold"><b>Avec Plus</b><span>illimité</span></li>`;
   selectPlan(plusPlan); renderPlusPrices(); plusMsg("");
   $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer";
   $("plus").hidden = false;
@@ -3139,7 +3144,7 @@ function freeRules() {
   return [
     { k: "1er import", t: "ton point de départ", used: n >= 1 },
     { k: "2e import", t: "ta première comparaison", used: n >= 2 },
-    { k: "Ensuite", t: n < 2 || monthOk ? "1 mise à jour par mois" : `1 par mois, la prochaine le ${fmtShort(next.toISOString())}`, used: false },
+    { k: "Ensuite", t: n < 2 || monthOk ? "1 mise à jour par mois" : `1 par mois, prochaine le ${fmtShort(next.toISOString())}`, used: false },
   ];
 }
 function renderPlusMini() {
@@ -3150,10 +3155,8 @@ function renderPlusMini() {
   if (hasPlus()) { $("plus-mini-t").textContent = "Zyeuto Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton bonhomme en or."; return; }
   $("plus-mini-t").textContent = n === 0 ? "Gratuit pour commencer"
     : n === 1 ? "Ta comparaison est offerte"
-    : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine mise à jour offerte le ${fmtShort(next.toISOString())}`;
-  $("plus-mini-s").textContent = n < 2
-    ? "1er import, puis un 2e pour comparer. Ensuite 1 par mois, ou illimité avec Plus."
-    : "Gratuit : 1 par mois. Avec Plus, c'est illimité.";
+    : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine offerte le ${fmtShort(next.toISOString())}`;
+  $("plus-mini-s").textContent = n < 2 ? "Ensuite 1 par mois, ou illimité avec Plus" : "Avec Plus, c'est illimité";
 }
 function renderPlusBlock() {
   renderPlusMini();
@@ -3165,7 +3168,7 @@ function renderPlusBlock() {
     ? `Tu as Zyeuto Plus ${PLUS_PLANS[prefs.plus.plan] || ""} : mises à jour illimitées. Merci !`
     : canUpdateFree()
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
-      : `Version gratuite : une mise à jour par mois. La prochaine gratuite : le ${fmtShort(next.toISOString())}.`;
+      : `Version gratuite : une mise à jour par mois. La prochaine gratuite : le ${fmtShort(next.toISOString())}`;
   $("plus-open").hidden = on;
   $("plus-manage").hidden = !on || prefs.plus.plan === "fr.zyeuto.plus.avie";
 }
@@ -3208,6 +3211,7 @@ const plusRestore = () => { plusMsg(""); nativePost({ type: "plus", action: "res
 $("plus-restore2").addEventListener("click", plusRestore);
 $("plus-restore").addEventListener("click", plusRestore);
 $("plus-later").addEventListener("click", closePlus);
+$("plus-x").addEventListener("click", closePlus);
 $("plus").addEventListener("click", (e) => { if (e.target === $("plus")) closePlus(); });
 $("plus-open").addEventListener("click", () => openPlus());
 $("plus-mini").addEventListener("click", () => { haptic("light"); openPlus(); });
