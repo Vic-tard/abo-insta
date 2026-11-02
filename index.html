@@ -232,6 +232,52 @@
   body[data-mode="empty"] .needs-data { display: none !important; }
   body:not([data-mode="empty"]) .only-empty { display: none !important; }
   .top-actions { display: flex; align-items: center; gap: 12px; }
+  .set-btn { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .set-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .set-dot { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 50%; background: #ef7f6a; box-shadow: 0 0 0 2px var(--bg); }
+  .imp-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 0; border-radius: 22px; background: linear-gradient(160deg, #ddd0fb, #a993e6); color: #2e2328; text-align: left; cursor: pointer; font: inherit; box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
+  .imp-row:active { transform: scale(.98); }
+  .imp-ic { width: 40px; height: 40px; border-radius: 12px; background: rgb(255 255 255 / .55); display: grid; place-items: center; flex: none; }
+  .imp-ic svg { width: 20px; height: 20px; fill: none; stroke: #2e2328; stroke-width: 2.2; stroke-linecap: round; }
+  .imp-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .imp-t b { font: 800 17px var(--round); } .imp-t small { font-size: 13px; color: rgb(46 35 40 / .7); }
+  .imp-go { font: 800 22px var(--round); opacity: .55; }
+  #more { align-self: center; font: 700 15px var(--round); padding: 8px 14px; }
+  /* Pages Réglages et Mes imports : listes façon iPhone */
+  .st-page { --grp: #ffffff; position: fixed; inset: 0; z-index: 19; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    transform: translateX(100%); transition: transform .32s cubic-bezier(.3,.9,.3,1); }
+  .st-page.open { transform: none; }
+  .st-in { max-width: 600px; margin: 0 auto; padding: max(10px, env(safe-area-inset-top, 0px)) 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .st-back { border: 0; background: none; padding: 10px 0; font: 600 17px var(--round); color: var(--link); cursor: pointer; }
+  .st-in h1 { margin: 2px 0 18px; font: 800 32px/1.1 var(--round); color: var(--ink); }
+  .st-label { margin: 0 6px 7px; font: 700 13px var(--round); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .st-group { background: var(--grp); border-radius: 18px; overflow: hidden; margin-bottom: 22px; box-shadow: 0 4px 14px rgb(46 35 40 / .07); }
+  .st-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 11px 14px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink); text-align: left; text-decoration: none; font: inherit; cursor: pointer; }
+  .st-group > .st-row:first-child, .st-group > div:first-child > .st-row, .st-group > [hidden] + .st-row { border-top: 0; }
+  .st-row:active:not(.st-static) { background: var(--surface-2); }
+  .st-static { cursor: default; }
+  .st-ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; }
+  .st-ic svg { width: 17px; height: 17px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .st-ic-none { background: none; }
+  .st-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .st-t b { font: 600 16px var(--round); }
+  .st-t small { font-size: 13px; line-height: 1.3; color: var(--muted); }
+  .st-t small:empty { display: none; }
+  .st-go { color: var(--muted); font: 600 20px var(--round); opacity: .6; }
+  .st-row.danger b { color: var(--down); }
+  .st-row.hot small { color: var(--down); }
+  .st-gold #plus-open b { color: #a86f12; font-weight: 800; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .st-gold #plus-open b { color: #f4cd63; } }
+  :root[data-theme="dark"] .st-gold #plus-open b { color: #f4cd63; }
+  .st-note { margin: 0; padding: 4px 14px 14px 56px; font-size: 14px; color: var(--muted); }
+  .st-foot { margin: -14px 8px 22px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+  .st-confirm { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .st-confirm p { margin: 0; font-size: 14px; color: var(--ink); }
+  .st-table { padding: 6px 14px 10px; }
+  .st-table table { width: 100%; }
+  #settings .msg { margin: -10px 0 22px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .st-page { --grp: #241b1e; } }
+  :root[data-theme="dark"] .st-page { --grp: #241b1e; }
   .help-btn { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--ink); font: 700 15px var(--font); cursor: pointer; flex: none; }
   .help-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 
@@ -1235,8 +1281,8 @@
       <h1>Zyeuto</h1>
     </div>
     <div class="top-actions">
-      <button class="sync needs-data" id="sync" type="button"></button>
-      <button class="help-btn" id="help-btn" type="button" aria-label="Comment ça marche">?</button>
+      <button class="sync needs-data" id="sync" type="button" hidden></button>
+      <button class="set-btn" id="set-btn" type="button" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="set-dot" id="set-dot" hidden></span></button>
     </div>
   </div>
 
@@ -1272,7 +1318,7 @@
     <p class="note">Ensuite, refais un export dès que tu en as envie, par exemple quand ton nombre d'abonnés bouge : l'app te montre qui a fait quoi.</p>
   </section>
 
-  <section class="next" id="next" hidden>
+  <section class="next" id="next" hidden style="display:none">
     <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Ton départ est enregistré</h2>
     <p id="next-text"></p>
   </section>
@@ -1311,11 +1357,6 @@
     </div>
     <p class="note" id="drive-msg" hidden></p>
   </section>
-  <button class="plus-mini" id="plus-mini" type="button" hidden>
-    <span class="plus-mini-tag">Plus</span>
-    <span class="plus-mini-txt"><b id="plus-mini-t">Gratuit pour commencer</b><small id="plus-mini-s"></small><span class="plus-mini-bar" id="plus-mini-bar" hidden><i></i></span></span>
-    <span class="plus-mini-go" aria-hidden="true">›</span>
-  </button>
 
   <div class="banner install" id="install-banner" hidden><strong>Installe l'app :</strong> touche <b>Partager</b> puis « <b>Sur l'écran d'accueil</b> ». Elle s'ouvrira en plein écran, comme une vraie app.<button class="x" id="install-x" aria-label="Fermer">✕</button></div>
   <div class="banner" id="storage-banner" hidden></div>
@@ -1332,7 +1373,14 @@
   </section>
   <p class="needs-data caption" id="caption">Chargement…</p>
   </div>
+  <button class="plus-mini" id="plus-mini" type="button" hidden>
+    <span class="plus-mini-tag">Plus</span>
+    <span class="plus-mini-txt"><b id="plus-mini-t">Gratuit pour commencer</b><small id="plus-mini-s"></small><span class="plus-mini-bar" id="plus-mini-bar" hidden><i></i></span></span>
+    <span class="plus-mini-go" aria-hidden="true">›</span>
+  </button>
 
+
+  <button class="imp-row needs-data" id="imp-row" type="button"><span class="imp-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span><span class="imp-t"><b>Mes imports</b><small id="imp-sub"></small></span><span class="imp-go" aria-hidden="true">›</span></button>
 
   <section class="needs-data tabs-wrap" id="list-card" data-tab="unfollow">
     <div class="tabs" role="tablist" aria-label="Listes">
@@ -1352,53 +1400,72 @@
   </section>
 
 
-  <section class="block needs-data hcard hc-imports">
-    <h2>Imports</h2>
-    <div class="scroll"><table id="imports"></table></div>
-    <div class="row" id="drop-row"><button class="btn ghost" id="drop-last">Supprimer le dernier import</button></div>
-    <div class="row" id="drop-confirm" hidden>
-      <button class="btn danger" id="drop-yes">Oui, le supprimer</button>
-      <button class="btn ghost" id="drop-no">Annuler</button>
-    </div>
-  </section>
+</div>
 
-  <section class="block needs-data hcard hc-remind" id="reminders-block">
-    <h2>Un rappel, si tu veux</h2>
-    <div class="reminders">
-      <a id="gcal" href="#" target="_blank" rel="noopener noreferrer">Rappel Google Agenda</a>
-      <button id="siri-btn" aria-expanded="false" aria-controls="siri">Rappel iPhone (Siri)</button>
+<!-- Mes imports : la liste complète, ouverte depuis la ligne « Mes imports » de l'accueil -->
+<div class="st-page" id="imports-page" role="dialog" aria-modal="true" aria-labelledby="imports-title" hidden>
+  <div class="st-in">
+    <button class="st-back" type="button" data-close="imports-page">‹ Accueil</button>
+    <h1 id="imports-title">Mes imports</h1>
+    <div class="st-group st-table"><div class="scroll"><table id="imports"></table></div></div>
+    <div class="st-group">
+      <div id="drop-row"><button class="st-row danger" id="drop-last" type="button"><span class="st-ic" style="background:#b8502e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b>Supprimer le dernier import</b><small>Si tu t'es trompé de fichier</small></span></button></div>
+      <div class="st-confirm" id="drop-confirm" hidden>
+        <p>Supprimer le dernier import ? Tu reviendras à l'état d'avant.</p>
+        <div class="row"><button class="btn danger" id="drop-yes">Oui, le supprimer</button><button class="btn ghost" id="drop-no">Annuler</button></div>
+      </div>
     </div>
-    <p class="siri" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ». Le rappel arrivera dans l'app Rappels.</p>
-  </section>
+  </div>
+</div>
 
-  <section class="block hcard hc-plus" id="plus-block" hidden>
-    <h2>Zyeuto Plus</h2>
-    <p class="note" id="plus-status"></p>
-    <div class="row">
-      <button class="btn primary" id="plus-open" type="button">Découvrir Plus</button>
-      <button class="btn ghost" id="plus-manage" type="button" hidden>Gérer mon abonnement</button>
-      <button class="btn ghost" id="plus-restore" type="button">Restaurer mes achats</button>
-    </div>
-  </section>
+<!-- Réglages : tout ce qui ne sert pas tous les jours -->
+<div class="st-page" id="settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+  <div class="st-in">
+    <button class="st-back" type="button" data-close="settings">‹ Accueil</button>
+    <h1 id="settings-title">Réglages</h1>
 
-  <section class="block hcard hc-backup">
-    <h2>Sauvegarde</h2>
-    <p class="note needs-data">Ton historique reste sur ce téléphone, rien n'est envoyé sur internet. Après chaque import, garde une copie dans Fichiers ou iCloud Drive : si le téléphone efface les données du site, tu la restaures en deux touches.</p>
-    <p class="note only-empty">Tu as déjà utilisé l'app sur un autre téléphone ? Restaure la copie que tu avais gardée.</p>
-    <p class="note needs-data" id="backup-status"></p>
-    <div class="row">
-      <button class="btn ghost needs-data" id="backup">Sauvegarder une copie</button>
-      <button class="btn ghost" id="restore">Restaurer une copie</button>
+    <div class="st-label needs-data">Mon compte</div>
+    <div class="st-group needs-data"><button class="st-row" id="st-photo" type="button"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1-3.5 3.8-5.5 7-5.5s6 2 7 5.5"/></svg></span><span class="st-t"><b>Ma photo de profil</b><small>Touche pour la changer</small></span><span class="st-go" aria-hidden="true">›</span></button></div>
+
+    <div id="plus-block" hidden>
+      <div class="st-label">Zyeuto Plus</div>
+      <div class="st-group st-gold">
+        <div class="st-row st-static" ><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Zyeuto Plus</b><small id="plus-status"></small></span></div>
+        <button class="st-row" id="plus-open" type="button"><span class="st-ic st-ic-none"></span><span class="st-t"><b>Découvrir Plus</b></span><span class="st-go" aria-hidden="true">›</span></button>
+        <button class="st-row" id="plus-manage" type="button" hidden><span class="st-ic st-ic-none"></span><span class="st-t"><b>Gérer mon abonnement</b></span><span class="st-go" aria-hidden="true">›</span></button>
+        <button class="st-row" id="plus-restore" type="button"><span class="st-ic st-ic-none"></span><span class="st-t"><b>Restaurer mes achats</b></span><span class="st-go" aria-hidden="true">›</span></button>
+      </div>
     </div>
-    <div class="row needs-data" id="reset-row">
-      <button class="btn danger" id="reset">Tout effacer</button>
+
+    <div class="st-label">Rappels</div>
+    <div class="st-group">
+      <a class="st-row" id="gcal" href="#" target="_blank" rel="noopener noreferrer"><span class="st-ic" style="background:#f4a96a"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span class="st-t"><b>Rappel dans Google Agenda</b><small>Tous les dimanches, pour penser à l'export</small></span><span class="st-go" aria-hidden="true">›</span></a>
+      <button class="st-row" id="siri-btn" type="button" aria-expanded="false" aria-controls="siri"><span class="st-ic" style="background:#ef7f6a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V7a3 3 0 0 1 3-3zM6 11a6 6 0 0 0 12 0M12 17v3"/></svg></span><span class="st-t"><b>Rappel avec Siri</b><small>Dans l'app Rappels de l'iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <p class="st-note" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ».</p>
     </div>
-    <div class="row" id="reset-confirm" hidden>
-      <button class="btn danger" id="reset-yes">Oui, effacer l'historique</button>
-      <button class="btn ghost" id="reset-no">Annuler</button>
+
+    <div class="st-label">Sauvegarde</div>
+    <div class="st-group">
+      <button class="st-row needs-data" id="backup" type="button"><span class="st-ic" style="background:#3f7f68"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></span><span class="st-t"><b>Sauvegarder une copie</b><small id="backup-status"></small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" id="restore" type="button"><span class="st-ic" style="background:#6aa58d"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7.5 13.5 12 9l4.5 4.5M5 5h14"/></svg></span><span class="st-t"><b>Restaurer une copie</b><small>Depuis Fichiers ou iCloud Drive</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
+    <p class="st-foot">Ton historique reste sur ce téléphone, rien n'est envoyé sur internet. Garde une copie après chaque import : si le téléphone efface les données, tu la restaures en deux touches.</p>
     <div class="msg" id="backup-msg" hidden></div>
-  </section>
+
+    <div class="st-label">Aide</div>
+    <div class="st-group">
+      <button class="st-row" id="help-btn" type="button"><span class="st-ic" style="background:#a993e6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/></svg></span><span class="st-t"><b>Comment ça marche</b></span><span class="st-go" aria-hidden="true">›</span></button>
+      <a class="st-row" href="confidentialite.html" target="_blank" rel="noopener noreferrer"><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="st-t"><b>Confidentialité</b><small>Tes données restent sur ton téléphone</small></span><span class="st-go" aria-hidden="true">›</span></a>
+    </div>
+
+    <div class="st-group needs-data st-last">
+      <div id="reset-row"><button class="st-row danger" id="reset" type="button"><span class="st-ic" style="background:#b8502e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b>Tout effacer</b></span></button></div>
+      <div class="st-confirm" id="reset-confirm" hidden>
+        <p>Tout l'historique de ce téléphone sera effacé. Pense à sauvegarder une copie avant.</p>
+        <div class="row"><button class="btn danger" id="reset-yes">Oui, tout effacer</button><button class="btn ghost" id="reset-no">Annuler</button></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Parcours guidé du premier export : remplace tout l'écran tant qu'aucun import n'est fait -->
@@ -1652,7 +1719,7 @@
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
-const PAGE = 40;
+const PAGE = 3; // sur l'accueil, puis « Voir tout »
 let state = { snapshots: [], events: [], followers: {} };  // { snapshots: [...], events: [...], followers: {name: ts} }
 let loading = true;
 let tab = "unfollow";
@@ -1702,6 +1769,7 @@ function setSync(kind, text) {
   const el = $("sync");
   el.className = "sync needs-data" + (kind === "ok" ? " ok" : kind === "warn" ? " warn" : "");
   el.innerHTML = ICONS[kind] + `<span>${text}</span>`;
+  $("set-dot").hidden = kind !== "warn";
 }
 function showStorageBanner(html) { $("storage-banner").innerHTML = html; $("storage-banner").hidden = !html; }
 
@@ -1981,7 +2049,7 @@ function renderList() {
   $("list-card").dataset.tab = tab;
   $("people").innerHTML = html || `<li class="empty"><span class="zy-av">${avatarSVG(prefs.zy?.look || {})}</span><span>${empty}</span></li>`;
   $("more").hidden = rows.length <= shown;
-  $("more").textContent = `Voir plus (${rows.length - shown} restants)`;
+  $("more").textContent = shown <= PAGE ? `Voir tout (${rows.length})` : `Voir plus (${rows.length - shown})`;
 }
 
 // On touche une barre, une part ou un point : la liste des comptes concernés s'ouvre en plein écran.
@@ -2066,6 +2134,10 @@ function niceStep(range) {
 
 function renderImports() {
   const snaps = state.snapshots;
+  if (snaps.length) {
+    const d = daysSince(snaps[snaps.length - 1].takenAt);
+    $("imp-sub").textContent = `${snaps.length} import${snaps.length > 1 ? "s" : ""} · le dernier ${d === 0 ? "aujourd'hui" : d === 1 ? "hier" : `il y a ${d} jours`}`;
+  }
   if (!snaps.length) { $("imports").innerHTML = `<tr><td class="empty">${loading ? "Chargement…" : "Aucun import pour l'instant."}</td></tr>`; return; }
   $("imports").innerHTML = `<tr><th>Date</th><th>Abonnés</th><th>Départs</th><th>Arrivées</th></tr>` +
     snaps.slice().reverse().map((s, i) => {
@@ -2252,7 +2324,7 @@ function selectTab(t) {
 }
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { selectTab(b.dataset.tab); shown = PAGE; renderList(); animateList(); }));
 $("search").addEventListener("input", () => { shown = PAGE; renderList(); });
-$("more").addEventListener("click", () => { shown += PAGE * 3; renderList(); });
+$("more").addEventListener("click", () => { shown += 40; renderList(); });
 
 // ---------- Copie / restauration ----------
 $("backup").addEventListener("click", async () => {
@@ -2284,12 +2356,12 @@ function renderBackup() {
   if (!last) setSync("ok", "Sur ce téléphone");
   else if (upToDate) setSync("ok", "Copie à jour");
   else setSync("warn", "Copie à faire");
-  $("backup").className = "btn needs-data " + (last && !upToDate ? "primary" : "ghost");
+  $("backup").classList.toggle("hot", !!(last && !upToDate));
   $("backup-status").textContent = !last ? "" : prefs.backupAt
     ? `Dernière copie : ${fmtDate(prefs.backupAt)}${upToDate ? "." : ", avant ton dernier import."}`
     : "Aucune copie pour l'instant.";
 }
-$("sync").addEventListener("click", () => $("backup").scrollIntoView({ behavior: "smooth", block: "center" }));
+$("sync").addEventListener("click", () => openStPage("settings"));
 $("restore").addEventListener("click", () => $("restore-file").click());
 $("restore-file").addEventListener("change", async (e) => {
   const f = e.target.files[0];
@@ -2478,6 +2550,23 @@ $("onb-next").addEventListener("click", () => {
 });
 $("onb-skip").addEventListener("click", closeOnboarding);
 $("help-btn").addEventListener("click", openOnboarding);
+// ---------- Réglages et Mes imports : pages qui glissent depuis la droite ----------
+function openStPage(id) {
+  const el = $(id);
+  el.hidden = false; el.scrollTop = 0;
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("open")));
+  haptic("light");
+}
+function closeStPage(id) {
+  const el = $(id);
+  el.classList.remove("open");
+  setTimeout(() => { if (!el.classList.contains("open")) el.hidden = true; }, 320);
+}
+$("set-btn").addEventListener("click", () => openStPage("settings"));
+$("imp-row").addEventListener("click", () => openStPage("imports-page"));
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeStPage(b.dataset.close)));
+$("st-photo").addEventListener("click", () => $("avatar-btn").click());
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") ["settings", "imports-page"].forEach((id) => { if (!$(id).hidden) closeStPage(id); }); });
 
 // ---------- Import depuis Google Drive ----------
 // Instagram peut déposer l'export tout seul dans Google Drive (export programmé, fichiers JSON non zippés).
@@ -3074,7 +3163,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-1615";
+const BUILD = "2026-11-02-1720";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -4083,7 +4172,7 @@ const PAGES = { games: $("pg-games"), stats: $("pg-stats") };
 const REST = { games: -100, stats: 100 };
 let page = "home";
 const pageW = () => window.innerWidth || 1;
-const overlayOpen = () => ["onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
+const overlayOpen = () => ["settings", "imports-page", "onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
 function placePage(p, pct, dragging) {
   const el = PAGES[p];
   el.classList.toggle("dragging", !!dragging);
