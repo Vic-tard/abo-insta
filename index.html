@@ -484,18 +484,73 @@
   .tip { position: fixed; z-index: 17; pointer-events: none; background: var(--btn); color: var(--btn-ink); font: 600 12px/1.3 var(--font); padding: 6px 9px; border-radius: 8px;
     translate: -50% calc(-100% - 10px); white-space: nowrap; box-shadow: 0 4px 14px rgb(0 0 0 / .18); }
   @media (prefers-reduced-motion: no-preference) {
-    .pg.anim .chart .bar { animation: grow .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 50% 100%; }
-    .pg.anim .chart .bar.neg { transform-origin: 50% 0; }
-    .pg.anim .chart .hbar { animation: growx .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 0 50%; }
-    .pg.anim .chart .seg { animation: sweep .8s cubic-bezier(.2, .8, .2, 1) both; }
-    .pg.anim .chart .curve { stroke-dasharray: 1; animation: draw 1.1s .1s ease-out both; }
-    .pg.anim .chart .area { animation: fadein .8s .3s both; }
-    .pg.anim .kpi { animation: pop .35s both; }
+    .st-card.seen .chart .bar { animation: grow .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 50% 100%; }
+    .st-card.seen .chart .bar.neg { transform-origin: 50% 0; }
+    .st-card.seen .chart .hbar { animation: growx .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 0 50%; }
+    .st-card.seen .chart .seg { animation: sweep .8s cubic-bezier(.2, .8, .2, 1) both; }
+    .st-card.seen .chart .curve { stroke-dasharray: 1; animation: draw 1.1s .1s ease-out both; }
+    .st-card.seen .chart .area { animation: fadein .8s .3s both; }
+    .pg.anim .kpi { animation: pop .4s .15s both; } .pg.anim .kpi + .kpi { animation-delay: .25s; }
     .pg.anim .tile { animation: pop .35s both; }
   }
   @keyframes grow { from { transform: scaleY(0); } }
   @keyframes growx { from { transform: scaleX(0); } }
   @keyframes sweep { from { stroke-dasharray: 0 100; } }
+
+
+  /* Page Graphiques, au style des Mini-jeux : héros violine avec le bonhomme, cartes colorées */
+  .st-hero { position: relative; display: grid; grid-template-columns: 84px 1fr; gap: 4px 16px; align-items: center; padding: 16px; border-radius: 24px; overflow: hidden;
+    background: linear-gradient(135deg, #4a2636, #8a4560); color: #fff; box-shadow: 0 10px 24px rgb(74 38 54 / .3); }
+  .st-hero[hidden] { display: none; }
+  .st-hero::before { content: ""; position: absolute; right: -50px; top: -60px; width: 170px; height: 170px; border-radius: 50%; background: rgb(255 255 255 / .08); }
+  .st-hero > * { position: relative; }
+  .st-hero .zy-av { width: 84px; box-shadow: 0 0 0 3px rgb(246 201 90 / .8); }
+  .st-hero small { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: rgb(255 255 255 / .75); }
+  .st-hero b { display: block; font: 800 40px/1.05 var(--round); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .st-chip { display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 999px; font: 700 12.5px/1.4 var(--round); background: rgb(255 255 255 / .16); color: #fff; }
+  .st-chip.up { background: #f6c95a; color: #3b2414; }
+  .st-chip.down { background: #ef7f6a; color: #fff; }
+  .st-bub { position: absolute; left: 78px; top: 4px; background: #fff; color: #2e2328; font: 800 12px/1 var(--round); padding: 6px 9px; border-radius: 12px 12px 12px 3px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / .18); white-space: nowrap; }
+  .st-hero .st-who { padding-top: 14px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .pg.anim .st-hero { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; }
+    .st-hero .zy-av { animation: qzFloat 2.6s ease-in-out infinite; }
+    .pg.anim .st-bub { animation: pop .4s .5s cubic-bezier(.3,1.6,.5,1) both; transform-origin: 0 100%; }
+  }
+  #pg-stats .kpis { grid-template-columns: 1fr 1fr; gap: 10px; }
+  #pg-stats .kpi { border-radius: 20px; padding: 14px; color: #2e2328; position: relative; overflow: hidden; box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
+  #pg-stats .kpi::before { content: ""; position: absolute; right: -30px; top: -36px; width: 90px; height: 90px; border-radius: 50%; background: rgb(255 255 255 / .25); }
+  #pg-stats .kpi > * { position: relative; }
+  #pg-stats .kpi b { font: 800 26px/1.15 var(--round); }
+  #pg-stats .kpi span { color: rgb(46 35 40 / .72); font-size: 12.5px; font-weight: 600; }
+  #pg-stats .kpi:nth-child(1) { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); }
+  #pg-stats .kpi:nth-child(2) { background: linear-gradient(160deg, #ffe0b8, #f7a96c); }
+  #pg-stats .st-card { border-top: 0; padding: 16px; border-radius: 24px; position: relative; overflow: hidden; color: #2e2328; box-shadow: 0 8px 18px rgb(46 35 40 / .12);
+    --ink: #2e2328; --muted: rgb(46 35 40 / .72); --line: rgb(255 255 255 / .6); --surface: #fff; --chart: #2e2328; --s1: rgb(255 255 255 / .72); }
+  #pg-stats .st-card::before { content: ""; position: absolute; right: -40px; top: -50px; width: 150px; height: 150px; border-radius: 50%; background: rgb(255 255 255 / .2); pointer-events: none; }
+  #pg-stats .st-card > * { position: relative; }
+  #pg-stats .st-card h2 { font: 800 19px/1.2 var(--round); color: #2e2328; margin: 0; }
+  #pg-stats .st-card .sub { margin: -4px 0 0; }
+  #pg-stats .st-card .legend li { background: rgb(255 255 255 / .55); border-radius: 12px; padding: 7px 10px; }
+  #pg-stats .st-card .donut-row { grid-template-columns: 1fr; justify-items: center; gap: 14px; }
+  #pg-stats .st-card .donut { width: 160px; }
+  #pg-stats .st-card .legend { width: 100%; }
+  #pg-stats .st-card .legend i { box-shadow: inset 0 0 0 1px rgb(46 35 40 / .18); }
+  #pg-stats .st-card .key { color: rgb(46 35 40 / .8); font-weight: 600; }
+  #pg-stats .st-card .empty { color: var(--muted); }
+  .st-evo { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
+  .st-moves { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); --up: #17794d !important; --down: #e0584a !important; }
+  .st-rel { background: linear-gradient(160deg, #ffc2cc, #ef7f8e); --c1: #2e2328; --c2: #fff; --c3: #f6c95a; }
+  .st-age { background: linear-gradient(160deg, #ffe0b8, #f7a96c); --s1: #fff6ea !important; --s2: #ffd08f; --s3: #ef8a4e; --s4: #b8452f; --s5: #5e2131; }
+  .st-grow { background: linear-gradient(135deg, #f7da7f, #f0b552); }
+  .st-month { background: linear-gradient(135deg, #f7a593, #ec7262); }
+  .st-day { background: linear-gradient(135deg, #f4c9d0, #d68b98); }
+  .st-stay { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
+  @media (prefers-reduced-motion: no-preference) {
+    #pg-stats .st-card.wait { opacity: 0; transform: translateY(28px) scale(.96); }
+    #pg-stats .st-card.seen { opacity: 1; transform: none; transition: opacity .45s ease-out, transform .55s cubic-bezier(.3,1.35,.5,1); }
+  }
 
   /* Partie de quiz */
   /* Mini-jeux en plein écran : flèche retour, ou glisser vers la droite */
@@ -1256,19 +1311,20 @@
 <!-- Page de droite : graphiques -->
 <div class="pg off" id="pg-stats" role="region" aria-label="Graphiques" inert>
   <div class="wrap">
-    <div class="pg-head"><div><h1>Graphiques</h1><p id="stats-sub"></p></div></div>
+    <div class="pg-head center"><div><h1>Graphiques</h1><p id="stats-sub"></p></div></div>
+    <div class="st-hero" id="st-hero"></div>
     <div class="kpis" id="kpis"></div>
-    <section class="block" id="g-evo-block">
+    <section class="block st-card st-evo" id="g-evo-block">
     <h2>Évolution</h2>
     <div id="chart"></div>
   </section>
-    <section class="block" id="g-moves-block"><h2>Arrivées et départs à chaque import</h2><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></section>
-    <section class="block" id="g-rel-block"><h2>Tes relations</h2><div id="g-rel"></div></section>
-    <section class="block" id="g-age-block"><h2>Depuis quand ils te suivent</h2><div id="g-age"></div></section>
-    <section class="block" id="g-grow-block"><h2>Ta communauté, depuis le début</h2><p class="sub">Tes abonnés actuels, selon la date où ils t'ont suivi. Ceux qui sont partis n'y sont plus.</p><div class="chart" id="g-grow"></div></section>
-    <section class="block" id="g-month-block"><h2>Nouveaux abonnés par mois</h2><p class="sub">Sur les 12 derniers mois, parmi ceux qui te suivent encore.</p><div class="chart" id="g-month"></div></section>
-    <section class="block" id="g-day-block"><h2 id="g-day-title">Le jour où ils s'abonnent</h2><div class="chart" id="g-day"></div></section>
-    <section class="block" id="g-stay-block"><h2>Combien de temps ils sont restés</h2><p class="sub">Pour les comptes partis, le temps entre leur abonnement et leur départ.</p><div class="chart" id="g-stay"></div></section>
+    <section class="block st-card st-moves" id="g-moves-block"><h2>Arrivées et départs à chaque import</h2><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></section>
+    <section class="block st-card st-rel" id="g-rel-block"><h2>Tes relations</h2><div id="g-rel"></div></section>
+    <section class="block st-card st-age" id="g-age-block"><h2>Depuis quand ils te suivent</h2><div id="g-age"></div></section>
+    <section class="block st-card st-grow" id="g-grow-block"><h2>Ta communauté, depuis le début</h2><p class="sub">Tes abonnés actuels, selon la date où ils t'ont suivi. Ceux qui sont partis n'y sont plus.</p><div class="chart" id="g-grow"></div></section>
+    <section class="block st-card st-month" id="g-month-block"><h2>Nouveaux abonnés par mois</h2><p class="sub">Sur les 12 derniers mois, parmi ceux qui te suivent encore.</p><div class="chart" id="g-month"></div></section>
+    <section class="block st-card st-day" id="g-day-block"><h2 id="g-day-title">Le jour où ils s'abonnent</h2><div class="chart" id="g-day"></div></section>
+    <section class="block st-card st-stay" id="g-stay-block"><h2>Combien de temps ils sont restés</h2><p class="sub">Pour les comptes partis, le temps entre leur abonnement et leur départ.</p><div class="chart" id="g-stay"></div></section>
   </div>
 </div>
 <nav class="pager" id="pager" aria-label="Pages">
@@ -2603,7 +2659,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0400";
+const BUILD = "2026-11-02-0500";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -3464,7 +3520,7 @@ function setPage(p) {
     if (open) el.classList.remove("off");
     el.style.transform = `translateX(${open ? 0 : REST[k]}%)`;
     el.inert = !open;
-    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); }
+    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); if (k === "stats") { watchStatCards(); countUp(); } }
   }
   document.documentElement.style.overflow = p === "home" ? "" : "hidden";
   $("pager").querySelectorAll("button").forEach((b) => b.dataset.page === p ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
@@ -3618,17 +3674,23 @@ function renderStatsPage() {
   const stamps = Object.values(state.followers).filter((t) => Number.isInteger(t) && t > 0).map((t) => t * 1000);
   $("stats-sub").textContent = `D'après ton import du ${fmtDate(last.takenAt)}`;
 
-  // Chiffres clés
+  // Héros : le bonhomme, le nombre d'abonnés qui défile, et le solde depuis le premier import
   const net = last.count - first.count;
   const mutual = rel ? Object.keys(state.following).filter((u) => u in state.followers).length : 0;
   const followingN = rel ? Object.keys(state.following).length : 0;
+  const quip = snaps.length < 2 ? "À suivre !" : net > 0 ? "Ça grimpe !" : net < 0 ? "Petite baisse…" : "Stable !";
+  const chip = snaps.length > 1
+    ? `<em class="st-chip ${net > 0 ? "up" : net < 0 ? "down" : ""}">${net > 0 ? "+" : net < 0 ? "−" : ""}${nf(Math.abs(net))} depuis le ${fmtShort(first.takenAt)}</em>`
+    : `<em class="st-chip">Le solde arrive au 2ᵉ import</em>`;
+  $("st-hero").innerHTML = `<span class="zy-av">${avatarSVG(zy().look)}</span><span class="st-bub">${quip}</span>
+    <div class="st-who"><small>Tes abonnés</small><b id="st-count" data-n="${last.count}">${nf(last.count)}</b>${chip}</div>`;
+  const old = stamps.filter((t) => (now - t) / DAY >= 365).length;
   $("kpis").innerHTML = [
-    `<div class="kpi"><b>${nf(last.count)}</b><span>abonnés</span></div>`,
-    snaps.length > 1
-      ? `<div class="kpi"><b style="color:var(${net < 0 ? "--down" : "--up"})">${net > 0 ? "+" : net < 0 ? "−" : ""}${nf(Math.abs(net))}</b><span>depuis le ${fmtShort(first.takenAt)}</span></div>`
-      : `<div class="kpi"><b>–</b><span>solde au 2ᵉ import</span></div>`,
     rel && followingN
       ? `<div class="kpi"><b>${pct(mutual, followingN)} %</b><span>te suivent en retour</span></div>`
+      : `<div class="kpi"><b>${snaps.length}</b><span>${snaps.length > 1 ? "imports" : "import"}</span></div>`,
+    stamps.length >= 3
+      ? `<div class="kpi"><b>${pct(old, stamps.length)} %</b><span>te suivent depuis plus d'un an</span></div>`
       : `<div class="kpi"><b>${snaps.length}</b><span>${snaps.length > 1 ? "imports" : "import"}</span></div>`,
   ].join("");
 
@@ -3664,7 +3726,6 @@ function renderStatsPage() {
     const age = (t) => (now - t) / DAY;
     const B = [["Moins de 3 mois", 0, 91], ["3 à 12 mois", 91, 365], ["1 à 2 ans", 365, 730], ["2 à 4 ans", 730, 1461], ["Plus de 4 ans", 1461, Infinity]];
     const parts = B.map(([label, a, b], i) => ({ label, n: stamps.filter((t) => age(t) >= a && age(t) < b).length, color: `var(--s${i + 1})` }));
-    const old = stamps.filter((t) => age(t) >= 365).length;
     $("g-age").innerHTML = donut(parts, `<b>${pct(old, stamps.length)} %</b><span>depuis plus d'un an</span>`);
   }
 
@@ -3714,6 +3775,27 @@ function renderStatsPage() {
     $("g-stay").innerHTML = hbars(SB.map(([label, a, b]) => ({ label, n: stays.filter((d) => d >= a && d < b).length })),
       (d) => `${d.label} : ${plural(d.n, "départ", "départs")}`);
   }
+}
+// Les cartes de la page Graphiques entrent en rebondissant quand on arrive dessus, et leurs graphiques se dessinent à ce moment-là.
+let statSeen = null;
+function watchStatCards() {
+  const cards = [...document.querySelectorAll("#pg-stats .st-card")];
+  statSeen?.disconnect();
+  if (!("IntersectionObserver" in window)) { cards.forEach((c) => c.classList.add("seen")); return; }
+  cards.forEach((c) => { c.classList.remove("seen"); c.classList.add("wait"); });
+  statSeen = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    e.target.classList.remove("wait"); e.target.classList.add("seen");
+    statSeen.unobserve(e.target);
+  }), { threshold: 0.18 });
+  cards.forEach((c) => statSeen.observe(c));
+}
+function countUp() {
+  const el = $("st-count"); if (!el) return;
+  const n = +el.dataset.n, t0 = performance.now(), dur = 900;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || n < 2) return;
+  const tick = (t) => { const k = Math.min(1, (t - t0) / dur); el.textContent = nf(Math.round(n * (1 - (1 - k) ** 3))); if (k < 1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
 }
 const renderHome = render;
 render = function () { renderHome(); renderGamesPage(); renderStatsPage(); };
