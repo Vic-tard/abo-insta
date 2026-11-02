@@ -1,5 +1,6 @@
 import UIKit
 import WebKit
+import UserNotifications
 
 /// Affiche l'app web Zyeuto et lui transmet les fichiers partagés.
 final class WebViewController: UIViewController {
@@ -37,7 +38,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 1 };",
+            source: "window.ZYEUTO_APP = { version: 2 };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Ressenti d'app : pas de zoom, pas de sélection de texte ni de menu « Copier » à l'appui long
         // (sauf dans les champs de saisie), pas de surlignage gris au toucher.
@@ -260,9 +261,29 @@ extension WebViewController: WKScriptMessageHandler {
             case "selection": UISelectionFeedbackGenerator().selectionChanged()
             default: UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
+        case "meta":
+            openMeta(body)
         default:
             break
         }
+    }
+
+    /// Bouton « Mettre à jour » : la page d'export d'Instagram s'ouvre dans Zyeuto, avec un bandeau guide.
+    private func openMeta(_ body: [String: Any]) {
+        guard presentedViewController == nil,
+              let url = URL(string: body["url"] as? String ?? "https://accountscenter.instagram.com/info_and_permissions/dyi/")
+        else { return }
+        let steps = (body["steps"] as? [[String: Any]] ?? []).map {
+            MetaViewController.Step(text: $0["t"] as? String ?? "", tip: $0["tip"] as? String ?? "")
+        }
+        let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
+        meta.onRequested = { [weak self] in
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested'); true")
+            MetaViewController.scheduleReminder()
+        }
+        meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
+        meta.modalPresentationStyle = .fullScreen
+        present(meta, animated: true)
     }
 }
 
@@ -369,6 +390,303 @@ extension WebViewController: WKDownloadDelegate {
         let sheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         sheet.popoverPresentationController?.sourceView = view
         present(sheet, animated: true)
+    }
+}
+
+// MARK: Instagram dans Zyeuto (bouton « Mettre à jour »)
+
+/// Affiche la page officielle d'export d'Instagram, avec un bandeau Zyeuto qui dit où toucher.
+/// Les touches sur la page d'Instagram, c'est l'utilisateur qui les fait : Zyeuto ne clique jamais à sa place
+/// et ne lit jamais le mot de passe (il est tapé sur la page d'Instagram).
+/// Quand le fichier est téléchargé, il est transmis à Zyeuto, qui l'importe tout seul.
+final class MetaViewController: UIViewController {
+    struct Step { let text: String; let tip: String }
+
+    var onRequested: (() -> Void)?
+    var onFile: ((URL) -> Void)?
+
+    private let url: URL
+    private let requesting: Bool
+    private let steps: [Step]
+    private var index = 0
+    private var webView: WKWebView!
+    private let stepLabel = UILabel()
+    private let tipLabel = UILabel()
+    private let progress = UIProgressView(progressViewStyle: .bar)
+    private let prevButton = UIButton(type: .system)
+    private let nextButton = UIButton(type: .system)
+    private let loading = UIActivityIndicatorView(style: .medium)
+    private var downloads: [ObjectIdentifier: URL] = [:]
+    private var loadingObservation: NSKeyValueObservation?
+
+    private static let ink = UIColor { $0.userInterfaceStyle == .dark ? UIColor(white: 0.95, alpha: 1)
+        : UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1) }
+    private static let rose = UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(red: 0x3a / 255, green: 0x23 / 255, blue: 0x2a / 255, alpha: 1)
+        : UIColor(red: 0xf6 / 255, green: 0xe2 / 255, blue: 0xe5 / 255, alpha: 1) }
+    private static let roseInk = UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(red: 0xf0 / 255, green: 0xb3 / 255, blue: 0xbd / 255, alpha: 1)
+        : UIColor(red: 0x8e / 255, green: 0x45 / 255, blue: 0x52 / 255, alpha: 1) }
+    private static let accent = UIColor(red: 0xc2 / 255, green: 0x5a / 255, blue: 0x6f / 255, alpha: 1)
+
+    init(url: URL, requesting: Bool, steps: [Step]) {
+        self.url = url
+        self.requesting = requesting
+        self.steps = steps.isEmpty ? [Step(text: "Suis les étapes d'Instagram", tip: "")] : steps
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) non utilisé") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+
+        // Barre du haut : retour à Zyeuto, et l'adresse officielle d'Instagram bien visible.
+        let back = UIButton(type: .system)
+        back.setTitle("◀ Zyeuto", for: .normal)
+        back.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        back.tintColor = Self.accent
+        back.addAction(UIAction { [weak self] _ in self?.close() }, for: .touchUpInside)
+        let title = UILabel()
+        title.numberOfLines = 2
+        title.textAlignment = .center
+        let t = NSMutableAttributedString(string: "Instagram\n", attributes: [.font: UIFont.systemFont(ofSize: 14, weight: .semibold), .foregroundColor: UIColor.label])
+        t.append(NSAttributedString(string: "🔒 accountscenter.instagram.com", attributes: [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: UIColor.secondaryLabel]))
+        title.attributedText = t
+        let top = UIView()
+        [back, title, loading].forEach { $0.translatesAutoresizingMaskIntoConstraints = false; top.addSubview($0) }
+        loading.hidesWhenStopped = true
+
+        // Bandeau Zyeuto : l'étape à faire, une barre qui avance, Précédent / Suivant.
+        let banner = UIView()
+        banner.backgroundColor = Self.rose
+        stepLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        stepLabel.textColor = Self.roseInk
+        stepLabel.numberOfLines = 0
+        tipLabel.font = .systemFont(ofSize: 13)
+        tipLabel.textColor = Self.ink.withAlphaComponent(0.75)
+        tipLabel.numberOfLines = 0
+        progress.progressTintColor = Self.accent
+        progress.trackTintColor = Self.accent.withAlphaComponent(0.18)
+        progress.layer.cornerRadius = 2
+        progress.clipsToBounds = true
+        prevButton.setTitle("Précédent", for: .normal)
+        prevButton.tintColor = Self.roseInk
+        prevButton.titleLabel?.font = .systemFont(ofSize: 15)
+        prevButton.addAction(UIAction { [weak self] _ in self?.go(-1) }, for: .touchUpInside)
+        var next = UIButton.Configuration.filled()
+        next.baseBackgroundColor = Self.ink
+        next.baseForegroundColor = .systemBackground
+        next.cornerStyle = .capsule
+        next.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        nextButton.configuration = next
+        nextButton.addAction(UIAction { [weak self] _ in self?.nextTapped() }, for: .touchUpInside)
+        let buttons = UIStackView(arrangedSubviews: [prevButton, UIView(), nextButton])
+        buttons.alignment = .center
+        let texts = UIStackView(arrangedSubviews: [progress, stepLabel, tipLabel, buttons])
+        texts.axis = .vertical
+        texts.spacing = 6
+        texts.setCustomSpacing(10, after: progress)
+        texts.setCustomSpacing(10, after: tipLabel)
+        texts.translatesAutoresizingMaskIntoConstraints = false
+        banner.addSubview(texts)
+
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = .default() // on reste connecté à Instagram d'une fois sur l'autre
+        webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = self
+        webView.uiDelegate = self
+        webView.allowsBackForwardNavigationGestures = true
+        loadingObservation = webView.observe(\.isLoading, options: [.new]) { [weak self] web, _ in
+            let busy = web.isLoading
+            DispatchQueue.main.async {
+                if busy { self?.loading.startAnimating() } else { self?.loading.stopAnimating() }
+            }
+        }
+
+        for v in [top, banner, webView as UIView] {
+            v.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(v)
+        }
+        let g = view.safeAreaLayoutGuide
+        NSLayoutConstraint.activate([
+            top.topAnchor.constraint(equalTo: g.topAnchor),
+            top.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            top.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            top.heightAnchor.constraint(equalToConstant: 48),
+            back.leadingAnchor.constraint(equalTo: top.leadingAnchor, constant: 14),
+            back.centerYAnchor.constraint(equalTo: top.centerYAnchor),
+            title.centerXAnchor.constraint(equalTo: top.centerXAnchor),
+            title.centerYAnchor.constraint(equalTo: top.centerYAnchor),
+            loading.trailingAnchor.constraint(equalTo: top.trailingAnchor, constant: -16),
+            loading.centerYAnchor.constraint(equalTo: top.centerYAnchor),
+            banner.topAnchor.constraint(equalTo: top.bottomAnchor),
+            banner.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            banner.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            texts.topAnchor.constraint(equalTo: banner.topAnchor, constant: 10),
+            texts.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
+            texts.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 16),
+            texts.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -16),
+            progress.heightAnchor.constraint(equalToConstant: 4),
+            webView.topAnchor.constraint(equalTo: banner.bottomAnchor),
+            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+        showStep(animated: false)
+        webView.load(URLRequest(url: url))
+    }
+
+    // MARK: Étapes
+
+    private var isLast: Bool { index == steps.count - 1 }
+
+    private func showStep(animated: Bool = true) {
+        let step = steps[index]
+        let apply = {
+            self.stepLabel.text = step.text
+            self.tipLabel.text = step.tip
+            self.tipLabel.isHidden = step.tip.isEmpty
+            self.prevButton.isHidden = self.index == 0
+        }
+        if animated, let box = stepLabel.superview {
+            UIView.transition(with: box, duration: 0.2, options: .transitionCrossDissolve, animations: apply)
+        } else {
+            apply()
+        }
+        progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
+        var c = nextButton.configuration
+        c?.title = isLast ? (requesting ? "C'est fait" : "Fermer") : "Suivant"
+        nextButton.configuration = c
+    }
+
+    private func go(_ delta: Int) {
+        let n = max(0, min(steps.count - 1, index + delta))
+        guard n != index else { return }
+        index = n
+        UISelectionFeedbackGenerator().selectionChanged()
+        showStep()
+    }
+
+    private func nextTapped() {
+        guard isLast else { return go(1) }
+        if requesting { finishRequest() } else { dismiss(animated: true) }
+    }
+
+    private func finishRequest() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        let done = onRequested
+        dismiss(animated: true) { done?() }
+    }
+
+    /// Retour à Zyeuto : si on est arrivé au bout de la demande, on vérifie qu'elle a bien été faite.
+    private func close() {
+        guard requesting, index >= steps.count - 2 else { return dismiss(animated: true) }
+        let alert = UIAlertController(title: "As-tu touché « Commencer l'exportation » ?",
+                                      message: "Si oui, Zyeuto te prévient quand ton export est sans doute prêt.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Pas encore", style: .cancel) { [weak self] _ in self?.dismiss(animated: true) })
+        alert.addAction(UIAlertAction(title: "Oui", style: .default) { [weak self] _ in self?.finishRequest() })
+        present(alert, animated: true)
+    }
+
+    /// Rappel 10 minutes après la demande (lors du premier vrai test, l'export était prêt en 8 minutes).
+    static func scheduleReminder() {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = "Ton export est sans doute prêt"
+            content.body = "Touche pour le récupérer et mettre tes données à jour."
+            content.sound = .default
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10 * 60, repeats: false)
+            center.removePendingNotificationRequests(withIdentifiers: ["zyeuto-export"])
+            center.add(UNNotificationRequest(identifier: "zyeuto-export", content: content, trigger: trigger))
+        }
+    }
+
+    private func failed(_ message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+}
+
+extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
+    func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if action.shouldPerformDownload { decisionHandler(.download); return }
+        // Liens vers une autre app (instagram://, App Store…) : on reste ici.
+        let scheme = action.request.url?.scheme ?? ""
+        decisionHandler(["http", "https", "blob", "data", "about"].contains(scheme) ? .allow : .cancel)
+    }
+
+    func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse,
+                 decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        let disposition = (response.response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Disposition") ?? ""
+        let isFile = disposition.lowercased().contains("attachment") || !response.canShowMIMEType
+            || ["application/zip", "application/x-zip-compressed", "application/octet-stream"].contains(response.response.mimeType ?? "")
+        decisionHandler(isFile && response.isForMainFrame ? .download : .allow)
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    // « Télécharger » ouvre parfois un nouvel onglet : on le charge ici.
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
+                 for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        webView.load(action.request)
+        return nil
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
+                 initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in completionHandler() })
+        present(alert, animated: true)
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
+                 initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Annuler", style: .cancel) { _ in completionHandler(false) })
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in completionHandler(true) })
+        present(alert, animated: true)
+    }
+}
+
+extension MetaViewController: WKDownloadDelegate {
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
+                  suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let file = dir.appendingPathComponent(suggestedFilename.isEmpty ? "instagram.zip" : suggestedFilename)
+        downloads[ObjectIdentifier(download)] = file
+        DispatchQueue.main.async {
+            self.stepLabel.text = "Zyeuto récupère ton fichier…"
+            self.tipLabel.text = "Ne ferme pas cet écran, c'est presque fini."
+            self.tipLabel.isHidden = false
+            self.progress.setProgress(1, animated: true)
+        }
+        completionHandler(file)
+    }
+
+    func downloadDidFinish(_ download: WKDownload) {
+        guard let file = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["zyeuto-export"])
+        let deliver = onFile
+        dismiss(animated: true) { deliver?(file) }
+    }
+
+    func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        downloads.removeValue(forKey: ObjectIdentifier(download))
+        showStep(animated: false)
+        failed("Le téléchargement n'a pas abouti. Vérifie ta connexion et touche encore « Télécharger ».")
     }
 }
 
