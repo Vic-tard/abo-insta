@@ -656,6 +656,19 @@
   .plus-links { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
   .plus-legal { font-size: 11.5px !important; line-height: 1.35 !important; color: rgb(46 35 40 / .7) !important; }
   .plus-legal a { color: inherit; }
+  .plus-mini { display: flex; align-items: center; gap: 10px; width: 100%; margin: 10px 0 0; padding: 10px 12px; border: 1.5px dashed rgb(46 35 40 / .25); border-radius: 18px; background: rgb(255 231 194 / .55); color: #2e2328; text-align: left; cursor: pointer; font: inherit; }
+  .plus-mini[hidden] { display: none; }
+  .wl-plus { margin: 14px auto 0; max-width: 420px; }
+  .plus-mini-tag { flex: none; font: 800 11px var(--round); letter-spacing: .08em; text-transform: uppercase; background: #2e2328; color: #ffd9a0; border-radius: 999px; padding: 4px 9px; }
+  .plus-mini-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .plus-mini-txt b { font: 700 14.5px/1.25 var(--round); }
+  .plus-mini-txt small { font-size: 12.5px; line-height: 1.3; color: rgb(46 35 40 / .72); }
+  .plus-mini-go { font: 700 20px var(--round); color: rgb(46 35 40 / .5); }
+  @media (prefers-color-scheme: dark) { .plus-mini { color: #f6e9e4; background: rgb(255 231 194 / .1); border-color: rgb(255 231 194 / .3); } .plus-mini-txt small, .plus-mini-go { color: rgb(246 233 228 / .7); } }
+  .plus-rules { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: grid; gap: 4px; text-align: left; }
+  .plus-rules li { display: flex; gap: 8px; align-items: baseline; font: 600 14px/1.3 var(--round); }
+  .plus-rules li b { flex: none; min-width: 74px; }
+  .plus-rules li.on { color: #2e2328; } .plus-rules li.off { color: rgb(46 35 40 / .55); text-decoration: line-through; }
   .hc-plus { background: linear-gradient(160deg, #ffe7c2, #f5b26b); }
   .hc-plus .btn.ghost { background: rgb(255 255 255 / .55); }
 
@@ -1255,6 +1268,11 @@
     </div>
     <p class="note" id="drive-msg" hidden></p>
   </section>
+  <button class="plus-mini" id="plus-mini" type="button" hidden>
+    <span class="plus-mini-tag">Plus</span>
+    <span class="plus-mini-txt"><b id="plus-mini-t">Gratuit pour commencer</b><small id="plus-mini-s"></small></span>
+    <span class="plus-mini-go" aria-hidden="true">›</span>
+  </button>
 
   <div class="banner install" id="install-banner" hidden><strong>Installe l'app :</strong> touche <b>Partager</b> puis « <b>Sur l'écran d'accueil</b> ». Elle s'ouvrira en plein écran, comme une vraie app.<button class="x" id="install-x" aria-label="Fermer">✕</button></div>
   <div class="banner" id="storage-banner" hidden></div>
@@ -1532,6 +1550,7 @@
     <span class="plus-tag">Zyeuto Plus</span>
     <h2 id="plus-t">Zyeute quand tu veux</h2>
     <p class="plus-why" id="plus-why"></p>
+    <ul class="plus-rules" id="plus-rules"></ul>
     <ul class="plus-perks">
       <li><i>∞</i>Mises à jour illimitées, chaque semaine ou chaque jour</li>
       <li><i>👀</i>Qui est parti, dès que tu en as envie</li>
@@ -2776,9 +2795,11 @@ function renderGuided() {
           <li><i><svg viewBox="0 0 24 24"><path d="M5 12h12M13 7l5 5-5 5"/></svg></i>Je te guide<br>pas à pas</li>
           <li><i><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></i>Tout reste<br>chez toi</li>
         </ul>
+        ${storeApp() ? `<button class="plus-mini wl-plus" id="wl-plus" type="button"><span class="plus-mini-tag">Plus</span><span class="plus-mini-txt"><b>Gratuit pour commencer</b><small>Ton 1er import, puis un 2e pour comparer. Ensuite 1 mise à jour par mois, ou illimité avec Zyeuto Plus.</small></span><span class="plus-mini-go" aria-hidden="true">›</span></button>` : ""}
         <div class="gf-foot"><button class="btn primary big" id="gf-go" type="button">C'est parti</button></div>
       </div>`;
     $("gf-go").onclick = () => { prefs.welcomed = true; savePrefs(); render(); };
+    if ($("wl-plus")) $("wl-plus").onclick = () => { haptic("light"); openPlus(); };
     wlPlay();
   } else if (step === "how") {
     body.innerHTML = `
@@ -3063,8 +3084,10 @@ function openPlus(why) {
     ? `Ton fichier est prêt, mais ta mise à jour gratuite du mois est déjà faite. Avec Plus, il s'importe tout de suite.`
     : why === "update"
       ? `Ta mise à jour gratuite du mois est déjà faite${next ? `. La prochaine : le ${fmtShort(next.toISOString())}` : ""}. Avec Plus, c'est quand tu veux.`
-      : "Gratuit : une mise à jour par mois. Avec Plus, c'est quand tu veux.";
+      : "C'est gratuit pour commencer. Ensuite, une mise à jour par mois, ou illimité avec Plus.";
   $("plus-av").innerHTML = $("wk-av").innerHTML;
+  $("plus-rules").innerHTML = freeRules().map((r) => `<li class="${r.used ? "off" : "on"}"><b>${r.k}</b><span>${r.t}${r.used ? " ✓" : ""}</span></li>`).join("")
+    + `<li class="on"><b>Plus</b><span>illimité, quand tu veux</span></li>`;
   selectPlan(plusPlan); renderPlusPrices(); plusMsg("");
   $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer";
   $("plus").hidden = false;
@@ -3075,7 +3098,29 @@ function closePlus() {
   // Fenêtre fermée sans acheter : le fichier en attente n'est pas importé.
   if (plusWaiting && !hasPlus()) { plusWaiting = null; toast("Pas d'import cette fois. Ta prochaine mise à jour gratuite arrive bientôt.", false); }
 }
+// Où en est l'utilisateur dans la version gratuite : 1er import, 2e (comparaison), puis 1 par mois.
+function freeRules() {
+  const n = state.snapshots.length, next = nextFreeAt(), monthOk = canUpdateFree();
+  return [
+    { k: "1er import", t: "ton point de départ", used: n >= 1 },
+    { k: "2e import", t: "ta première comparaison", used: n >= 2 },
+    { k: "Ensuite", t: n < 2 || monthOk ? "1 mise à jour par mois" : `1 par mois, la prochaine le ${fmtShort(next.toISOString())}`, used: false },
+  ];
+}
+function renderPlusMini() {
+  $("plus-mini").hidden = !storeApp();
+  if (!storeApp()) return;
+  const n = state.snapshots.length, next = nextFreeAt();
+  if (hasPlus()) { $("plus-mini-t").textContent = "Zyeuto Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, quand tu veux."; return; }
+  $("plus-mini-t").textContent = n === 0 ? "Gratuit pour commencer"
+    : n === 1 ? "Ta comparaison est offerte"
+    : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine mise à jour offerte le ${fmtShort(next.toISOString())}`;
+  $("plus-mini-s").textContent = n < 2
+    ? "1er import, puis un 2e pour comparer. Ensuite 1 par mois, ou illimité avec Plus."
+    : "Gratuit : 1 par mois. Avec Plus, c'est illimité.";
+}
 function renderPlusBlock() {
+  renderPlusMini();
   $("plus-block").hidden = !storeApp();
   if (!storeApp()) return;
   const on = hasPlus();
@@ -3127,6 +3172,7 @@ $("plus-restore").addEventListener("click", plusRestore);
 $("plus-later").addEventListener("click", closePlus);
 $("plus").addEventListener("click", (e) => { if (e.target === $("plus")) closePlus(); });
 $("plus-open").addEventListener("click", () => openPlus());
+$("plus-mini").addEventListener("click", () => { haptic("light"); openPlus(); });
 $("plus-manage").addEventListener("click", () => nativePost({ type: "plus", action: "manage" }));
 window.zyeutoFile = {
   begin(name) { sharedBusy = true; this.name = name || "export.zip"; this.parts = []; },
