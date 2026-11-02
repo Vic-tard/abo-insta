@@ -552,6 +552,39 @@
     #pg-stats .st-card.seen { opacity: 1; transform: none; transition: opacity .45s ease-out, transform .55s cubic-bezier(.3,1.35,.5,1); }
   }
 
+  /* Graphiques cliquables */
+  #pg-stats [data-pick] { cursor: pointer; }
+  #pg-stats .st-card .legend li[data-pick] { grid-template-columns: 12px 1fr auto 10px; }
+  #pg-stats .st-card .legend li[data-pick]::after { content: "›"; font: 800 16px/1 var(--round); color: rgb(46 35 40 / .5); }
+  #pg-stats .st-card .legend li[data-pick]:active { background: rgb(255 255 255 / .85); }
+  .st-hour { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); }
+  .st-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -2px 0 -4px; }
+  .st-nav span { font: 700 13.5px var(--round); color: #2e2328; }
+  .st-nav button { width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgb(255 255 255 / .6); color: #2e2328; font: 800 20px/1 var(--round); cursor: pointer; }
+  .st-nav button:disabled { opacity: .35; cursor: default; }
+  .gz-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 2px; }
+  .gz-chips button { flex: none; border: 0; border-radius: 999px; padding: 7px 12px; background: rgb(255 255 255 / .55); color: #2e2328; font: 700 13px var(--round); cursor: pointer; }
+  .gz-chips button[aria-pressed="true"] { background: #2e2328; color: #fff; }
+  .gz-box { touch-action: pan-y; user-select: none; -webkit-user-select: none; border-radius: 14px; }
+  .gz-box svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .gz-box .gz-dot { fill: #fff; stroke: #2e2328; stroke-width: 1.5; }
+  .gz-box .gz-cur line { stroke: #2e2328; stroke-width: 1.5; stroke-dasharray: 3 3; }
+  .gz-box .gz-cur circle { fill: #2e2328; stroke: #fff; stroke-width: 2.5; }
+  .gz-info { min-height: 44px; background: rgb(255 255 255 / .6); border-radius: 14px; padding: 9px 12px; font-size: 13.5px; line-height: 1.35; color: #2e2328; }
+  .gz-info a { color: #2e2328; font-weight: 800; text-decoration: none; overflow-wrap: anywhere; }
+  .gz-info small { display: block; color: rgb(46 35 40 / .72); font-size: 12.5px; }
+  .gz-see { border: 0; border-radius: 14px; padding: 12px; background: #2e2328; color: #fff; font: 700 14.5px var(--round); cursor: pointer; }
+  .gz-see[hidden] { display: none; }
+  #who-sheet .card { gap: 12px; }
+  #who-sheet .card > * { flex-shrink: 0; }
+  .who-hero { border-radius: 22px; padding: 16px; color: #2e2328; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; box-shadow: 0 8px 18px rgb(46 35 40 / .12); position: relative; overflow: hidden; }
+  .who-hero::before { content: ""; position: absolute; right: -40px; top: -50px; width: 140px; height: 140px; border-radius: 50%; background: rgb(255 255 255 / .22); }
+  .who-hero > * { position: relative; }
+  .who-hero b { font: 800 40px/1.05 var(--round); font-variant-numeric: tabular-nums; }
+  .who-hero span { font-size: 13.5px; color: rgb(46 35 40 / .78); font-weight: 600; }
+  @media (prefers-reduced-motion: no-preference) { #who-sheet:not([hidden]) .who-hero { animation: pop .4s .1s cubic-bezier(.3,1.4,.5,1) both; } #who-sheet:not([hidden]) #who-list li { animation: rise .35s both; } }
+  #who-list li .who small { white-space: normal; }
+
   /* Partie de quiz */
   /* Mini-jeux en plein écran : flèche retour, ou glisser vers la droite */
   .bilan.fullpage { background: var(--bg); padding: 0; align-items: stretch; }
@@ -1271,6 +1304,18 @@
     <div class="acts" id="quiz-acts"></div>
   </div>
 </div>
+<div class="bilan fullpage" id="who-sheet" role="dialog" aria-modal="true" aria-labelledby="who-title" hidden>
+  <div class="card">
+    <div class="fp-head"><button class="fp-back" id="who-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="who-title"></p><span></span></div>
+    <div class="who-hero" id="who-hero"><b id="who-n"></b><span id="who-sub"></span></div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="who-search" placeholder="Chercher un pseudo" autocomplete="off" autocapitalize="none" aria-label="Chercher un compte">
+    </div>
+    <ul class="people" id="who-list"></ul>
+    <button class="more" id="who-more" type="button" hidden></button>
+  </div>
+</div>
 <div class="bilan fullpage" id="trophy-sheet" role="dialog" aria-modal="true" aria-labelledby="trophy-title" hidden>
   <div class="card">
     <div class="fp-head"><button class="fp-back" id="trophy-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="trophy-sum"></p><span></span></div>
@@ -1318,13 +1363,19 @@
     <h2>Évolution</h2>
     <div id="chart"></div>
   </section>
-    <section class="block st-card st-moves" id="g-moves-block"><h2>Arrivées et départs à chaque import</h2><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></section>
-    <section class="block st-card st-rel" id="g-rel-block"><h2>Tes relations</h2><div id="g-rel"></div></section>
-    <section class="block st-card st-age" id="g-age-block"><h2>Depuis quand ils te suivent</h2><div id="g-age"></div></section>
-    <section class="block st-card st-grow" id="g-grow-block"><h2>Ta communauté, depuis le début</h2><p class="sub">Tes abonnés actuels, selon la date où ils t'ont suivi. Ceux qui sont partis n'y sont plus.</p><div class="chart" id="g-grow"></div></section>
-    <section class="block st-card st-month" id="g-month-block"><h2>Nouveaux abonnés par mois</h2><p class="sub">Sur les 12 derniers mois, parmi ceux qui te suivent encore.</p><div class="chart" id="g-month"></div></section>
-    <section class="block st-card st-day" id="g-day-block"><h2 id="g-day-title">Le jour où ils s'abonnent</h2><div class="chart" id="g-day"></div></section>
-    <section class="block st-card st-stay" id="g-stay-block"><h2>Combien de temps ils sont restés</h2><p class="sub">Pour les comptes partis, le temps entre leur abonnement et leur départ.</p><div class="chart" id="g-stay"></div></section>
+    <section class="block st-card st-moves" id="g-moves-block"><h2>Arrivées et départs à chaque import</h2><p class="sub">Touche un import pour voir qui est arrivé et qui est parti.</p><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></section>
+    <section class="block st-card st-rel" id="g-rel-block"><h2>Tes relations</h2><p class="sub">Touche une part pour voir les comptes.</p><div id="g-rel"></div></section>
+    <section class="block st-card st-age" id="g-age-block"><h2>Depuis quand ils te suivent</h2><p class="sub">Touche une part pour voir qui.</p><div id="g-age"></div></section>
+    <section class="block st-card st-grow" id="g-grow-block"><h2>Ta communauté, depuis le début</h2><p class="sub">Chaque marche, c'est un abonné qui est encore là. Glisse ton doigt sur la courbe, pince pour zoomer.</p>
+      <div class="gz-chips" id="gz-chips" role="group" aria-label="Période"><button type="button" data-span="0">Tout</button><button type="button" data-span="730">2 ans</button><button type="button" data-span="365">1 an</button><button type="button" data-span="182">6 mois</button><button type="button" data-span="30">1 mois</button><button type="button" data-span="7">7 jours</button></div>
+      <div class="gz-box chart" id="gz-box"><svg id="gz-svg" viewBox="0 0 340 190" role="img" aria-label="Abonnés actuels cumulés selon leur date d'abonnement"></svg></div>
+      <div class="gz-info" id="gz-info" aria-live="polite"></div>
+      <button type="button" class="gz-see" id="gz-see"></button></section>
+    <section class="block st-card st-month" id="g-month-block"><h2>Nouveaux abonnés par mois</h2><p class="sub">Parmi ceux qui te suivent encore. Touche une barre pour voir qui t'a suivi ce mois-là.</p>
+      <div class="st-nav"><button type="button" id="gm-prev" aria-label="Année précédente">‹</button><span id="gm-range"></span><button type="button" id="gm-next" aria-label="Année suivante">›</button></div><div class="chart" id="g-month"></div></section>
+    <section class="block st-card st-day" id="g-day-block"><h2 id="g-day-title">Le jour où ils s'abonnent</h2><p class="sub">Touche un jour pour voir qui.</p><div class="chart" id="g-day"></div></section>
+    <section class="block st-card st-hour" id="g-hour-block"><h2 id="g-hour-title">L'heure où ils s'abonnent</h2><p class="sub">Touche une heure pour voir qui.</p><div class="chart" id="g-hour"></div></section>
+    <section class="block st-card st-stay" id="g-stay-block"><h2>Combien de temps ils sont restés</h2><p class="sub">Pour les comptes partis, le temps entre leur abonnement et leur départ. Touche une barre pour voir qui.</p><div class="chart" id="g-stay"></div></section>
   </div>
 </div>
 <nav class="pager" id="pager" aria-label="Pages">
@@ -1696,6 +1747,30 @@ function renderList() {
   $("more").textContent = `Voir plus (${rows.length - shown} restants)`;
 }
 
+// On touche une barre, une part ou un point : la liste des comptes concernés s'ouvre en plein écran.
+const PICKS = {};
+let pickN = 0;
+const tapPick = (fn, tip) => { const k = "p" + (++pickN); PICKS[k] = fn; return ` data-pick="${k}" data-tip="${esc(tip)}"`; };
+const DAYS_ALL = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const fmtWhen = (ms) => { const d = new Date(ms); return `${DAYS_ALL[d.getDay()]} ${d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })} à ${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}`; };
+const fmtLen = (days) => {
+  if (days < 30) return `${Math.max(1, Math.round(days))} jour${Math.round(days) > 1 ? "s" : ""}`;
+  if (days < 365) return `${Math.round(days / 30.4)} mois`;
+  const y = Math.floor(days / 365), m = Math.round((days - y * 365) / 30.4);
+  return `${y} an${y > 1 ? "s" : ""}${m && m < 12 ? ` et ${m} mois` : ""}`;
+};
+// Lignes de liste : du plus récent au plus ancien.
+const rowsOf = (users, src = state.followers, verb = "abonné") => users
+  .map((u) => [u, Number.isInteger(src[u]) && src[u] > 0 ? src[u] * 1000 : 0]).sort((a, b) => b[1] - a[1])
+  .map(([u, ms]) => ({ u, sub: ms ? `${verb} le ${fmtWhen(ms)}` : "" }));
+const followersWhere = (test) => rowsOf(Object.keys(state.followers).filter((u) => { const t = state.followers[u]; return Number.isInteger(t) && t > 0 && test(t * 1000); }));
+// Qui est arrivé et qui est parti à un import donné.
+const importWho = (snap) => () => {
+  const ev = state.events.filter((e) => e.at === snap.takenAt);
+  const up = ev.filter((e) => e.kind === "follow").map((e) => ({ u: e.u, cls: "up", sub: "arrivé à cet import" }));
+  const down = ev.filter((e) => e.kind === "unfollow").map((e) => ({ u: e.u, cls: "down", sub: e.ts ? `parti, abonné depuis le ${fmtDate(e.ts * 1000)}` : "parti à cet import" }));
+  return { title: `Import du ${fmtShort(snap.takenAt)}`, sub: `${up.length} arrivée${up.length > 1 ? "s" : ""} et ${down.length} départ${down.length > 1 ? "s" : ""}`, rows: [...down, ...up], cls: "st-moves" };
+};
 function renderChart() {
   const snaps = state.snapshots;
   if (snaps.length < 2) { $("chart").innerHTML = `<p class="empty">La courbe apparaît à partir de deux imports.</p>`; return; }
@@ -1725,7 +1800,8 @@ function renderChart() {
   svg += `<polyline points="${pts.join(" ")}" class="curve" pathLength="1" fill="none" stroke="var(--chart)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
   xs.forEach((x, i) => {
     const endpoint = i === xs.length - 1;
-    svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="${endpoint ? 5 : 3.5}" class="dot" fill="${endpoint ? "var(--ink)" : "var(--surface)"}" stroke="${endpoint ? "var(--surface)" : "var(--chart)"}" stroke-width="2"><title>${fmtDate(snaps[i].takenAt)} : ${nf(ys[i])} abonnés</title></circle>`;
+    if (i) svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="16" fill="transparent"${tapPick(importWho(snaps[i]), `${fmtShort(snaps[i].takenAt)} : ${nf(ys[i])} abonnés`)}/>`;
+    svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="${endpoint ? 5 : 3.5}" class="dot" pointer-events="none" fill="${endpoint ? "var(--ink)" : "var(--surface)"}" stroke="${endpoint ? "var(--surface)" : "var(--chart)"}" stroke-width="2"><title>${fmtDate(snaps[i].takenAt)} : ${nf(ys[i])} abonnés</title></circle>`;
   });
   $("chart").innerHTML = svg + "</svg>";
   drawChartWhenSeen();
@@ -2659,7 +2735,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-0500";
+const BUILD = "2026-11-02-0610";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zyeuto » ----------
@@ -3504,7 +3580,7 @@ const PAGES = { games: $("pg-games"), stats: $("pg-stats") };
 const REST = { games: -100, stats: 100 };
 let page = "home";
 const pageW = () => window.innerWidth || 1;
-const overlayOpen = () => ["onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
+const overlayOpen = () => ["onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
 function placePage(p, pct, dragging) {
   const el = PAGES[p];
   el.classList.toggle("dragging", !!dragging);
@@ -3520,7 +3596,7 @@ function setPage(p) {
     if (open) el.classList.remove("off");
     el.style.transform = `translateX(${open ? 0 : REST[k]}%)`;
     el.inert = !open;
-    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); if (k === "stats") { watchStatCards(); countUp(); } }
+    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); if (k === "stats") { if (statsDirty) { statsDirty = false; renderStatsPage(); } watchStatCards(); countUp(); } }
   }
   document.documentElement.style.overflow = p === "home" ? "" : "hidden";
   $("pager").querySelectorAll("button").forEach((b) => b.dataset.page === p ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
@@ -3536,7 +3612,7 @@ $("bilan-see").addEventListener("click", () => { if (page !== "home") setPage("h
 // Glisser du doigt : la page suit le doigt, puis s'ouvre ou revient selon la distance et la vitesse.
 {
   let g = null;
-  const NO_SWIPE = ".tabs, .scroll, input, textarea, select, canvas, .onb, .bilan, .sheet-bg, .pager";
+  const NO_SWIPE = ".tabs, .scroll, input, textarea, select, canvas, .onb, .bilan, .sheet-bg, .pager, .gz-box, .gz-chips";
   document.addEventListener("touchstart", (e) => {
     g = null;
     if (e.touches.length !== 1 || document.body.dataset.mode !== "data" || overlayOpen()) return;
@@ -3578,6 +3654,8 @@ $("bilan-see").addEventListener("click", () => { if (page !== "home") setPage("h
 // Bulle d'info : on touche une barre, une part ou un point.
 function hideTip() { $("tip").hidden = true; }
 document.addEventListener("click", (e) => {
+  const pk = page === "stats" && e.target.closest?.("#pg-stats [data-pick]");
+  if (pk) { const r = PICKS[pk.dataset.pick]?.(); if (r && r.rows.length) { openWho(r); return; } }
   const el = e.target.closest?.("[data-tip]");
   if (!el || page !== "stats") return hideTip();
   const r = el.getBoundingClientRect(), tip = $("tip");
@@ -3629,10 +3707,10 @@ function donut(parts, mid) {
   parts.forEach((p, i) => {
     if (!p.n) return;
     const len = (p.n / total) * 100;
-    segs += `<circle class="seg" cx="70" cy="70" r="${R}" pathLength="100" fill="none" stroke="${p.color}" stroke-width="20" stroke-dasharray="${Math.max(0.01, len - gap)} ${100 - len + gap}" stroke-dashoffset="${-at}" style="animation-delay:${i * 0.08}s" data-tip="${esc(p.label)} : ${nf(p.n)} (${pct(p.n, total)} %)" transform="rotate(-90 70 70)"/>`;
+    segs += `<circle class="seg" cx="70" cy="70" r="${R}" pathLength="100" fill="none" stroke="${p.color}" stroke-width="20" stroke-dasharray="${Math.max(0.01, len - gap)} ${100 - len + gap}" stroke-dashoffset="${-at}" style="animation-delay:${i * 0.08}s" ${p.who ? tapPick(p.who, `${p.label} : ${nf(p.n)} (${pct(p.n, total)} %)`) : ` data-tip="${esc(p.label)} : ${nf(p.n)} (${pct(p.n, total)} %)"`} transform="rotate(-90 70 70)"/>`;
     at += len;
   });
-  const legend = parts.map((p) => `<li><i style="background:${p.color}"></i><span>${p.label}${p.hint ? `<small>${p.hint}</small>` : ""}</span><b>${nf(p.n)}<em>${pct(p.n, total)} %</em></b></li>`).join("");
+  const legend = parts.map((p) => `<li${p.who && p.n ? tapPick(p.who, p.label) : ""}><i style="background:${p.color}"></i><span>${p.label}${p.hint ? `<small>${p.hint}</small>` : ""}</span><b>${nf(p.n)}<em>${pct(p.n, total)} %</em></b></li>`).join("");
   return `<div class="donut-row"><div class="donut chart"><svg viewBox="0 0 140 140" role="img" aria-label="${esc(parts.map((p) => `${p.label} ${p.n}`).join(", "))}">${segs}</svg><div class="mid">${mid}</div></div><ul class="legend">${legend}</ul></div>`;
 }
 // Barres verticales simples ; la plus haute porte sa valeur.
@@ -3643,7 +3721,7 @@ function bars(items, { color = "var(--chart)", tip, highlightMax = true, labelEv
   items.forEach((d, i) => {
     const h = (d.n / max) * (H - T - B), x = i * slot + (slot - bw) / 2, fill = highlightMax && i !== iMax ? "var(--s1)" : color;
     svg += `<path class="bar" style="animation-delay:${i * 0.03}s" d="${barPath(x, H - B - h, bw, h)}" fill="${fill}"/>`;
-    svg += `<rect class="hit" x="${i * slot}" y="0" width="${slot}" height="${H - B}" data-tip="${esc(tip(d))}"/>`;
+    svg += `<rect class="hit" x="${i * slot}" y="0" width="${slot}" height="${H - B}"${d.who && d.n ? tapPick(d.who, tip(d)) : ` data-tip="${esc(tip(d))}"`}/>`;
     if (i % labelEvery === 0 || i === n - 1) svg += `<text x="${i * slot + slot / 2}" y="${H - 6}" text-anchor="middle">${esc(d.short || d.label)}</text>`;
     if (i === iMax && d.n) svg += `<text class="v" x="${i * slot + slot / 2}" y="${H - B - h - 6}" text-anchor="middle">${nf(d.n)}</text>`;
   });
@@ -3657,7 +3735,7 @@ function hbars(items, tip) {
     svg += `<text x="0" y="${y + h / 2 + 4}">${esc(d.label)}</text>`;
     if (w > 0) svg += `<path class="hbar" style="animation-delay:${i * 0.05}s" d="M${LW},${y}h${w - Math.min(4, w)}q${Math.min(4, w)},0 ${Math.min(4, w)},${Math.min(4, w)}v${h - 2 * Math.min(4, w)}q0,${Math.min(4, w)} ${-Math.min(4, w)},${Math.min(4, w)}h${-(w - Math.min(4, w))}z" fill="var(--chart)"/>`;
     svg += `<text class="v" x="${LW + w + 6}" y="${y + h / 2 + 4}">${nf(d.n)}</text>`;
-    svg += `<rect class="hit" x="0" y="${i * row}" width="${W}" height="${row}" data-tip="${esc(tip(d))}"/>`;
+    svg += `<rect class="hit" x="0" y="${i * row}" width="${W}" height="${row}"${d.who && d.n ? tapPick(d.who, tip(d)) : ` data-tip="${esc(tip(d))}"`}/>`;
   });
   return svg + "</svg>";
 }
@@ -3704,7 +3782,9 @@ function renderStatsPage() {
       const x = i * slot + (slot - bw) / 2, hu = (s.follows / max) * half, hd = (s.unfollows / max) * half;
       svg += `<path class="bar" style="animation-delay:${i * 0.04}s" d="${barPath(x, mid - hu - 1, bw, hu)}" fill="var(--up)"/>`;
       svg += `<path class="bar neg" style="animation-delay:${i * 0.04}s" d="${barPath(x, mid + 1, bw, hd, true)}" fill="var(--down)"/>`;
-      svg += `<rect class="hit" x="${i * slot}" y="0" width="${slot}" height="${H - B}" data-tip="${fmtShort(s.takenAt)} : +${nf(s.follows)} / −${nf(s.unfollows)}"/>`;
+      if (s.follows) svg += `<text class="v" x="${i * slot + slot / 2}" y="${mid - hu - 6}" text-anchor="middle">+${nf(s.follows)}</text>`;
+      if (s.unfollows) svg += `<text class="v" x="${i * slot + slot / 2}" y="${mid + hd + 14}" text-anchor="middle">−${nf(s.unfollows)}</text>`;
+      svg += `<rect class="hit" x="${i * slot}" y="0" width="${slot}" height="${H - B}"${tapPick(importWho(s), `${fmtShort(s.takenAt)} : +${nf(s.follows)} / −${nf(s.unfollows)}`)}/>`;
     });
     const ticks = S.length <= 4 ? S.map((_, i) => i) : [0, S.length - 1];
     ticks.forEach((i) => svg += `<text x="${i * slot + slot / 2}" y="${H - 5}" text-anchor="middle">${fmtShort(S[i].takenAt)}</text>`);
@@ -3714,10 +3794,11 @@ function renderStatsPage() {
   // Relations
   if (show("g-rel-block", !!rel)) {
     const fans = rel.fans.length, notBack = rel.notBack.length;
+    const mutualList = () => Object.keys(state.following).filter((u) => u in state.followers);
     $("g-rel").innerHTML = donut([
-      { label: "Mutuels", hint: "Vous vous suivez", n: mutual, color: "var(--c1)" },
-      { label: "Fans", hint: "Tu ne les suis pas", n: fans, color: "var(--c2)" },
-      { label: "Pas en retour", hint: "Ils ne te suivent pas", n: notBack, color: "var(--c3)" },
+      { label: "Mutuels", hint: "Vous vous suivez", n: mutual, color: "var(--c1)", who: () => ({ title: "Mutuels", sub: "Vous vous suivez", rows: rowsOf(mutualList()), cls: "st-rel" }) },
+      { label: "Fans", hint: "Tu ne les suis pas", n: fans, color: "var(--c2)", who: () => ({ title: "Fans", sub: "Ils te suivent, tu ne les suis pas", rows: rowsOf(relations().fans), cls: "st-rel" }) },
+      { label: "Pas en retour", hint: "Ils ne te suivent pas", n: notBack, color: "var(--c3)", who: () => ({ title: "Pas en retour", sub: "Tu les suis, ils ne te suivent pas", rows: rowsOf(relations().notBack, state.following, "suivi"), cls: "st-rel" }) },
     ], `<b>${nf(mutual)}</b><span>amis mutuels</span>`);
   }
 
@@ -3725,38 +3806,16 @@ function renderStatsPage() {
   if (show("g-age-block", stamps.length >= 3)) {
     const age = (t) => (now - t) / DAY;
     const B = [["Moins de 3 mois", 0, 91], ["3 à 12 mois", 91, 365], ["1 à 2 ans", 365, 730], ["2 à 4 ans", 730, 1461], ["Plus de 4 ans", 1461, Infinity]];
-    const parts = B.map(([label, a, b], i) => ({ label, n: stamps.filter((t) => age(t) >= a && age(t) < b).length, color: `var(--s${i + 1})` }));
+    const parts = B.map(([label, a, b], i) => ({ label, n: stamps.filter((t) => age(t) >= a && age(t) < b).length, color: `var(--s${i + 1})`,
+      who: () => ({ title: label, sub: "Depuis quand ils te suivent", rows: followersWhere((t) => age(t) >= a && age(t) < b), cls: "st-age" }) }));
     $("g-age").innerHTML = donut(parts, `<b>${pct(old, stamps.length)} %</b><span>depuis plus d'un an</span>`);
   }
 
-  // Courbe reconstituée à partir des dates d'abonnement
-  if (show("g-grow-block", stamps.length >= 3)) {
-    const ts = stamps.slice().sort((a, b) => a - b), t0 = ts[0], t1 = Math.max(now, ts[ts.length - 1]);
-    const W = 340, H = 170, L = 40, R = 10, T = 12, B = 24, N = 40;
-    const pts = [];
-    for (let k = 0, j = 0; k <= N; k++) { const t = t0 + ((t1 - t0) * k) / N; while (j < ts.length && ts[j] <= t) j++; pts.push([t, j]); }
-    const hi = ts.length, step = niceStep(hi * 0.75), top = Math.ceil(hi / step) * step;
-    const sx = (t) => L + ((t - t0) / (t1 - t0 || 1)) * (W - L - R), sy = (v) => T + (1 - v / top) * (H - T - B);
-    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Abonnés actuels cumulés selon leur date d'abonnement"><defs><linearGradient id="grow-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--chart)" stop-opacity=".28"/><stop offset="1" stop-color="var(--chart)" stop-opacity="0"/></linearGradient></defs>`;
-    for (let v = 0; v <= top + 1e-9; v += step) svg += `<line x1="${L}" x2="${W - R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${nf(v)}</text>`;
-    const y0 = new Date(t0).getFullYear(), y1 = new Date(t1).getFullYear();
-    svg += `<text x="${L}" y="${H - 6}">${y0}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${fmtShort(new Date(t1).toISOString())} ${y1}</text>`;
-    const line = pts.map(([t, v]) => `${sx(t).toFixed(1)},${sy(v).toFixed(1)}`).join(" ");
-    svg += `<polygon class="area" points="${sx(t0)},${sy(0)} ${line} ${sx(t1)},${sy(0)}" fill="url(#grow-g)"/>`;
-    svg += `<polyline class="curve" pathLength="1" points="${line}" fill="none" stroke="var(--chart)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
-    pts.forEach(([t, v], k) => { if (k % 4 === 0 || k === N) svg += `<rect class="hit" x="${sx(t) - 17}" y="0" width="34" height="${H - B}" data-tip="${fmtDate(new Date(t).toISOString())} : ${nf(v)}"/>`; });
-    svg += `<circle cx="${sx(t1)}" cy="${sy(hi)}" r="4.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>`;
-    $("g-grow").innerHTML = svg + "</svg>";
-  }
+  // Courbe détaillée, zoomable
+  if (show("g-grow-block", stamps.length >= 3)) setupGrow(now);
 
-  // Nouveaux abonnés par mois (12 derniers mois)
-  if (show("g-month-block", stamps.length >= 3)) {
-    const end = new Date(now), months = [];
-    for (let k = 11; k >= 0; k--) { const d = new Date(end.getFullYear(), end.getMonth() - k, 1); months.push({ y: d.getFullYear(), m: d.getMonth(), n: 0 }); }
-    for (const t of stamps) { const d = new Date(t), mo = months.find((x) => x.y === d.getFullYear() && x.m === d.getMonth()); if (mo) mo.n++; }
-    $("g-month").innerHTML = bars(months.map((x) => ({ n: x.n, label: `${MONTHS[x.m]} ${x.y}`, short: MONTHS_S[x.m] })),
-      { tip: (d) => `${d.label} : ${plural(d.n, "nouvel abonné", "nouveaux abonnés")}`, labelEvery: 2 });
-  }
+  // Nouveaux abonnés par mois, année par année
+  if (show("g-month-block", stamps.length >= 3)) { GM.now = now; GM.first = Math.min(...stamps); GM.off = 0; drawMonths(); }
 
   // Jour de la semaine
   if (show("g-day-block", stamps.length >= 7)) {
@@ -3764,18 +3823,195 @@ function renderStatsPage() {
     for (const t of stamps) c[new Date(t).getDay()]++;
     const order = [1, 2, 3, 4, 5, 6, 0], best = order.reduce((a, b) => (c[b] > c[a] ? b : a), 1);
     $("g-day-title").textContent = `Ils s'abonnent surtout le ${DAYS[best]}`;
-    $("g-day").innerHTML = bars(order.map((d) => ({ n: c[d], label: DAYS[d], short: DAYS[d].slice(0, 3) })),
+    $("g-day").innerHTML = bars(order.map((d) => ({ n: c[d], label: DAYS[d], short: DAYS[d].slice(0, 3),
+      who: () => ({ title: `Abonnés du ${DAYS[d]}`, sub: `Ils t'ont suivi un ${DAYS[d]}`, rows: followersWhere((t) => new Date(t).getDay() === d), cls: "st-day" }) })),
       { tip: (d) => `Le ${d.label} : ${plural(d.n, "abonné", "abonnés")}` });
   }
 
+  // Heure de la journée
+  if (show("g-hour-block", stamps.length >= 7)) {
+    const c = Array(24).fill(0);
+    for (const t of stamps) c[new Date(t).getHours()]++;
+    const best = c.indexOf(Math.max(...c));
+    $("g-hour-title").textContent = `Ils s'abonnent surtout vers ${best} h`;
+    $("g-hour").innerHTML = bars(c.map((n, h) => ({ n, label: `${h} h`, short: `${h}h`,
+      who: () => ({ title: `Entre ${h} h et ${h + 1} h`, sub: "L'heure où ils t'ont suivi", rows: followersWhere((t) => new Date(t).getHours() === h), cls: "st-hour" }) })),
+      { tip: (d) => `${d.label} : ${plural(d.n, "abonné", "abonnés")}`, labelEvery: 3 });
+  }
+
   // Durée avant départ
-  const stays = state.events.filter((e) => e.kind === "unfollow" && Number.isInteger(e.ts) && e.ts > 0).map((e) => (new Date(e.at).getTime() - e.ts * 1000) / DAY);
-  if (show("g-stay-block", stays.length >= 1)) {
+  const gone = state.events.filter((e) => e.kind === "unfollow" && Number.isInteger(e.ts) && e.ts > 0).map((e) => ({ e, d: (new Date(e.at).getTime() - e.ts * 1000) / DAY }));
+  if (show("g-stay-block", gone.length >= 1)) {
     const SB = [["Moins d'1 mois", 0, 30], ["1 à 6 mois", 30, 182], ["6 à 12 mois", 182, 365], ["1 à 2 ans", 365, 730], ["Plus de 2 ans", 730, Infinity]];
-    $("g-stay").innerHTML = hbars(SB.map(([label, a, b]) => ({ label, n: stays.filter((d) => d >= a && d < b).length })),
-      (d) => `${d.label} : ${plural(d.n, "départ", "départs")}`);
+    $("g-stay").innerHTML = hbars(SB.map(([label, a, b]) => {
+      const L = gone.filter((x) => x.d >= a && x.d < b);
+      return { label, n: L.length, who: () => ({ title: `Restés ${label.charAt(0).toLowerCase() + label.slice(1)}`, sub: "Partis après être restés", cls: "st-stay",
+        rows: L.slice().sort((x, y) => y.e.at.localeCompare(x.e.at)).map((x) => ({ u: x.e.u, cls: "down", sub: `resté ${fmtLen(x.d)}, parti vers le ${fmtDate(x.e.at)}` })) }) };
+    }), (d) => `${d.label} : ${plural(d.n, "départ", "départs")}`);
   }
 }
+
+// ---------- Ta communauté : chaque abonné est une marche ; on glisse pour lire, on pince pour zoomer ----------
+const GZ = { ts: [], users: [], a: 0, b: 0, t0: 0, t1: 0, drawn: false };
+const GW = 340, GH = 190, GL = 40, GR = 12, GT = 14, GB = 24;
+function setupGrow(now) {
+  const list = Object.entries(state.followers).filter(([, t]) => Number.isInteger(t) && t > 0).map(([u, t]) => [u, t * 1000]).sort((x, y) => x[1] - y[1]);
+  GZ.users = list.map((x) => x[0]); GZ.ts = list.map((x) => x[1]);
+  GZ.t0 = GZ.ts[0] - DAY; GZ.t1 = Math.max(now, GZ.ts[GZ.ts.length - 1]);
+  GZ.a = GZ.t0; GZ.b = GZ.t1; GZ.drawn = false; GZ.hit = -1;
+  drawGrow();
+}
+const countAt = (t) => { let lo = 0, hi = GZ.ts.length; while (lo < hi) { const m = (lo + hi) >> 1; if (GZ.ts[m] <= t) lo = m + 1; else hi = m; } return lo; };
+function fmtTick(t, span) {
+  const d = new Date(t);
+  if (span > 2.5 * 365 * DAY) return String(d.getFullYear());
+  if (span > 75 * DAY) return `${MONTHS_S[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+function drawGrow() {
+  const { a, b, ts } = GZ, ca = countAt(a), cb = countAt(b), n = cb - ca, span = b - a;
+  let step = niceStep(Math.max(3, cb - ca)), lo = Math.floor(ca / step) * step, hi = Math.ceil(cb / step) * step;
+  if (hi <= lo) hi = lo + step;
+  const sx = (t) => GL + ((t - a) / span) * (GW - GL - GR), sy = (v) => GT + (1 - (v - lo) / (hi - lo)) * (GH - GT - GB);
+  GZ.sx = sx; GZ.sy = sy;
+  let svg = `<defs><linearGradient id="gz-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient><clipPath id="gz-clip"><rect x="${GL}" y="0" width="${GW - GL - GR}" height="${GH}"/></clipPath></defs>`;
+  for (let v = lo; v <= hi + 1e-9; v += step) svg += `<line x1="${GL}" x2="${GW - GR}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${GL - 6}" y="${sy(v) + 4}" text-anchor="end">${nf(v)}</text>`;
+  [0, 0.5, 1].forEach((k, j) => svg += `<text x="${GL + k * (GW - GL - GR)}" y="${GH - 6}" text-anchor="${["start", "middle", "end"][j]}">${fmtTick(a + k * span, span)}</text>`);
+  let d = `M${GL},${sy(ca).toFixed(1)}`;
+  if (n <= 800) { for (let k = ca; k < cb; k++) d += `H${sx(ts[k]).toFixed(1)}V${sy(k + 1).toFixed(1)}`; }
+  else { for (let c = 1; c <= 340; c++) { const t = a + (span * c) / 340; d += `L${sx(t).toFixed(1)},${sy(countAt(t)).toFixed(1)}`; } }
+  d += `H${GW - GR}`;
+  svg += `<g clip-path="url(#gz-clip)"><path d="${d}V${sy(lo)}H${GL}Z" fill="url(#gz-g)"/>`;
+  svg += `<path class="${GZ.drawn ? "" : "curve"}" pathLength="1" d="${d}" fill="none" stroke="#2e2328" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if (n && n <= 60) for (let k = ca; k < cb; k++) svg += `<circle class="gz-dot" cx="${sx(ts[k]).toFixed(1)}" cy="${sy(k + 1).toFixed(1)}" r="3.2"/>`;
+  svg += `</g><g class="gz-cur" id="gz-cur" visibility="hidden"><line y1="${GT}" y2="${GH - GB}"/><circle r="6"/></g>`;
+  $("gz-svg").innerHTML = svg;
+  GZ.drawn = true;
+  const full = a <= GZ.t0 + 1 && b >= GZ.t1 - 1;
+  $("gz-chips").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(+x.dataset.span === 0 ? full : Math.abs(span - x.dataset.span * DAY) < DAY && b >= GZ.t1 - 1)));
+  $("gz-info").innerHTML = `<b>+${nf(n)}</b> abonné${n > 1 ? "s" : ""} encore là, arrivé${n > 1 ? "s" : ""} entre le ${fmtDate(a)} et le ${fmtDate(b)}<small>Glisse ton doigt sur la courbe pour voir qui. Pince pour zoomer, touche deux fois pour tout revoir.</small>`;
+  $("gz-see").hidden = !n;
+  $("gz-see").textContent = `Voir ${n > 1 ? `les ${nf(n)} abonnés` : "cet abonné"} de cette période`;
+  GZ.hit = -1;
+}
+function growAtX(clientX) {
+  const r = $("gz-svg").getBoundingClientRect(), x = ((clientX - r.left) / r.width) * GW;
+  const t = GZ.a + ((x - GL) / (GW - GL - GR)) * (GZ.b - GZ.a);
+  return Math.max(GZ.a, Math.min(GZ.b, t));
+}
+function scrubGrow(clientX) {
+  const t = growAtX(clientX), { ts, users } = GZ, ca = countAt(GZ.a), cb = countAt(GZ.b);
+  if (cb <= ca) return;
+  let k = countAt(t) - 1;
+  if (k + 1 < cb && (k < ca || Math.abs(ts[k + 1] - t) < Math.abs(t - ts[k]))) k++;
+  k = Math.max(ca, Math.min(cb - 1, k));
+  const cur = $("gz-cur");
+  cur.setAttribute("visibility", "visible");
+  cur.querySelector("line").setAttribute("x1", GZ.sx(ts[k])); cur.querySelector("line").setAttribute("x2", GZ.sx(ts[k]));
+  cur.querySelector("circle").setAttribute("cx", GZ.sx(ts[k])); cur.querySelector("circle").setAttribute("cy", GZ.sy(k + 1));
+  if (k === GZ.hit) return;
+  GZ.hit = k; haptic("selection");
+  $("gz-info").innerHTML = `<a href="${profileUrl(users[k])}" target="_blank" rel="noopener noreferrer">${esc(users[k])}</a> · ${nf(k + 1)}ᵉ abonné encore là<small>Abonné le ${fmtWhen(ts[k])}</small>`;
+}
+{
+  const box = $("gz-box"), pts = new Map();
+  let pinch = null, raf = 0, lastTap = 0;
+  const clamp = (a, b) => {
+    const minSpan = 2 * DAY, full = GZ.t1 - GZ.t0;
+    let span = Math.max(minSpan, Math.min(full, b - a));
+    a = Math.max(GZ.t0, Math.min(GZ.t1 - span, a));
+    return [a, a + span];
+  };
+  const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; drawGrow(); }); };
+  box.addEventListener("pointerdown", (e) => {
+    try { box.setPointerCapture(e.pointerId); } catch {}
+    pts.set(e.pointerId, e.clientX);
+    if (pts.size === 2) {
+      const [x1, x2] = [...pts.values()];
+      pinch = { d: Math.max(20, Math.abs(x2 - x1)), tm: growAtX((x1 + x2) / 2), a: GZ.a, b: GZ.b };
+      $("gz-cur")?.setAttribute("visibility", "hidden");
+    } else if (pts.size === 1) {
+      const now = performance.now();
+      if (now - lastTap < 300) { GZ.a = GZ.t0; GZ.b = GZ.t1; drawGrow(); lastTap = 0; return; }
+      lastTap = now;
+      scrubGrow(e.clientX);
+    }
+  });
+  box.addEventListener("pointermove", (e) => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, e.clientX);
+    if (pts.size >= 2 && pinch) {
+      const [x1, x2] = [...pts.values()], dd = Math.max(20, Math.abs(x2 - x1)), r = box.getBoundingClientRect();
+      const span = (pinch.b - pinch.a) * (pinch.d / dd), frac = (((x1 + x2) / 2 - r.left) / r.width * GW - GL) / (GW - GL - GR);
+      [GZ.a, GZ.b] = clamp(pinch.tm - frac * span, pinch.tm - frac * span + span);
+      redraw();
+    } else if (pts.size === 1 && !pinch) scrubGrow(e.clientX);
+  });
+  const up = (e) => { pts.delete(e.pointerId); if (pts.size < 2 && pinch) { pinch = null; if (pts.size === 1) pts.clear(); } };
+  box.addEventListener("pointerup", up);
+  box.addEventListener("pointercancel", up);
+  $("gz-chips").addEventListener("click", (e) => {
+    const x = e.target.closest("[data-span]"); if (!x) return;
+    const sp = +x.dataset.span * DAY;
+    [GZ.a, GZ.b] = sp ? clamp(GZ.t1 - sp, GZ.t1) : [GZ.t0, GZ.t1];
+    haptic("selection"); drawGrow();
+  });
+  $("gz-see").addEventListener("click", () => {
+    const { a, b } = GZ;
+    openWho({ title: "Ta communauté", sub: `Arrivés entre le ${fmtDate(a)} et le ${fmtDate(b)}, toujours là`, rows: followersWhere((t) => t > a && t <= b), cls: "st-grow" });
+  });
+}
+
+// ---------- Nouveaux abonnés par mois : 12 mois à la fois, on remonte les années avec les flèches ----------
+const GM = { now: 0, first: 0, off: 0 };
+function drawMonths() {
+  const end = new Date(GM.now), months = [];
+  for (let k = 11; k >= 0; k--) { const d = new Date(end.getFullYear(), end.getMonth() - k - 12 * GM.off, 1); months.push({ y: d.getFullYear(), m: d.getMonth(), n: 0 }); }
+  for (const u in state.followers) {
+    const t = state.followers[u]; if (!Number.isInteger(t) || t <= 0) continue;
+    const d = new Date(t * 1000), mo = months.find((x) => x.y === d.getFullYear() && x.m === d.getMonth()); if (mo) mo.n++;
+  }
+  const f = months[0], l = months[11], firstD = new Date(GM.first);
+  $("gm-range").textContent = `${MONTHS[f.m]} ${f.y} – ${MONTHS[l.m]} ${l.y}`;
+  $("gm-prev").disabled = new Date(f.y, f.m, 1) <= new Date(firstD.getFullYear(), firstD.getMonth(), 1);
+  $("gm-next").disabled = GM.off === 0;
+  $("g-month").innerHTML = bars(months.map((x) => ({ n: x.n, label: `${MONTHS[x.m]} ${x.y}`, short: MONTHS_S[x.m],
+    who: () => ({ title: new Date(x.y, x.m, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase()), sub: "Nouveaux abonnés ce mois-là, toujours là", cls: "st-month",
+      rows: followersWhere((t) => { const d = new Date(t); return d.getFullYear() === x.y && d.getMonth() === x.m; }) }) })),
+    { tip: (d) => `${d.label} : ${plural(d.n, "nouvel abonné", "nouveaux abonnés")}`, labelEvery: 2 });
+}
+$("gm-prev").addEventListener("click", () => { GM.off++; haptic("selection"); drawMonths(); });
+$("gm-next").addEventListener("click", () => { GM.off = Math.max(0, GM.off - 1); haptic("selection"); drawMonths(); });
+
+// ---------- Liste plein écran des comptes ----------
+let whoRows = [], whoShown = 80;
+function openWho({ title, sub, rows, cls = "" }) {
+  $("who-title").textContent = title;
+  $("who-sub").textContent = sub || "";
+  $("who-hero").className = "who-hero " + cls;
+  $("who-n").textContent = `${nf(rows.length)} compte${rows.length > 1 ? "s" : ""}`;
+  $("who-search").value = ""; whoRows = rows; whoShown = 80;
+  renderWho();
+  hideTip();
+  $("who-sheet").hidden = false; $("who-sheet").querySelector(".card").scrollTop = 0;
+  haptic("selection");
+}
+function renderWho() {
+  const q = $("who-search").value.trim().toLowerCase();
+  const rows = q ? whoRows.filter((r) => r.u.toLowerCase().includes(q)) : whoRows;
+  $("who-list").innerHTML = rows.slice(0, whoShown).map((r, i) => `
+    <li${i < 12 ? ` style="animation-delay:${i * 0.03}s"` : ""}><span class="av ${r.cls || ""}" aria-hidden="true"><i>${esc((r.u || "?")[0])}</i></span>
+      <span class="who"><a href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer">${esc(r.u)}</a>${r.sub ? `<small class="${r.cls || ""}">${r.sub}</small>` : ""}</span>
+      <a class="btn ghost small" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">Voir</a></li>`).join("")
+    || `<li class="empty" style="display:block">${q ? "Aucun compte ne correspond." : "Personne ici."}</li>`;
+  $("who-more").hidden = rows.length <= whoShown;
+  $("who-more").textContent = `Voir plus (${nf(rows.length - whoShown)} restants)`;
+}
+$("who-search").addEventListener("input", () => { whoShown = 80; renderWho(); });
+$("who-more").addEventListener("click", () => { whoShown += 120; renderWho(); });
+$("who-close").addEventListener("click", () => { $("who-sheet").hidden = true; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("who-sheet").hidden) { e.stopImmediatePropagation(); $("who-sheet").hidden = true; } }, true);
+
 // Les cartes de la page Graphiques entrent en rebondissant quand on arrive dessus, et leurs graphiques se dessinent à ce moment-là.
 let statSeen = null;
 function watchStatCards() {
@@ -3798,7 +4034,9 @@ function countUp() {
   requestAnimationFrame(tick);
 }
 const renderHome = render;
-render = function () { renderHome(); renderGamesPage(); renderStatsPage(); };
+// La page Graphiques ne se recalcule que quand on l'ouvre (plus léger pour les gros comptes).
+let statsDirty = true;
+render = function () { renderHome(); renderGamesPage(); statsDirty = true; if (page === "stats") { statsDirty = false; renderStatsPage(); } else setTimeout(() => { if (statsDirty) { statsDirty = false; renderStatsPage(); } }, 700); };
 
 // ---------- Photo de profil : réduite à 320 px et gardée sur le téléphone ----------
 const AVATAR_KEY = "abo-avatar";
