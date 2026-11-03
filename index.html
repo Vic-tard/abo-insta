@@ -939,6 +939,17 @@
   .gf .big { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; font-size: 17px; border-radius: 14px; box-sizing: border-box; text-decoration: none; }
   .gf .big svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .gf .alt { background: none; border: 0; color: var(--muted); font: 500 14px var(--font); text-decoration: underline; padding: 6px; cursor: pointer; align-self: center; }
+  .gf-short li span { font-size: 17px; }
+  .gf-safe { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+  .gf-safe svg { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--up); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .gf .btn.gf-huge { min-height: 64px; font-size: 21px; border-radius: 20px; }
+  .gf .btn.gf-huge svg { width: 22px; height: 22px; }
+  .gf-duo { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 4px; }
+  .gf-duo:has(> :only-child) { grid-auto-columns: minmax(0, 50%); justify-content: center; }
+  .gf-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-height: 84px; padding: 12px 8px;
+    border: 0; border-radius: 18px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; line-height: 1.2; text-align: center; cursor: pointer; }
+  .gf-tile:active { transform: scale(.96); }
+  .gf-tile svg { width: 24px; height: 24px; fill: none; stroke: var(--rose); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .gf-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
   .gf-why { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: flex-start; margin: 0; }
   .gf-why svg { width: 18px; height: 18px; flex: none; margin-top: 1px; fill: none; stroke: var(--up); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
@@ -4002,17 +4013,18 @@ function renderGuided() {
   } else if (step === "insta" && metaInApp()) {
     // App iPhone : Instagram s'ouvre DANS Zieuton, avec le bandeau qui montre où toucher (comme « Mettre à jour »).
     gfOnReturn = null;
-    body.innerHTML = `${guide(gfRepeat ? "On remet ça&nbsp;? Je t'ouvre Instagram ici, avec mon bandeau 😉" : "Première mission&nbsp;: demander ta liste à Instagram. Je reste avec toi tout du long&nbsp;!")}
+    // Écran court et rassurant : trois lignes, un gros bouton, deux petits carrés en bas (démo, sauvegarde).
+    body.innerHTML = `${guide(gfRepeat ? "On remet ça&nbsp;? Je t'ouvre Instagram ici 😉" : "Première mission&nbsp;! Je reste avec toi tout du long.")}
       <h2 id="gf-title">Demande ta liste à Instagram</h2>
-      <ol class="gf-how">
-        <li><i>1</i><span>Instagram s'ouvre ici, dans Zieuton.<small>S'il te demande de te connecter, vas-y&nbsp;: c'est bien lui, son adresse est écrite en haut.</small></span></li>
-        <li><i>2</i><span>Mon bandeau te montre où toucher, une étape à la fois.<small>Environ 2 minutes. Tu ne peux pas te tromper.</small></span></li>
-        <li><i>3</i><span>À la fin, ton iPhone demande s'il peut t'envoyer des notifications&nbsp;: touche « Autoriser ».<small>Comme ça, je te préviens dès que ta liste est prête.</small></span></li>
+      <ol class="gf-how gf-short">
+        <li><i>1</i><span>Instagram s'ouvre ici, dans Zieuton.</span></li>
+        <li><i>2</i><span>Je te montre où toucher. 2 minutes.</span></li>
+        <li><i>3</i><span>À la fin, touche « Autoriser » pour être prévenu.</span></li>
       </ol>
-      <p class="gf-why">${ICON.lock}<span>Ton mot de passe, tu le tapes sur la page d'Instagram. Zieuton ne le lit pas et ne touche pas à ton compte.</span></p>
+      <p class="gf-safe">${ICON.lock}Ton mot de passe reste chez Instagram.</p>
       <div class="gf-foot">
-        <button class="btn cheer big" id="gf-meta" type="button">${ICON.out}Ouvrir Instagram</button>
-        <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>
+        <button class="btn cheer big gf-huge" id="gf-meta" type="button">${ICON.out}Ouvrir Instagram</button>
+        <div class="gf-duo"><button class="gf-tile" id="gf-restore" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM3 4h18v3H3zM10 11h4"/></svg>J'ai une sauvegarde</button></div>
       </div>`;
     $("gf-meta").onclick = wkGo;
   } else if (step === "get" && metaInApp()) {
@@ -4178,11 +4190,12 @@ function renderGuided() {
     const foot = body.querySelector(".gf-foot");
     if (foot) {
       const d = document.createElement("button");
-      d.className = "alt gf-demo"; d.type = "button";
+      const duo = foot.querySelector(".gf-duo");
+      d.className = duo ? "gf-tile" : "alt gf-demo"; d.type = "button";
       d.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>`
         + (step === "welcome" ? "Jeter un œil à la démo" : step === "get" || step === "wait" ? "En attendant, voir la démo" : "Voir la démo");
       d.onclick = () => { if (step === "welcome") { prefs.welcomed = true; savePrefs(); } enterDemo(); };
-      foot.append(d);
+      if (duo) duo.prepend(d); else foot.append(d);
     }
   }
   const nd = $("gf-nodrive");
@@ -4226,7 +4239,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1950";
+const BUILD = "2026-11-03-2000";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
