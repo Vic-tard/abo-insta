@@ -597,6 +597,10 @@ final class MetaViewController: UIViewController {
     private let steps: [Step]
     private var index = 0
     private var loginShown = false
+    /// Écran « tape le code de sécurité » d'Instagram : par où le code est arrivé (whatsapp, sms, email, app), vide sinon.
+    private var codeShown = ""
+    private var seenCode = Date.distantPast
+    private var codeKind = ""
     private var downloading = false
     /// « Commencer l'exportation » touché : on attend qu'Instagram ait bien pris la demande.
     private var sentAt: Date?
@@ -677,7 +681,16 @@ final class MetaViewController: UIViewController {
           };
           setInterval(function () {
             var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username]'), vis);
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            // Code de sécurité : on regarde seulement s'il y a une case pour un code, et si la page parle de WhatsApp, SMS ou e-mail.
+            var codeIn = Array.prototype.some.call(document.querySelectorAll('input[autocomplete="one-time-code"],input[name*="code" i],input[aria-label*="code" i],input[placeholder*="code" i]'), vis);
+            var code = '';
+            if (codeIn && !login) {
+              var txt = (document.body.innerText || '').toLowerCase();
+              code = txt.indexOf('whatsapp') >= 0 ? 'whatsapp'
+                : (txt.indexOf('sms') >= 0 || txt.indexOf('texto') >= 0 || txt.indexOf('text message') >= 0) ? 'sms'
+                : (txt.indexOf('e-mail') >= 0 || txt.indexOf('email') >= 0) ? 'email' : 'app';
+            }
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -946,6 +959,18 @@ final class MetaViewController: UIViewController {
         if downloading {
             return Step(verb: "Presque fini :", target: "Zieuton récupère ton fichier…", tip: "Ne ferme pas cet écran.")
         }
+        if !codeShown.isEmpty {
+            let place: (String, String) = {
+                switch codeShown {
+                case "whatsapp": return ("va chercher le code sur WhatsApp", "Instagram vient de te l'envoyer sur WhatsApp. Ouvre WhatsApp, note le code, puis reviens ici le taper.")
+                case "sms": return ("regarde tes SMS", "Instagram vient de t'envoyer un code par SMS. Tape-le ici : souvent, ton iPhone te le propose tout seul au-dessus du clavier.")
+                case "email": return ("regarde tes e-mails", "Instagram vient de t'envoyer un code par e-mail. Ouvre ta boîte mail, note le code, puis reviens ici le taper.")
+                default: return ("tape le code de sécurité", "Instagram vérifie que c'est bien toi. Le code arrive par WhatsApp, SMS ou e-mail, selon ton compte.")
+                }
+            }()
+            return Step(verb: "Petite vérif d'Instagram :", target: place.0,
+                        tip: place.1 + " Zieuton ne voit jamais ce code. En général, Instagram ne le demande qu'à la première connexion.")
+        }
         if loginShown {
             return index == 0 && sentAt == nil
                 ? Step(verb: "D'abord,", target: "connecte-toi à Instagram",
@@ -970,7 +995,7 @@ final class MetaViewController: UIViewController {
 
     private func showStep(animated: Bool = true) {
         let step = currentStep
-        let normal = pageKnown && !(loginShown || downloading || sentAt != nil)
+        let normal = pageKnown && codeShown.isEmpty && !(loginShown || downloading || sentAt != nil)
         let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!"].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
@@ -1054,7 +1079,7 @@ final class MetaViewController: UIViewController {
         lastTapAt = Date()
         let last = min(steps.count - 1, index + 2)
         guard index <= last else { return }
-        let checking = guarded && pageKnown && !loginShown && sentAt == nil
+        let checking = guarded && pageKnown && !loginShown && codeShown.isEmpty && sentAt == nil
         for i in index...last {
             let step = steps[i]
             guard has(step.wait) else { continue }
@@ -1119,6 +1144,7 @@ final class MetaViewController: UIViewController {
     private func received(state: [String: Any], mainFrame: Bool) {
         let now = Date()
         if state["login"] as? Bool == true { seenLogin = now }
+        if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
         if state["start"] as? Bool == true { seenStart = now; sawStart = true }
         if state["create"] as? Bool == true { seenCreate = now }
         if !finished, let dl = state["dl"] as? Int { downloadsSeen = max(downloadsSeen, dl) }
@@ -1138,6 +1164,8 @@ final class MetaViewController: UIViewController {
         let startVisible = now.timeIntervalSince(seenStart) < 1.6
         let createVisible = now.timeIntervalSince(seenCreate) < 1.6
         if login != loginShown { loginShown = login; showStep() }
+        let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
+        if code != codeShown { codeShown = code; warning = nil; showStep() }
         // L'alerte s'efface toute seule au bout de 10 s : le bandeau remontre l'étape à faire.
         if warning != nil, now.timeIntervalSince(warningAt) > 10 { warning = nil; showStep() }
         guard requesting, !login else { return }
