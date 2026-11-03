@@ -1451,16 +1451,18 @@ private extension WebViewController {
 @MainActor
 final class PlusStore {
     static let shared = PlusStore()
-    static let plusIds = ["fr.zyeuto.plus.an", "fr.zyeuto.plus.mois", "fr.zyeuto.plus.avie"]
-    /// Comptes Instagram en plus (achats uniques à 0,99 €) : un Zieuton = un compte, sauf achat.
-    static let accountIds = ["fr.zyeuto.compte2", "fr.zyeuto.compte3", "fr.zyeuto.compte4"]
-    static let ids = plusIds + accountIds
+    /// Chaque compte Instagram du téléphone (1 à 4) a son propre Plus, dans son propre groupe d'abonnements :
+    /// compte 1 = fr.zyeuto.plus.*, compte 2 = fr.zyeuto.plus2.*, etc. (un même identifiant Apple peut ainsi en payer plusieurs).
+    static let slots = 1...4
+    static func prefix(_ slot: Int) -> String { slot == 1 ? "fr.zyeuto.plus." : "fr.zyeuto.plus\(slot)." }
+    static let ids = slots.flatMap { n in ["an", "mois", "avie"].map { prefix(n) + $0 } }
+    static func slot(of id: String) -> Int? { slots.first { id.hasPrefix(prefix($0)) } }
 
     private(set) var products: [Product] = []
-    /// L'achat en cours de validité (nil = version gratuite).
+    /// L'achat en cours de validité pour le compte 1 (nil = version gratuite).
     private(set) var active: String?
-    /// Nombre de comptes Instagram en plus achetés (0 à 3).
-    private(set) var extraAccounts = 0
+    /// Plus de chaque compte : numéro du compte → produit acheté.
+    private(set) var bySlot: [Int: String] = [:]
     var onChange: (() -> Void)?
     private var updates: Task<Void, Never>?
 
@@ -1485,17 +1487,14 @@ final class PlusStore {
     }
 
     func refresh() async {
-        var found: String?
-        var accounts = Set<String>()
+        var found: [Int: String] = [:]
         for await result in Transaction.currentEntitlements {
-            guard case .verified(let t) = result, t.revocationDate == nil else { continue }
-            if Self.accountIds.contains(t.productID) { accounts.insert(t.productID); continue }
-            guard Self.plusIds.contains(t.productID) else { continue }
+            guard case .verified(let t) = result, t.revocationDate == nil, let slot = Self.slot(of: t.productID) else { continue }
             // L'achat à vie l'emporte sur un abonnement encore en cours.
-            if found == nil || t.productID == "fr.zyeuto.plus.avie" { found = t.productID }
+            if found[slot] == nil || t.productID.hasSuffix(".avie") { found[slot] = t.productID }
         }
-        if found != active { active = found }
-        extraAccounts = accounts.count
+        bySlot = found
+        active = found[1]
         onChange?()
     }
 
@@ -1522,7 +1521,7 @@ final class PlusStore {
     func restore() async -> Bool {
         try? await AppStore.sync()
         await refresh()
-        return active != nil || extraAccounts > 0
+        return !bySlot.isEmpty
     }
 
     /// L'état en JSON pour la page : acheté ou non, et les prix affichés par l'App Store.
@@ -1530,7 +1529,7 @@ final class PlusStore {
         var dict: [String: Any] = [
             "active": active != nil,
             "plan": active ?? "",
-            "accounts": 1 + extraAccounts,
+            "plusSlots": Dictionary(uniqueKeysWithValues: bySlot.map { (String($0.key), $0.value) }),
             "products": products.map { p -> [String: Any] in
                 var unit = ""
                 if let period = p.subscription?.subscriptionPeriod.unit { unit = period == .year ? "year" : period == .month ? "month" : "" }

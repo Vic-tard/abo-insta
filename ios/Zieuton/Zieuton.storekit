@@ -18,48 +18,48 @@
       "type" : "NonConsumable"
     },
     {
-      "displayPrice" : "0.99",
+      "displayPrice" : "19.99",
       "familyShareable" : false,
-      "internalID" : "6739000010",
+      "internalID" : "6739000100",
       "localizations" : [
         {
-          "description" : "Suivre un compte Instagram de plus dans Zieuton, sans rien effacer.",
-          "displayName" : "Compte Instagram n°2",
+          "description" : "Mises à jour illimitées pour le compte 2 de ce téléphone.",
+          "displayName" : "Zieuton Plus à vie · compte 2",
           "locale" : "fr_FR"
         }
       ],
-      "productID" : "fr.zyeuto.compte2",
-      "referenceName" : "Compte Instagram 2",
+      "productID" : "fr.zyeuto.plus2.avie",
+      "referenceName" : "Zieuton Plus à vie (compte 2)",
       "type" : "NonConsumable"
     },
     {
-      "displayPrice" : "0.99",
+      "displayPrice" : "19.99",
       "familyShareable" : false,
-      "internalID" : "6739000011",
+      "internalID" : "6739000103",
       "localizations" : [
         {
-          "description" : "Suivre un compte Instagram de plus dans Zieuton, sans rien effacer.",
-          "displayName" : "Compte Instagram n°3",
+          "description" : "Mises à jour illimitées pour le compte 3 de ce téléphone.",
+          "displayName" : "Zieuton Plus à vie · compte 3",
           "locale" : "fr_FR"
         }
       ],
-      "productID" : "fr.zyeuto.compte3",
-      "referenceName" : "Compte Instagram 3",
+      "productID" : "fr.zyeuto.plus3.avie",
+      "referenceName" : "Zieuton Plus à vie (compte 3)",
       "type" : "NonConsumable"
     },
     {
-      "displayPrice" : "0.99",
+      "displayPrice" : "19.99",
       "familyShareable" : false,
-      "internalID" : "6739000012",
+      "internalID" : "6739000106",
       "localizations" : [
         {
-          "description" : "Suivre un compte Instagram de plus dans Zieuton, sans rien effacer.",
-          "displayName" : "Compte Instagram n°4",
+          "description" : "Mises à jour illimitées pour le compte 4 de ce téléphone.",
+          "displayName" : "Zieuton Plus à vie · compte 4",
           "locale" : "fr_FR"
         }
       ],
-      "productID" : "fr.zyeuto.compte4",
-      "referenceName" : "Compte Instagram 4",
+      "productID" : "fr.zyeuto.plus4.avie",
+      "referenceName" : "Zieuton Plus à vie (compte 4)",
       "type" : "NonConsumable"
     }
   ],
@@ -115,6 +115,153 @@
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Zieuton Plus mensuel",
           "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    },
+    {
+      "id" : "21500002",
+      "localizations" : [],
+      "name" : "Zieuton Plus compte 2",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "9.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6739000101",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, à l'année.",
+              "displayName" : "Zieuton Plus annuel · compte 2",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus2.an",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Zieuton Plus annuel (compte 2)",
+          "subscriptionGroupID" : "21500002",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6739000102",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, au mois.",
+              "displayName" : "Zieuton Plus mensuel · compte 2",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus2.mois",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Zieuton Plus mensuel (compte 2)",
+          "subscriptionGroupID" : "21500002",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    },
+    {
+      "id" : "21500003",
+      "localizations" : [],
+      "name" : "Zieuton Plus compte 3",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "9.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6739000104",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, à l'année.",
+              "displayName" : "Zieuton Plus annuel · compte 3",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus3.an",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Zieuton Plus annuel (compte 3)",
+          "subscriptionGroupID" : "21500003",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6739000105",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, au mois.",
+              "displayName" : "Zieuton Plus mensuel · compte 3",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus3.mois",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Zieuton Plus mensuel (compte 3)",
+          "subscriptionGroupID" : "21500003",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    },
+    {
+      "id" : "21500004",
+      "localizations" : [],
+      "name" : "Zieuton Plus compte 4",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "9.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6739000107",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, à l'année.",
+              "displayName" : "Zieuton Plus annuel · compte 4",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus4.an",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Zieuton Plus annuel (compte 4)",
+          "subscriptionGroupID" : "21500004",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6739000108",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Mises à jour illimitées, au mois.",
+              "displayName" : "Zieuton Plus mensuel · compte 4",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "fr.zyeuto.plus4.mois",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Zieuton Plus mensuel (compte 4)",
+          "subscriptionGroupID" : "21500004",
           "type" : "RecurringSubscription"
         }
       ]

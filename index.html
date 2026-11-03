@@ -232,6 +232,9 @@
   body[data-mode="empty"] .needs-data { display: none !important; }
   body:not([data-mode="empty"]) .only-empty { display: none !important; }
   .top-actions { display: flex; align-items: center; gap: 12px; }
+  .acct-pill { height: 34px; padding: 0 12px 0 4px; border: 0; border-radius: 17px; background: var(--surface-2); color: var(--ink); display: inline-flex; align-items: center; gap: 7px; font: 700 14px var(--round); cursor: pointer; max-width: 150px; }
+  .acct-pill i { flex: none; width: 26px; height: 26px; border-radius: 50%; background: #c27583; color: #fff; display: grid; place-items: center; font: 800 13px var(--round); font-style: normal; }
+  .acct-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .set-btn { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex: none; }
   .set-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
   .set-dot { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 50%; background: #ef7f6a; box-shadow: 0 0 0 2px var(--bg); }
@@ -1342,6 +1345,7 @@
     </div>
     <div class="top-actions">
       <button class="sync needs-data" id="sync" type="button" hidden></button>
+      <button class="acct-pill" id="acct-pill" type="button" hidden></button>
       <button class="set-btn" id="set-btn" type="button" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="set-dot" id="set-dot" hidden></span></button>
     </div>
   </div>
@@ -1536,9 +1540,9 @@
       <div class="st-label">Comptes Instagram suivis</div>
       <div class="st-group" id="acct-list" hidden></div>
       <div class="st-group">
-        <button class="st-row" id="acct-add" type="button"><span class="st-ic" style="background:#c9a24a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b id="acct-add-t">Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
+        <button class="st-row" id="acct-add" type="button"><span class="st-ic" style="background:#c9a24a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b>Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
       </div>
-      <p class="st-foot">Zieuton suit un seul compte Instagram par téléphone. Chaque compte en plus coûte 0,99 €, une fois.</p>
+      <p class="st-foot">Chaque compte Instagram a ses propres données et son propre Zieuton Plus. Jusqu'à 4 comptes sur ce téléphone.</p>
     </div>
     <div class="st-label">Connexion</div>
     <div class="st-group">
@@ -2134,20 +2138,25 @@ function acctLikeness(a, b) {
 }
 // Comme la limite gratuite : seulement dans l'app, là où Plus est vendu.
 const acctLockOn = () => storeApp();
-// Plusieurs comptes : chaque compte en plus s'achète (0,99 €, à vie). prefs.accts = [{ id, h, n }], prefs.acctCur = id du compte affiché.
-// Le compte affiché vit dans « state » comme avant ; les autres sont rangés à part (« acct:<id> »).
-const ACCT_IDS = ["fr.zyeuto.compte2", "fr.zyeuto.compte3", "fr.zyeuto.compte4"];
-const acctSlots = () => 1 + Math.min(ACCT_IDS.length, prefs.extraAccounts || 0);
+// Plusieurs comptes sur un même téléphone (ex. Victor, puis son ami Mathéo) : chacun a ses données et son propre Zieuton Plus.
+// prefs.accts = [{ id, slot, h, n, p }], prefs.acctCur = id du compte affiché. slot (1 à 4) choisit les produits Plus de ce compte.
+// Le compte affiché vit dans « state » et en haut de prefs (prénom, bonhomme, quota gratuit…) ; les autres sont rangés à part.
+const MAX_ACCTS = 4;
+const PER_ACCT = ["me", "lastFreeAt", "zy", "games"];
 function accts() {
   if (!Array.isArray(prefs.accts)) {
     // Ancienne empreinte unique (ou rien encore) : un seul compte.
     prefs.accts = [{ id: "a1", h: prefs.acct ? prefs.acct.h : [], n: prefs.acct ? prefs.acct.n : 0 }];
     prefs.acctCur = "a1"; delete prefs.acct;
   }
+  prefs.accts.forEach((a, i) => { if (!a.slot) a.slot = i + 1; });
   return prefs.accts;
 }
 const curAcct = () => accts().find((a) => a.id === prefs.acctCur) || accts()[0];
-const acctIndex = (a) => accts().indexOf(a) + 1;
+const curSlot = () => curAcct().slot || 1;
+// Prénom (ou « Compte 2 ») d'un compte, pour la liste et les messages.
+const acctMe = (a) => (a.id === curAcct().id ? prefs.me : a.p && a.p.me) || {};
+const acctName = (a) => acctMe(a).name || `Compte ${accts().indexOf(a) + 1}`;
 const sameAcct = (a, print) => a.n >= 10 && acctLikeness(a.h, print) >= ACCT_SAME;
 function isOtherAccount(names) {
   const cur = curAcct();
@@ -2160,57 +2169,87 @@ function knownAcct(names) {
   return accts().find((a) => a !== cur && sameAcct(a, print)) || null;
 }
 function rememberAccount(names) { if (DEMO || !names.length) return; const a = curAcct(); a.h = acctPrint(names); a.n = names.length; savePrefs(); }
+// Pendant la démo, les comptes rangés restent en mémoire.
+let demoParked = {};
 async function parkState(id, s) {
+  if (DEMO) { demoParked[id] = s; return; }
   try { await store.set("acct:" + id, s); } catch {}
   try { localStorage.setItem("abo-state-" + id, JSON.stringify(s)); } catch {}
 }
 async function unparkState(id) {
+  if (DEMO) return demoParked[id] || emptyState();
   let s = null;
   try { s = await store.get("acct:" + id); } catch {}
   if (!isState(s)) { try { s = JSON.parse(localStorage.getItem("abo-state-" + id) || "null"); } catch {} }
   return isState(s) ? s : emptyState();
 }
+// Range les réglages personnels du compte affiché, et sort ceux du compte suivant.
+function swapPersonal(from, to) {
+  from.p = {};
+  for (const k of PER_ACCT) if (prefs[k] !== undefined) from.p[k] = prefs[k];
+  if (avatar) from.p.avatar = avatar;
+  for (const k of PER_ACCT) { if (to.p && to.p[k] !== undefined) prefs[k] = to.p[k]; else delete prefs[k]; }
+  const av = to.p && to.p.avatar || null;
+  delete to.p;
+  if (DEMO) { avatar = av; try { renderAvatar(); } catch {} } else setAvatar(av);
+}
+function renderAll() {
+  undoState = null; $("toast").hidden = true;
+  render(); renderPlusBlock();
+  for (const f of [renderSettings, renderHomeZy, renderZy, renderAvatar, renderBackup]) { try { f(); } catch {} }
+}
 // Passer sur un autre compte suivi : rien n'est effacé.
 async function goAccount(id) {
-  if (DEMO || id === prefs.acctCur) return;
+  const to = accts().find((a) => a.id === id);
+  if (!to || id === prefs.acctCur) return;
   await parkState(prefs.acctCur, state);
   state = await unparkState(id);
+  swapPersonal(curAcct(), to);
   prefs.acctCur = id; savePrefs();
-  await save(); render(); renderPlusBlock();
+  await save(); renderAll();
 }
-// Nouveau compte (s'il reste une place achetée) : le compte affiché est rangé, on part de zéro.
+// Nouveau compte (un ami sur ce téléphone) : gratuit, il aura son propre Plus. Le compte affiché est rangé.
 async function addAccount() {
-  if (DEMO || accts().length >= acctSlots()) return false;
+  if (DEMO || accts().length >= MAX_ACCTS) return false;
   await parkState(prefs.acctCur, state);
   const id = "a" + (Math.max(0, ...accts().map((a) => parseInt(a.id.slice(1)) || 0)) + 1);
-  accts().push({ id, h: [], n: 0 });
+  const used = accts().map((a) => a.slot);
+  const slot = [1, 2, 3, 4].find((n) => !used.includes(n));
+  const to = { id, slot, h: [], n: 0 };
+  swapPersonal(curAcct(), to);
+  accts().push(to);
   prefs.acctCur = id; state = emptyState(); savePrefs();
-  await save(); render();
+  await save(); renderAll();
   return true;
 }
 function otherAccountError(what, names) {
   const known = names && knownAcct(names);
+  const full = accts().length >= MAX_ACCTS;
   const e = new Error(known
-    ? `${what} est celui de ton compte ${acctIndex(known)}. Touche « Passer sur ce compte » pour l'y importer.`
-    : `${what} vient d'un autre compte Instagram que celui suivi ici. Rien n'a été enregistré. `
-      + (accts().length < acctSlots()
-        ? "Tu as une place libre : touche « Ajouter ce compte » pour le suivre en plus, sans rien effacer."
-        : accts().length >= 1 + ACCT_IDS.length
-          ? `Tu suis déjà ${accts().length} comptes, le maximum.`
-          : "Zieuton suit un seul compte par téléphone. Pour suivre celui-ci en plus, sans rien perdre, ajoute un compte (0,99 €, à vie)."));
-  e.otherAccount = known ? { known: known.id } : { add: accts().length < acctSlots() };
+    ? `${what} est celui du compte de ${acctName(known)}. Touche « Passer sur ce compte » pour l'y importer.`
+    : `${what} vient d'un autre compte Instagram que celui de ${acctName(curAcct())}. Rien n'a été enregistré. `
+      + (full
+        ? `Ce téléphone suit déjà ${accts().length} comptes, le maximum.`
+        : "Touche « Ajouter ce compte » pour le suivre à part : il aura ses propres données et son propre Zieuton Plus."));
+  e.otherAccount = known ? { known: known.id } : full ? null : { add: true };
   return e;
 }
 function renderAcct() {
-  $("acct-group").hidden = !acctLockOn() || DEMO;
-  if ($("acct-group").hidden) return;
+  $("acct-group").hidden = !acctLockOn() && !DEMO;
   const list = accts(), multi = list.length > 1;
+  // Plusieurs comptes : le prénom du compte affiché en haut de l'accueil, pour savoir chez qui on est.
+  $("acct-pill").hidden = $("acct-group").hidden || !multi;
+  if (multi) $("acct-pill").innerHTML = `<i>${esc(acctName(curAcct()).slice(0, 1).toUpperCase())}</i><span>${esc(acctName(curAcct()))}</span>`;
+  if ($("acct-group").hidden) return;
   $("acct-list").hidden = !multi;
-  $("acct-list").innerHTML = multi ? list.map((a) => `<button class="st-row acct-item${a.id === prefs.acctCur ? " on" : ""}" type="button" data-acct="${a.id}"><span class="st-ic" style="background:${a.id === prefs.acctCur ? "#c27583" : "#b9aeb2"}"><b>${acctIndex(a)}</b></span><span class="st-t"><b>Compte ${acctIndex(a)}${a.id === prefs.acctCur ? " · affiché" : ""}</b><small>${a.n ? nf(a.n) + " abonnés" : "Pas encore importé"}</small></span>${a.id === prefs.acctCur ? "" : '<span class="st-go" aria-hidden="true">›</span>'}</button>`).join("") : "";
-  const free = acctSlots() - list.length;
-  $("acct-add-t").textContent = free > 0 ? "Suivre un autre compte" : "Ajouter un compte";
-  $("acct-add-s").textContent = free > 0 ? `${free} place${free > 1 ? "s" : ""} libre${free > 1 ? "s" : ""}, sans rien effacer` : list.length >= 1 + ACCT_IDS.length ? `${list.length} comptes au maximum` : "0,99 €, à vie. Sans rien effacer.";
-  $("acct-add").hidden = list.length >= 1 + ACCT_IDS.length && free <= 0;
+  $("acct-list").innerHTML = multi ? list.map((a) => {
+    const on = a.id === curAcct().id, me = acctMe(a), name = acctName(a);
+    const plus = planOfSlot(a.slot) ? " · Plus" : "";
+    const sub = [me.ig ? "@" + me.ig : "", a.n ? nf(a.n) + " abonnés" : "Pas encore importé"].filter(Boolean).join(" · ") + plus;
+    return `<button class="st-row acct-item${on ? " on" : ""}" type="button" data-acct="${a.id}"><span class="st-ic" style="background:${on ? "#c27583" : "#b9aeb2"}"><b>${esc(name.slice(0, 1).toUpperCase())}</b></span><span class="st-t"><b>${esc(name)}${on ? " · affiché" : ""}</b><small>${esc(sub)}</small></span>${on ? "" : '<span class="st-go" aria-hidden="true">›</span>'}</button>`;
+  }).join("") : "";
+  $("acct-add").hidden = list.length >= MAX_ACCTS;
+  $("acct-add-s").textContent = "Pour un ami, sur ce téléphone";
 }
 
 // ---------- Comparaison ----------
@@ -2606,12 +2645,12 @@ async function commit(takenAt) {
     return false;
   }
 }
-// Import refusé (autre compte) : passer sur ce compte s'il est déjà suivi, sinon l'ajouter (place libre ou achat).
+// Import refusé (autre compte) : passer sur ce compte s'il est déjà suivi, sinon l'ajouter (gratuit, il aura son propre Plus).
 function showSwitch(o) {
   const add = $("pv-add");
   add.dataset.known = o && o.known || "";
-  if (o) add.textContent = o.known ? "Passer sur ce compte" : o.add ? "Ajouter ce compte" : "Ajouter ce compte · 0,99 €";
-  add.hidden = !o || (!o.known && !o.add && accts().length >= 1 + ACCT_IDS.length);
+  if (o) add.textContent = o.known ? "Passer sur ce compte" : "Ajouter ce compte";
+  add.hidden = !o;
 }
 // Le fichier en attente est importé dans le compte qui vient d'être choisi.
 async function importPendingHere() {
@@ -2622,8 +2661,7 @@ $("pv-add").addEventListener("click", async () => {
   if (!pending) return;
   const known = $("pv-add").dataset.known;
   if (known) { await goAccount(known); return importPendingHere(); }
-  if (accts().length < acctSlots()) { await addAccount(); return importPendingHere(); }
-  buyAccount(async () => { await addAccount(); await importPendingHere(); });
+  if (await addAccount()) return importPendingHere();
 });
 $("save").addEventListener("click", async () => {
   if (!pending) return;
@@ -2756,14 +2794,13 @@ $("acct-list").addEventListener("click", async (e) => {
   haptic("selection");
   await goAccount(b.dataset.acct);
   renderAcct();
-  toast(`Compte ${acctIndex(curAcct())} affiché.`, false);
+  toast(`Compte de ${acctName(curAcct())} affiché.`, false);
 });
-$("acct-add").addEventListener("click", () => {
-  if (DEMO) return toast("C'est la démo : touche « Quitter » en haut pour en sortir.", false);
-  const ready = async () => { await addAccount(); renderAcct(); toast(`Compte ${acctIndex(curAcct())} ajouté : importe son export pour commencer.`, false); };
-  if (accts().length < acctSlots()) return ready();
-  if (accts().length >= 1 + ACCT_IDS.length) return;
-  buyAccount(ready);
+$("acct-add").addEventListener("click", async () => {
+  if (DEMO) return toast("C'est la démo : touche « Quitter » en haut pour ajouter un vrai compte.", false);
+  if (!(await addAccount())) return;
+  renderAcct();
+  toast("Nouveau compte : son prénom dans Mon compte, puis importe son export.", false);
 });
 
 // ---------- Nouvel export ----------
@@ -2962,6 +2999,7 @@ document.querySelectorAll(".st-page").forEach((el) => {
   el.addEventListener("touchend", end); el.addEventListener("touchcancel", end);
 });
 $("set-btn").addEventListener("click", () => openStPage("settings"));
+$("acct-pill").addEventListener("click", () => { haptic("light"); openStPage("st-account"); setTimeout(() => $("acct-group").scrollIntoView({ behavior: "smooth", block: "center" }), 350); });
 document.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openStPage(b.dataset.open)));
 // Apparence : automatique, clair ou sombre
 function applyTheme() {
@@ -2974,6 +3012,7 @@ document.querySelectorAll("[data-theme-pick]").forEach((b) => b.addEventListener
 applyTheme();
 // Mon compte : prénom et pseudo Instagram (gardés sur le téléphone)
 function renderSettings() {
+  try { renderAcct(); } catch {}
   const me = prefs.me || {};
   $("st-me-name").textContent = me.name || "Ton prénom";
   $("st-me-name").classList.toggle("ph", !me.name);
@@ -3664,7 +3703,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0200";
+const BUILD = "2026-11-03-0230";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -3679,7 +3718,17 @@ const haptic = (kind) => { if (nativeApp) nativePost({ type: "haptic", kind }); 
 // Plus (au mois, à l'année ou à vie) : mises à jour illimitées. L'achat passe par l'App Store, dans l'app iPhone seulement.
 const PLUS_PLANS = { "fr.zyeuto.plus.an": "à l'année", "fr.zyeuto.plus.mois": "au mois", "fr.zyeuto.plus.avie": "à vie" };
 const storeApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 4;
-const hasPlus = () => !!(prefs.plus && prefs.plus.active);
+// Chaque compte a son propre Plus : produits « fr.zyeuto.plus.* » pour le compte 1, « fr.zyeuto.plus2.* » pour le 2, etc.
+// (un groupe d'abonnements par compte, sinon Apple refuserait un 2e abonnement sur le même identifiant Apple).
+const slotId = (base, slot) => slot > 1 ? base.replace("fr.zyeuto.plus.", `fr.zyeuto.plus${slot}.`) : base;
+const baseId = (id) => String(id || "").replace(/^fr\.zyeuto\.plus\d\./, "fr.zyeuto.plus.");
+function planOfSlot(slot) {
+  if (DEMO) return slot === 1 ? "fr.zyeuto.plus.an" : "";
+  const m = prefs.plusSlots || {};
+  return m[slot] || (slot === 1 && !prefs.plusSlots && prefs.plus && prefs.plus.active ? prefs.plus.plan : "") || "";
+}
+const hasPlus = () => !!planOfSlot(curSlot());
+const curPlan = () => baseId(planOfSlot(curSlot()));
 // Un mois de calendrier après la dernière mise à jour gratuite (30 ou 31 jours selon le mois ; le 31 janvier donne le 28 ou 29 février).
 function nextFreeAt() {
   if (!prefs.lastFreeAt) return null;
@@ -3737,6 +3786,8 @@ function openPlus(why) {
     : why === "update"
       ? "Ta mise à jour gratuite du mois est déjà faite. Avec Plus, pas besoin d'attendre."
       : "C'est gratuit pour commencer. Ensuite, une mise à jour par mois, ou illimité avec Plus.";
+  // Plusieurs comptes sur ce téléphone : chacun prend son propre Plus.
+  if (accts().length > 1) $("plus-why").textContent += ` Ce Plus est pour le compte de ${acctName(curAcct())} seulement.`;
   // Aperçu : ton bonhomme tel qu'il sera avec Plus, en or.
   $("plus-av").innerHTML = avatarSVG(prefs.zy?.look || {}, true);
   $("plus-rules").innerHTML = freeRules().map((r) => `<li class="${r.used ? "off" : "on"}"><b>${r.k}</b><span>${r.t}${r.used ? " ✓" : ""}</span></li>`).join("")
@@ -3782,12 +3833,12 @@ function renderPlusBlock() {
   const on = hasPlus();
   const next = nextFreeAt();
   $("plus-status").textContent = on
-    ? `Tu as Zieuton Plus ${PLUS_PLANS[prefs.plus.plan] || ""} : mises à jour illimitées. Merci !`
+    ? `${accts().length > 1 ? acctName(curAcct()) + " a" : "Tu as"} Zieuton Plus ${PLUS_PLANS[curPlan()] || ""} : mises à jour illimitées. Merci !`
     : canUpdateFree()
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
       : `Version gratuite : une mise à jour par mois. La prochaine gratuite dans ${freeLeft(next)}`;
   $("plus-open").hidden = on;
-  $("plus-manage").hidden = !on || prefs.plus.plan === "fr.zyeuto.plus.avie";
+  $("plus-manage").hidden = !on || curPlan() === "fr.zyeuto.plus.avie";
 }
 async function plusUnlocked() {
   $("plus").hidden = true;
@@ -3797,42 +3848,26 @@ async function plusUnlocked() {
   // Un fichier attendait : on l'importe maintenant.
   if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
 }
-// Compte Instagram en plus : un achat à vie (0,99 €) par compte, au plus 3 en plus.
-let acctBuying = null;
-function buyAccount(then) {
-  if (!storeApp() || acctBuying) return;
-  const id = ACCT_IDS[Math.min(ACCT_IDS.length - 1, prefs.extraAccounts || 0)];
-  acctBuying = then;
-  toast("Un instant…", false);
-  nativePost({ type: "plus", action: "buy", id });
-}
 // Réponses de l'app iPhone : état de l'achat, prix du magasin, résultat d'un achat.
 window.zyeutoPlus = (d) => {
   if (!d || typeof d !== "object") return;
-  if (typeof d.accounts === "number") { prefs.extraAccounts = Math.max(0, d.accounts - 1); if (DEMO) realPrefs.extraAccounts = prefs.extraAccounts; savePrefs(); try { renderAcct(); } catch {} }
-  if (acctBuying && d.result) {
-    const then = acctBuying; acctBuying = null;
-    if (Array.isArray(d.products) && d.products.length) prefs.plusPrices = Object.fromEntries(d.products.map((p) => [p.id, p.price]));
-    savePrefs();
-    if (d.result === "ok" && accts().length < acctSlots()) { haptic("success"); confetti(); return then(); }
-    toast(d.result === "pending" ? "Achat en attente : il doit encore être accepté." : d.result === "cancel" ? "Achat annulé." : "L'achat n'a pas pu se faire. Réessaie.", false);
-    renderAcct();
-    return;
-  }
   const was = hasPlus();
   prefs.plus = { active: !!d.active, plan: d.plan || "" };
+  // Plus de chaque compte : { "1": "fr.zyeuto.plus.an", "2": "fr.zyeuto.plus2.mois" } (l'ancienne app n'envoie que le compte 1).
+  if (d.plusSlots && typeof d.plusSlots === "object") prefs.plusSlots = d.plusSlots;
+  else delete prefs.plusSlots;
   if (Array.isArray(d.products) && d.products.length) {
     prefs.plusPrices = Object.fromEntries(d.products.map((p) => [p.id, p.price]));
   }
-  if (DEMO) { realPrefs.plus = prefs.plus; if (prefs.plusPrices) realPrefs.plusPrices = prefs.plusPrices; try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch {} }
+  if (DEMO) { realPrefs.plus = prefs.plus; realPrefs.plusSlots = prefs.plusSlots; if (prefs.plusPrices) realPrefs.plusPrices = prefs.plusPrices; try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch {} }
   savePrefs();
-  renderPlusPrices(); renderPlusBlock();
+  renderPlusPrices(); renderPlusBlock(); try { renderAcct(); } catch {}
   // Plus vient de s'activer (ou de s'arrêter) : le bonhomme change de couleur partout.
   if (was !== hasPlus()) { try { renderHomeZy(); renderZy(); render(); } catch {} }
   const r = d.result;
   if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
   if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked();
-  if (r === "restored" && !hasPlus()) return plusMsg("Tes comptes Instagram en plus sont restaurés. Aucun Zieuton Plus trouvé sur ce compte Apple.");
+  if (r === "restored" && !hasPlus()) return plusMsg(`Aucun Zieuton Plus trouvé pour le compte de ${acctName(curAcct())}. Chaque compte a son propre Plus.`);
   if (r === "none") return plusMsg("Aucun achat Zieuton Plus trouvé sur ce compte Apple.");
   if (r === "pending") return plusMsg("Achat en attente : il doit encore être accepté (par exemple par un parent). Plus s'activera tout seul.");
   if (r === "error") return plusMsg("L'achat n'a pas pu se faire. Vérifie ta connexion et réessaie.");
@@ -3843,7 +3878,7 @@ $("plus-buy").addEventListener("click", () => {
   if (plusBusy) return;
   plusBusy = true; plusMsg("");
   $("plus-buy").disabled = true; $("plus-buy").textContent = "Un instant…";
-  nativePost({ type: "plus", action: "buy", id: plusPlan });
+  nativePost({ type: "plus", action: "buy", id: slotId(plusPlan, curSlot()) });
 });
 const plusRestore = () => { plusMsg(""); nativePost({ type: "plus", action: "restore" }); };
 $("plus-restore2").addEventListener("click", plusRestore);
@@ -5212,8 +5247,8 @@ const DEMO_FIRST = ("lea hugo ines lucas jade louis emma gabriel chloe arthur li
   + "charlotte rayan elise samuel lisa naim maya tiago alix nolan esther lyam victoire bastien heloise oscar").split(" ");
 const DEMO_WORDS = ("photo travel food run art music skate surf film cafe paris lyon nantes bordeaux lille marseille "
   + "studio daily life vibes style ink beauty sport yoga bike book").split(" ");
-function demoData() {
-  let seed = 20261102;
+function demoData(o = {}) {
+  let seed = o.seed || 20261102;
   const rnd = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const one = (a) => a[rnd() * a.length | 0];
   const used = new Set();
@@ -5229,7 +5264,7 @@ function demoData() {
   const at = days.map((d) => new Date(now - d * DAY - 3 * 36e5).toISOString());
   // Point de départ : 1 183 abonnés arrivés sur les 4 dernières années (plus nombreux récemment).
   let followers = {};
-  for (let i = 0; i < 1183; i++) followers[nameOf()] = sec(now - days[0] * DAY - (rnd() ** 1.6) * 4 * 365 * DAY);
+  for (let i = 0, n0 = o.size || 1183; i < n0; i++) followers[nameOf()] = sec(now - days[0] * DAY - (rnd() ** 1.6) * 4 * 365 * DAY);
   // Quelques anniversaires d'abonnement aujourd'hui et dans les jours qui viennent.
   const names0 = Object.keys(followers);
   [[1, 0], [2, 0], [3, 0], [1, 2], [2, 4], [4, 6]].forEach(([y, d], i) => {
@@ -5237,7 +5272,7 @@ function demoData() {
     followers[names0[i * 37]] = sec(t.getTime());
   });
   const state = { snapshots: [], events: [], followers: {} };
-  const ups = [0, 26, 19, 31, 14, 23, 17], downs = [0, 9, 12, 6, 15, 8, 11];
+  const ups = o.ups || [0, 26, 19, 31, 14, 23, 17], downs = o.downs || [0, 9, 12, 6, 15, 8, 11];
   at.forEach((takenAt, i) => {
     let unfollows = [], follows = [];
     if (i) {
@@ -5267,15 +5302,27 @@ function demoData() {
     welcomed: true, onboarded: true, useDrive: false, stayInSafari: true, installDismissed: true,
     lastImportAt: last, backupAt: last, backupCount: at.length,
     zy: { xp: 640, look: { hat: "cap" }, anni: {} }, games: { gone: { best: 4, wins: 6 } },
+    me: { name: "Victor", ig: "victor.demo" },
   };
   return { state, prefs };
 }
 const isDemoName = (u) => /(^|[._])demo([._\d]|$)/.test(u);
+let demoAvatar = null;
 function enterDemo() {
   if (DEMO) return;
   const d = demoData();
+  // Deux comptes sur le même téléphone : Victor (avec Plus) et son ami Mathéo (sans Plus), à changer dans Réglages → Mon compte.
+  const m = demoData({ seed: 77, size: 412, ups: [0, 11, 8, 14, 6, 9, 12], downs: [0, 4, 7, 3, 5, 6, 2] });
+  m.state.snapshots = m.state.snapshots.slice(-3);
+  demoParked = { a2: m.state };
+  d.prefs.accts = [
+    { id: "a1", slot: 1, h: [], n: d.state.snapshots.at(-1).count },
+    { id: "a2", slot: 2, h: [], n: m.state.snapshots.at(-1).count, p: { me: { name: "Mathéo", ig: "matheo.demo" }, zy: { xp: 90, look: {}, anni: {} }, games: {} } },
+  ];
+  d.prefs.acctCur = "a1";
   realState = state; realPrefs = prefs;
-  for (const k of ["theme", "plus", "plusPrices"]) if (k in realPrefs) d.prefs[k] = realPrefs[k];
+  for (const k of ["theme", "plus", "plusSlots", "plusPrices"]) if (k in realPrefs) d.prefs[k] = realPrefs[k];
+  demoAvatar = avatar;
   DEMO = true; state = d.state; prefs = d.prefs;
   document.body.classList.add("demo"); $("demo-bar").hidden = false; renderDemoRow();
   undoState = null; $("toast").hidden = true;
@@ -5289,14 +5336,16 @@ function enterDemo() {
 function leaveDemo(quiet) {
   if (!DEMO) return;
   // Ce que la personne a réglé pendant la démo (thème, achat Plus) est gardé.
-  for (const k of ["theme", "plus", "plusPrices"]) if (k in prefs) realPrefs[k] = prefs[k];
+  for (const k of ["theme", "plus", "plusSlots", "plusPrices"]) if (k in prefs) realPrefs[k] = prefs[k];
+  if (avatar !== demoAvatar) { avatar = demoAvatar; try { renderAvatar(); } catch {} }
+  demoParked = {};
   DEMO = false; state = realState; prefs = realPrefs; realState = realPrefs = null;
   savePrefs();
   document.body.classList.remove("demo"); $("demo-bar").hidden = true; renderDemoRow();
   undoState = null; $("toast").hidden = true; $("bilan").hidden = true;
   tab = "unfollow"; shown = PAGE; selectTab(tab);
   if (!quiet) haptic("light");
-  render(); renderPlusBlock(); renderBackup();
+  renderAll();
   setPage("home"); window.scrollTo(0, 0);
 }
 $("demo-quit").addEventListener("click", () => leaveDemo());
