@@ -793,6 +793,25 @@ final class MetaViewController: UIViewController {
         """
     }
 
+    static let autoDownloadScript = """
+    (function () {
+      var taps = 0, last = 0;
+      setInterval(function () {
+        if (taps >= 2 || Date.now() - last < 5000) return;
+        if (document.querySelector('input[type=password], input[autocomplete=one-time-code]')) return;
+        var btn = Array.prototype.find.call(document.querySelectorAll('button,a,[role=button]'), function (el) {
+          var t = (el.innerText || '').trim().toLowerCase(); var r = el.getBoundingClientRect();
+          return (t === 'télécharger' || t === 'download') && r.width > 0 && r.height > 0 && !el.disabled
+            && el.getAttribute('aria-disabled') !== 'true';
+        });
+        if (!btn) return;
+        taps++; last = Date.now();
+        btn.scrollIntoView({ block: 'center' });
+        setTimeout(function () { btn.click(); }, 600);
+      }, 1200);
+    })();
+    """
+
     init(url: URL, requesting: Bool, steps: [Step]) {
         self.url = url
         self.requesting = requesting
@@ -834,6 +853,12 @@ final class MetaViewController: UIViewController {
         config.websiteDataStore = .default() // on reste connecté à Instagram d'une fois sur l'autre
         let content = WKUserContentController()
         content.addUserScript(WKUserScript(source: watcherScript(), injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+        // Ouvert pour récupérer le fichier (notification « prêt ») : Zieuton touche lui-même « Télécharger »,
+        // le fichier s'importe tout seul ensuite. Deux essais au plus (Instagram redemande parfois une confirmation),
+        // jamais pendant un mot de passe ou un code.
+        if !requesting {
+            content.addUserScript(WKUserScript(source: Self.autoDownloadScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+        }
         content.add(WeakHandler(self), name: "zyeutoTap")
         content.add(WeakHandler(self), name: "zyeutoState")
         config.userContentController = content
