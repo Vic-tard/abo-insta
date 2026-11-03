@@ -755,7 +755,7 @@
   .plus-mini { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; padding: 12px 14px 12px 12px; border: 0; border-radius: 20px; background: var(--night); color: #f7ecd9; text-align: left; cursor: pointer; font: inherit;
     box-shadow: 0 0 0 1.5px rgb(244 205 99 / .55), 0 10px 22px rgb(26 18 20 / .28); }
   .plus-mini[hidden] { display: none; }
-  .wl-plus { margin: 14px auto 0; max-width: 420px; }
+  .wl-free { margin: 16px auto 0; text-align: center; font-size: 14px; color: var(--muted); }
   .plus-mini-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .plus-mini-txt b { font: 800 15px/1.25 var(--round); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .plus-mini-tag { flex: none; }
@@ -3999,11 +3999,10 @@ function renderGuided() {
           <li><i><svg viewBox="0 0 24 24"><path d="M5 12h12M13 7l5 5-5 5"/></svg></i>Je te guide<br>pas à pas</li>
           <li><i><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></i>Tout reste<br>chez toi</li>
         </ul>
-        ${storeApp() ? `<button class="plus-mini wl-plus" id="wl-plus" type="button"><span class="plus-mini-tag">Plus</span><span class="plus-mini-txt"><b>Gratuit pour commencer</b><small>Puis 1 mise à jour par mois, ou illimité avec Plus</small></span><span class="plus-mini-go" aria-hidden="true">›</span></button>` : ""}
+        <p class="wl-free">🎁 C'est gratuit, on commence quand tu veux</p>
         <div class="gf-foot"><button class="btn primary big" id="gf-go" type="button">C'est parti</button></div>
       </div>`;
     $("gf-go").onclick = () => { prefs.welcomed = true; savePrefs(); render(); };
-    if ($("wl-plus")) $("wl-plus").onclick = () => { haptic("light"); openPlus(); };
     wlPlay();
   } else if (step === "how") {
     body.innerHTML = `
@@ -4232,7 +4231,7 @@ function renderGuided() {
     body.prepend(bk);
   }
   // « Voir la démo » : pour découvrir l'app tout de suite, sans attendre Instagram.
-  if (!gfRepeat && !state.snapshots.length && step !== "install") {
+  if (!gfRepeat && !state.snapshots.length && step !== "install" && step !== "welcome") {
     const foot = body.querySelector(".gf-foot");
     if (foot) {
       const d = document.createElement("button");
@@ -4285,7 +4284,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-2200";
+const BUILD = "2026-11-03-2320";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
