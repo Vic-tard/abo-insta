@@ -44,7 +44,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 4 };",
+            source: "window.ZYEUTO_APP = { version: 5 };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Ressenti d'app : pas de zoom, pas de sélection de texte ni de menu « Copier » à l'appui long
         // (sauf dans les champs de saisie), pas de surlignage gris au toucher.

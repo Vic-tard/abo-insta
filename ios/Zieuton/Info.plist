@@ -44,6 +44,43 @@
 				<string>public.json</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Sauvegarde Zieuton</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>fr.zyeuto.backup</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Type « Sauvegarde Zieuton » (fichiers .zieuton) : le bouton « J'ai une sauvegarde » ne laisse choisir que ceux-là. -->
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>fr.zyeuto.backup</string>
+			<key>UTTypeDescription</key>
+			<string>Sauvegarde Zieuton</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>zieuton</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/x-zieuton</string>
+				</array>
+			</dict>
+		</dict>
 	</array>
 	<!-- Zieuton fermé : iOS le réveille de temps en temps pour voir si le fichier Instagram est prêt. -->
 	<key>UIBackgroundModes</key>
