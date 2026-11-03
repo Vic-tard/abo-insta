@@ -1028,8 +1028,12 @@
   .zy-item[aria-pressed="true"] { border-color: var(--rose-ink); }
   .zy-item:disabled { cursor: default; opacity: .5; }
   .zy-item:disabled .zy-av { filter: grayscale(1); }
-  .zy-ranks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; text-align: center; font-size: 11px; color: var(--muted); }
+  #zy-title { text-align: center; }
+  .zy-ranks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; text-align: center; font-size: 11px; color: var(--muted); }
   .zy-ranks li { background: var(--surface-2); border-radius: 12px; padding: 8px 2px; }
+  .zy-ranks li { width: calc(25% - 4.5px); box-sizing: border-box; }
+  .zy-ranks li:last-child { background: linear-gradient(135deg, #fff1b8, #f6c95a); color: #2e2328; }
+  .zy-ranks li:last-child b { color: #2e2328; }
   .zy-ranks li b { display: block; font: 700 12px/1.2 var(--round); color: var(--muted); }
   .zy-ranks li.on { background: var(--ring); color: #2e2328; }
   .zy-ranks li.on b { color: #2e2328; }
@@ -3841,7 +3845,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1230";
+const BUILD = "2026-11-03-1245";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4582,12 +4586,15 @@ document.addEventListener("keydown", (e) => {
 
 // ---------- Niveau de Zieutage : les points gagnés dans tous les jeux font monter de niveau ----------
 // prefs.zy = { xp, look: { hat, eyes, wall }, spun: "AAAA-MM-JJ", anni: { "pseudo|année": 1 } }
-const RANKS = [[1, "Curieux"], [5, "Fouineur"], [10, "Détective"], [15, "Espion"], [20, "Légende"]];
-// Points pour passer du niveau lvl au suivant : 150 au départ, puis 25 % de plus à chaque niveau.
-const xpStep = (lvl) => Math.round(150 * 1.25 ** (lvl - 1) / 10) * 10;
+const RANKS = [[1, "Curieux"], [5, "Fouineur"], [10, "Détective"], [15, "Espion"], [20, "Agent secret"], [25, "Légende"], [30, "Zieuton d'or"]];
+// Points pour passer du niveau lvl au suivant : 150 au départ, puis 70 de plus à chaque niveau.
+// Niveau 10 ≈ 3 900 points, niveau 20 ≈ 14 800, niveau 30 ≈ 32 800 : très dur, mais faisable en jouant souvent.
+const xpStep = (lvl) => 150 + 70 * (lvl - 1);
+const LVL_MAX = 30;
 function levelOf(xp) {
   let lvl = 1, floor = 0;
-  while (xp >= floor + xpStep(lvl)) { floor += xpStep(lvl); lvl++; }
+  while (lvl < LVL_MAX && xp >= floor + xpStep(lvl)) { floor += xpStep(lvl); lvl++; }
+  if (lvl === LVL_MAX) return { lvl, into: 1, need: 1, max: true };
   return { lvl, into: xp - floor, need: xpStep(lvl) };
 }
 const rankOf = (lvl) => RANKS.filter(([l]) => lvl >= l).pop()[1];
@@ -4690,7 +4697,7 @@ function renderZy() {
     <small>Niveau de Zieutage</small>
     <b>Niveau ${L.lvl} · <em>${rank}</em></b>
     <span class="zy-bar"><i style="--w:${(L.into / L.need * 100).toFixed(1)}%"></i></span>
-    <span class="zy-sub">${nf(L.into)} / ${nf(L.need)} points</span>`;
+    <span class="zy-sub">${L.max ? "Niveau maximum !" : `${nf(L.into)} / ${nf(L.need)} points`}</span>`;
   renderWheel(); renderAnni(); renderProno();
 }
 function openLook(slot = "hat") {
@@ -4703,8 +4710,7 @@ function openLook(slot = "hat") {
       const on = (z.look[slot] || "") === x.id, locked = L.lvl < x.lvl;
       return `<button class="zy-item" type="button" data-item="${x.id}" data-s="${slot}" aria-pressed="${on}" ${locked ? "disabled" : ""}><span class="zy-av">${avatarSVG({ ...z.look, [slot]: x.id })}</span>${esc(x.name)}${locked ? `<br>Niveau ${x.lvl}` : ""}</button>`;
     }).join("")}</div>
-    <ul class="zy-ranks">${RANKS.map(([l, n]) => `<li class="${L.lvl >= l ? "on" : ""}"><b>${n}</b>Niv. ${l}</li>`).join("")}</ul>
-    <p class="note">Gagne des points dans tous les jeux, en important tes exports et en tournant la roue : chaque niveau débloque des accessoires.</p>`;
+    <ul class="zy-ranks">${RANKS.map(([l, n]) => `<li class="${L.lvl >= l ? "on" : ""}"><b>${n}</b>Niv. ${l}</li>`).join("")}</ul>`;
   $("zy-sheet").hidden = false;
 }
 $("zy-level").addEventListener("click", () => openLook());
