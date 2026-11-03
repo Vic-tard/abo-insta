@@ -20,8 +20,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         URLContexts.forEach { web.receive(fileAt: $0.url) }
     }
 
-    // Zieuton passe en arrière-plan : on demande à iOS de le réveiller pour guetter le fichier Instagram.
+    // Zieuton passe en arrière-plan : dernière vérification, puis iOS le réveillera pour guetter le fichier Instagram.
     func sceneDidEnterBackground(_ scene: UIScene) {
-        ExportWatcher.shared.scheduleBackgroundCheck()
+        ExportWatcher.shared.enteredBackground()
     }
 }
