@@ -801,6 +801,15 @@ final class MetaViewController: UIViewController {
         head.setCustomSpacing(10, after: avatar)
         head.alignment = .center
         sayLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        // Le texte prend toute la place libre ; les flèches gardent leur taille de petite pastille ronde.
+        sayLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        for b in [prevButton, nextButton] {
+            b.setContentHuggingPriority(.required, for: .horizontal)
+            b.setContentCompressionResistancePriority(.required, for: .horizontal)
+            b.translatesAutoresizingMaskIntoConstraints = false
+            b.widthAnchor.constraint(equalToConstant: 34).isActive = true
+            b.heightAnchor.constraint(equalToConstant: 34).isActive = true
+        }
 
         // Le bouton à chercher, redessiné comme chez Instagram et entouré comme dans le guide.
         replicaBox.layer.cornerRadius = 13
@@ -943,7 +952,8 @@ final class MetaViewController: UIViewController {
             self.replicaBox.isHidden = step.look.isEmpty || !normal
             if normal && !step.look.isEmpty { self.drawReplica(step) }
             self.progress.isHidden = !normal || self.steps.count < 2
-            self.prevButton.isHidden = !normal || self.steps.count < 2
+            // À la première étape, pas de flèche « précédent » grisée : elle n'apparaît qu'à partir de l'étape 2.
+            self.prevButton.isHidden = !normal || self.steps.count < 2 || self.index == 0
             self.nextButton.isHidden = !normal || self.steps.count < 2
             self.prevButton.isEnabled = self.index > 0
             // Pas de « Suivant » sur la dernière étape : c'est le vrai bouton d'Instagram qui valide.
