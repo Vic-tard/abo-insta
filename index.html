@@ -3881,7 +3881,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1330";
+const BUILD = "2026-11-03-1350";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4623,9 +4623,9 @@ document.addEventListener("keydown", (e) => {
 // ---------- Niveau de Zieutage : les points gagnés dans tous les jeux font monter de niveau ----------
 // prefs.zy = { xp, look: { hat, eyes, wall }, spun: "AAAA-MM-JJ", anni: { "pseudo|année": 1 } }
 const RANKS = [[1, "Curieux"], [5, "Fouineur"], [10, "Détective"], [15, "Espion"], [20, "Agent secret"], [25, "Légende"], [30, "Zieuton d'or"]];
-// Points pour passer du niveau lvl au suivant : 100 au départ, puis 10 % de plus à chaque niveau.
-// Niveau 10 ≈ 1 400 points, niveau 20 ≈ 5 700, niveau 30 ≈ 15 000 : très dur, mais faisable en jouant souvent.
-const xpStep = (lvl) => Math.round(100 * 1.1 ** (lvl - 1) / 10) * 10;
+// Points pour passer du niveau lvl au suivant : 100 (1 → 2), 200, 360, 550… jusqu'à 10 000 (29 → 30).
+// Courbe douce (puissance 1,38) entre ces deux bornes, arrondie à la dizaine.
+const xpStep = (lvl) => lvl <= 1 ? 100 : Math.round((100 + 100 * (lvl - 1) ** (Math.log(99) / Math.log(28))) / 10) * 10;
 const LVL_MAX = 30;
 function levelOf(xp) {
   let lvl = 1, floor = 0;
