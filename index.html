@@ -3016,7 +3016,8 @@ const DRIVE = {
 };
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 // Google refuse la connexion dans une app (vue web intégrée) : le mode Drive reste réservé au site.
-const driveReady = () => !!DRIVE.clientId && !nativeApp;
+// Google Drive retiré (2026-11-03) : un seul parcours, export sur l'appareil puis import. Code gardé en sommeil.
+const driveReady = () => false;
 const DRIVE_TOKEN = "abo-drive-token-ro";
 function driveToken() {
   try { const t = JSON.parse(localStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
