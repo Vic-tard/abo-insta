@@ -1523,7 +1523,9 @@ final class ExportWatcher: NSObject {
     }
     private enum Id {
         static let asked = "zy-asked", ready = "zy-ready", reminder = "zy-reminder", lastDay = "zy-last-day"
-        static let all = [asked, ready, reminder, lastDay, "zyeuto-export"]
+        /// Filet de sécurité : iOS ne laisse pas Zieuton vérifier quand il est fermé, alors on prévient quand même.
+        static let likely = "zy-likely"
+        static let all = [asked, ready, likely, reminder, lastDay, "zyeuto-export"]
         /// Notifications avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
         static let readyCategory = "zy-ready-actions"
     }
@@ -1585,6 +1587,9 @@ final class ExportWatcher: NSObject {
 
     // MARK: Étapes
 
+    /// Délai du filet de sécurité : le même que celui où la carte de l'accueil passe à « prêt ».
+    static let likelyAfter: TimeInterval = 10 * 60
+
     /// La demande vient de partir dans Instagram.
     func requested(downloadsBefore: Int) {
         store.set(Date(), forKey: Key.requested)
@@ -1599,8 +1604,12 @@ final class ExportWatcher: NSObject {
             let now = Date()
             self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive d'ici 10 minutes maximum. Je te préviens dès qu'il est là.",
                         subtitle: "Demande envoyée à Instagram à \(Self.hour(now))", after: 1)
-            self.notify(Id.reminder, "Instagram traîne un peu 👀", "Demandé à \(Self.hour(now)) et toujours pas de nouvelles. Touche pour aller voir si ton fichier est là.",
-                        after: 12 * 60, category: Id.readyCategory)
+            // Zieuton fermé, iOS décide seul quand le réveiller (parfois jamais) : sans ce filet, aucune notif ne partirait.
+            // Si Zieuton voit le fichier avant, cette notification est remplacée par « Ton fichier Instagram est prêt ».
+            self.notify(Id.likely, "Ton fichier Instagram est sûrement prêt 🎉", "Instagram met en général moins de 10 minutes. Touche pour le récupérer : Zieuton se met à jour tout seul.",
+                        subtitle: "Demandé à \(Self.hour(now))", after: Self.likelyAfter, badge: true, category: Id.readyCategory)
+            self.notify(Id.reminder, "Ton fichier t'attend 📥", "Demandé à \(Self.hour(now)). Touche pour le récupérer et voir enfin qui est parti et qui est arrivé.",
+                        after: 40 * 60, category: Id.readyCategory)
             self.notify(Id.lastDay, "⏳ Dernier jour pour ton fichier", "Ta demande de \(Self.day(now)) expire bientôt. Touche pour mettre Zieuton à jour avant qu'elle disparaisse.",
                         after: 3 * 86400, category: Id.readyCategory)
         }
@@ -1628,8 +1637,8 @@ final class ExportWatcher: NSObject {
         store.set(Date(), forKey: Key.ready)
         timer?.invalidate(); timer = nil
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [Id.reminder, Id.lastDay])
-        center.removeDeliveredNotifications(withIdentifiers: [Id.asked])
+        center.removePendingNotificationRequests(withIdentifiers: [Id.likely, Id.reminder, Id.lastDay])
+        center.removeDeliveredNotifications(withIdentifiers: [Id.asked, Id.likely])
         let now = Date(), expires = now.addingTimeInterval(4 * 86400)
         let took = requestedAt.map { Self.duration(now.timeIntervalSince($0)) }
         notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour mettre Zieuton à jour : tu sauras qui est parti et qui est arrivé. Valable jusqu'au \(Self.day(expires)).",
@@ -1711,8 +1720,9 @@ final class ExportWatcher: NSObject {
             self.checker = nil
             self.finishCheck = nil
             if outcome == .ready { self.markReady() }
-            if outcome == .pending, let r = self.requestedAt, Date().timeIntervalSince(r) > 10 * 60 {
+            if outcome == .pending, let r = self.requestedAt, Date().timeIntervalSince(r) > Self.likelyAfter - 2 * 60 {
                 // Instagram prend son temps : on repousse le rappel au lieu d'annoncer un fichier pas encore là.
+                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Id.likely])
                 self.notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
                             subtitle: "Demandé à \(Self.hour(r))", after: 10 * 60)
             }
@@ -1754,6 +1764,24 @@ final class ExportWatcher: NSObject {
             guard let task = task as? BGAppRefreshTask else { return }
             DispatchQueue.main.async { shared.handle(task) }
         }
+    }
+
+    /// Zieuton passe en arrière-plan : on demande à iOS un peu de temps pour vérifier une dernière fois tout de suite,
+    /// puis on lui demande de nous réveiller plus tard.
+    func enteredBackground() {
+        scheduleBackgroundCheck()
+        guard isWaiting, let r = requestedAt, Date().timeIntervalSince(r) > 30 else { return }
+        var task = UIBackgroundTaskIdentifier.invalid
+        let end = {
+            guard task != .invalid else { return }
+            UIApplication.shared.endBackgroundTask(task)
+            task = .invalid
+        }
+        task = UIApplication.shared.beginBackgroundTask(withName: "zy-check") { [weak self] in
+            self?.finishCheck?(.unknown)
+            end()
+        }
+        check { _ in end() }
     }
 
     /// Demande à iOS de réveiller Zieuton dans quelques minutes (iOS choisit le moment exact).
