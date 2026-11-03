@@ -990,7 +990,7 @@
   .zy-card p { margin: 0; color: var(--muted); font-size: 13.5px; }
   .zy-card .btn { margin: 0; }
   .zy-wheel-wrap { display: grid; grid-template-columns: 156px 1fr; gap: 14px; align-items: center; }
-  .zy-wheel-box { position: relative; width: 156px; aspect-ratio: 1; }
+  .zy-wheel-box { position: relative; width: 156px; aspect-ratio: 1; --wr: 100px; }
   .zy-wheel-box::after { content: ""; position: absolute; left: 50%; top: -5px; translate: -50% 0; border: 9px solid transparent; border-top: 14px solid var(--ink); border-bottom: 0; z-index: 2; }
   .zy-wheel { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 6px 16px rgb(46 35 40 / .18), inset 0 0 0 4px rgb(255 255 255 / .6);
     background: conic-gradient(#ef7f6a 0 45deg, #f6c8cf 45deg 90deg, #f4a96a 90deg 135deg, #fff2f4 135deg 180deg, #f2c45a 180deg 225deg, #f6c8cf 225deg 270deg, #d4919b 270deg 315deg, #fff2f4 315deg 360deg);
@@ -1131,12 +1131,64 @@
   .zy-card.flashy > * { position: relative; }
   .zy-card.flashy h2 { font: 800 19px/1.2 var(--round); }
   .zy-card.flashy h2 span, .zy-card.flashy p { color: rgb(46 35 40 / .75); }
-  #zy-wheel-card { background: linear-gradient(160deg, #ffe0b8, #f7a96c); }
-  #zy-wheel-card h2 { justify-content: center; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
   #zy-anni-card { background: linear-gradient(160deg, #ffc2cc, #ef7f8e); }
-  #zy-prono-card { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
-  #zy-prono-card .btn.primary, #zy-wheel-card .btn.primary { background: #2e2328; color: #fff; }
-  #zy-prono-card .btn.ghost { background: rgb(255 255 255 / .6); color: #2e2328; }
+  /* Roue du jour et pronostics : deux tuiles côte à côte, chacune ouvre son jeu en plein écran */
+  .zy-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .zy-duo.solo { grid-template-columns: 1fr; }
+  .zy-tile { border: 0; border-radius: 24px; padding: 16px 10px 14px; color: #2e2328; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 8px 18px rgb(46 35 40 / .12);
+    display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font: 13px/1.3 var(--font); }
+  .zy-tile::before { content: ""; position: absolute; right: -36px; top: -46px; width: 120px; height: 120px; border-radius: 50%; background: rgb(255 255 255 / .2); }
+  .zy-tile > * { position: relative; }
+  .zy-tile:active { transform: scale(.97); }
+  .zy-tile b { font: 800 17px/1.15 var(--round); }
+  .zy-tile small { font: 700 11.5px/1 var(--round); background: rgb(255 255 255 / .6); border-radius: 999px; padding: 6px 10px; }
+  .zy-tile small.on { background: #2e2328; color: #fff; }
+  .t-wheel { background: linear-gradient(160deg, #ffe0b8, #f7a96c); }
+  .t-prono { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
+  .zt-art { width: 92px; aspect-ratio: 1; display: grid; place-items: center; }
+  .zt-art .zy-wheel-box { width: 92px !important; }
+  .zt-art .zy-wheel span { display: none; }
+  .zt-art .zy-wheel-box::after { border-width: 6px; border-top-width: 10px; top: -3px; }
+  @media (prefers-reduced-motion: no-preference) { .t-wheel:not(.done) .zt-art .zy-wheel { animation: ztSpin 9s linear infinite; } .t-prono .cb-mini { animation: qzFloat 3s ease-in-out infinite; } }
+  @keyframes ztSpin { to { transform: rotate(360deg); } }
+  .cb-mini { width: 84px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font: 800 22px/1 var(--round); color: #fff; text-shadow: 0 1px 6px rgb(60 30 110 / .5);
+    background: radial-gradient(circle at 34% 28%, #fff 0 7%, rgb(255 255 255 / .55) 14%, transparent 34%), radial-gradient(circle at 50% 60%, #b9a2f2, #6d52c4 70%, #4b3592);
+    box-shadow: inset 0 -8px 16px rgb(40 20 90 / .35), 0 8px 16px rgb(60 30 110 / .3); }
+  /* Pages plein écran de la roue et des pronostics */
+  .game-page .card { background: transparent !important; color: #2e2328; gap: 16px; display: flex; flex-direction: column; overflow-y: auto; }
+  .game-page .fp-head { grid-template-columns: 76px 1fr 76px; }
+  .game-page .fp-head p { color: #2e2328; }
+  .game-page .fp-back { background: rgb(255 255 255 / .5); color: #2e2328; }
+  .fp-pill { justify-self: end; font: 800 12.5px/1 var(--round); background: rgb(255 255 255 / .6); border-radius: 999px; padding: 7px 10px; white-space: nowrap; }
+  #wheel-page.bilan.fullpage { background: linear-gradient(170deg, #ffe0b8, #f39a5c); }
+  #prono-page.bilan.fullpage { background: linear-gradient(170deg, #e6dcfd, #9c84e0); }
+  .wp-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; }
+  .wp-body .zy-wheel-box { width: min(300px, 78vw) !important; --wr: min(150px, 39vw); }
+  .wp-body .zy-wheel span { font-size: 16px !important; }
+  .wp-body .zy-res { font: 800 20px/1.3 var(--round); margin: 0; min-height: 1.3em; }
+  .wp-body .qz-go, #prono-acts .qz-go { max-width: 420px; }
+  .wp-body .qz-go:disabled { opacity: .45; box-shadow: none; cursor: default; }
+  .cb-ball { align-self: center; width: min(210px, 56vw); aspect-ratio: 1; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #fff;
+    background: radial-gradient(circle at 32% 26%, #fff 0 5%, rgb(255 255 255 / .5) 11%, transparent 30%), radial-gradient(circle at 50% 62%, var(--ball1, #b9a2f2), var(--ball2, #6d52c4) 68%, var(--ball3, #432d8a));
+    box-shadow: inset 0 -16px 30px rgb(30 15 70 / .35), 0 0 0 6px rgb(255 255 255 / .25), 0 18px 34px rgb(60 30 110 / .35); transition: background .3s; }
+  .cb-ball.up { --ball1: #a6e8c8; --ball2: #3fa57a; --ball3: #23694b; }
+  .cb-ball.down { --ball1: #f8b3bf; --ball2: #d4566f; --ball3: #8e2c41; }
+  .cb-ball b { font: 800 clamp(44px, 15vw, 64px)/1 var(--round); text-shadow: 0 2px 10px rgb(0 0 0 / .25); font-variant-numeric: tabular-nums; }
+  .cb-ball small { font: 700 14px/1 var(--round); opacity: .9; }
+  .cb-ball.locked { box-shadow: inset 0 -16px 30px rgb(30 15 70 / .35), 0 0 0 6px #fff, 0 18px 34px rgb(60 30 110 / .35); }
+  .cb-hint { margin: 0; text-align: center; font: 700 14px/1.3 var(--round); color: rgb(46 35 40 / .75); }
+  .cb-track { position: relative; height: 56px; margin: 0 14px; touch-action: none; cursor: grab; outline: none; }
+  .cb-track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 12px; translate: 0 -50%; border-radius: 99px; background: rgb(255 255 255 / .5); }
+  .cb-fill { position: absolute; top: 50%; height: 12px; translate: 0 -50%; border-radius: 99px; background: #2e2328; }
+  .cb-zero { position: absolute; left: 50%; top: 50%; width: 4px; height: 24px; translate: -50% -50%; border-radius: 2px; background: #fff; }
+  .cb-thumb { position: absolute; top: 50%; width: 44px; height: 44px; translate: -50% -50%; border-radius: 50%; background: #fff; box-shadow: 0 4px 12px rgb(46 35 40 / .3), inset 0 0 0 5px #2e2328; }
+  .cb-track:focus-visible .cb-thumb { outline: 3px solid #fff; outline-offset: 3px; }
+  .cb-ends { display: flex; justify-content: space-between; margin: -10px 4px 0; font: 700 13px/1 var(--round); color: rgb(46 35 40 / .6); }
+  #prono-page .qz-hero { align-items: center; gap: 12px; padding-top: 6px; }
+  #prono-page .qz-av { width: 92px; flex: none; }
+  #prono-page .qz-bub { position: static; white-space: normal; max-width: 190px; border-radius: 16px 16px 16px 4px; }
+  #prono-acts { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: auto; }
+  #prono-acts .qz-ghost { border: 0; background: rgb(255 255 255 / .6); color: #2e2328; border-radius: 999px; padding: 12px 22px; font: 800 15px var(--round); cursor: pointer; }
   .goal.flashy { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); color: #2e2328; border-radius: 24px; box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
   .goal.flashy span { color: rgb(46 35 40 / .75); }
   .goal.flashy .track { background: rgb(255 255 255 / .55); }
@@ -1766,6 +1818,23 @@
     <div class="zy-look" id="zy-look"></div>
   </div>
 </div>
+<div class="bilan fullpage game-page" id="wheel-page" role="dialog" aria-modal="true" aria-labelledby="wheel-title" hidden>
+  <div class="card">
+    <div class="fp-head"><button class="fp-back" id="wheel-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="wheel-title">La roue du jour</p><span></span></div>
+    <div class="wp-body" id="wheel-body"></div>
+  </div>
+</div>
+<div class="bilan fullpage game-page" id="prono-page" role="dialog" aria-modal="true" aria-labelledby="prono-title" hidden>
+  <div class="card">
+    <div class="fp-head"><button class="fp-back" id="prono-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="prono-title">Mes pronostics</p><span class="fp-pill">300 pts</span></div>
+    <div class="qz-hero"><span class="qz-av idle" id="prono-av"></span><span class="qz-bub" id="prono-bub" aria-live="polite"></span></div>
+    <div class="cb-ball" id="prono-ball"><b id="prono-num">0</b><small id="prono-unit">abonné</small></div>
+    <p class="cb-hint" id="prono-hint"></p>
+    <div class="cb-track" id="prono-track" role="slider" tabindex="0" aria-label="Ton pronostic : abonnés gagnés ou perdus au prochain import"><i class="cb-fill" id="prono-fill"></i><i class="cb-zero"></i><span class="cb-thumb" id="prono-thumb"></span></div>
+    <div class="cb-ends" id="prono-ends"><span id="prono-min"></span><span id="prono-max"></span></div>
+    <div class="acts" id="prono-acts"></div>
+  </div>
+</div>
 <div class="xp-pop" id="xp-pop" aria-live="polite" hidden></div>
 <button class="unlock" id="unlock" type="button" hidden><span class="medal" id="unlock-medal"></span><span><small id="unlock-kind">Trophée débloqué</small><b id="unlock-name"></b></span></button>
 <canvas id="confetti" aria-hidden="true"></canvas>
@@ -1776,9 +1845,11 @@
   <div class="wrap">
     <div class="pg-head center"><div><h1 class="pg-title-big">Mini-jeux</h1></div></div>
     <button class="zy-level" id="zy-level" type="button" aria-label="Mon niveau et mon bonhomme"></button>
-    <section class="zy-card flashy" id="zy-wheel-card" aria-label="La roue du jour"></section>
+    <div class="zy-duo" id="zy-duo">
+      <button class="zy-tile t-wheel" id="tile-wheel" type="button"><span class="zt-art" id="tile-wheel-art"></span><b>La roue du jour</b><small id="tile-wheel-sub"></small></button>
+      <button class="zy-tile t-prono" id="tile-prono" type="button"><span class="zt-art" id="tile-prono-art"></span><b>Mes pronostics</b><small id="tile-prono-sub"></small></button>
+    </div>
     <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
-    <section class="zy-card flashy" id="zy-prono-card" aria-label="Mes pronostics"></section>
     <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
     <div class="goal flashy" id="goal"></div>
     <section class="games" id="games" aria-label="Mini-jeux">
@@ -3741,7 +3812,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0530";
+const BUILD = "2026-11-03-0600";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4476,6 +4547,8 @@ document.addEventListener("keydown", (e) => {
   if (!$("quiz").hidden) closeQuiz();
   if (!$("trophy-sheet").hidden) $("trophy-sheet").hidden = true;
   if (!$("zy-sheet").hidden) $("zy-sheet").hidden = true;
+  if (!$("wheel-page").hidden) $("wheel-page").hidden = true;
+  if (!$("prono-page").hidden) $("prono-page").hidden = true;
 });
 
 // ---------- Niveau de Zieutage : les points gagnés dans tous les jeux font monter de niveau ----------
@@ -4627,16 +4700,23 @@ const WHEEL_COLORS = { 10: "#f6c8cf", 20: "#f4a96a", 30: "#ef7f6a", 50: "#d4919b
 const wheelStarts = WHEEL.reduce((a, w, i) => (a.push(i ? a[i - 1] + WHEEL[i - 1].deg : 0), a), []);
 const todayKey = () => toDateInput(new Date());
 let wheelTurn = 0, wheelBusy = false;
+const wheelHTML = (id) => `<div class="zy-wheel-box"><div class="zy-wheel"${id ? ` id="${id}"` : ""} style="transform:rotate(${wheelTurn}deg);background:conic-gradient(${WHEEL.map((w, i) => `${WHEEL_COLORS[w.pts]} ${wheelStarts[i]}deg ${wheelStarts[i] + w.deg}deg`).join(",")})">${WHEEL.map((w, i) =>
+  `<span style="transform:rotate(${wheelStarts[i] + w.deg / 2 - 90}deg) translate(calc(var(--wr) * ${w.pts === 100 ? .52 : .58}),-50%)">${w.pts}</span>`).join("")}</div></div>`;
 function renderWheel() {
-  const z = zy(), done = z.spun === todayKey(), card = $("zy-wheel-card");
+  const z = zy(), done = z.spun === todayKey();
+  $("tile-wheel").classList.toggle("done", done);
+  if (!$("tile-wheel-art").firstChild) $("tile-wheel-art").innerHTML = wheelHTML();
+  const sub = $("tile-wheel-sub");
+  sub.textContent = done ? "Reviens demain" : "1 tour gratuit"; sub.classList.toggle("on", !done);
   if (wheelBusy) return;
-  card.innerHTML = `<h2>La roue du jour<span>${done ? "Reviens demain" : "1 tour par jour"}</span></h2>
-    <div class="zy-wheel-wrap"><div class="zy-wheel-box"><div class="zy-wheel" id="zy-wheel" style="transform:rotate(${wheelTurn}deg);background:conic-gradient(${WHEEL.map((w, i) => `${WHEEL_COLORS[w.pts]} ${wheelStarts[i]}deg ${wheelStarts[i] + w.deg}deg`).join(",")})">${WHEEL.map((w, i) =>
-      `<span style="transform:rotate(${wheelStarts[i] + w.deg / 2 - 90}deg) translate(${w.pts === 100 ? 52 : 58}px,-50%)">${w.pts}</span>`).join("")}</div></div>
-    <div class="zy-wheel-side"><p class="zy-res" id="zy-wheel-res">${done ? esc(z.spunText || "Déjà tournée aujourd'hui.") : "Tente ta chance : jusqu'à 100 points."}</p>
-    <button class="btn primary" type="button" id="zy-spin" ${done ? "disabled" : ""}>${done ? "Demain !" : "Tourner"}</button></div></div>`;
+  $("wheel-body").innerHTML = `${wheelHTML("zy-wheel")}
+    <p class="zy-res" id="zy-wheel-res">${done ? esc(z.spunText || "Déjà tournée aujourd'hui.") : "Jusqu'à 100 points !"}</p>
+    <button class="qz-go" type="button" id="zy-spin" ${done ? "disabled" : ""}>${done ? "Reviens demain" : "Tourner"}</button>`;
   $("zy-spin").addEventListener("click", spinWheel);
 }
+function openWheel() { renderWheel(); $("wheel-page").hidden = false; haptic("light"); }
+$("tile-wheel").addEventListener("click", openWheel);
+$("wheel-close").addEventListener("click", () => { $("wheel-page").hidden = true; });
 function spinWheel() {
   const z = zy();
   if (z.spun === todayKey() || wheelBusy) return;
@@ -4653,8 +4733,8 @@ function spinWheel() {
     const text = w.pts === 100 ? "Jackpot : +100 points !" : `+${w.pts} points !`;
     z.spun = todayKey(); z.spunText = text; z.spins = (z.spins || 0) + 1; if (w.pts === 100) z.jackpots = (z.jackpots || 0) + 1; savePrefs();
     $("zy-wheel-res").textContent = text;
-    btn.textContent = "Demain !";
-    wheelBusy = false;
+    btn.textContent = "Reviens demain";
+    wheelBusy = false; renderWheel();
     if (w.pts >= 50) confetti();
     gainXP(w.pts, "Roue du jour"); checkTrophies();
   };
@@ -4716,51 +4796,108 @@ $("zy-anni-card").addEventListener("click", async (e) => {
   try { if (navigator.share) await navigator.share({ text }); } catch {}
 });
 
-// ---------- Pronostics : arrivées et départs au prochain import ----------
-let pronoDraft = null;
-function renderProno() {
-  const card = $("zy-prono-card"), p = prefs.prono;
-  if (!state.snapshots.length) { card.hidden = true; return; }
-  card.hidden = false;
-  if (p && !pronoDraft) {
-    card.innerHTML = `<h2>Mes pronostics<span>En attente</span></h2>
-      <p>Au prochain import, tu as dit <b>+${nf(p.up)}</b> arrivée${p.up > 1 ? "s" : ""} et <b>−${nf(p.down)}</b> départ${p.down > 1 ? "s" : ""}. Plus tu tombes juste, plus tu gagnes (jusqu'à 300 points).</p>
-      <button class="btn ghost" type="button" id="prono-edit">Changer</button>`;
-    $("prono-edit").addEventListener("click", () => { pronoDraft = { up: p.up, down: p.down }; renderProno(); });
-    return;
-  }
-  const d = pronoDraft || (pronoDraft = { up: 0, down: 0 });
-  card.innerHTML = `<h2>Mes pronostics<span>Jusqu'à 300 points</span></h2>
-    <p>Combien d'arrivées et de départs au prochain import ?</p>
-    <div class="zy-steps">${[["up", "Arrivées", "+"], ["down", "Départs", "−"]].map(([k, l, sgn]) =>
-      `<div class="zy-step"><small>${l}</small><div><button type="button" data-p="${k}" data-d="-1" aria-label="Moins">−</button><b>${d[k] ? sgn : ""}${nf(d[k])}</b><button type="button" data-p="${k}" data-d="1" aria-label="Plus">+</button></div></div>`).join("")}</div>
-    <button class="btn primary" type="button" id="prono-ok">Valider mon pronostic</button>`;
-  $("prono-ok").addEventListener("click", () => {
-    prefs.prono = { up: d.up, down: d.down, base: state.snapshots.length, at: new Date().toISOString() };
-    pronoDraft = null; savePrefs(); haptic("success"); renderProno();
-  });
+// ---------- Pronostics : la boule de cristal ----------
+// Un seul chiffre à deviner : combien d'abonnés en plus (ou en moins) au prochain import.
+// prefs.prono = { net, base, at } (anciens pronostics : { up, down } → net = up − down).
+const PRONO_LOOK = { hat: "halo", eyes: "round", bg: "night" };
+const pronoNet = (p) => p.net ?? (p.up || 0) - (p.down || 0);
+const signed = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + nf(Math.abs(n));
+let pronoVal = 0, pronoEdit = false;
+// Amplitude du curseur : selon les écarts déjà vus entre deux imports (au moins ±10).
+function pronoRange() {
+  const nets = state.snapshots.slice(1).map((x) => Math.abs((x.follows || 0) - (x.unfollows || 0)));
+  const last = state.snapshots[state.snapshots.length - 1], seen = nets.length ? Math.max(...nets.slice(-12)) * 2 : Math.round((last?.count || 0) * 0.02);
+  const raw = Math.max(10, seen), mag = 10 ** Math.floor(Math.log10(raw)), nice = [1, 2, 2.5, 5, 10].find((k) => k * mag >= raw) * mag;
+  return Math.round(nice);
 }
-{
-  // Appui long sur + ou − : ça défile.
-  let rep = null;
-  const step = (b) => { pronoDraft[b.dataset.p] = Math.max(0, pronoDraft[b.dataset.p] + +b.dataset.d); haptic("selection"); b.parentElement.querySelector("b").textContent = (pronoDraft[b.dataset.p] ? (b.dataset.p === "up" ? "+" : "−") : "") + nf(pronoDraft[b.dataset.p]); };
-  const stop = () => { clearTimeout(rep); clearInterval(rep); rep = null; };
-  $("zy-prono-card").addEventListener("pointerdown", (e) => {
-    const b = e.target.closest("[data-p]"); if (!b || !pronoDraft) return;
-    step(b); stop(); rep = setTimeout(() => { rep = setInterval(() => step(b), 90); }, 400);
+function pronoStep(R) { return R <= 40 ? 1 : R <= 100 ? 2 : R <= 250 ? 5 : Math.round(R / 50); }
+function renderProno() {
+  const tile = $("tile-prono"), p = prefs.prono, has = !!state.snapshots.length;
+  tile.hidden = !has; $("zy-duo").classList.toggle("solo", !has);
+  if (!has) return;
+  const sub = $("tile-prono-sub");
+  $("tile-prono-art").innerHTML = `<span class="cb-mini">${p ? signed(pronoNet(p)) : "?"}</span>`;
+  sub.textContent = p ? "En attente" : "Jusqu'à 300 pts"; sub.classList.toggle("on", !p);
+}
+function pronoMood(v, R) {
+  const r = v / R;
+  if (v === 0) return "Ni plus ni moins… stable.";
+  if (r >= .6) return "Je vois une avalanche d'abonnés !";
+  if (r >= .25) return "Ça grimpe, je le sens !";
+  if (r > 0) return "Un petit plus, je dirais.";
+  if (r <= -.6) return "Aïe, je vois des valises…";
+  if (r <= -.25) return "Hmm, quelques départs…";
+  return "Un tout petit moins.";
+}
+function paintProno() {
+  const R = pronoRange(), p = prefs.prono, locked = p && !pronoEdit, v = locked ? pronoNet(p) : pronoVal;
+  const ball = $("prono-ball");
+  ball.className = "cb-ball" + (v > 0 ? " up" : v < 0 ? " down" : "") + (locked ? " locked" : "");
+  $("prono-num").textContent = v === 0 ? "0" : signed(v);
+  $("prono-unit").textContent = Math.abs(v) > 1 ? "abonnés" : "abonné";
+  const pos = (Math.max(-R, Math.min(R, v)) + R) / (2 * R) * 100;
+  $("prono-thumb").style.left = pos + "%";
+  $("prono-fill").style.left = Math.min(pos, 50) + "%"; $("prono-fill").style.width = Math.abs(pos - 50) + "%";
+  const tr = $("prono-track");
+  tr.setAttribute("aria-valuemin", -R); tr.setAttribute("aria-valuemax", R); tr.setAttribute("aria-valuenow", v); tr.setAttribute("aria-valuetext", signed(v) + " abonnés");
+  $("prono-min").textContent = "−" + nf(R); $("prono-max").textContent = "+" + nf(R);
+}
+function renderPronoPage() {
+  const p = prefs.prono, locked = p && !pronoEdit;
+  $("prono-track").hidden = $("prono-ends").hidden = !!locked;
+  $("prono-hint").textContent = locked ? "Verdict au prochain import" : "Glisse pour deviner ton solde au prochain import";
+  const bub = $("prono-bub");
+  bub.textContent = locked ? "C'est noté, rendez-vous au prochain import !" : pronoMood(pronoVal, pronoRange()); bub.className = "qz-bub";
+  $("prono-acts").innerHTML = locked
+    ? `<button class="qz-ghost" type="button" id="prono-change">Changer</button>`
+    : `<button class="qz-go" type="button" id="prono-ok">Je valide</button>`;
+  if (locked) $("prono-change").addEventListener("click", () => { pronoEdit = true; pronoVal = pronoNet(p); renderPronoPage(); });
+  else $("prono-ok").addEventListener("click", () => {
+    prefs.prono = { net: pronoVal, base: state.snapshots.length, at: new Date().toISOString() };
+    pronoEdit = false; savePrefs(); haptic("success");
+    const a = $("prono-av"); a.className = "qz-av"; void a.offsetWidth; a.className = "qz-av happy";
+    renderPronoPage(); renderProno();
   });
-  ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => $("zy-prono-card").addEventListener(ev, stop));
+  paintProno();
+}
+function openProno() {
+  pronoEdit = false; pronoVal = prefs.prono ? pronoNet(prefs.prono) : 0;
+  $("prono-av").innerHTML = avatarSVG(PRONO_LOOK); $("prono-av").className = "qz-av idle";
+  renderPronoPage(); $("prono-page").hidden = false; haptic("light");
+}
+$("tile-prono").addEventListener("click", openProno);
+$("prono-close").addEventListener("click", () => { $("prono-page").hidden = true; });
+{
+  // Le curseur : on touche ou on glisse n'importe où sur la barre, le chiffre suit le doigt.
+  const tr = $("prono-track");
+  let on = false, lastMood = "";
+  const setV = (v) => {
+    const R = pronoRange(), st = pronoStep(R);
+    v = Math.max(-R, Math.min(R, Math.round(v / st) * st));
+    if (v === pronoVal) return;
+    pronoVal = v; haptic("selection"); paintProno();
+    const m = pronoMood(v, R);
+    if (m !== lastMood) { lastMood = m; const b = $("prono-bub"); b.textContent = m; replayAnim2(b); }
+  };
+  const fromX = (x) => { const b = tr.getBoundingClientRect(), R = pronoRange(); setV(((x - b.left) / b.width * 2 - 1) * R); };
+  tr.addEventListener("pointerdown", (e) => { on = true; tr.setPointerCapture(e.pointerId); fromX(e.clientX); });
+  tr.addEventListener("pointermove", (e) => { if (on) fromX(e.clientX); });
+  ["pointerup", "pointercancel"].forEach((ev) => tr.addEventListener(ev, () => { on = false; }));
+  tr.addEventListener("keydown", (e) => {
+    const st = pronoStep(pronoRange()), d = { ArrowRight: st, ArrowUp: st, ArrowLeft: -st, ArrowDown: -st }[e.key];
+    if (d) { e.preventDefault(); setV(pronoVal + d); }
+  });
 }
 // Appelé à chaque import avec bilan : compare au pronostic et donne les points.
 function settleProno(r) {
   const p = prefs.prono;
   if (!p || state.snapshots.length <= p.base) return null;
   delete prefs.prono; savePrefs();
-  const up = r.follows.length, down = r.unfollows.length, err = Math.abs(p.up - up) + Math.abs(p.down - down);
+  const up = r.follows.length, down = r.unfollows.length, net = up - down, guess = pronoNet(p), err = Math.abs(guess - net);
   const tol = Math.max(2, Math.round((up + down) * 0.1));
   const pts = err === 0 ? 300 : Math.max(10, Math.round(240 * Math.max(0, 1 - err / (tol * 5))));
   const z = zy(); if (err === 0) z.pronoExact = (z.pronoExact || 0) + 1; if (err <= tol) z.pronoGood = (z.pronoGood || 0) + 1; savePrefs();
-  return { pts, text: `${err === 0 ? "Pronostic parfait" : err <= tol ? "Pronostic presque juste" : "Pronostic"} : tu avais dit +${nf(p.up)} / −${nf(p.down)}, c'était +${nf(up)} / −${nf(down)}. +${pts} points.`, ok: err <= tol };
+  return { pts, text: `${err === 0 ? "Pronostic parfait" : err <= tol ? "Pronostic presque juste" : "Pronostic"} : tu avais dit ${signed(guess) || "0"}, c'était ${signed(net) || "0"}. +${pts} points.`, ok: err <= tol };
 }
 
 // Pages plein écran : glisser vers la droite pour revenir (la page suit le doigt).
@@ -4769,7 +4906,7 @@ document.querySelectorAll(".bilan.fullpage").forEach((el) => {
   el.addEventListener("touchstart", (e) => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = 0; drag = null; }, { passive: true });
   el.addEventListener("touchmove", (e) => {
     const t = e.touches[0], mx = t.clientX - x0, my = t.clientY - y0;
-    if (drag === null && (Math.abs(mx) > 8 || Math.abs(my) > 8)) drag = mx > 0 && Math.abs(mx) > Math.abs(my) * 1.2 && !e.target.closest("#ticket-cv");
+    if (drag === null && (Math.abs(mx) > 8 || Math.abs(my) > 8)) drag = mx > 0 && Math.abs(mx) > Math.abs(my) * 1.2 && !e.target.closest("#ticket-cv, #prono-track");
     if (!drag) return;
     dx = Math.max(0, mx);
     el.style.transition = "none"; el.style.transform = `translateX(${dx}px)`;
@@ -4788,7 +4925,7 @@ const PAGES = { games: $("pg-games"), stats: $("pg-stats") };
 const REST = { games: -100, stats: 100 };
 let page = "home";
 const pageW = () => window.innerWidth || 1;
-const overlayOpen = () => ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
+const overlayOpen = () => ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "wheel-page", "prono-page", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
 function placePage(p, pct, dragging) {
   const el = PAGES[p];
   el.classList.toggle("dragging", !!dragging);
