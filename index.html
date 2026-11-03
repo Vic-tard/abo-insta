@@ -3693,7 +3693,7 @@ function metaStep(x) {
   };
 }
 // Touches toujours permises, à toutes les étapes : bandeau des cookies, connexion, « Continuer ».
-const META_ALWAYS_OK = ["cookie", "Cookie", "Continuer", "Continue", "Se connecter", "Log in", "Plus tard", "Not now", "OK"];
+const META_ALWAYS_OK = ["cookie", "Cookie", "Continuer", "Continue", "Se connecter", "Log in", "Plus tard", "Not now"];
 function guardOf(img) {
   const g = META_GUARD[img] || {};
   // Pas sur les étapes à choix (« Depuis le début », « JSON ») : une touche « OK » n'y vaut pas le bon choix.
