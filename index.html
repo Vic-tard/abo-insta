@@ -1387,15 +1387,15 @@
   .an-head { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; position: relative; }
   .an-head::before { content: ""; position: absolute; top: -10px; left: 50%; width: 150px; height: 110px; translate: -50% 0; background: radial-gradient(closest-side, rgb(246 201 90 / .3), transparent); pointer-events: none; }
   .an-cake { width: 64px; height: 64px; position: relative; filter: drop-shadow(0 6px 14px rgb(0 0 0 / .35)); }
-  .an-head small { font: 800 11px/1 var(--round); letter-spacing: .08em; text-transform: uppercase; color: #f6c95a; margin-top: 4px; position: relative; }
+  .an-head small { font: 800 13.5px/1 var(--round); letter-spacing: .07em; text-transform: uppercase; color: #f6c95a; margin-top: 4px; position: relative; }
   #zy-anni-card .an-head h2 { font: 800 22px/1.15 var(--round); color: #fff; margin: 0; justify-content: center; position: relative; }
   #zy-anni-card .zy-anni { gap: 8px; }
   #zy-anni-card .zy-anni li { background: rgb(255 255 255 / .07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1); border-radius: 18px; padding: 10px 10px 10px 10px; gap: 12px; }
   #zy-anni-card .zy-anni li span { color: #fff; font: 700 14.5px/1.2 var(--round); overflow: hidden; text-overflow: ellipsis; }
-  #zy-anni-card .zy-anni li span small { color: rgb(255 255 255 / .6); font: 600 12px var(--font); margin-top: 2px; }
-  .an-badge { flex: none; width: 44px; height: 44px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-    font: 800 17px/1 var(--round); font-style: normal; color: #2e2328; box-shadow: inset 0 0 0 3px rgb(255 255 255 / .35), inset 0 -6px 10px rgb(0 0 0 / .15), 0 6px 14px rgb(0 0 0 / .3); }
-  .an-badge small { font: 800 8.5px/1 var(--round); text-transform: uppercase; letter-spacing: .04em; opacity: .75; }
+  #zy-anni-card .zy-anni li span small { color: rgb(255 255 255 / .6); font: 600 12px var(--font); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #zy-anni-card .zy-anni li i.an-badge { flex: none; width: 48px; height: 48px; margin: 0; padding: 0; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font: 800 18px/1 var(--round); font-style: normal; color: #2e2328; box-shadow: inset 0 0 0 3px rgb(255 255 255 / .35), inset 0 -6px 10px rgb(0 0 0 / .15), 0 6px 14px rgb(0 0 0 / .3); }
+  #zy-anni-card .zy-anni li i.an-badge small { display: block; margin: 0; color: inherit; font: 800 8px/1 var(--round); text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
   .an-badge.tier-diamond { color: #2e2160; } .an-badge.tier-bronze { color: #4a2a12; }
   #zy-anni-card .an-badge.tier-bronze { background: linear-gradient(135deg, #f6cfa8, #b06a35); } #zy-anni-card .an-badge.tier-silver { background: linear-gradient(135deg, #ffffff, #9aa3b2); }
   #zy-anni-card .an-badge.tier-gold { background: linear-gradient(135deg, #fff0b0, #d39a2a); } #zy-anni-card .an-badge.tier-diamond { background: linear-gradient(135deg, #e9e2ff, #8f78e6); }
@@ -1461,6 +1461,7 @@
   #quiz .qz-av { width: 112px; border-radius: 50%; position: relative; box-shadow: 0 0 0 4px rgb(255 255 255 / .06), 0 14px 30px rgb(0 0 0 / .45); }
   #quiz .qz-av svg { clip-path: circle(50%); }
   #quiz .qz-av.party { padding: 0; width: 112px; }
+  #quiz .qz-av, #quiz .qz-av.idle, #quiz .qz-av.happy, #quiz .qz-av.sad, #quiz .qz-av.party { animation: none !important; transform: none !important; }
   #quiz .pips[hidden] + .qz-hero { margin-top: auto; }
   #quiz .qz-bub { left: calc(50% + 52px); top: 0; box-shadow: 0 8px 20px rgb(0 0 0 / .3); }
   #quiz .quiz-q { color: #fff; font: 800 22px/1.25 var(--round); }
@@ -4092,7 +4093,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1640";
+const BUILD = "2026-11-03-1700";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -5203,9 +5204,9 @@ function renderAnni() {
     ? `
        <ul class="zy-anni">${today.slice(0, 4).map((a, k) => {
          const done = z.anni[a.u + "|" + y];
-         return `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>${ansText(a.years)} qu'il te suit !</small></span><button type="button" data-anni="${esc(a.u)}" data-y="${a.years}" ${done ? "disabled" : ""}>${done ? "Fêté ✓" : `Fêter <b>+${anniPts(a.years)}</b>`}</button></li>`;
+         return `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>Depuis le ${fmtDate(a.since.getTime())}</small></span><button type="button" data-anni="${esc(a.u)}" data-y="${a.years}" ${done ? "disabled" : ""}>${done ? "Fêté ✓" : `Fêter <b>+${anniPts(a.years)}</b>`}</button></li>`;
        }).join("")}</ul>${today.length > 4 ? `<p>Et ${today.length - 4 > 1 ? `${today.length - 4} autres` : "1 autre"} aujourd'hui !</p>` : ""}`
-    : `<ul class="zy-anni">${soon.slice(0, 3).map((a, k) => `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>${ansText(a.years)} d'abonnement</small></span><em>${a.days === 1 ? "Demain" : `Dans ${a.days} j`}</em></li>`).join("")}</ul>`);
+    : `<ul class="zy-anni">${soon.slice(0, 3).map((a, k) => `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>Depuis le ${fmtDate(a.since.getTime())}</small></span><em>${a.days === 1 ? "Demain" : `Dans ${a.days} j`}</em></li>`).join("")}</ul>`);
 }
 $("zy-anni-card").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-anni]");
