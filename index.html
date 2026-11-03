@@ -1541,6 +1541,11 @@
       <div class="st-group" id="acct-list" hidden></div>
       <div class="st-group">
         <button class="st-row" id="acct-add" type="button"><span class="st-ic" style="background:#c9a24a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b>Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
+        <div id="acct-del-row" hidden><button class="st-row danger" id="acct-del" type="button"><span class="st-ic" style="background:#b8502e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b id="acct-del-t">Supprimer ce compte</b><small>Ses données sont effacées de ce téléphone</small></span></button></div>
+        <div class="st-confirm" id="acct-del-confirm" hidden>
+          <p id="acct-del-p"></p>
+          <div class="row"><button class="btn danger" id="acct-del-yes" type="button">Oui, supprimer</button><button class="btn ghost" id="acct-del-no" type="button">Annuler</button></div>
+        </div>
       </div>
       <p class="st-foot">Chaque compte a ses propres données et son propre Zieuton Plus. Un compte ajouté prend Plus dès son 1er import. 3 comptes au maximum par téléphone.</p>
     </div>
@@ -2208,6 +2213,21 @@ async function goAccount(id) {
   prefs.acctCur = id; savePrefs();
   await save(); renderAll();
 }
+// Supprimer le compte affiché (un compte ajouté) : ses données sont effacées, on revient au compte principal.
+// Refusé tant que son Plus est actif : sinon un autre ami récupérerait ce Plus en ajoutant son compte à cette place.
+async function deleteAccount() {
+  const del = curAcct();
+  if (del.slot === 1 || accts().length < 2) return false;
+  await goAccount(accts().find((a) => a.slot === 1).id);
+  prefs.accts = accts().filter((a) => a !== del); savePrefs();
+  if (DEMO) delete demoParked[del.id];
+  else {
+    try { await store.set("acct:" + del.id, null); } catch {}
+    try { localStorage.removeItem("abo-state-" + del.id); } catch {}
+  }
+  renderAll();
+  return true;
+}
 // Nouveau compte (un ami sur ce téléphone) : il devra prendre son propre Plus dès son 1er import. Le compte affiché est rangé.
 async function addAccount() {
   if (DEMO || accts().length >= MAX_ACCTS) return false;
@@ -2249,6 +2269,11 @@ function renderAcct() {
     return `<button class="st-row acct-item${on ? " on" : ""}" type="button" data-acct="${a.id}"><span class="st-ic" style="background:${on ? "#c27583" : "#b9aeb2"}"><b>${esc(name.slice(0, 1).toUpperCase())}</b></span><span class="st-t"><b>${esc(name)}${on ? " · affiché" : ""}</b><small>${esc(sub)}</small></span>${on ? "" : '<span class="st-go" aria-hidden="true">›</span>'}</button>`;
   }).join("") : "";
   $("acct-add").hidden = list.length >= MAX_ACCTS;
+  // Seul un compte ajouté (pas le compte principal du téléphone) peut être supprimé, depuis ce compte.
+  const delOk = multi && curSlot() > 1;
+  $("acct-del-row").hidden = !delOk || !$("acct-del-confirm").hidden;
+  if (!delOk) $("acct-del-confirm").hidden = true;
+  $("acct-del-t").textContent = `Supprimer le compte de ${acctName(curAcct())}`;
   $("acct-add-s").textContent = "Pour un ami : il prend son propre Plus";
 }
 
@@ -2795,6 +2820,18 @@ $("acct-list").addEventListener("click", async (e) => {
   await goAccount(b.dataset.acct);
   renderAcct();
   toast(`Compte de ${acctName(curAcct())} affiché.`, false);
+});
+$("acct-del").addEventListener("click", () => {
+  if (storeApp() && hasPlus()) return toast(`Le compte de ${acctName(curAcct())} a Zieuton Plus : résilie-le d'abord (Réglages → Zieuton Plus → Gérer), puis supprime le compte.`, false);
+  $("acct-del-p").textContent = `L'historique, le bonhomme et les jeux de ${acctName(curAcct())} seront effacés de ce téléphone. Tu reviendras sur le compte de ${acctName(accts().find((a) => a.slot === 1))}.`;
+  $("acct-del-row").hidden = true; $("acct-del-confirm").hidden = false;
+});
+$("acct-del-no").addEventListener("click", () => { $("acct-del-confirm").hidden = true; renderAcct(); });
+$("acct-del-yes").addEventListener("click", async () => {
+  const name = acctName(curAcct());
+  $("acct-del-confirm").hidden = true;
+  if (await deleteAccount()) { haptic("success"); toast(`Compte de ${name} supprimé.`, false); }
+  renderAcct();
 });
 $("acct-add").addEventListener("click", async () => {
   if (DEMO) return toast("C'est la démo : touche « Quitter » en haut pour ajouter un vrai compte.", false);
@@ -3703,7 +3740,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0300";
+const BUILD = "2026-11-03-0330";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
