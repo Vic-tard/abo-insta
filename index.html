@@ -939,9 +939,12 @@
   .gf .big { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; font-size: 17px; border-radius: 14px; box-sizing: border-box; text-decoration: none; }
   .gf .big svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .gf .alt { background: none; border: 0; color: var(--muted); font: 500 14px var(--font); text-decoration: underline; padding: 6px; cursor: pointer; align-self: center; }
-  .gf-short li span { font-size: 17px; }
-  .gf-safe { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 2px 0 0; font-size: 14px; color: var(--muted); }
-  .gf-safe svg { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--up); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .gf-mid { margin-block: auto; display: flex; flex-direction: column; gap: 22px; }
+  .gf-short { gap: 14px; }
+  .gf-short li { padding: 18px 16px; align-items: center; }
+  .gf-short li span { font-size: 17px; line-height: 1.4; }
+  .gf-safe { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 0 2px; font-size: 12.5px; color: var(--muted); }
+  .gf-safe svg { width: 13px; height: 13px; flex: none; fill: none; stroke: var(--up); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .gf .btn.gf-huge { min-height: 64px; font-size: 21px; border-radius: 20px; }
   .gf .btn.gf-huge svg { width: 22px; height: 22px; }
   .gf-duo { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 4px; }
@@ -4014,15 +4017,15 @@ function renderGuided() {
     // App iPhone : Instagram s'ouvre DANS Zieuton, avec le bandeau qui montre où toucher (comme « Mettre à jour »).
     gfOnReturn = null;
     // Écran court et rassurant : trois lignes, un gros bouton, deux petits carrés en bas (démo, sauvegarde).
-    body.innerHTML = `${guide(gfRepeat ? "On remet ça&nbsp;? Je t'ouvre Instagram ici 😉" : "Première mission&nbsp;! Je reste avec toi tout du long.")}
-      <h2 id="gf-title">Demande ta liste à Instagram</h2>
+    body.innerHTML = `<div class="gf-mid">${guide(gfRepeat ? "On remet ça&nbsp;? Je t'ouvre Instagram ici 😉" : "Trop cool, on va enfin voir qui te suit&nbsp;! Je reste avec toi tout du long.")}
+      <h2 id="gf-title">On récupère ta liste Instagram</h2>
       <ol class="gf-how gf-short">
-        <li><i>1</i><span>Tu ouvres Instagram, ici dans Zieuton.</span></li>
-        <li><i>2</i><span>Suis mon bandeau en haut&nbsp;: il te montre chaque bouton à toucher.</span></li>
-        <li><i>3</i><span>Accepte les notifications&nbsp;: je te préviens dès que ta liste est prête.</span></li>
-      </ol>
-      <p class="gf-safe">${ICON.lock}Ton mot de passe reste chez Instagram.</p>
+        <li><i>1</i><span>Instagram s'ouvre ici, sans quitter Zieuton.</span></li>
+        <li><i>2</i><span>Mon bandeau te guide, bouton par bouton. Tout simple&nbsp;!</span></li>
+        <li><i>3</i><span>Avec les notifications, je te fais signe dès que ta liste arrive 🎉</span></li>
+      </ol></div>
       <div class="gf-foot">
+        <p class="gf-safe">${ICON.lock}Ton mot de passe reste chez Instagram.</p>
         <button class="btn cheer big gf-huge" id="gf-meta" type="button">${ICON.out}Ouvrir Instagram</button>
         <div class="gf-duo"><button class="gf-tile" id="gf-restore" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM3 4h18v3H3zM10 11h4"/></svg>J'ai une sauvegarde</button></div>
       </div>`;
@@ -4239,7 +4242,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-2020";
+const BUILD = "2026-11-03-2030";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
