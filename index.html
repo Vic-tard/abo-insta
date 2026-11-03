@@ -1751,6 +1751,12 @@
   .mode[aria-pressed="true"]::after { border-color: #ef7f6a; background: radial-gradient(circle, #ef7f6a 0 6px, var(--surface) 7px); }
   .btn:disabled { opacity: .45; }
   .gf-backbtn { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); font: 600 14px var(--font); border-radius: 999px; padding: 7px 14px 7px 10px; cursor: pointer; margin-bottom: -4px; }
+  .gf-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: -4px; }
+  .gf-top .gf-backbtn { margin-bottom: 0; }
+  .gf-acct { display: inline-flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); font: 600 14px var(--font); border-radius: 999px; padding: 5px 12px 5px 5px; cursor: pointer; max-width: 60%; }
+  .gf-acct i { width: 24px; height: 24px; border-radius: 50%; background: var(--accent, #c9707e); color: #fff; font: 700 12px var(--font); font-style: normal; display: grid; place-items: center; flex: none; }
+  .gf-acct span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gf-acct svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; opacity: .7; }
   .gf-backbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .mode:active { transform: scale(.98); }
   .mode-ic { grid-row: span 2; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; align-self: start; }
@@ -4230,6 +4236,27 @@ function renderGuided() {
     };
     body.prepend(bk);
   }
+  // Plusieurs comptes sur ce téléphone : le compte affiché, en haut à droite, pour passer sur un autre.
+  if (!DEMO && accts().length > 1) {
+    const list = accts(), cur = curAcct();
+    const next = cur.slot !== 1 ? list.find((a) => a.slot === 1) : list[(list.indexOf(cur) + 1) % list.length];
+    const top = document.createElement("div");
+    top.className = "gf-top";
+    const ch = document.createElement("button");
+    ch.className = "gf-acct"; ch.type = "button"; ch.id = "gf-acct";
+    ch.innerHTML = `<i>${esc(acctName(cur).slice(0, 1).toUpperCase())}</i><span>${esc(acctName(cur))}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>`;
+    ch.setAttribute("aria-label", `Compte affiché : ${acctName(cur)}. Passer sur le compte de ${acctName(next)}`);
+    ch.onclick = async () => {
+      haptic("selection");
+      await goAccount(next.id);
+      try { renderAcct(); } catch {}
+      toast(`Compte de ${acctName(curAcct())} affiché.`, false);
+    };
+    const bk = $("gf-backbtn");
+    if (bk) top.append(bk); else top.append(document.createElement("span"));
+    top.append(ch);
+    body.prepend(top);
+  }
   // « Voir la démo » : pour découvrir l'app tout de suite, sans attendre Instagram.
   if (!gfRepeat && !state.snapshots.length && step !== "install" && step !== "welcome") {
     const foot = body.querySelector(".gf-foot");
@@ -4284,7 +4311,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-2330";
+const BUILD = "2026-11-03-2340";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
