@@ -1295,6 +1295,87 @@
   .trophy.on.gold .medal { background: linear-gradient(135deg, #fbe7a0, #dba63a) !important; color: #5a3a08 !important; }
   .trophy.on.diamond .medal { background: linear-gradient(135deg, #e6dcff, #9c86e8) !important; color: #2e2160 !important; }
   .trophy.sel .medal { outline: 3px solid var(--ink); outline-offset: 2px; }
+  /* ---- Trophées, version premium : écrin sombre, médailles métal, anneau de progression ---- */
+  #trophy-sheet.bilan.fullpage { background: radial-gradient(120% 60% at 50% 0%, #4a2a4a 0%, #24152a 55%, #140c18 100%); }
+  #trophy-sheet .card { background: transparent !important; color: #fff; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
+  #trophy-sheet .fp-head p { color: #fff; }
+  #trophy-sheet .fp-back { background: rgb(255 255 255 / .1); color: #fff; }
+  #trophy-sheet .t-hero { gap: 4px; }
+  .t-ring { width: 148px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; position: relative;
+    background: conic-gradient(#f6c95a calc(var(--p) * 1%), rgb(255 255 255 / .1) 0); box-shadow: 0 0 40px rgb(246 201 90 / .25); }
+  .t-ring::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #3b2440, #1b1020); }
+  .t-ring > * { position: relative; }
+  .t-ring svg { width: 64px; height: 64px; filter: drop-shadow(0 4px 10px rgb(246 201 90 / .5)); }
+  .t-ring svg path[fill="#fff6d8"], .t-ring svg rect { fill: #f6c95a; }
+  .t-ring svg path[stroke="#fff6d8"] { stroke: #f6c95a; }
+  #trophy-sheet .t-hero b { font: 800 30px/1.1 var(--round); color: #fff; margin-top: 8px; }
+  #trophy-sheet .t-hero b em { font-style: normal; color: rgb(255 255 255 / .45); }
+  #trophy-sheet .t-hero > span { color: #f6c95a; font: 700 14px var(--round); }
+  .t-tiers { display: flex; gap: 8px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+  .t-tiers span { display: flex; align-items: center; gap: 6px; font: 700 12px/1 var(--round); color: rgb(255 255 255 / .8); background: rgb(255 255 255 / .07); border-radius: 999px; padding: 6px 10px 6px 6px; }
+  .t-tiers i { width: 14px; height: 14px; border-radius: 50%; }
+  .tier-bronze { background: linear-gradient(135deg, #f6cfa8, #b06a35); } .tier-silver { background: linear-gradient(135deg, #ffffff, #9aa3b2); }
+  .tier-gold { background: linear-gradient(135deg, #fff0b0, #d39a2a); } .tier-diamond { background: linear-gradient(135deg, #e9e2ff, #8f78e6); }
+  .t-next { background: linear-gradient(135deg, rgb(246 201 90 / .16), rgb(246 201 90 / .04)); border: 1px solid rgb(246 201 90 / .3); border-radius: 20px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .t-next > small { font: 800 11px/1 var(--round); letter-spacing: .08em; text-transform: uppercase; color: #f6c95a; }
+  .t-next button { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; text-align: left; border: 0; background: none; color: #fff; padding: 0; cursor: pointer; font: inherit; }
+  .t-next button b { font: 700 14.5px/1.2 var(--round); display: block; }
+  .t-next button span small { display: block; color: rgb(255 255 255 / .6); font-size: 12.5px; margin-top: 2px; }
+  .t-next button em { font: 800 13px var(--round); font-style: normal; color: #2e2328; background: #f6c95a; border-radius: 999px; padding: 6px 10px; }
+  .t-filter { display: grid; grid-template-columns: repeat(3, 1fr); background: rgb(255 255 255 / .07); border-radius: 999px; padding: 4px; gap: 4px; }
+  .t-filter button { border: 0; background: none; color: rgb(255 255 255 / .65); font: 700 13.5px var(--round); padding: 9px 0; border-radius: 999px; cursor: pointer; }
+  .t-filter button[aria-pressed="true"] { background: #fff; color: #2e2328; }
+  .t-sec { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .t-sec h3 { margin: 0; display: flex; justify-content: space-between; align-items: baseline; font: 800 17px/1.2 var(--round); color: #fff; }
+  .t-sec h3 small { font: 700 12.5px var(--round); color: rgb(255 255 255 / .5); }
+  #trophy-sheet .trophies { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px 8px !important; }
+  #trophy-sheet .trophy { color: rgb(255 255 255 / .5); }
+  #trophy-sheet .trophy b { color: rgb(255 255 255 / .55) !important; font: 700 11.5px/1.2 var(--round) !important; }
+  #trophy-sheet .trophy.on b { color: #fff !important; }
+  #trophy-sheet .trophy small { font: 800 10.5px/1 var(--round); color: rgb(246 201 90 / .55); }
+  #trophy-sheet .trophy.on small { color: #f6c95a; }
+  #trophy-sheet .trophy .medal { width: 62px !important; height: 62px !important; font: 800 15px/1 var(--round) !important; overflow: visible; }
+  #trophy-sheet .trophy:not(.on) .medal { background: rgb(255 255 255 / .05) !important; color: rgb(255 255 255 / .35) !important; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / .14) !important; }
+  #trophy-sheet .trophy:not(.on) .medal::before { content: ""; position: absolute; right: -2px; bottom: -2px; width: 20px; height: 20px; border-radius: 50%; background: #3b2440 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 11V8a5 5 0 0 1 10 0v3' fill='none' stroke='%23ffffff99' stroke-width='2.4' stroke-linecap='round'/%3E%3Crect x='5' y='11' width='14' height='10' rx='2.5' fill='%23ffffff99'/%3E%3C/svg%3E") center / 12px no-repeat; box-shadow: 0 0 0 2px #24152a; }
+  #trophy-sheet .trophy.on .medal { box-shadow: inset 0 0 0 4px rgb(255 255 255 / .35), inset 0 -8px 12px rgb(0 0 0 / .18), 0 8px 18px var(--glow, rgb(0 0 0 / .3)) !important; }
+  #trophy-sheet .trophy.on.bronze .medal { --glow: rgb(192 122 69 / .45); } #trophy-sheet .trophy.on.silver .medal { --glow: rgb(170 178 192 / .45); }
+  #trophy-sheet .trophy.on.gold .medal { --glow: rgb(219 166 58 / .55); } #trophy-sheet .trophy.on.diamond .medal { --glow: rgb(156 134 232 / .6); }
+  #trophy-sheet .trophy.on .medal { overflow: hidden; }
+  #trophy-sheet .trophy:not(.on) .medal::after { display: none; }
+  @media (prefers-reduced-motion: no-preference) { #trophy-sheet .trophy.on .medal::after { animation: shine 4.5s ease-in-out infinite; } #trophy-sheet .trophy.on:nth-child(3n) .medal::after { animation-delay: 1.5s; } #trophy-sheet .trophy.on:nth-child(3n+1) .medal::after { animation-delay: 3s; } }
+  @keyframes shine { 0%, 70% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+  #trophy-sheet .trophy.sel .medal { outline: 3px solid #f6c95a; outline-offset: 3px; }
+  #trophy-sheet .trophy .t-plus { margin-top: -2px; }
+  .t-empty { text-align: center; color: rgb(255 255 255 / .6); font: 700 14px var(--round); padding: 20px 0; }
+  .t-pop { position: absolute; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 5; background: rgb(40 24 46 / .96); border: 1px solid rgb(246 201 90 / .25); border-radius: 26px;
+    padding: 18px; display: grid; grid-template-columns: 84px 1fr; gap: 6px 16px; align-items: center; color: #fff; box-shadow: 0 -10px 40px rgb(0 0 0 / .45); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .t-pop[hidden] { display: none; }
+  .t-pop .trophy { grid-row: span 3; }
+  .t-pop .trophy .medal { width: 84px !important; height: 84px !important; font-size: 20px !important; }
+  .t-pop b { font: 800 19px/1.2 var(--round); }
+  .t-pop p { margin: 0; color: rgb(255 255 255 / .75); font-size: 14px; }
+  .t-pop .t-st { justify-self: start; font: 800 12.5px/1 var(--round); border-radius: 999px; padding: 6px 10px; background: rgb(255 255 255 / .1); }
+  .t-pop .t-st.on { background: #3e9e68; } .t-pop .t-st.pts { background: #f6c95a; color: #2e2328; }
+  .t-pop .t-sts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .t-pop .t-x { position: absolute; right: 10px; top: 10px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .1); color: #fff; font: 700 16px/1 var(--round); cursor: pointer; }
+  @media (prefers-reduced-motion: no-preference) { .t-pop:not([hidden]) { animation: rise .3s cubic-bezier(.3,1.3,.5,1); } }
+  /* ---- Mini-jeux : étoiles, record, défi du jour ---- */
+  .g-stars { letter-spacing: 1px; color: rgb(46 35 40 / .25); }
+  .g-stars b { color: #2e2328; font: inherit; }
+  .qz-best { display: flex; align-items: center; gap: 10px; background: rgb(255 255 255 / .6); border-radius: 18px; padding: 10px 14px; }
+  .qz-best .qz-st { display: flex; gap: 2px; }
+  .qz-best .qz-st svg { width: 22px; height: 22px; fill: rgb(46 35 40 / .18); }
+  .qz-best .qz-st svg.on { fill: #f6c95a; stroke: #c98a20; stroke-width: 1.2; }
+  .qz-best span { text-align: left; font: 700 14px/1.2 var(--round); }
+  .qz-best span small { display: block; font: 600 12px var(--font); opacity: .7; }
+  .qz-daily { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; border-radius: 18px; padding: 12px 14px; background: #2e2328; color: #fff; font: 700 14px/1.25 var(--round); }
+  .qz-daily i { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #f6c95a; color: #2e2328; font: 800 16px/1 var(--round); font-style: normal; }
+  .qz-daily small { display: block; font: 600 12px var(--font); opacity: .7; }
+  .qz-daily.done { background: rgb(255 255 255 / .55); color: #2e2328; }
+  .qz-daily.done i { background: #3e9e68; color: #fff; }
+  .qz-goal { font: 700 14px var(--round); background: rgb(255 255 255 / .55); border-radius: 999px; padding: 8px 14px; }
+  #quiz-acts .qz-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #quiz-acts .qz-row .qz-ghost { padding: 13px 8px; font-size: 14px; }
   /* Écran de bienvenue : le petit bonhomme sort de derrière son mur */
   .wl { flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; position: relative; }
   .gf.welcome { background: radial-gradient(120% 60% at 50% 0%, var(--rose-soft), var(--bg) 70%); }
@@ -1876,9 +1957,11 @@
   <div class="card">
     <div class="fp-head"><button class="fp-back" id="trophy-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="trophy-sum"></p><span></span></div>
     <div class="t-hero" id="trophy-hero"></div>
-    <p class="t-detail" id="trophy-detail" aria-live="polite"></p>
-    <div class="trophies" id="trophy-grid"></div>
+    <div class="t-next" id="trophy-next"></div>
+    <div class="t-filter" id="trophy-filter" role="tablist"><button type="button" data-f="all" aria-pressed="true">Tous</button><button type="button" data-f="on" aria-pressed="false">Gagnés</button><button type="button" data-f="off" aria-pressed="false">À gagner</button></div>
+    <div id="trophy-grid"></div>
   </div>
+  <div class="t-pop" id="trophy-detail" aria-live="polite" hidden></div>
 </div>
 <div class="bilan fullpage" id="zy-sheet" role="dialog" aria-modal="true" aria-labelledby="zy-title" hidden>
   <div class="card">
@@ -3881,7 +3964,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1350";
+const BUILD = "2026-11-03-1415";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4316,6 +4399,8 @@ function settleBet() {
 const QUIZ_LEN = 5;
 const pick = (arr) => arr[Math.random() * arr.length | 0];
 const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const starsOf = (score, total = QUIZ_LEN) => score >= total ? 3 : score >= total - 1 ? 2 : score >= total / 2 ? 1 : 0;
+const DAILY_GOAL = 4, DAILY_BONUS = 50;
 function stats(id) { prefs.games = prefs.games || {}; return prefs.games[id] || (prefs.games[id] = { best: 0 }); }
 
 // Chaque jeu dit s'il est jouable (sinon pourquoi) et fabrique une question.
@@ -4367,7 +4452,9 @@ function renderGames() {
   for (const [id, g] of Object.entries(GAMES)) {
     const ok = g.ready(), tile = $("tile-" + id), best = stats(id).best;
     tile.disabled = ok !== true;
-    tile.querySelector("small").textContent = ok !== true ? (id === "gone" ? "Après un départ" : id === "back" || id === "first" ? "Réimporte le .zip" : "Bientôt") : best ? `Record : ${best}/${QUIZ_LEN}` : "Jamais joué";
+    const sm = tile.querySelector("small"), st = starsOf(best);
+    if (ok !== true) sm.textContent = id === "gone" ? "Après un départ" : id === "back" || id === "first" ? "Réimporte le .zip" : "Bientôt";
+    else sm.innerHTML = best ? `<span class="g-stars"><b>${"★".repeat(st)}</b>${"★".repeat(3 - st)}</span> · Record ${best}/${QUIZ_LEN}${stats(id).day === todayKey() ? " · Défi ✓" : ""}` : "Jamais joué · Défi du jour +50";
     tile.title = ok === true ? "" : ok;
   }
   const t = trophyStatus(), on = t.filter((x) => x.on);
@@ -4406,10 +4493,11 @@ function openQuiz(id) {
   setMood("idle"); setBub("Prêt ?");
   $("quiz-score").textContent = "";
   $("quiz-pips").hidden = true; $("quiz-time").hidden = true;
-  const best = stats(id).best;
+  const sg = stats(id), best = sg.best, st = starsOf(best), daily = sg.day === todayKey();
   $("quiz-body").innerHTML = `<div class="qz-intro"><p class="qz-big">${esc(GAMES[id].title)}</p><p>${esc(QUIZ_INFO[id])}</p>
-    <ul class="qz-rules"><li><b>5</b>questions</li><li><b>${QUIZ_TIME} s</b>par question</li><li><b>${best ? best + "/5" : "–"}</b>ton record</li></ul>
-    <p class="qz-tip">Réponds vite pour gagner un bonus, enchaîne 3 bonnes réponses pour la série.</p></div>`;
+    <div class="qz-best"><span class="qz-st">${[0, 1, 2].map((i) => ICON_STAR.replace("<svg", `<svg class="${i < st ? "on" : ""}"`)).join("")}</span><span>${best ? `Record ${best}/${QUIZ_LEN}` : "Pas encore de record"}<small>${sg.played ? `${sg.played} partie${sg.played > 1 ? "s" : ""} jouée${sg.played > 1 ? "s" : ""}` : "Première partie"}</small></span></div>
+    <ul class="qz-rules"><li><b>5</b>questions</li><li><b>${QUIZ_TIME} s</b>chrono</li><li><b>×3</b>série = bonus</li></ul>
+    <div class="qz-daily${daily ? " done" : ""}"><i>${daily ? "✓" : "★"}</i><span>${daily ? "Défi du jour réussi" : `Défi du jour : ${DAILY_GOAL}/${QUIZ_LEN} ou plus`}<small>${daily ? "Reviens demain pour un nouveau défi" : `+${DAILY_BONUS} points en bonus, une fois par jour`}</small></span></div></div>`;
   replayAnim2($("quiz-body"));
   $("quiz-msg").textContent = "";
   $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-start">C'est parti !</button>`;
@@ -4490,10 +4578,12 @@ function endQuiz() {
   if (quiz.score === QUIZ_LEN) st.perfect = true;
   st.played = (st.played || 0) + 1;
   savePrefs();
-  const bonus = 10 + (quiz.score === total ? 20 : 0);
+  let bonus = 10 + (quiz.score === total ? 20 : 0);
+  const dailyWon = quiz.score >= DAILY_GOAL && st.day !== todayKey();
+  if (dailyWon) { st.day = todayKey(); bonus += DAILY_BONUS; savePrefs(); }
   quiz.pts += bonus;
   gainXP(bonus, "", true);
-  const stars = quiz.score === total ? 3 : quiz.score >= total - 1 ? 2 : quiz.score >= total / 2 ? 1 : 0;
+  const stars = starsOf(quiz.score, total);
   const line = ["Tu connais tes abonnés ? Rejoue !", "Pas mal du tout.", "Presque parfait.", "Sans faute !"][stars];
   $("quiz-pips").hidden = true; $("quiz-time").hidden = true;
   setMood(stars >= 2 ? "party" : stars ? "happy" : "sad");
@@ -4501,13 +4591,17 @@ function endQuiz() {
   $("quiz-score").textContent = "";
   $("quiz-body").innerHTML = `<div class="score"><div class="qz-stars">${[0, 1, 2].map((i) => `<span class="${i < stars ? "on" : ""}" style="--d:${250 + i * 200}ms">${ICON_STAR}</span>`).join("")}</div>
     <b>${quiz.score}/${total}</b><p>${line}</p><span class="qz-pts">+${nf(quiz.pts)} points</span>
-    ${record ? `<span class="record">Nouveau record</span>` : `<p>Ton record : ${st.best}/${QUIZ_LEN}</p>`}</div>`;
+    ${record ? `<span class="record">Nouveau record !</span>` : `<p>Ton record : ${st.best}/${QUIZ_LEN}</p>`}
+    ${dailyWon ? `<div class="qz-daily"><i>★</i><span>Défi du jour réussi !<small>+${DAILY_BONUS} points en bonus</small></span></div>`
+      : stars < 3 ? `<span class="qz-goal">Plus que ${total - quiz.score} bonne${total - quiz.score > 1 ? "s" : ""} réponse${total - quiz.score > 1 ? "s" : ""} pour ★★★</span>` : ""}</div>`;
   replayAnim2($("quiz-body"));
   $("quiz-msg").textContent = "";
-  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-again">Rejouer</button><button class="qz-ghost" type="button" id="quiz-done">Retour aux mini-jeux</button>`;
-  $("quiz-again").addEventListener("click", () => openQuiz(quiz.id));
+  const ids = Object.keys(GAMES), nextId = ids.slice(ids.indexOf(quiz.id) + 1).concat(ids).find((g) => g !== quiz.id && GAMES[g].ready() === true);
+  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-again">↻ Rejouer</button><div class="qz-row">${nextId ? `<button class="qz-ghost" type="button" id="quiz-next-game">${esc(GAMES[nextId].title)} ›</button>` : ""}<button class="qz-ghost" type="button" id="quiz-done"${nextId ? "" : ' style="grid-column:1/-1"'}>Mini-jeux</button></div>`;
+  $("quiz-again").addEventListener("click", () => { const g = quiz.id; openQuiz(g); nextQuestion(); });
+  if (nextId) $("quiz-next-game").addEventListener("click", () => openQuiz(nextId));
   $("quiz-done").addEventListener("click", closeQuiz);
-  if (stars >= 2 || record) confetti();
+  if (stars >= 2 || record || dailyWon) confetti();
 }
 function closeQuiz() { clearTimeout(quizTimer); $("quiz").hidden = true; quiz = null; renderGames(); checkTrophies(); }
 $("quiz-close").addEventListener("click", closeQuiz);
@@ -4593,21 +4687,57 @@ $("unlock").addEventListener("click", () => {
   clearTimeout(unlockTimer); unlockTimer = null; unlockQueue = []; $("unlock").hidden = true;
   if (kind === "Trophée débloqué") openTrophies(); else openLook();
 });
+const T_SECTIONS = [
+  ["Imports et régularité", ["first", "duo", "five", "ten", "i25", "i50", "streak", "streak8", "streak26"]],
+  ["Croissance", ["zero", "boom", "boom50", "green3", "g10", "g50", "g100", "g250", "g500", "g1000", "g2500", "g5000", "g10000"]],
+  ["Mini-jeux", ["all", "perfect", "perfect3", "p10", "p50", "p100", "detective", "seer", "seer5"]],
+  ["Roue et pronostics", ["spin1", "spin7", "spin30", "jackpot", "prono", "pronoExact"]],
+  ["Fêtes et style", ["anni1", "anni10", "anni5y", "style3", "style5"]],
+];
+const TIER_NAMES = { bronze: "Bronze", silver: "Argent", gold: "Or", diamond: "Diamant" };
+let trophyFilter = "all";
+const trophyBtn = (x, fresh) => `<button type="button" class="trophy ${tierOf(x.pts)}${x.on ? " on" : ""}${fresh && freshTrophies.has(x.id) ? " new" : ""}" data-t="${x.id}"><span class="medal" aria-hidden="true">${esc(x.m)}</span><b>${esc(x.name)}</b>${x.lock ? `<span class="t-plus">Plus</span>` : `<small>+${nf(x.pts)}</small>`}</button>`;
 function openTrophies() {
-  const t = trophyStatus(), n = t.filter((x) => x.on).length;
+  const t = trophyStatus(), on = t.filter((x) => x.on), n = on.length, earned = on.reduce((a, x) => a + x.pts, 0);
   $("trophy-sum").textContent = "Trophées";
-  $("trophy-hero").innerHTML = `<span class="t-cup">${$("tile-trophies").querySelector(".t-cup svg").outerHTML}</span><b id="trophy-title">${n} sur ${t.length}</b><span>Plus un trophée est dur, plus il rapporte de points.</span>`;
-  $("trophy-detail").textContent = "Touche un trophée pour voir comment l'avoir.";
-  $("trophy-grid").innerHTML = t.map((x) => `<button type="button" class="trophy ${tierOf(x.pts)}${x.on ? " on" : ""}${freshTrophies.has(x.id) ? " new" : ""}" data-t="${x.id}"><span class="medal" aria-hidden="true">${esc(x.m)}</span><b>${esc(x.name)}</b>${x.lock ? `<span class="t-plus">Plus</span>` : ""}</button>`).join("");
+  const tiers = ["bronze", "silver", "gold", "diamond"].map((k) => [k, on.filter((x) => tierOf(x.pts) === k).length]);
+  $("trophy-hero").innerHTML = `<span class="t-ring" style="--p:${(n / t.length * 100).toFixed(1)}">${$("tile-trophies").querySelector(".t-cup svg").outerHTML}</span>
+    <b id="trophy-title">${n} <em>/ ${t.length}</em></b><span>${nf(earned)} points gagnés</span>
+    <div class="t-tiers">${tiers.map(([k, c]) => `<span><i class="tier-${k}"></i>${c} ${TIER_NAMES[k]}</span>`).join("")}</div>`;
+  // Prochains défis : les trophées pas encore gagnés les plus faciles (ceux qui rapportent le moins).
+  const next = t.filter((x) => !x.on && !x.lock).sort((a, b) => a.pts - b.pts).slice(0, 2);
+  $("trophy-next").hidden = !next.length;
+  $("trophy-next").innerHTML = `<small>Prochains défis</small>${next.map((x) => `<button type="button" data-t="${x.id}"><span class="trophy ${tierOf(x.pts)}"><span class="medal" style="width:44px!important;height:44px!important;font-size:13px!important">${esc(x.m)}</span></span><span><b>${esc(x.name)}</b><small>${esc(x.how)}</small></span><em>+${nf(x.pts)}</em></button>`).join("")}`;
+  renderTrophyGrid(t);
   freshTrophies.clear();
+  $("trophy-detail").hidden = true;
   $("trophy-sheet").hidden = false;
 }
-$("trophy-grid").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-t]"); if (!b) return;
-  const x = TROPHIES.find((t) => t.id === b.dataset.t), on = b.classList.contains("on"), lock = !plusTrophyOk(x);
-  $("trophy-grid").querySelectorAll(".sel").forEach((o) => o.classList.remove("sel")); b.classList.add("sel");
-  $("trophy-detail").textContent = `${x.name} : ${x.how.charAt(0).toLowerCase() + x.how.slice(1)}. ${on ? "Gagné, " : ""}+${nf(x.pts)} points.${lock ? " Avec Zieuton Plus seulement." : ""}`;
+function renderTrophyGrid(t = trophyStatus()) {
+  document.querySelectorAll("#trophy-filter [data-f]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === trophyFilter));
+  const keep = (x) => trophyFilter === "all" || (trophyFilter === "on" ? x.on : !x.on);
+  const byId = Object.fromEntries(t.map((x) => [x.id, x]));
+  const html = T_SECTIONS.map(([title, ids]) => {
+    const all = ids.map((id) => byId[id]).filter(Boolean), list = all.filter(keep);
+    if (!list.length) return "";
+    return `<section class="t-sec"><h3>${title}<small>${all.filter((x) => x.on).length} / ${all.length}</small></h3><div class="trophies">${list.map((x) => trophyBtn(x, true)).join("")}</div></section>`;
+  }).join("");
+  $("trophy-grid").innerHTML = html || `<p class="t-empty">${trophyFilter === "on" ? "Aucun trophée gagné pour l'instant. Lance-toi !" : "Tu as tout gagné. Respect !"}</p>`;
+}
+$("trophy-filter").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (!b) return; trophyFilter = b.dataset.f; haptic("selection"); renderTrophyGrid(); });
+function showTrophy(id) {
+  const x = trophyStatus().find((t) => t.id === id); if (!x) return;
+  const pop = $("trophy-detail");
+  pop.innerHTML = `<button class="t-x" type="button" aria-label="Fermer">✕</button>${trophyBtn(x)}<b>${esc(x.name)}</b><p>${esc(x.how)}.</p>
+    <div class="t-sts"><span class="t-st${x.on ? " on" : ""}">${x.on ? "Gagné" : x.lock ? "Avec Zieuton Plus" : "À gagner"}</span><span class="t-st pts">+${nf(x.pts)} points</span><span class="t-st">${TIER_NAMES[tierOf(x.pts)]}</span></div>`;
+  pop.hidden = true; void pop.offsetWidth; pop.hidden = false;
   haptic("selection");
+}
+$("trophy-sheet").addEventListener("click", (e) => {
+  if (e.target.closest(".t-x")) { $("trophy-detail").hidden = true; return; }
+  const b = e.target.closest("[data-t]");
+  if (b && !b.closest("#trophy-detail")) return showTrophy(b.dataset.t);
+  if (!e.target.closest("#trophy-detail")) $("trophy-detail").hidden = true;
 });
 $("tile-trophies").addEventListener("click", openTrophies);
 $("trophy-close").addEventListener("click", () => { $("trophy-sheet").hidden = true; });
