@@ -3694,10 +3694,14 @@ function metaStep(x) {
 }
 // Touches toujours permises, à toutes les étapes : bandeau des cookies, connexion, « Continuer ».
 const META_ALWAYS_OK = ["cookie", "Cookie", "Continuer", "Continue", "Se connecter", "Log in", "Plus tard", "Not now"];
+// L'écran d'Instagram de chaque étape : l'app cale le bandeau sur l'écran vraiment affiché.
+// Le résumé (avec « Commencer l'exportation ») sert à 4 étapes : l'app lit les réglages choisis pour savoir laquelle.
+const META_SCREEN = { "ig-01": "home", "ig-02": "profile", "ig-03": "dest", "ig-04": "summary:info", "ig-05": "pick", "ig-07": "pick",
+  "ig-08": "summary:period", "ig-09": "period", "ig-10": "summary:format", "ig-11": "format", "ig-12": "summary:start" };
 function guardOf(img) {
   const g = META_GUARD[img] || {};
   // Pas sur les étapes à choix (« Depuis le début », « JSON ») : une touche « OK » n'y vaut pas le bon choix.
-  return { ok: (g.ok || []).concat(g.pick ? [] : META_ALWAYS_OK), bad: g.bad || [], free: !!g.free, pick: !!g.pick, oops: g.oops || "", redoOops: g.redoOops || "",
+  return { screen: META_SCREEN[img] || "", ok: (g.ok || []).concat(g.pick ? [] : META_ALWAYS_OK), bad: g.bad || [], free: !!g.free, pick: !!g.pick, oops: g.oops || "", redoOops: g.redoOops || "",
     redo: g.redo ? IG_SHOTS.findIndex((s) => s.img === g.redo) : -1 };
 }
 function wkGo() {
@@ -4245,7 +4249,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-2040";
+const BUILD = "2026-11-03-2110";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
