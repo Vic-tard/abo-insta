@@ -1215,9 +1215,24 @@
   .zy-anni li { background: rgb(255 255 255 / .85); box-shadow: 0 4px 10px rgb(46 35 40 / .08); }
   .zy-anni li span { color: #2e2328; }
   .zy-anni li span small { color: #8a7a80; }
-  .zy-anni li i { background: linear-gradient(135deg, #f9df8a, #efae47); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 1px; flex-direction: column; line-height: 1; font-size: 15px; }
-  .zy-anni li i small { font: 700 8.5px/1 var(--round); }
-  .zy-anni li button { background: #2e2328; color: #fff; }
+  #zy-anni-card { padding-top: 26px; background: linear-gradient(160deg, #ffd3dc, #f39aa8); }
+  #zy-anni-card.party { background: linear-gradient(160deg, #ffe39a, #f7a3b4 55%, #c9a7f3); }
+  #zy-anni-card h2 { justify-content: center; text-align: center; font-size: 21px; }
+  #zy-anni-card p { text-align: center; font-weight: 700; }
+  .zy-bunting { position: absolute !important; left: 0; top: 0; width: 100%; height: 24px; }
+  .zy-anni li { border-radius: 18px; padding: 10px 12px; }
+  .zy-anni li span { font-weight: 700; }
+  .zy-anni li i.zy-balloon { position: relative; flex: none; width: 40px; height: 46px; border-radius: 50% 50% 46% 46% / 54% 54% 46% 46%; margin-bottom: 8px;
+    background: radial-gradient(circle at 32% 28%, rgb(255 255 255 / .75) 0 9%, transparent 22%), var(--bc); color: #2e2328; box-shadow: inset -4px -5px 0 rgb(0 0 0 / .08);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font: 800 16px/1 var(--round); font-style: normal; }
+  .zy-anni li i.zy-balloon small { font: 700 8.5px/1 var(--round); }
+  .zy-anni li i.zy-balloon::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 1.5px; height: 9px; background: rgb(46 35 40 / .35); }
+  .zy-anni li i.zy-balloon::before { content: ""; position: absolute; left: 50%; bottom: -3px; translate: -50% 0; border: 4px solid transparent; border-bottom: 5px solid var(--bc); border-top: 0; }
+  @media (prefers-reduced-motion: no-preference) { #zy-anni-card .zy-balloon { animation: qzFloat 2.8s ease-in-out infinite; } #zy-anni-card li:nth-child(2) .zy-balloon { animation-delay: -.9s; } #zy-anni-card li:nth-child(3) .zy-balloon { animation-delay: -1.8s; } }
+  .zy-anni li button { background: #2e2328; color: #fff; padding: 9px 13px; }
+  .zy-anni li button b { color: #f6c95a; }
+  .zy-anni li button:disabled { background: #3e9e68; color: #fff; }
+  .zy-anni li em { flex: none; font: 800 12.5px/1 var(--round); font-style: normal; background: #2e2328; color: #fff; border-radius: 999px; padding: 7px 11px; }
   .zy-step { background: rgb(255 255 255 / .75); color: #2e2328; }
   .zy-step small { color: #8a7a80; }
   .zy-step button { background: #fff; color: #2e2328; box-shadow: 0 2px 6px rgb(46 35 40 / .12); }
@@ -1863,14 +1878,14 @@
       <button class="zy-tile t-wheel" id="tile-wheel" type="button"><span class="zt-art" id="tile-wheel-art"></span><b>La roue du jour</b><small id="tile-wheel-sub"></small></button>
       <button class="zy-tile t-prono" id="tile-prono" type="button"><span class="zt-art" id="tile-prono-art"></span><b>Mes pronostics</b><small id="tile-prono-sub"></small></button>
     </div>
-    <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
-    <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
-    <div class="goal flashy" id="goal"></div>
     <section class="games" id="games" aria-label="Mini-jeux">
     <button class="game-card g-oldest" id="tile-oldest" data-game="oldest" type="button"><span class="g-av" data-look="oldest"></span><span class="g-txt"><b>Le Vétéran</b><em>Qui te suit depuis le plus longtemps&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
     <button class="game-card g-first" id="tile-first" data-game="first" type="button"><span class="g-av" data-look="first"></span><span class="g-txt"><b>Coup de foudre</b><em>Qui a craqué en premier, toi ou l'autre&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
     <button class="game-card g-back" id="tile-back" data-game="back" type="button"><span class="g-av" data-look="back"></span><span class="g-txt"><b>Ça match ?</b><em>Il te suit en retour, ou pas&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
   </section>
+    <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
+    <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
+    <div class="goal flashy" id="goal"></div>
     <button class="trophy-line" id="tile-trophies" type="button"><span class="t-cup" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M15 8h18v11a9 9 0 0 1-18 0z" fill="#fff6d8"/><path d="M15 11H9a6 6 0 0 0 6 8M33 11h6a6 6 0 0 1-6 8" fill="none" stroke="#fff6d8" stroke-width="3" stroke-linecap="round"/><path d="M21 27h6v6h-6z" fill="#fff6d8"/><rect x="15" y="33" width="18" height="6" rx="2" fill="#fff6d8"/><path d="M19 12v6" stroke="#e8b442" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="t-txt"><b>Trophées</b><small id="trophy-count"></small><span class="t-bar"><i id="trophy-bar"></i></span></span><span class="t-medals" id="trophy-medals" aria-hidden="true"></span></button>
   </div>
 </div>
@@ -3826,7 +3841,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0630";
+const BUILD = "2026-11-03-1230";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4803,21 +4818,27 @@ function anniversariesNow() {
   return { today, soon };
 }
 const ansText = (n) => `${n} an${n > 1 ? "s" : ""}`;
+// Anniversaires : carte de fête (fanions, ballons), 10 points par année d'abonnement.
+const ANNI_COLORS = ["#f2c45a", "#ef7f6a", "#9b86d6", "#5fb592", "#e8909c"];
+const anniPts = (n) => 10 * n;
+const BUNTING = `<svg class="zy-bunting" viewBox="0 0 320 26" preserveAspectRatio="none" aria-hidden="true"><path d="M0 3Q160 16 320 3" fill="none" stroke="rgb(46 35 40 / .35)" stroke-width="1.4"/>${
+  Array.from({ length: 11 }, (_, k) => { const x = 8 + k * 28.5, y = 3 + 13 * (1 - ((x - 160) / 160) ** 2) * .95; return `<path d="M${x - 9} ${y}L${x + 9} ${y}L${x} ${y + 15}z" fill="${ANNI_COLORS[k % 5]}"/>`; }).join("")}</svg>`;
+const balloon = (n, k) => `<i class="zy-balloon" style="--bc:${ANNI_COLORS[k % 5]}">${n}<small>${n > 1 ? "ans" : "an"}</small></i>`;
 function renderAnni() {
   const card = $("zy-anni-card");
   if (!Object.keys(state.followers).length) { card.hidden = true; return; }
   const { today, soon } = anniversaries(), z = zy(), y = new Date().getFullYear();
   card.hidden = !today.length && !soon.length;
   if (card.hidden) return;
-  card.innerHTML = today.length
-    ? `<h2>Anniversaires du jour<span>${today.length}</span></h2>
-       <ul class="zy-anni">${today.slice(0, 6).map((a) => {
+  card.classList.toggle("party", !!today.length);
+  card.innerHTML = BUNTING + (today.length
+    ? `<h2>C'est la fête aujourd'hui !</h2>
+       <ul class="zy-anni">${today.slice(0, 4).map((a, k) => {
          const done = z.anni[a.u + "|" + y];
-         return `<li><i>${a.years}<small>${a.years > 1 ? "ans" : "an"}</small></i><span>${esc(a.u)}<small>te suit depuis ${ansText(a.years)} aujourd'hui</small></span><button type="button" data-anni="${esc(a.u)}" data-y="${a.years}" ${done ? "disabled" : ""}>${done ? "Fêté" : "Fêter"}</button></li>`;
-       }).join("")}</ul>${today.length > 6 ? `<p>Et ${today.length - 6} autres aujourd'hui.</p>` : ""}`
-    : `<h2>Anniversaires d'abonnement</h2>
-       <ul class="zy-anni">${soon.slice(0, 3).map((a) => `<li><i>${a.years}<small>${a.years > 1 ? "ans" : "an"}</small></i><span>${esc(a.u)}<small>${ansText(a.years)} ${a.days === 1 ? "demain" : `dans ${a.days} jours`}</small></span></li>`).join("")}</ul>
-       <p>Le jour J, tu pourras le fêter et gagner des points.</p>`;
+         return `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>${ansText(a.years)} qu'il te suit !</small></span><button type="button" data-anni="${esc(a.u)}" data-y="${a.years}" ${done ? "disabled" : ""}>${done ? "Fêté ✓" : `Fêter <b>+${anniPts(a.years)}</b>`}</button></li>`;
+       }).join("")}</ul>${today.length > 4 ? `<p>Et ${today.length - 4 > 1 ? `${today.length - 4} autres` : "1 autre"} aujourd'hui !</p>` : ""}`
+    : `<h2>Bientôt la fête</h2>
+       <ul class="zy-anni">${soon.slice(0, 3).map((a, k) => `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>${ansText(a.years)} d'abonnement</small></span><em>${a.days === 1 ? "Demain" : `Dans ${a.days} j`}</em></li>`).join("")}</ul>`);
 }
 $("zy-anni-card").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-anni]");
@@ -4825,7 +4846,7 @@ $("zy-anni-card").addEventListener("click", async (e) => {
   const u = b.dataset.anni, n = +b.dataset.y, z = zy();
   z.anni[u + "|" + new Date().getFullYear()] = 1; z.anniN = (z.anniN || 0) + 1; z.anniMax = Math.max(z.anniMax || 0, n); savePrefs();
   confetti();
-  gainXP(5, "Anniversaire"); checkTrophies();
+  gainXP(anniPts(n), "Anniversaire"); checkTrophies();
   const text = `Ça fait ${ansText(n)} aujourd'hui que @${u} me suit 🎂`;
   try { if (navigator.share) await navigator.share({ text }); } catch {}
 });
