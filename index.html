@@ -1017,17 +1017,25 @@
     padding: 9px 16px; border-radius: 999px; box-shadow: 0 8px 20px rgb(0 0 0 / .2); pointer-events: none; white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
   @media (prefers-reduced-motion: no-preference) { .xp-pop { animation: xpPop 1.8s ease-out both; } }
   @keyframes xpPop { 0% { opacity: 0; transform: translateY(14px) scale(.8); } 12% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px); } }
-  .zy-look { display: flex; flex-direction: column; gap: 12px; }
-  .zy-look .zy-av { width: 132px; align-self: center; }
-  .zy-slots { display: flex; gap: 6px; justify-content: center; }
-  .zy-slots button { border: 0; border-radius: 999px; padding: 8px 14px; font: 600 13px var(--font); background: var(--surface-2); color: var(--ink); cursor: pointer; }
-  .zy-slots button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); }
-  .zy-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .zy-item { border: 2px solid transparent; border-radius: 16px; background: var(--surface-2); padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; font: 600 11.5px/1.2 var(--font); color: var(--ink); cursor: pointer; }
-  .zy-item .zy-av { width: 52px; }
-  .zy-item[aria-pressed="true"] { border-color: var(--rose-ink); }
-  .zy-item:disabled { cursor: default; opacity: .5; }
-  .zy-item:disabled .zy-av { filter: grayscale(1); }
+  #zy-title { font: 800 28px/1.1 var(--round); margin: 4px 0 0; }
+  .zy-look { display: flex; flex-direction: column; gap: 14px; }
+  .zy-look > .zy-av { width: 140px; align-self: center; border-radius: 28%; overflow: hidden; box-shadow: 0 0 0 4px var(--bg), 0 0 0 7px #f6c95a, 0 14px 28px rgb(46 35 40 / .25); }
+  .zy-look > .zy-av svg { display: block; width: 100%; height: 100%; }
+  .zy-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; background: var(--surface-2); border-radius: 999px; padding: 4px; }
+  .zy-slots button { border: 0; border-radius: 999px; padding: 9px 0; font: 700 13px var(--round); background: transparent; color: var(--muted); cursor: pointer; }
+  .zy-slots button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); box-shadow: 0 2px 6px rgb(46 35 40 / .18); }
+  .zy-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 10px; }
+  .zy-item { position: relative; border: 2px solid transparent; border-radius: 20px; background: var(--surface); box-shadow: 0 2px 10px rgb(46 35 40 / .08); padding: 12px 6px 10px; min-height: 128px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; color: var(--ink); cursor: pointer; text-align: center; }
+  .zy-item .zy-av { width: 64px; border-radius: 24%; overflow: hidden; }
+  .zy-item b { font: 700 12.5px/1.2 var(--round); text-wrap: balance; }
+  .zy-item small { font: 800 10.5px/1 var(--round); background: var(--surface-2); color: var(--muted); border-radius: 999px; padding: 4px 8px; }
+  .zy-item small.on { background: #f6c95a; color: #2e2328; }
+  .zy-item[aria-pressed="true"] { border-color: #f6c95a; }
+  .zy-item:disabled { cursor: default; }
+  .zy-item:disabled .zy-av { filter: grayscale(1); opacity: .45; }
+  .zy-item:disabled b { color: var(--muted); }
+  .zy-item:not(:disabled):active { transform: scale(.97); }
   #zy-title { text-align: center; }
   .zy-ranks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; text-align: center; font-size: 11px; color: var(--muted); }
   .zy-ranks li { background: var(--surface-2); border-radius: 12px; padding: 8px 2px; }
@@ -1585,7 +1593,7 @@
 
     <button class="st-group st-me needs-data" id="st-me" type="button" data-open="st-account">
       <span class="st-me-av" id="st-me-av" aria-hidden="true"></span>
-      <span class="st-t"><b id="st-me-name">Ton prénom</b><small id="st-me-sub">Mon compte, ma photo, mon bonhomme</small></span><span class="st-go" aria-hidden="true">›</span>
+      <span class="st-t"><b id="st-me-name">Ton prénom</b><small id="st-me-sub">Mon compte, ma photo, mon zieuteur</small></span><span class="st-go" aria-hidden="true">›</span>
     </button>
 
     <div class="st-group">
@@ -1627,7 +1635,7 @@
       <label class="st-row st-field"><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg></span><span class="st-t"><b>Instagram</b></span><input id="st-ig" type="text" maxlength="31" placeholder="@ton.pseudo" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done"></label>
     </div>
     <div class="st-group">
-      <button class="st-row" id="st-look-btn" type="button"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1-3.5 3.8-5.5 7-5.5s6 2 7 5.5"/></svg></span><span class="st-t"><b>Mon bonhomme</b><small id="st-zy-sub">Ses accessoires et ton niveau</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" id="st-look-btn" type="button"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1-3.5 3.8-5.5 7-5.5s6 2 7 5.5"/></svg></span><span class="st-t"><b>Mon zieuteur</b><small id="st-zy-sub">Ses accessoires et ton niveau</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <a class="st-row" id="st-ig-open" href="#" target="_blank" rel="noopener noreferrer" hidden><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg></span><span class="st-t"><b>Voir mon profil Instagram</b></span><span class="st-go" aria-hidden="true">›</span></a>
     </div>
     <div id="acct-group" hidden>
@@ -1657,7 +1665,7 @@
 
     <div class="st-plus-hero"><span class="plus-tag">Zieuton Plus</span><p id="plus-status"></p></div>
     <div class="st-group st-gold">
-      <button class="st-row" id="plus-open" type="button"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Découvrir Plus</b><small>Mises à jour illimitées, bonhomme en or</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" id="plus-open" type="button"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Découvrir Plus</b><small>Mises à jour illimitées, zieuteur en or</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" id="plus-manage" type="button" hidden><span class="st-ic st-ic-none"></span><span class="st-t"><b>Gérer mon abonnement</b></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" id="plus-restore" type="button"><span class="st-ic st-ic-none"></span><span class="st-t"><b>Restaurer mes achats</b><small>Si tu as déjà payé sur un autre iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
@@ -1847,7 +1855,7 @@
 <div class="bilan fullpage" id="zy-sheet" role="dialog" aria-modal="true" aria-labelledby="zy-title" hidden>
   <div class="card">
     <div class="fp-head"><button class="fp-back" id="zy-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="zy-sum"></p><span></span></div>
-    <h2 id="zy-title">Mon bonhomme</h2>
+    <h2 id="zy-title">Mon zieuteur</h2>
     <div class="zy-look" id="zy-look"></div>
   </div>
 </div>
@@ -1877,7 +1885,7 @@
 <div class="pg off" id="pg-games" role="region" aria-label="Mini-jeux" inert>
   <div class="wrap">
     <div class="pg-head center"><div><h1 class="pg-title-big">Mini-jeux</h1></div></div>
-    <button class="zy-level" id="zy-level" type="button" aria-label="Mon niveau et mon bonhomme"></button>
+    <button class="zy-level" id="zy-level" type="button" aria-label="Mon niveau et mon zieuteur"></button>
     <div class="zy-duo" id="zy-duo">
       <button class="zy-tile t-wheel" id="tile-wheel" type="button"><span class="zt-art" id="tile-wheel-art"></span><b>La roue du jour</b><small id="tile-wheel-sub"></small></button>
       <button class="zy-tile t-prono" id="tile-prono" type="button"><span class="zt-art" id="tile-prono-art"></span><b>Mes pronostics</b><small id="tile-prono-sub"></small></button>
@@ -1951,7 +1959,7 @@
     <ul class="plus-rules" id="plus-rules"></ul>
     <ul class="plus-perks">
       <li><i>∞</i>Mises à jour illimitées</li>
-      <li><i>✦</i>Ton bonhomme en or</li>
+      <li><i>✦</i>Ton zieuteur en or</li>
       <li><i>✓</i>Sans pub, tes données chez toi</li>
     </ul>
     <div class="plus-plans" role="radiogroup" aria-label="Formule">
@@ -2940,7 +2948,7 @@ $("acct-list").addEventListener("click", async (e) => {
 });
 $("acct-del").addEventListener("click", () => {
   if (storeApp() && hasPlus()) return toast(`Le compte de ${acctName(curAcct())} a Zieuton Plus : résilie-le d'abord (Réglages → Zieuton Plus → Gérer), puis supprime le compte.`, false);
-  $("acct-del-p").textContent = `L'historique, le bonhomme et les jeux de ${acctName(curAcct())} seront effacés de ce téléphone. Tu reviendras sur le compte de ${acctName(accts().find((a) => a.slot === 1))}.`;
+  $("acct-del-p").textContent = `L'historique, le zieuteur et les jeux de ${acctName(curAcct())} seront effacés de ce téléphone. Tu reviendras sur le compte de ${acctName(accts().find((a) => a.slot === 1))}.`;
   $("acct-del-row").hidden = true; $("acct-del-confirm").hidden = false;
 });
 $("acct-del-no").addEventListener("click", () => { $("acct-del-confirm").hidden = true; renderAcct(); });
@@ -3152,7 +3160,7 @@ function renderSettings() {
   const me = prefs.me || {};
   $("st-me-name").textContent = me.name || "Ton prénom";
   $("st-me-name").classList.toggle("ph", !me.name);
-  $("st-me-sub").textContent = me.ig ? `@${me.ig} · Mon compte` : "Mon compte, ma photo, mon bonhomme";
+  $("st-me-sub").textContent = me.ig ? `@${me.ig} · Mon compte` : "Mon compte, ma photo, mon zieuteur";
   const face = $("avatar-core").innerHTML;
   $("st-me-av").innerHTML = face; $("st-acc-av").innerHTML = face;
   if (document.activeElement !== $("st-name")) $("st-name").value = me.name || "";
@@ -3845,7 +3853,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1245";
+const BUILD = "2026-11-03-1300";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -3964,7 +3972,7 @@ function renderPlusMini() {
   if (!storeApp()) return;
   const n = state.snapshots.length, next = nextFreeAt();
   $("plus-mini").classList.toggle("on", hasPlus());
-  if (hasPlus()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = "Zieuton Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton bonhomme en or."; return; }
+  if (hasPlus()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = "Zieuton Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton zieuteur en or."; return; }
   if (guestAcct()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = acctMe(curAcct()).name ? `Plus pour ${acctMe(curAcct()).name}` : "Plus pour ce compte"; $("plus-mini-s").textContent = "Compte ajouté : Plus dès le 1er import"; return; }
   $("plus-mini-t").textContent = n === 0 ? "Gratuit pour commencer"
     : n === 1 ? "Ta comparaison est offerte"
@@ -3994,7 +4002,7 @@ function renderPlusBlock() {
 async function plusUnlocked() {
   $("plus").hidden = true;
   haptic("success"); confetti();
-  toast("Bienvenue dans Zieuton Plus ! Ton bonhomme est passé en or.", false);
+  toast("Bienvenue dans Zieuton Plus ! Ton zieuteur est passé en or.", false);
   renderPlusBlock();
   // Un fichier attendait : on l'importe maintenant.
   if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
@@ -4518,7 +4526,7 @@ const TROPHIES = [
   { id: "anni10", m: "10", name: "Fêtard", how: "Fête 10 anniversaires", pts: 300, test: () => zs("anniN") >= 10 },
   { id: "anni5y", m: "5 ans", name: "Vieille amitié", how: "Fête un abonné qui te suit depuis 5 ans", pts: 600, test: () => zs("anniMax") >= 5 },
   { id: "style3", m: "3", name: "Styliste", how: "Porte 3 accessoires en même temps", pts: 100, test: () => Object.values(prefs.zy?.look || {}).filter(Boolean).length >= 3 },
-  { id: "style5", m: "5", name: "Défilé", how: "Habille ton bonhomme dans les 5 catégories", pts: 400, test: () => Object.values(prefs.zy?.look || {}).filter(Boolean).length >= 5 },
+  { id: "style5", m: "5", name: "Défilé", how: "Habille ton zieuteur dans les 5 catégories", pts: 400, test: () => Object.values(prefs.zy?.look || {}).filter(Boolean).length >= 5 },
 ];
 const tierOf = (pts) => pts >= 2000 ? "diamond" : pts >= 500 ? "gold" : pts >= 150 ? "silver" : "bronze";
 // Trophées « Plus » (imports chaque semaine, 25 ou 50 imports) : impossibles avec une seule mise à jour gratuite par mois.
@@ -4587,9 +4595,9 @@ document.addEventListener("keydown", (e) => {
 // ---------- Niveau de Zieutage : les points gagnés dans tous les jeux font monter de niveau ----------
 // prefs.zy = { xp, look: { hat, eyes, wall }, spun: "AAAA-MM-JJ", anni: { "pseudo|année": 1 } }
 const RANKS = [[1, "Curieux"], [5, "Fouineur"], [10, "Détective"], [15, "Espion"], [20, "Agent secret"], [25, "Légende"], [30, "Zieuton d'or"]];
-// Points pour passer du niveau lvl au suivant : 150 au départ, puis 70 de plus à chaque niveau.
-// Niveau 10 ≈ 3 900 points, niveau 20 ≈ 14 800, niveau 30 ≈ 32 800 : très dur, mais faisable en jouant souvent.
-const xpStep = (lvl) => 150 + 70 * (lvl - 1);
+// Points pour passer du niveau lvl au suivant : 100 au départ, puis 10 % de plus à chaque niveau.
+// Niveau 10 ≈ 1 400 points, niveau 20 ≈ 5 700, niveau 30 ≈ 15 000 : très dur, mais faisable en jouant souvent.
+const xpStep = (lvl) => Math.round(100 * 1.1 ** (lvl - 1) / 10) * 10;
 const LVL_MAX = 30;
 function levelOf(xp) {
   let lvl = 1, floor = 0;
@@ -4641,6 +4649,8 @@ const LOOKS = [
   { id: "devil", slot: "hat", name: "Cornes de diablotin", lvl: 16, svg: `<path d="M31 34c-6-4-8.5-11-7-19 4 5 9.5 7.5 15 9.5z" fill="#e2685a"/><path d="M69 34c6-4 8.5-11 7-19-4 5-9.5 7.5-15 9.5z" fill="#e2685a"/><path d="M27 19c.5 4 2.5 7 6 9.5M73 19c-.5 4-2.5 7-6 9.5" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.6" stroke-linecap="round"/>` },
   { id: "halo", slot: "hat", name: "Auréole", lvl: 19, svg: `<ellipse cx="50" cy="17" rx="19" ry="5.5" fill="none" stroke="#f2c45a" stroke-width="7" stroke-opacity=".3"/><ellipse cx="50" cy="17" rx="19" ry="5.5" fill="none" stroke="#f2c45a" stroke-width="3.4"/><path d="M36 15c4-2 10-3 15-3" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="1.4" stroke-linecap="round"/>` },
   { id: "crown", slot: "hat", name: "Couronne", lvl: 22, svg: `<path d="M28.5 35.5L26 14.5l11.5 9L50 9l12.5 14.5 11.5-9-2.5 21z" fill="#f2c45a" stroke="#d9a63a" stroke-width="1.6" stroke-linejoin="round"/><rect x="28" y="31" width="44" height="6" rx="2" fill="#e8b442"/><circle cx="50" cy="34" r="2.6" fill="#e2685a"/><circle cx="39" cy="34" r="1.8" fill="#7cc4a8"/><circle cx="61" cy="34" r="1.8" fill="#7cc4a8"/><circle cx="26" cy="14.5" r="2.4" fill="#f2c45a"/><circle cx="50" cy="9" r="2.6" fill="#f2c45a"/><circle cx="74" cy="14.5" r="2.4" fill="#f2c45a"/><path d="M33 22l2.5 9" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/>` },
+  { id: "goldcap", slot: "hat", name: "Casquette dorée", lvl: 29, dy: -5, svg: `<path d="M22 40C22 22.5 34 15 50 15s28 7.5 28 25z" fill="#f2c45a"/><path d="M50 15v25M35 18.5c-3 6-4 13-4 21.5M65 18.5c3 6 4 13 4 21.5" stroke="#d9a63a" stroke-width="1.4" fill="none"/><circle cx="50" cy="15.5" r="2.4" fill="#d9a63a"/><path d="M30 26c3-5 8-8 13-9" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="2.4" stroke-linecap="round"/><path d="M16 41.5C27 36.5 73 36.5 84 41.5c-4 4.5-12 5.5-34 5.5s-30-1-34-5.5z" fill="#d9a63a"/><path d="M20 41.5c10-3 50-3 60 0" fill="none" stroke="#b98a2a" stroke-width="1.2"/>` },
+  { id: "royal", slot: "hat", name: "Couronne royale", lvl: 30, svg: `<path d="M26 37L23 13l10 9 8-14 9 13 9-13 8 14 10-9-3 24z" fill="#f2c45a" stroke="#c9922e" stroke-width="1.6" stroke-linejoin="round"/><path d="M29 27c6 3 15 4 21 4s15-1 21-4l-1 7H30z" fill="#c94a5a"/><rect x="25" y="33" width="50" height="7" rx="2.5" fill="#e8b442"/><circle cx="50" cy="36.5" r="3" fill="#5ad1e6"/><circle cx="38" cy="36.5" r="2.2" fill="#e2685a"/><circle cx="62" cy="36.5" r="2.2" fill="#e2685a"/><g fill="#fff6d8"><circle cx="23" cy="13" r="2.6"/><circle cx="41" cy="8" r="2.6"/><circle cx="59" cy="8" r="2.6"/><circle cx="77" cy="13" r="2.6"/></g><circle cx="50" cy="20" r="2.4" fill="#5ad1e6"/><path d="M31 20l2 9" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/>` },
   // ---- Yeux
   { id: "sun", slot: "eyes", name: "Lunettes de soleil", lvl: 2, svg: `<path d="M27.5 42.5h21v5.5c0 4.5-3.5 7.5-8 7.5h-5c-4.5 0-8-3-8-7.5zM51.5 42.5h21v5.5c0 4.5-3.5 7.5-8 7.5h-5c-4.5 0-8-3-8-7.5z" fill="#2e2328"/><path d="M25 42.5h50" stroke="#2e2328" stroke-width="3" stroke-linecap="round"/><path d="M31 46l5-1.5M55 46l5-1.5" stroke="#fff" stroke-opacity=".55" stroke-width="1.8" stroke-linecap="round"/>` },
   { id: "round", slot: "eyes", name: "Lunettes rondes", lvl: 4, svg: `<circle cx="39.5" cy="48" r="8.6" fill="#fff" fill-opacity=".18" stroke="#2e2328" stroke-width="2.2"/><circle cx="60.5" cy="48" r="8.6" fill="#fff" fill-opacity=".18" stroke="#2e2328" stroke-width="2.2"/><path d="M48 47.5c1.3-1.4 2.7-1.4 4 0M31 46.5l-6.5-2M69 46.5l6.5-2" fill="none" stroke="#2e2328" stroke-width="2.2" stroke-linecap="round"/>` },
@@ -4649,12 +4659,14 @@ const LOOKS = [
   { id: "3d", slot: "eyes", name: "Lunettes 3D", lvl: 12, svg: `<rect x="27" y="41.5" width="46" height="13" rx="3" fill="#fff" stroke="#2e2328" stroke-width="1.6"/><rect x="30.5" y="44" width="16" height="8" rx="2" fill="#e2685a" fill-opacity=".85"/><rect x="53.5" y="44" width="16" height="8" rx="2" fill="#5aa6d9" fill-opacity=".85"/>` },
   { id: "spy", slot: "eyes", name: "Masque d'espion", lvl: 15, svg: `<path d="M20.5 41c9-3 18-2.5 29.5 1 11.5-3.5 20.5-4 29.5-1v9c0 5-3 8.5-8 8.5-6 0-9-3-14-4-2-.4-3.5-.4-5 0-5 1-8 4-14 4-5 0-8-3.5-8-8.5z" fill="#2e2328"/><ellipse cx="39.5" cy="49" rx="5.6" ry="4.6" fill="#fff"/><ellipse cx="60.5" cy="49" rx="5.6" ry="4.6" fill="#fff"/><circle cx="40.5" cy="49" r="2.6" fill="#2e2328"/><circle cx="61.5" cy="49" r="2.6" fill="#2e2328"/>` },
   { id: "monocle", slot: "eyes", name: "Monocle", lvl: 18, svg: `<circle cx="60.5" cy="48" r="9.5" fill="#fff" fill-opacity=".25" stroke="#d9a63a" stroke-width="2.6"/><path d="M55 43.5a7 7 0 0 1 5-2" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><path d="M69.5 51.5c3 3 3.5 7 2 12" fill="none" stroke="#d9a63a" stroke-width="1.3" stroke-dasharray="2 1.5"/>` },
+  { id: "visor", slot: "eyes", name: "Visière néon", lvl: 25, svg: `<rect x="24" y="41" width="52" height="13" rx="6.5" fill="#5ad1e6" fill-opacity=".9" stroke="#2e2328" stroke-width="2"/><path d="M30 45h13" stroke="#fff" stroke-opacity=".75" stroke-width="2" stroke-linecap="round"/>` },
   // ---- Visage
   { id: "smile", slot: "face", name: "Sourire", lvl: 3, svg: `<path d="M45 56.5c2.8 3.2 7.2 3.2 10 0" fill="none" stroke="#2e2328" stroke-width="2.2" stroke-linecap="round"/>` },
   { id: "tongue", slot: "face", name: "Langue tirée", lvl: 8, svg: `<path d="M44.5 56h11c0 2-2.5 3.8-5.5 3.8s-5.5-1.8-5.5-3.8z" fill="#2e2328"/><path d="M47 58.5h6v2.5a3 3 0 0 1-6 0z" fill="#ef6f86"/><path d="M50 58.8v2.6" stroke="#c9485f" stroke-width=".9"/>` },
   { id: "kiss", slot: "face", name: "Bisou", lvl: 14, svg: `<path d="M50 61c-3.4-1.8-5-3.4-5-5.2a2.5 2.5 0 0 1 5-.8 2.5 2.5 0 0 1 5 .8c0 1.8-1.6 3.4-5 5.2z" fill="#ef6f86"/><path d="M58 33.5c-1.7-1-2.6-1.9-2.6-2.8a1.3 1.3 0 0 1 2.6-.4 1.3 1.3 0 0 1 2.6.4c0 .9-.9 1.8-2.6 2.8z" fill="#ef6f86" fill-opacity=".8"/>` },
   { id: "mustache", slot: "face", name: "Moustache", lvl: 17, svg: `<path d="M50 55.5c-2-2.5-6-3.5-9-1.5-2.5 1.6-4.5 4.5-8 3.5 2 3.5 6.5 4.5 10 3 3-1.3 5.5-3 7-5 1.5 2 4 3.7 7 5 3.5 1.5 8 .5 10-3-3.5 1-5.5-1.9-8-3.5-3-2-7-1-9 1.5z" fill="#4a3a41"/>` },
   { id: "bubble", slot: "face", name: "Bulle de chewing-gum", lvl: 21, svg: `<circle cx="50" cy="58" r="8.5" fill="#f6a8bd" fill-opacity=".92" stroke="#ef8aa6" stroke-width="1.2"/><path d="M45 54.5a5.5 5.5 0 0 1 4-2.2" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>` },
+  { id: "goatee", slot: "face", name: "Barbichette", lvl: 26, svg: `<path d="M45 56c2.8 2.6 7.2 2.6 10 0" fill="none" stroke="#2e2328" stroke-width="2.2" stroke-linecap="round"/><path d="M46 60.5c1 4.5 2.5 6.5 4 6.5s3-2 4-6.5c-2.6 1-5.4 1-8 0z" fill="#4a3a41"/>` },
   // ---- Mur
   { id: "bricks", slot: "wall", name: "Mur de briques", lvl: 5, color: "#b5574a", pattern: `<path d="M0 72h100M0 80h100M0 88h100M0 96h100M12 64v8M37 64v8M62 64v8M87 64v8M24 72v8M49 72v8M74 72v8M12 80v8M37 80v8M62 80v8M87 80v8M24 88v8M49 88v8M74 88v8" stroke="#8e3f35" stroke-width="1.4"/>` },
   { id: "coral", slot: "wall", name: "Mur corail", lvl: 7, color: "#ef7f6a", pattern: `<path d="M0 64h100" stroke="#fff" stroke-opacity=".35" stroke-width="2"/>` },
@@ -4662,12 +4674,15 @@ const LOOKS = [
   { id: "gold", slot: "wall", name: "Mur doré", lvl: 14, color: "#d9a63a", pattern: `<path d="M0 64h100" stroke="#fff" stroke-opacity=".5" stroke-width="2"/><path d="M14 80l2 4 4 1-4 1-2 4-2-4-4-1 4-1zM84 86l1.5 3 3 .8-3 .8-1.5 3-1.5-3-3-.8 3-.8z" fill="#fff" fill-opacity=".8"/>` },
   { id: "starry", slot: "wall", name: "Mur nuit étoilée", lvl: 20, color: "#2b3566", pattern: `<g fill="#fff"><circle cx="10" cy="76" r="1.2"/><circle cx="34" cy="88" r="1"/><circle cx="58" cy="74" r="1.3"/><circle cx="90" cy="92" r="1.1"/><circle cx="74" cy="84" r=".9"/><circle cx="20" cy="94" r=".9"/></g><path d="M44 80l1.6 3.4 3.4 1.6-3.4 1.6-1.6 3.4-1.6-3.4-3.4-1.6 3.4-1.6z" fill="#f2c45a"/>` },
   { id: "hearts", slot: "wall", name: "Mur cœurs", lvl: 24, color: "#e8909c", pattern: `<g fill="#fff" fill-opacity=".7"><path d="M14 86c-3.5-2.4-5-4-5-5.6a2.5 2.5 0 0 1 5-.7 2.5 2.5 0 0 1 5 .7c0 1.6-1.5 3.2-5 5.6zM50 96c-3.5-2.4-5-4-5-5.6a2.5 2.5 0 0 1 5-.7 2.5 2.5 0 0 1 5 .7c0 1.6-1.5 3.2-5 5.6zM84 84c-3.5-2.4-5-4-5-5.6a2.5 2.5 0 0 1 5-.7 2.5 2.5 0 0 1 5 .7c0 1.6-1.5 3.2-5 5.6z"/></g>` },
+  { id: "diamond", slot: "wall", name: "Mur diamant", lvl: 28, color: "#6fb9de", pattern: `<path d="M0 64h100" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><path d="M14 74l6 6-6 6-6-6zM50 82l6 6-6 6-6-6zM86 72l6 6-6 6-6-6z" fill="#fff" fill-opacity=".8"/><path d="M32 90l3 3-3 3-3-3zM70 88l3 3-3 3-3-3z" fill="#fff" fill-opacity=".55"/>` },
   // ---- Fond
   { id: "sky", slot: "bg", name: "Fond ciel", lvl: 4, bg: ["#9fd0ee", "#cfe8f6"] },
   { id: "mint", slot: "bg", name: "Fond menthe", lvl: 9, bg: ["#8fd3b8", "#c9eadc"] },
   { id: "sunset", slot: "bg", name: "Fond coucher de soleil", lvl: 13, bg: ["#ef7f6a", "#f2c45a"] },
   { id: "lilac", slot: "bg", name: "Fond lilas", lvl: 16, bg: ["#b8a6e6", "#e2d9f7"] },
   { id: "night", slot: "bg", name: "Fond nuit", lvl: 23, bg: ["#1f2547", "#4a3f7a"], stars: true },
+  { id: "aurora", slot: "bg", name: "Fond aurore", lvl: 27, bg: ["#3fb79a", "#8a6be0"] },
+  { id: "goldbg", slot: "bg", name: "Fond or", lvl: 30, bg: ["#c7891d", "#f6d06a"], stars: true },
 ];
 const SLOTS = { hat: "Chapeau", eyes: "Yeux", face: "Visage", wall: "Mur", bg: "Fond" };
 let avatarN = 0;
@@ -4708,7 +4723,7 @@ function openLook(slot = "hat") {
     <div class="zy-slots">${Object.entries(SLOTS).map(([k, v]) => `<button type="button" data-slot="${k}" aria-pressed="${k === slot}">${v}</button>`).join("")}</div>
     <div class="zy-items">${items.map((x) => {
       const on = (z.look[slot] || "") === x.id, locked = L.lvl < x.lvl;
-      return `<button class="zy-item" type="button" data-item="${x.id}" data-s="${slot}" aria-pressed="${on}" ${locked ? "disabled" : ""}><span class="zy-av">${avatarSVG({ ...z.look, [slot]: x.id })}</span>${esc(x.name)}${locked ? `<br>Niveau ${x.lvl}` : ""}</button>`;
+      return `<button class="zy-item" type="button" data-item="${x.id}" data-s="${slot}" aria-pressed="${on}" ${locked ? "disabled" : ""}><span class="zy-av">${avatarSVG({ ...z.look, [slot]: x.id })}</span><b>${esc(x.name)}</b>${locked ? `<small>Niv. ${x.lvl}</small>` : on ? `<small class="on">Porté</small>` : ""}</button>`;
     }).join("")}</div>
     <ul class="zy-ranks">${RANKS.map(([l, n]) => `<li class="${L.lvl >= l ? "on" : ""}"><b>${n}</b>Niv. ${l}</li>`).join("")}</ul>`;
   $("zy-sheet").hidden = false;
