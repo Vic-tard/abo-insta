@@ -1451,9 +1451,9 @@ private extension WebViewController {
 @MainActor
 final class PlusStore {
     static let shared = PlusStore()
-    /// Chaque compte Instagram du téléphone (1 à 4) a son propre Plus, dans son propre groupe d'abonnements :
+    /// Chaque compte Instagram du téléphone (1 à 3) a son propre Plus, dans son propre groupe d'abonnements :
     /// compte 1 = fr.zyeuto.plus.*, compte 2 = fr.zyeuto.plus2.*, etc. (un même identifiant Apple peut ainsi en payer plusieurs).
-    static let slots = 1...4
+    static let slots = 1...3
     static func prefix(_ slot: Int) -> String { slot == 1 ? "fr.zyeuto.plus." : "fr.zyeuto.plus\(slot)." }
     static let ids = slots.flatMap { n in ["an", "mois", "avie"].map { prefix(n) + $0 } }
     static func slot(of id: String) -> Int? { slots.first { id.hasPrefix(prefix($0)) } }
