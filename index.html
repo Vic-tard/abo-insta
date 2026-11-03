@@ -950,6 +950,13 @@
   .taps li.ok .n { background: var(--up-soft); color: var(--up); }
   .taps li.cur button { box-shadow: inset 0 0 0 2px var(--btn); }
   .taps li.cur .n { background: var(--btn); color: var(--btn-ink); }
+  /* App iPhone : ce qui va se passer dans Instagram, en trois lignes */
+  .gf-how { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .gf-how li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; background: var(--surface-2); border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.4; }
+  .gf-how li > i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); font: 700 13px var(--font); font-style: normal; }
+  .gf-how small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .gf-wait.ready .radar { display: none; }
+  .gf-wait .done-ic { font-size: 54px; line-height: 1; }
   .gf-wait { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 18px 0 4px; }
   .gf-wait .radar { width: 96px; height: 96px; }
   .gf-wait b { font-size: 17px; }
@@ -1814,6 +1821,17 @@
     <button class="asked-stay" id="asked-stay" type="button">Rester sur l'accueil</button>
   </div>
 </div>
+<!-- Juste après le tout premier import : ce qu'on voit déjà, et ce qui vient ensuite -->
+<div class="asked" id="first" hidden role="dialog" aria-modal="true" aria-labelledby="first-t">
+  <div class="asked-card">
+    <span class="zy-av asked-av" id="first-av" aria-hidden="true"></span>
+    <h2 id="first-t">C'est ton départ&nbsp;!</h2>
+    <p id="first-n"></p>
+    <p>Pour voir qui part et qui arrive, il faut un deuxième export. Fais-le dans quelques jours, ou dès que ton nombre d'abonnés baisse&nbsp;: je compare et je te montre tout.</p>
+    <button class="asked-go stats" id="first-notback" type="button">Qui ne me suit pas en retour&nbsp;?</button>
+    <button class="asked-go games" id="first-ok" type="button">Découvrir l'app</button>
+  </div>
+</div>
 <div class="asked" id="plus" hidden role="dialog" aria-modal="true" aria-labelledby="plus-t">
   <div class="asked-card plus-card">
     <button class="plus-x" id="plus-x" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -1869,6 +1887,7 @@
       <label for="pv-date">Date de l'export<input type="date" id="pv-date"></label>
       <div class="msg err" id="pv-err" hidden></div>
       <button class="btn primary" id="pv-add" type="button" hidden>Ajouter ce compte</button>
+      <button class="btn primary" id="pv-redo" type="button" hidden>Refaire l'export avec le guide</button>
       <div class="row">
         <button class="btn primary" id="save">Enregistrer</button>
         <button class="btn ghost" id="cancel-confirm">Annuler</button>
@@ -2479,9 +2498,24 @@ async function importFiles(files) {
   $("pv-radar").hidden = false;
   $("pv-source").textContent = "";
   $("save").disabled = true;
+  $("save").textContent = "Enregistrer";
+  $("pv-redo").hidden = true;
   showSwitch(null);
   try {
     pending = await readExport(files).finally(() => { $("pv-radar").hidden = true; });
+    // Premier import avec la période « Année dernière » : la liste est incomplète, on le dit avant d'enregistrer.
+    const short = !state.snapshots.length && lastYearOnly(pending.followers);
+    if (short) {
+      $("pv-count").textContent = `${nf(Object.keys(pending.followers).length)} abonnés`;
+      $("pv-source").textContent = pending.source;
+      $("pv-date").value = toDateInput(pending.date);
+      $("pv-err").textContent = `Il manque sûrement des abonnés : le plus ancien te suit seulement depuis le ${fmtDate(short)}. Instagram a dû garder la période « Année dernière ». Refais l'export en choisissant « Depuis le début ».`;
+      $("pv-err").hidden = false;
+      $("pv-redo").hidden = false;
+      $("save").disabled = false;
+      $("save").textContent = "Mon compte a moins d'un an : continuer";
+      return;
+    }
     // Import direct, sans écran de confirmation : on peut annuler juste après.
     if (await commit(pending.date.toISOString())) return;
     const n = Object.keys(pending.followers).length;
@@ -2493,8 +2527,27 @@ async function importFiles(files) {
     $("pv-count").textContent = "Import impossible";
     $("pv-err").textContent = err.message;
     $("pv-err").hidden = false;
+    $("pv-redo").hidden = false;
   }
 }
+// Période « Année dernière » : tous les abonnés datent de moins d'un an, et le plus ancien d'à peu près un an.
+// Renvoie la date du plus ancien abonné dans ce cas (un compte qui a moins d'un an peut continuer quand même).
+function lastYearOnly(followers) {
+  const ts = Object.values(followers).filter((t) => Number.isInteger(t) && t > 0);
+  if (ts.length < 50 || ts.length < Object.keys(followers).length * 0.9) return null;
+  const oldest = Math.min(...ts) * 1000, days = (Date.now() - oldest) / 86400000;
+  return days > 300 && days < 372 ? new Date(oldest).toISOString() : null;
+}
+// Erreur d'import : on repart sur le guide de l'export, au début.
+$("pv-redo").addEventListener("click", () => {
+  closeSheet();
+  delete prefs.requestedAt; delete prefs.readyAt;
+  prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; gfTaps = [];
+  savePrefs(); haptic("light");
+  if (!state.snapshots.length) return render();
+  if (metaInApp()) { render(); return wkGo(); }
+  openRepeat();
+});
 
 // Enregistre l'export en attente. Renvoie false (et affiche l'erreur dans la feuille) si l'import est refusé.
 let undoState = null, toastTimer = null;
@@ -2516,6 +2569,7 @@ async function commit(takenAt) {
     if (r.status === "ok" && !hasPlus()) prefs.lastFreeAt = new Date().toISOString();
     prefs.lastImportAt = new Date().toISOString(); savePrefs();
     closeSheet();
+    $("asked").hidden = true;
     // Premier import : « Pas en retour » est le seul résultat disponible tout de suite.
     tab = r.status === "ok" ? "unfollow" : state.following ? "notback" : "recent";
     if (r.status === "same" && !r.withFollowing) tab = "unfollow";
@@ -2534,6 +2588,7 @@ async function commit(takenAt) {
       : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
     if (r.status === "ok") openBilan(r, prev);
     else { playIntro(); confetti(); checkTrophies(); }
+    if (r.status === "first" && state.snapshots.length === 1) setTimeout(() => openFirst(r.count), 1400);
     gainXP(30, "Import");
     await save();
     return true;
@@ -2546,6 +2601,7 @@ async function commit(takenAt) {
     $("save").disabled = false;
     $("pv-err").textContent = err.message;
     $("pv-err").hidden = false;
+    $("pv-redo").hidden = !!err.otherAccount;
     showSwitch(err.otherAccount || null);
     return false;
   }
@@ -3088,7 +3144,7 @@ function wkGo() {
 window.zyeutoMeta = (ev) => {
   // Fichier vu prêt par l'app : la carte passe à « Ton export est prêt ».
   if (ev === "ready") {
-    if (reqPending() && !prefs.readyAt) { prefs.readyAt = new Date().toISOString(); savePrefs(); haptic("success"); renderWeekly(); }
+    if (reqPending() && !prefs.readyAt) { prefs.readyAt = new Date().toISOString(); savePrefs(); haptic("success"); renderWeekly(); if (gfOn()) renderGuided(); }
     return;
   }
   // Notification « C'est demandé » touchée : retour à l'accueil, sur la carte « En préparation ».
@@ -3100,6 +3156,8 @@ window.zyeutoMeta = (ev) => {
   }
   if (ev === "requested") {
     markRequested(); haptic("success"); scrollTo({ top: 0 });
+    // Premier export : l'écran d'attente du parcours prend le relais (pas de jeux ni de graphiques encore vides).
+    if (gfOn()) return;
     $("asked-av").innerHTML = $("wk-av").innerHTML;
     $("asked").hidden = false;
   }
@@ -3109,10 +3167,23 @@ $("asked-games").addEventListener("click", () => closeAsked("games"));
 $("asked-stats").addEventListener("click", () => closeAsked("stats"));
 $("asked-stay").addEventListener("click", () => closeAsked());
 $("asked").addEventListener("click", (e) => { if (e.target === $("asked")) closeAsked(); });
+// Après le tout premier import : ce que ça veut dire, et la suite.
+function openFirst(n) {
+  $("first-av").innerHTML = $("wk-av").innerHTML;
+  $("first-n").innerHTML = `${nf(n)} abonnés enregistrés aujourd'hui.`;
+  $("first-notback").hidden = !state.following;
+  $("first").hidden = false;
+}
+$("first-ok").addEventListener("click", () => { $("first").hidden = true; });
+$("first-notback").addEventListener("click", () => {
+  $("first").hidden = true;
+  selectTab("notback"); shown = PAGE; renderList(); animateList();
+  $("list-card").scrollIntoView({ behavior: "smooth", block: "start" });
+});
 $("wk-go").addEventListener("click", wkGo);
 $("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
 // La carte passe toute seule à « Ton export est prêt » au bout de quelques minutes.
-setInterval(() => { if (!document.hidden && reqPending()) renderWeekly(); }, 30000);
+setInterval(() => { if (!document.hidden && reqPending()) { renderWeekly(); if (gfOn() && gfStep() === "get" && metaInApp()) renderGuided(); } }, 30000);
 
 // ---------- Parcours guidé du premier export ----------
 // Tant qu'aucun import n'est fait, l'app n'affiche que ce parcours : une étape à la fois, un seul gros bouton.
@@ -3366,6 +3437,43 @@ function renderGuided() {
         <button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>
       </div>`;
     $("gf-drive").onclick = () => driveSignIn("drive-flow");
+  } else if (step === "insta" && metaInApp()) {
+    // App iPhone : Instagram s'ouvre DANS Zieuton, avec le bandeau qui montre où toucher (comme « Mettre à jour »).
+    gfOnReturn = null;
+    body.innerHTML = `${guide(gfRepeat ? "On remet ça&nbsp;? Je t'ouvre Instagram ici, avec mon bandeau 😉" : "Première mission&nbsp;: demander ta liste à Instagram. Je reste avec toi tout du long&nbsp;!")}
+      <h2 id="gf-title">Demande ta liste à Instagram</h2>
+      <ol class="gf-how">
+        <li><i>1</i><span>Instagram s'ouvre ici, dans Zieuton.<small>S'il te demande de te connecter, vas-y&nbsp;: c'est bien lui, son adresse est écrite en haut.</small></span></li>
+        <li><i>2</i><span>Mon bandeau te montre où toucher, une étape à la fois.<small>Environ 2 minutes. Tu ne peux pas te tromper.</small></span></li>
+        <li><i>3</i><span>À la fin, ton iPhone demande s'il peut t'envoyer des notifications&nbsp;: touche « Autoriser ».<small>Comme ça, je te préviens dès que ta liste est prête.</small></span></li>
+      </ol>
+      <p class="gf-why">${ICON.lock}<span>Ton mot de passe, tu le tapes sur la page d'Instagram. Zieuton ne le lit pas et ne touche pas à ton compte.</span></p>
+      <div class="gf-foot">
+        <button class="btn cheer big" id="gf-meta" type="button">${ICON.out}Ouvrir Instagram</button>
+        <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>
+      </div>`;
+    $("gf-meta").onclick = wkGo;
+  } else if (step === "get" && metaInApp()) {
+    // App iPhone : on attend Instagram ici. L'app guette la page d'Instagram et envoie une notification quand c'est prêt.
+    const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
+    const ready = !!prefs.readyAt || since >= READY_AFTER_MIN;
+    const ago = since < 60 ? since + " min" : Math.round(since / 60) + " h";
+    const say = ready ? "Ta liste est sûrement prête&nbsp;! On va la chercher 🏃"
+      : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste."
+      : `Demandé il y a ${ago}. Instagram y travaille encore…`;
+    body.innerHTML = `${guide(say)}
+      <h2 id="gf-title">${ready ? "Ta liste est prête" : "Instagram prépare ta liste"}</h2>
+      <div class="gf-wait${ready ? " ready" : ""}"><div class="radar" aria-hidden="true"></div>${ready ? `<span class="done-ic" aria-hidden="true">📬</span>` : ""}
+        <b>${ready ? "Plus qu'une touche" : "En général, 2 à 10 minutes"}</b>
+        <small>${ready
+          ? "Touche le bouton&nbsp;: Instagram s'ouvre ici, tu touches « Télécharger », et je m'occupe du reste."
+          : "Tu peux fermer l'app&nbsp;: je t'envoie une notification dès que c'est prêt. Ensuite, tu as 4 jours pour la récupérer."}</small></div>
+      <div class="gf-foot">
+        <button class="btn ${ready ? "cheer" : "ghost"} big" id="gf-get" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>${ready ? "Récupérer ma liste" : "Regarder si c'est prêt"}</button>
+        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
+      </div>`;
+    $("gf-get").onclick = wkGo;
+    $("gf-back").onclick = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; gfTaps = []; savePrefs(); render(); };
   } else if (step === "insta" && !useDrive()) {
     const i = prefs.igOpened ? Math.min(prefs.igStep || 0, IG_SHOTS.length - 1) : 0, last = i === IG_SHOTS.length - 1;
     const foot = !prefs.igOpened
@@ -3556,7 +3664,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-02-2300";
+const BUILD = "2026-11-03-0200";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
