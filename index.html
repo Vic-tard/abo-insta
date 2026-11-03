@@ -817,6 +817,11 @@
   .hc-plus .btn.primary { background: var(--gold); color: var(--gold-ink); font-weight: 800; }
   .hc-plus .btn.ghost { background: rgb(255 255 255 / .08); color: #f7ecd9; border: 1px solid rgb(244 205 99 / .3); }
 
+  /* App iPhone : un seul gros bouton, le reste derrière « Un souci ? » */
+  .wk-sos { order: 10; display: flex; flex-direction: column; gap: 8px; }
+  .wk-sos button { border: 0; border-radius: 14px; background: rgb(255 255 255 / .62); color: #2e2328; font: 700 15px var(--round); padding: 12px 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .wk-sos svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .wk-sos p { margin: 0; font-size: 12.5px; text-align: center; color: rgb(46 35 40 / .72); }
   .wk-redo { order: 9; align-self: center; border: 0; background: none; font: 600 13px var(--round); color: rgb(46 35 40 / .72); text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; cursor: pointer; }
   .wk-big svg { width: 22px; height: 22px; flex: none; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) { .wk-av { animation: qzFloat 2.8s ease-in-out infinite; } }
@@ -1400,6 +1405,12 @@
       <li><i>1</i>Demander</li><li><i>2</i>Attendre</li><li><i>3</i>Télécharger</li>
     </ol>
     <button class="wk-redo" id="wk-redo" type="button" hidden>Pas fait&nbsp;? Recommencer la demande</button>
+    <button class="wk-redo" id="wk-help" type="button" aria-expanded="false" aria-controls="wk-sos" hidden>Un souci&nbsp;?</button>
+    <div class="wk-sos" id="wk-sos" hidden>
+      <p>Normalement, le gros bouton fait tout. Sinon&nbsp;:</p>
+      <button id="sos-file" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>J'ai déjà mon fichier Instagram</button>
+      <button id="sos-redo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>Recommencer la demande</button>
+    </div>
     <button class="wk-big" id="wk-go" type="button"><svg id="wk-go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span id="wk-go-t">C'est parti</span></button>
     <div class="wk-more" id="wk-more" hidden>
     <a class="btn primary" id="go-export" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noopener noreferrer">
@@ -2541,6 +2552,7 @@ function startImport() { $("file").click(); }
 $("quick-import").addEventListener("click", startImport);
 $("bar-file").addEventListener("click", startImport);
 $("wk-toggle").addEventListener("click", () => {
+  if (metaInApp()) return;   // App iPhone : rien à déplier, le gros bouton fait tout.
   const open = $("wk-toggle").getAttribute("aria-expanded") !== "true";
   $("wk-toggle").setAttribute("aria-expanded", String(open));
   $("wk-more").hidden = !open;
@@ -2915,7 +2927,11 @@ function renderWeekly() {
   });
   $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : "En préparation";
   if (pend) { due.textContent = mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
-  $("wk-redo").hidden = !pend;
+  // App iPhone : le gros bouton fait tout (Instagram dans Zieuton, téléchargement, import). Le reste est rangé dans « Un souci ? ».
+  const simple = metaInApp();
+  $("wk-redo").hidden = !pend || simple;
+  $("wk-help").hidden = !simple;
+  if (simple) { $("wk-more").hidden = true; $("wk-toggle").setAttribute("aria-expanded", "false"); $("sos-redo").hidden = !pend; }
   $("wk-go-t").textContent = !pend ? "C'est parti" : useDrive() ? "Vérifier mon Drive" : "Récupérer et mettre à jour";
   $("wk-go-i").innerHTML = pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
@@ -3257,6 +3273,12 @@ $("first-notback").addEventListener("click", () => {
   $("list-card").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 $("wk-go").addEventListener("click", wkGo);
+$("wk-help").addEventListener("click", () => {
+  const open = $("wk-sos").hidden;
+  $("wk-sos").hidden = !open; $("wk-help").setAttribute("aria-expanded", String(open)); haptic("light");
+});
+$("sos-file").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); startImport(); });
+$("sos-redo").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); $("wk-redo").click(); });
 $("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
 // La carte passe toute seule à « Ton export est prêt » au bout de quelques minutes.
 setInterval(() => { if (!document.hidden && reqPending()) { renderWeekly(); if (gfOn() && gfStep() === "get" && metaInApp()) renderGuided(); } }, 30000);
@@ -3740,7 +3762,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0330";
+const BUILD = "2026-11-03-0400";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
