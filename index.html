@@ -497,6 +497,7 @@
   .pg-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
   .pg-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
   .pg-head.center { justify-content: center; text-align: center; }
+  .pg-head .pg-title-big { font-size: 28px; font-weight: 800; }
   .pager { position: fixed; left: 50%; translate: -50% 0; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 16; display: flex; gap: 4px; padding: 5px;
     border-radius: 999px; background: color-mix(in srgb, var(--surface) 82%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
     box-shadow: 0 6px 24px rgb(46 35 40 / .14), 0 0 0 1px var(--line); }
@@ -1771,7 +1772,7 @@
 <div class="demo-bar" id="demo-bar" role="status" hidden><b class="demo-tag">Démo</b><span>Données inventées</span><button type="button" id="demo-quit">Quitter la démo</button></div>
 <div class="pg off" id="pg-games" role="region" aria-label="Mini-jeux" inert>
   <div class="wrap">
-    <div class="pg-head center"><div><h1>Mini-jeux</h1><p>Chaque partie fait monter ton niveau de Zieutage</p></div></div>
+    <div class="pg-head center"><div><h1 class="pg-title-big">Mini-jeux</h1></div></div>
     <button class="zy-level" id="zy-level" type="button" aria-label="Mon niveau et mon bonhomme"></button>
     <section class="zy-card flashy" id="zy-wheel-card" aria-label="La roue du jour"></section>
     <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
@@ -3738,7 +3739,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0500";
+const BUILD = "2026-11-03-0520";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
