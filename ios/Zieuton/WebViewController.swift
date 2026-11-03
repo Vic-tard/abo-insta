@@ -427,7 +427,10 @@ extension WebViewController: WKScriptMessageHandler {
                 verb: d["verb"] as? String ?? "", target: d["target"] as? String ?? "",
                 after: d["after"] as? String ?? "", tip: d["tip"] as? String ?? "",
                 look: d["look"] as? String ?? "",
-                wait: d["wait"] as? [String] ?? [], final: d["final"] as? Bool ?? false)
+                wait: d["wait"] as? [String] ?? [], final: d["final"] as? Bool ?? false,
+                ok: d["ok"] as? [String], bad: d["bad"] as? [String] ?? [],
+                free: d["free"] as? Bool ?? false, pick: d["pick"] as? Bool ?? false,
+                redo: d["redo"] as? Int ?? -1, oops: d["oops"] as? String ?? "", redoOops: d["redoOops"] as? String ?? "")
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
         meta.onRequested = { [weak self] downloadsBefore in
@@ -562,7 +565,26 @@ final class MetaViewController: UIViewController {
         var look = ""      // à quoi ressemble le bouton chez Instagram : button, row, link, radio, check
         var wait: [String] = [] // textes de bouton qui terminent l'étape quand on les touche
         var final = false  // l'étape qui envoie la demande
+        // Pour repérer un mauvais bouton :
+        var ok: [String]? = nil  // touches normales pendant l'étape (sans ça, aucune alerte : ancienne page)
+        var bad: [String] = []   // mauvais choix connus (« Année dernière », « HTML », « Facebook »…)
+        var free = false         // page à cases à cocher : les autres touches sont permises
+        var pick = false         // il faut avoir choisi la bonne option avant « Enregistrer »
+        var redo = -1            // étape où revenir si on a enregistré sans le bon choix
+        var oops = ""            // conseil quand on touche un mauvais choix
+        var redoOops = ""        // conseil quand on a enregistré sans le bon choix
     }
+
+    /// Alerte « mauvais bouton » affichée dans le bandeau.
+    private struct Warning: Equatable { var title: String; var text: String }
+    private var warning: Warning?
+    private var warningAt = Date.distantPast
+    /// Étape où la bonne option a été choisie (« Depuis le début », « JSON »).
+    private var pickedAt = -1
+    private var lastTapAt = Date.distantPast
+    private var createSince: Date?
+    /// Les alertes ne s'allument que si la page est bien en français ou en anglais (bouton « Créer une exportation » reconnu).
+    private var guarded: Bool { steps.contains { $0.ok != nil } && seenCreate != .distantPast }
 
     /// La demande est partie (avec le nombre d'exports déjà téléchargeables avant elle).
     var onRequested: ((Int) -> Void)?
@@ -607,6 +629,9 @@ final class MetaViewController: UIViewController {
     private static let coral = UIColor(red: 0xef / 255, green: 0x7f / 255, blue: 0x6a / 255, alpha: 1)
     private static let peachTop = UIColor(red: 0xff / 255, green: 0xe9 / 255, blue: 0xcf / 255, alpha: 1)
     private static let peachBottom = UIColor(red: 0xfb / 255, green: 0xc4 / 255, blue: 0x93 / 255, alpha: 1)
+    private static let warnTop = UIColor(red: 0xff / 255, green: 0xdd / 255, blue: 0xd6 / 255, alpha: 1)
+    private static let warnBottom = UIColor(red: 0xf7 / 255, green: 0xa4 / 255, blue: 0x94 / 255, alpha: 1)
+    private static let alarm = UIColor(red: 0xd9 / 255, green: 0x3f / 255, blue: 0x2e / 255, alpha: 1)
     private static let metaBlue = UIColor(red: 0x00 / 255, green: 0x64 / 255, blue: 0xe0 / 255, alpha: 1)
 
     private static func rounded(_ size: CGFloat, _ weight: UIFont.Weight) -> UIFont {
@@ -631,7 +656,8 @@ final class MetaViewController: UIViewController {
             var el = e.target && e.target.closest ? e.target.closest('button,a,label,[role=button],[role=link],[role=radio],[role=checkbox],[role=menuitem],[role=option],[tabindex]') : null;
             var n = el || e.target;
             var t = (n.innerText || (n.getAttribute && n.getAttribute('aria-label')) || '').trim();
-            if (t) window.webkit.messageHandlers.zyeutoTap.postMessage(t.slice(0, 300));
+            // Touche hors d'un bouton (texte, fond) : marquée « ~ », elle ne déclenche jamais d'alerte.
+            if (t) window.webkit.messageHandlers.zyeutoTap.postMessage((el ? '' : '~') + t.slice(0, 300));
           }, true);
           var START = \(start), CREATE = \(create);
           var vis = function (el) {
@@ -844,6 +870,14 @@ final class MetaViewController: UIViewController {
             all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 12),
             all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
         ])
+        // Toucher le bandeau ferme l'alerte.
+        banner.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(bannerTapped)))
+    }
+
+    @objc private func bannerTapped() {
+        guard warning != nil else { return }
+        warning = nil
+        showStep()
     }
 
     /// Redessine le bouton d'Instagram : bouton bleu, ligne avec flèche, lien bleu, bouton radio ou case à cocher.
@@ -925,6 +959,9 @@ final class MetaViewController: UIViewController {
                             ? "Rien ne bouge ? Touche encore « Commencer l'exportation » sur la page."
                             : "Zieuton vérifie que c'est bien parti.")
         }
+        if let w = warning {
+            return Step(verb: "", target: w.title, tip: w.text, look: steps[index].look)
+        }
         return steps[index]
     }
 
@@ -934,7 +971,7 @@ final class MetaViewController: UIViewController {
     private func showStep(animated: Bool = true) {
         let step = currentStep
         let normal = pageKnown && !(loginShown || downloading || sentAt != nil)
-        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index)].joined(separator: "|")
+        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!"].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
         let apply = {
@@ -947,10 +984,17 @@ final class MetaViewController: UIViewController {
                 say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(15, .semibold), .foregroundColor: Self.ink]))
             }
             self.sayLabel.attributedText = say
+            // Alerte : le bandeau passe au rouge doux, et garde le bouton à chercher bien visible.
+            let warn = self.warning != nil && normal
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(animated ? 0.25 : 0)
+            self.gradient.colors = warn ? [Self.warnTop.cgColor, Self.warnBottom.cgColor] : [Self.peachTop.cgColor, Self.peachBottom.cgColor]
+            CATransaction.commit()
+            self.replicaBox.layer.borderColor = (warn ? Self.alarm : Self.coral).cgColor
             self.tipLabel.text = step.tip
             self.tipLabel.isHidden = step.tip.isEmpty
             self.replicaBox.isHidden = step.look.isEmpty || !normal
-            if normal && !step.look.isEmpty { self.drawReplica(step) }
+            if normal && !step.look.isEmpty { self.drawReplica(self.warning == nil ? step : self.steps[self.index]) }
             self.progress.isHidden = !normal || self.steps.count < 2
             // À la première étape, pas de flèche « précédent » grisée : elle n'apparaît qu'à partir de l'étape 2.
             self.prevButton.isHidden = !normal || self.steps.count < 2 || self.index == 0
@@ -972,6 +1016,12 @@ final class MetaViewController: UIViewController {
             }
         }
         apply()
+        if animated, warning != nil, normal {
+            let shake = CAKeyframeAnimation(keyPath: "transform.translation.x")
+            shake.values = [0, -9, 9, -6, 6, -3, 0]
+            shake.duration = 0.4
+            banner.layer.add(shake, forKey: "zyShake")
+        }
         progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
         if animated {
             UIView.animate(withDuration: 0.25, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
@@ -982,8 +1032,9 @@ final class MetaViewController: UIViewController {
 
     private func go(_ delta: Int) {
         let n = max(0, min(steps.count - 1, index + delta))
-        guard n != index else { return }
+        guard n != index || warning != nil else { return }
         index = n
+        warning = nil
         UISelectionFeedbackGenerator().selectionChanged()
         showStep()
     }
@@ -993,15 +1044,27 @@ final class MetaViewController: UIViewController {
     }
 
     /// Un bouton vient d'être touché sur la page d'Instagram : on regarde s'il termine l'étape en cours
-    /// (ou l'une des deux suivantes, si on a été plus vite que le bandeau).
+    /// (ou l'une des deux suivantes, si on a été plus vite que le bandeau). Sinon, si ce n'est pas
+    /// une touche normale de l'étape, le bandeau prévient tout de suite : « Oups, pas le bon bouton ! ».
     private func tapped(_ text: String) {
         guard !finished, !downloading else { return }
-        let t = Self.norm(text)
+        let loose = text.hasPrefix("~")
+        let t = Self.norm(loose ? String(text.dropFirst()) : text)
+        let has: ([String]) -> Bool = { list in list.contains { !$0.isEmpty && t.contains(Self.norm($0)) } }
+        lastTapAt = Date()
         let last = min(steps.count - 1, index + 2)
         guard index <= last else { return }
+        let checking = guarded && pageKnown && !loginShown && sentAt == nil
         for i in index...last {
             let step = steps[i]
-            guard step.wait.contains(where: { t.contains(Self.norm($0)) }) else { continue }
+            guard has(step.wait) else { continue }
+            // « Enregistrer » sans avoir choisi la bonne option : Instagram a gardé son réglage par défaut.
+            if checking, step.pick, pickedAt != i, step.redo >= 0, step.redo < steps.count {
+                index = step.redo
+                pickedAt = -1
+                warn("Attention, pas le bon réglage !", step.redoOops.isEmpty ? step.oops : step.redoOops)
+                return
+            }
             if step.final, requesting {
                 index = i
                 sentAt = Date()
@@ -1010,9 +1073,46 @@ final class MetaViewController: UIViewController {
                 index = min(steps.count - 1, i + 1)
                 UISelectionFeedbackGenerator().selectionChanged()
             }
+            warning = nil
             showStep()
             return
         }
+        guard checking else { return }
+        // Une bonne touche pendant l'étape (« Tout effacer », « Depuis le début », « JSON »…).
+        for i in index...last where has(steps[i].ok ?? []) {
+            index = i
+            if steps[i].pick { pickedAt = i }
+            if warning != nil { warning = nil }
+            showStep()
+            return
+        }
+        // Un mauvais choix connu (« Année dernière », « HTML », compte Facebook…).
+        for i in index...last where !loose && has(steps[i].bad) {
+            index = i
+            if steps[i].pick { pickedAt = -1 }
+            warn("Oups, pas le bon choix !", steps[i].oops.isEmpty ? Self.backHint : steps[i].oops)
+            return
+        }
+        // « Créer une exportation » retouché plus tard : on reprend au début, sans gronder.
+        if index > 0, has(steps[0].wait) { index = 1; warning = nil; showStep(); return }
+        // Flèche retour, croix, Annuler : la personne revient en arrière, très bien.
+        if ["retour", "back", "fermer", "close", "annuler", "cancel", "precedent", "previous"].contains(t.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            if warning != nil { warning = nil; showStep() }
+            return
+        }
+        // Cases à cocher libres, ou grand bloc de texte (une zone vide de la page) : rien à dire.
+        if loose || steps[index].free || t.count > 120 { return }
+        warn("Oups, pas le bon bouton !", Self.backHint)
+    }
+
+    private static let backHint = "Reviens en arrière avec la flèche ‹ ou la croix ✕ d'Instagram, puis touche le bouton entouré ici. Sinon, tu risques de te perdre."
+
+    private func warn(_ title: String, _ text: String) {
+        warning = Warning(title: title, text: text)
+        warningAt = Date()
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        shownKey = "" // redessine même si c'était déjà la même alerte (on secoue encore)
+        showStep()
     }
 
     /// Un cadre de la page dit ce qu'il affiche.
@@ -1038,7 +1138,21 @@ final class MetaViewController: UIViewController {
         let startVisible = now.timeIntervalSince(seenStart) < 1.6
         let createVisible = now.timeIntervalSince(seenCreate) < 1.6
         if login != loginShown { loginShown = login; showStep() }
+        // L'alerte s'efface toute seule au bout de 10 s : le bandeau remontre l'étape à faire.
+        if warning != nil, now.timeIntervalSince(warningAt) > 10 { warning = nil; showStep() }
         guard requesting, !login else { return }
+        // Revenu sur la page d'accueil de l'export (« Créer une exportation » bien visible depuis un moment) :
+        // le bandeau reprend à la première étape.
+        if createVisible { if createSince == nil { createSince = now } } else { createSince = nil }
+        if sentAt == nil, index > 0, !(sawStart && index >= steps.count - 1), let since = createSince,
+           now.timeIntervalSince(since) > 2.5, now.timeIntervalSince(lastTapAt) > 2.5 {
+            index = 0
+            pickedAt = -1
+            warning = nil
+            createSince = nil
+            showStep()
+            return
+        }
         // « Commencer l'exportation » a été touché, et Instagram a quitté cet écran (retour à « Créer une exportation »,
         // ou le bouton a disparu) : la demande est partie. Si la touche n'a pas été vue, le retour à l'accueil
         // d'Instagram juste après l'écran final suffit aussi.
