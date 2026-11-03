@@ -203,9 +203,6 @@
   .steps-alt { margin: 0; padding: 0 14px 12px; font-size: 13px; color: var(--muted); }
   .steps-alt b { color: var(--ink); font-weight: 600; }
   .weekly .note { font-size: 13px; }
-  .reminders { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
-  .reminders a, .reminders button { font: 600 14px var(--font); color: var(--link); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: none; }
-  .siri { font-size: 13px; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin: 0; }
 
   .toast { position: fixed; left: 50%; translate: -50% 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 50; width: min(568px, calc(100% - 32px));
     background: var(--ink); color: var(--bg); border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / .25); }
@@ -701,8 +698,6 @@
   .hcard h2, .tabs-wrap h2 { font: 800 19px/1.2 var(--round); margin: 0; }
   .hc-imports { background: linear-gradient(160deg, #ddd0fb, #a993e6); }
   .hc-imports th, .hc-imports td { border-top-color: rgb(255 255 255 / .55); }
-  .hc-remind { background: linear-gradient(160deg, #c9f0dd, #7fcfa9); }
-  .hc-remind .reminders a, .hc-remind .reminders button { background: rgb(255 255 255 / .62); border-radius: 999px; padding: 8px 14px; font-weight: 700; }
   .hc-backup { background: linear-gradient(160deg, #ffc2cc, #ef7f8e); }
   .hc-backup .btn.danger { background: rgb(255 255 255 / .45); }
   .hcard .btn.ghost, .hcard .btn.danger { font-weight: 700; }
@@ -1000,7 +995,7 @@
   .zy-wheel span { position: absolute; left: 50%; top: 50%; font: 800 11px/1 var(--round); color: #2e2328; transform-origin: 0 0; white-space: nowrap; }
   .zy-wheel::after { content: ""; position: absolute; inset: 41%; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgb(0 0 0 / .2); }
   .zy-wheel-side { display: flex; flex-direction: column; gap: 8px; }
-  .zy-res { font: 700 15px/1.3 var(--round); color: var(--ink) !important; }
+  .zy-res { font: 700 15px/1.3 var(--round); color: #2e2328 !important; }
   .zy-anni { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .zy-anni li { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 14px; padding: 9px 10px; }
   .zy-anni li i { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--ring); color: #2e2328; font: 800 14px/1 var(--round); font-style: normal; }
@@ -1169,6 +1164,7 @@
   .trophy { background: none !important; padding: 0 !important; border: 0; cursor: pointer; font: inherit; gap: 6px !important; }
   .trophy .medal { width: 58px !important; height: 58px !important; font: 800 14px/1 var(--round) !important; box-shadow: inset 0 -4px 0 rgb(0 0 0 / .12); }
   .trophy b { font: 700 11.5px/1.2 var(--round) !important; text-align: center; }
+  .trophy .t-plus { font: 800 9.5px/1 var(--round); letter-spacing: .05em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; background: linear-gradient(135deg, #f8dc7d, #c98a20); color: #2e2328; }
   .trophy:not(.on) .medal { background: var(--surface-2) !important; color: var(--muted) !important; box-shadow: inset 0 0 0 2px var(--line); }
   .trophy.on.bronze .medal { background: linear-gradient(135deg, #f3c39a, #c07a45) !important; color: #4a2a12 !important; }
   .trophy.on.silver .medal { background: linear-gradient(135deg, #f4f6fa, #aab2c0) !important; color: #3a404c !important; }
@@ -1510,7 +1506,6 @@
     </div>
 
     <div class="st-group">
-      <button class="st-row" type="button" data-open="st-remind"><span class="st-ic" style="background:#ef7f6a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9M10 20a2 2 0 0 0 4 0"/></svg></span><span class="st-t"><b>Rappels</b><small>Pour penser à faire ta mise à jour</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" type="button" data-open="st-backup" id="st-backup-row"><span class="st-ic" style="background:#3f7f68"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5z"/></svg></span><span class="st-t"><b>Sauvegarde</b><small id="st-backup-sub"></small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
 
@@ -1591,19 +1586,6 @@
       <button class="st-row" type="button" role="radio" data-theme-pick="light"><span class="st-ic" style="background:#f4a96a"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg></span><span class="st-t"><b>Clair</b></span><span class="st-check" aria-hidden="true">✓</span></button>
       <button class="st-row" type="button" role="radio" data-theme-pick="dark"><span class="st-ic" style="background:#2e2328"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Sombre</b></span><span class="st-check" aria-hidden="true">✓</span></button>
     </div>
-  </div>
-</div>
-<div class="st-page" id="st-remind" role="dialog" aria-modal="true" aria-labelledby="st-remind-t" hidden>
-  <div class="st-in">
-    <button class="st-back" type="button" data-close="st-remind">‹ Réglages</button>
-    <h1 id="st-remind-t">Rappels</h1>
-
-    <div class="st-group">
-      <a class="st-row" id="gcal" href="#" target="_blank" rel="noopener noreferrer"><span class="st-ic" style="background:#f4a96a"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span class="st-t"><b>Rappel dans Google Agenda</b><small>Tous les dimanches, pour penser à l'export</small></span><span class="st-go" aria-hidden="true">›</span></a>
-      <button class="st-row" id="siri-btn" type="button" aria-expanded="false" aria-controls="siri"><span class="st-ic" style="background:#ef7f6a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V7a3 3 0 0 1 3-3zM6 11a6 6 0 0 0 12 0M12 17v3"/></svg></span><span class="st-t"><b>Rappel avec Siri</b><small>Dans l'app Rappels de l'iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
-      <p class="st-note" id="siri" hidden>Dis à Siri : « <b>Rappelle-moi tous les dimanches à 18 h d'exporter Instagram</b> ».</p>
-    </div>
-    <p class="st-foot">Quand tu demandes ton fichier à Instagram, Zieuton te prévient aussi tout seul dès qu'il est prêt.</p>
   </div>
 </div>
 <div class="st-page" id="st-backup" role="dialog" aria-modal="true" aria-labelledby="st-backup-t" hidden>
@@ -1904,11 +1886,11 @@
       <div class="radar" id="pv-radar" aria-hidden="true" hidden></div>
       <div class="preview" id="pv-count"></div>
       <p class="note" id="pv-source"></p>
-      <label for="pv-date">Date de l'export<input type="date" id="pv-date"></label>
+      <label for="pv-date" id="pv-date-l">Date de l'export<input type="date" id="pv-date"></label>
       <div class="msg err" id="pv-err" hidden></div>
       <button class="btn primary" id="pv-add" type="button" hidden>Ajouter ce compte</button>
       <button class="btn primary" id="pv-redo" type="button" hidden>Refaire l'export avec le guide</button>
-      <div class="row">
+      <div class="row" id="pv-row">
         <button class="btn primary" id="save">Enregistrer</button>
         <button class="btn ghost" id="cancel-confirm">Annuler</button>
       </div>
@@ -2258,7 +2240,7 @@ function otherAccountError(what, names) {
   const full = accts().length >= MAX_ACCTS;
   const e = new Error(known
     ? `${what} est celui du compte de ${acctName(known)}. Touche « Passer sur ce compte » pour l'y importer.`
-    : `${what} vient d'un autre compte Instagram que celui de ${acctName(curAcct())}. Rien n'a été enregistré. `
+    : `${what} vient d'un autre compte Instagram que ${acctMe(curAcct()).name ? "celui de " + acctMe(curAcct()).name : "celui déjà suivi ici"}. Rien n'a été enregistré. `
       + (full
         ? `Ce téléphone suit déjà ${accts().length} comptes, le maximum.`
         : "Touche « Ajouter ce compte » pour le suivre à part, avec ses propres données. Il lui faudra son propre Zieuton Plus dès le 1er import."));
@@ -2322,8 +2304,10 @@ async function recordSnapshot(followers, following, takenAt, source) {
 }
 
 // ---------- Affichage ----------
-const fmtDate = (iso) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-const fmtShort = (iso) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+// Formats créés une seule fois : beaucoup plus rapide pour les comptes à plusieurs dizaines de milliers d'abonnés.
+const DF_LONG = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }), DF_SHORT = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
+const fmtDate = (iso) => DF_LONG.format(new Date(iso));
+const fmtShort = (iso) => DF_SHORT.format(new Date(iso));
 const nf = (n) => n.toLocaleString("fr-FR");
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const profileUrl = (u) => `https://www.instagram.com/${encodeURIComponent(u)}/`;
@@ -2382,12 +2366,12 @@ function renderList() {
     rows = (rel ? rel[tab === "notback" ? "notBack" : "fans"] : [])
       .filter((u) => u.includes(q))
       .sort((a, b) => (src[b] ?? -1) - (src[a] ?? -1))
-      .map((u) => ({ u, cls: "", sub: src[u] ? `${tab === "notback" ? "suivi" : "abonné"} depuis le ${fmtDate(src[u] * 1000)}` : "" }));
+      .map((u) => ({ u, cls: "", sub: () => src[u] ? `${tab === "notback" ? "suivi" : "abonné"} depuis le ${fmtDate(src[u] * 1000)}` : "" }));
   } else if (tab === "recent") {
     rows = Object.entries(state.followers)
       .filter(([u]) => u.includes(q))
       .sort((a, b) => (b[1] ?? -1) - (a[1] ?? -1))
-      .map(([u, ts]) => ({ u, cls: "", sub: ts ? `abonné depuis le ${fmtDate(ts * 1000)}` : "" }));
+      .map(([u, ts]) => ({ u, cls: "", sub: () => ts ? `abonné depuis le ${fmtDate(ts * 1000)}` : "" }));
   } else {
     rows = state.events
       .filter((e) => e.kind === tab && e.u.includes(q))
@@ -2395,7 +2379,7 @@ function renderList() {
       .map((e) => ({ u: e.u, cls: tab === "unfollow" ? "down" : "up",
         sub: `${tab === "unfollow" ? "parti" : "arrivé"} entre le ${fmtShort(e.since)} et le ${fmtShort(e.at)}` }));
   }
-  const html = rows.slice(0, shown).map((r) => `
+  const html = rows.slice(0, shown).map((r) => (typeof r.sub === "function" ? { ...r, sub: r.sub() } : r)).map((r) => `
     <li${r.cls === "down" ? ' class="dep"' : ""}><span class="av ${r.cls}" aria-hidden="true"><i>${esc(r.u[0])}</i></span>
       <span class="who"><a href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer">${esc(r.u)}</a>${r.sub ? `<small class="${r.cls}">${r.sub}</small>` : ""}</span>
       <a class="btn ghost small" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">Voir</a></li>`).join("");
@@ -2429,7 +2413,7 @@ const fmtLen = (days) => {
 // Lignes de liste : du plus récent au plus ancien.
 const rowsOf = (users, src = state.followers, verb = "abonné") => users
   .map((u) => [u, Number.isInteger(src[u]) && src[u] > 0 ? src[u] * 1000 : 0]).sort((a, b) => b[1] - a[1])
-  .map(([u, ms]) => ({ u, sub: ms ? `${verb} le ${fmtWhen(ms)}` : "" }));
+  .map(([u, ms]) => ({ u, sub: () => ms ? `${verb} le ${fmtWhen(ms)}` : "" }));
 const followersWhere = (test) => rowsOf(Object.keys(state.followers).filter((u) => { const t = state.followers[u]; return Number.isInteger(t) && t > 0 && test(t * 1000); }));
 // Qui est arrivé et qui est parti à un import donné.
 const importWho = (snap) => () => {
@@ -2539,11 +2523,20 @@ const isState = (s) => s && Array.isArray(s.snapshots) && Array.isArray(s.events
 
 // ---------- Import ----------
 function openSheet(which) {
+  // Un message en bas de l'écran passerait par-dessus les boutons de la feuille.
+  $("toast").hidden = true; clearTimeout(toastTimer);
   $("sheet").hidden = false;
   $("sheet-confirm").hidden = which !== "confirm";
   $("sheet-photo").hidden = which !== "photo";
 }
 function closeSheet() { $("sheet").hidden = true; pending = null; }
+// Import refusé : pas de titre « Vérifie avant d'enregistrer », pas de date ni d'« Enregistrer », juste l'erreur et la marche à suivre.
+function sheetError(on) {
+  $("sheet-title").hidden = on;
+  $("pv-date-l").hidden = on;
+  $("save").hidden = on;
+  $("cancel-confirm").textContent = on ? "Fermer" : "Annuler";
+}
 function toDateInput(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 
 // Après le premier vrai import, le bouton ouvre directement le sélecteur de fichier.
@@ -2576,13 +2569,14 @@ async function importFiles(files) {
   $("save").disabled = true;
   $("save").textContent = "Enregistrer";
   $("pv-redo").hidden = true;
+  sheetError(false);
   showSwitch(null);
   try {
     pending = await readExport(files).finally(() => { $("pv-radar").hidden = true; });
     // Premier import avec la période « Année dernière » : la liste est incomplète, on le dit avant d'enregistrer.
     const short = !state.snapshots.length && lastYearOnly(pending.followers);
     if (short) {
-      $("pv-count").textContent = `${nf(Object.keys(pending.followers).length)} abonnés`;
+      $("pv-count").textContent = plural(Object.keys(pending.followers).length, "abonné", "abonnés");
       $("pv-source").textContent = pending.source;
       $("pv-date").value = toDateInput(pending.date);
       $("pv-err").textContent = `Il manque sûrement des abonnés : le plus ancien te suit seulement depuis le ${fmtDate(short)}. Instagram a dû garder la période « Année dernière ». Refais l'export en choisissant « Depuis le début ».`;
@@ -2593,14 +2587,11 @@ async function importFiles(files) {
       return;
     }
     // Import direct, sans écran de confirmation : on peut annuler juste après.
-    if (await commit(pending.date.toISOString())) return;
-    const n = Object.keys(pending.followers).length;
-    $("pv-count").textContent = `${nf(n)} abonnés`;
-    $("pv-source").textContent = pending.source;
-    $("pv-date").value = toDateInput(pending.date);
-    $("save").disabled = false;
+    // Refusé : commit() a déjà affiché l'erreur dans la feuille.
+    await commit(pending.date.toISOString());
   } catch (err) {
     $("pv-count").textContent = "Import impossible";
+    sheetError(true);
     $("pv-err").textContent = err.message;
     $("pv-err").hidden = false;
     $("pv-redo").hidden = false;
@@ -2611,7 +2602,7 @@ async function importFiles(files) {
 function lastYearOnly(followers) {
   const ts = Object.values(followers).filter((t) => Number.isInteger(t) && t > 0);
   if (ts.length < 50 || ts.length < Object.keys(followers).length * 0.9) return null;
-  const oldest = Math.min(...ts) * 1000, days = (Date.now() - oldest) / 86400000;
+  const oldest = ts.reduce((m, t) => Math.min(m, t), Infinity) * 1000, days = (Date.now() - oldest) / 86400000;
   return days > 300 && days < 372 ? new Date(oldest).toISOString() : null;
 }
 // Erreur d'import : on repart sur le guide de l'export, au début.
@@ -2627,8 +2618,11 @@ $("pv-redo").addEventListener("click", () => {
 
 // Enregistre l'export en attente. Renvoie false (et affiche l'erreur dans la feuille) si l'import est refusé.
 let undoState = null, toastTimer = null;
+// Ce qu'un import fait gagner (points, trophées, pronostic, paris) : remis comme avant si l'import est annulé.
+const GAIN_KEYS = ["zy", "trophies", "prono", "bet", "games"];
 async function commit(takenAt) {
   const before = JSON.stringify(state);
+  const gainsBefore = JSON.stringify(Object.fromEntries(GAIN_KEYS.map((k) => [k, prefs[k]])));
   const prev = state.snapshots[state.snapshots.length - 1];
   try {
     const r = await recordSnapshot(pending.followers, pending.following, takenAt, pending.source);
@@ -2658,7 +2652,7 @@ async function commit(takenAt) {
       toast(r.withFollowing ? "Aucun départ ni arrivée depuis le dernier import. « Pas en retour » et « Fans » sont à jour." : "Liste identique au dernier import : rien de nouveau.", false);
       await save(); return true;
     }
-    undoState = { state: JSON.parse(before), freeBefore };
+    undoState = { state: JSON.parse(before), freeBefore, gains: JSON.parse(gainsBefore) };
     toast(r.status === "first"
       ? `${nf(r.count)} abonnés enregistrés. C'est ton départ.`
       : `Importé : ${nf(r.unfollows.length)} départ${r.unfollows.length > 1 ? "s" : ""}, ${nf(r.follows.length)} arrivée${r.follows.length > 1 ? "s" : ""}.`, true);
@@ -2671,8 +2665,9 @@ async function commit(takenAt) {
   } catch (err) {
     state = JSON.parse(before);
     openSheet("confirm");
-    $("pv-count").textContent = `${nf(Object.keys(pending.followers).length)} abonnés`;
-    $("pv-source").textContent = pending.source;
+    sheetError(true);
+    $("pv-count").textContent = "Import impossible";
+    $("pv-source").textContent = `${pending.source} · ${plural(Object.keys(pending.followers).length, "abonné", "abonnés")}`;
     $("pv-date").value = toDateInput(pending.date);
     $("save").disabled = false;
     $("pv-err").textContent = err.message;
@@ -2720,6 +2715,8 @@ $("undo").addEventListener("click", async () => {
   state = undoState.state;
   // Import annulé : la mise à jour gratuite du mois n'est pas consommée.
   if ("freeBefore" in undoState) { if (undoState.freeBefore) prefs.lastFreeAt = undoState.freeBefore; else delete prefs.lastFreeAt; savePrefs(); }
+  // Les points et trophées gagnés avec cet import repartent aussi : pas de niveau gonflé en important puis en annulant.
+  if (undoState.gains) { for (const k of GAIN_KEYS) { if (undoState.gains[k] === undefined) delete prefs[k]; else prefs[k] = undoState.gains[k]; } savePrefs(); clearTimeout(unlockTimer); unlockTimer = null; unlockQueue = []; $("unlock").hidden = true; $("xp-pop").hidden = true; }
   undoState = null;
   $("bilan").hidden = true;
   $("toast").hidden = true;
@@ -2727,6 +2724,7 @@ $("undo").addEventListener("click", async () => {
   render();
   renderPlusBlock();
   toast("Import annulé.", false);
+  try { renderZy(); renderGames(); } catch {}
   await save();
 });
 
@@ -2854,7 +2852,6 @@ $("acct-add").addEventListener("click", async () => {
 
 // ---------- Nouvel export ----------
 // Préférences (date de demande d'export, dernière copie) gardées dans localStorage.
-const APP_URL = location.origin + location.pathname;
 let prefs = {};
 try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } catch {}
 function savePrefs() { if (DEMO) return; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
@@ -2867,11 +2864,6 @@ function markRequested() {
 }
 $("go-export").addEventListener("click", (e) => { if (DEMO) { e.preventDefault(); return leaveDemo(); } markRequested(); });
 $("start-export").addEventListener("click", markRequested);
-$("siri-btn").addEventListener("click", () => {
-  const open = $("siri").hidden;
-  $("siri").hidden = !open;
-  $("siri-btn").setAttribute("aria-expanded", String(open));
-});
 
 // Bandeau « installer » : seulement sur iPhone/iPad dans Safari, hors app installée.
 // Dans l'app iPhone Zieuton, la page est affichée par l'app (pas de Safari, pas d'écran d'accueil).
@@ -2882,22 +2874,6 @@ const needsInstall = !standalone && isIOS;
 $("install-banner").hidden = !needsInstall || prefs.installDismissed;
 $("install-x").addEventListener("click", () => { prefs.installDismissed = true; savePrefs(); $("install-banner").hidden = true; });
 
-function gcalUrl() {
-  // Prochain dimanche 18 h, répété chaque semaine.
-  const d = new Date();
-  d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
-  const day = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-  const q = new URLSearchParams({
-    action: "TEMPLATE",
-    text: "Exporter Instagram (Zieuton)",
-    dates: `${day}T180000/${day}T181000`,
-    ctz: "Europe/Paris",
-    recur: "RRULE:FREQ=WEEKLY",
-    details: `Ouvre Zieuton et touche « Demander l'export à Instagram » :\n${APP_URL}\n\nRéglages : Exporter sur mon appareil · seulement Followers et suivi(e)s · Depuis le début · JSON.`,
-  });
-  return "https://calendar.google.com/calendar/render?" + q.toString().replace(/\+/g, "%20");
-}
-$("gcal").href = gcalUrl();
 
 const READY_AFTER_MIN = 10;
 var lastPendingSent = null;
@@ -3093,7 +3069,7 @@ $("imp-row").addEventListener("click", () => openStPage("imports-page"));
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeStPage(b.dataset.close)));
 $("st-photo").addEventListener("click", () => $("avatar-btn").click());
 new MutationObserver(() => renderSettings()).observe($("avatar-core"), { childList: true, subtree: true, attributes: true });
-const ST_PAGES = ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-remind", "st-backup", "st-help", "st-privacy"];
+const ST_PAGES = ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy"];
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const top = ST_PAGES.filter((id) => !$(id).hidden).pop(); if (top) closeStPage(top); } });
 
 // ---------- Import depuis Google Drive ----------
@@ -3762,7 +3738,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0400";
+const BUILD = "2026-11-03-0500";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -3955,7 +3931,7 @@ $("plus-later").addEventListener("click", closePlus);
 $("plus-x").addEventListener("click", closePlus);
 $("plus").addEventListener("click", (e) => { if (e.target === $("plus")) closePlus(); });
 $("plus-open").addEventListener("click", () => openPlus());
-$("plus-mini").addEventListener("click", () => { haptic("light"); openPlus(); });
+$("plus-mini").addEventListener("click", () => { haptic("light"); hasPlus() ? openStPage("st-plus") : openPlus(); });
 $("plus-manage").addEventListener("click", () => nativePost({ type: "plus", action: "manage" }));
 window.zyeutoFile = {
   begin(name) { sharedBusy = true; this.name = name || "export.zip"; this.parts = []; },
@@ -4405,11 +4381,11 @@ const TROPHIES = [
   { id: "duo", m: "2", name: "Premier bilan", how: "Fais un deuxième import", pts: 50, test: (s) => s.length >= 2 },
   { id: "five", m: "5", name: "Habitué", how: "Fais 5 imports", pts: 100, test: (s) => s.length >= 5 },
   { id: "ten", m: "10", name: "Fidèle", how: "Fais 10 imports", pts: 250, test: (s) => s.length >= 10 },
-  { id: "i25", m: "25", name: "Accro", how: "Fais 25 imports", pts: 700, test: (s) => s.length >= 25 },
-  { id: "i50", m: "50", name: "Inarrêtable", how: "Fais 50 imports", pts: 1800, test: (s) => s.length >= 50 },
-  { id: "streak", m: "4×", name: "4 semaines", how: "Importe 4 semaines d'affilée", pts: 200, test: (s) => importRun(s) >= 4 },
-  { id: "streak8", m: "8×", name: "2 mois non-stop", how: "Importe 8 semaines d'affilée", pts: 600, test: (s) => importRun(s) >= 8 },
-  { id: "streak26", m: "26×", name: "6 mois non-stop", how: "Importe 26 semaines d'affilée", pts: 2500, test: (s) => importRun(s) >= 26 },
+  { plus: true, id: "i25", m: "25", name: "Accro", how: "Fais 25 imports", pts: 700, test: (s) => s.length >= 25 },
+  { plus: true, id: "i50", m: "50", name: "Inarrêtable", how: "Fais 50 imports", pts: 1800, test: (s) => s.length >= 50 },
+  { plus: true, id: "streak", m: "4×", name: "4 semaines", how: "Importe 4 semaines d'affilée", pts: 200, test: (s) => importRun(s) >= 4 },
+  { plus: true, id: "streak8", m: "8×", name: "2 mois non-stop", how: "Importe 8 semaines d'affilée", pts: 600, test: (s) => importRun(s) >= 8 },
+  { plus: true, id: "streak26", m: "26×", name: "6 mois non-stop", how: "Importe 26 semaines d'affilée", pts: 2500, test: (s) => importRun(s) >= 26 },
   { id: "zero", m: "0", name: "Personne n'est parti", how: "Un bilan sans aucun départ", pts: 100, test: (s) => s.slice(1).some((x) => !x.unfollows) },
   { id: "boom", m: "↑", name: "Belle semaine", how: "Gagne 10 abonnés en un seul import", pts: 150, test: (s) => s.slice(1).some((x) => x.follows - x.unfollows >= 10) },
   { id: "boom50", m: "↑↑", name: "Explosion", how: "Gagne 50 abonnés en un seul import", pts: 700, test: (s) => s.slice(1).some((x) => x.follows - x.unfollows >= 50) },
@@ -4438,7 +4414,10 @@ const TROPHIES = [
   { id: "style5", m: "5", name: "Défilé", how: "Habille ton bonhomme dans les 5 catégories", pts: 400, test: () => Object.values(prefs.zy?.look || {}).filter(Boolean).length >= 5 },
 ];
 const tierOf = (pts) => pts >= 2000 ? "diamond" : pts >= 500 ? "gold" : pts >= 150 ? "silver" : "bronze";
-function trophyStatus() { return TROPHIES.map((t) => ({ ...t, on: !!t.test(state.snapshots) })); }
+// Trophées « Plus » (imports chaque semaine, 25 ou 50 imports) : impossibles avec une seule mise à jour gratuite par mois.
+// Un trophée déjà gagné reste gagné. Sur le site, rien n'est vendu : tout est ouvert.
+const plusTrophyOk = (t) => !t.plus || !storeApp() || hasPlus() || (prefs.trophies || []).includes(t.id);
+function trophyStatus() { return TROPHIES.map((t) => ({ ...t, on: plusTrophyOk(t) && !!t.test(state.snapshots), lock: !plusTrophyOk(t) })); }
 
 let unlockQueue = [], unlockTimer = null, freshTrophies = new Set();
 // Montre les trophées gagnés depuis la dernière fois. La première fois, on enregistre sans fêter.
@@ -4476,15 +4455,15 @@ function openTrophies() {
   $("trophy-sum").textContent = "Trophées";
   $("trophy-hero").innerHTML = `<span class="t-cup">${$("tile-trophies").querySelector(".t-cup svg").outerHTML}</span><b id="trophy-title">${n} sur ${t.length}</b><span>Plus un trophée est dur, plus il rapporte de points.</span>`;
   $("trophy-detail").textContent = "Touche un trophée pour voir comment l'avoir.";
-  $("trophy-grid").innerHTML = t.map((x) => `<button type="button" class="trophy ${tierOf(x.pts)}${x.on ? " on" : ""}${freshTrophies.has(x.id) ? " new" : ""}" data-t="${x.id}"><span class="medal" aria-hidden="true">${esc(x.m)}</span><b>${esc(x.name)}</b></button>`).join("");
+  $("trophy-grid").innerHTML = t.map((x) => `<button type="button" class="trophy ${tierOf(x.pts)}${x.on ? " on" : ""}${freshTrophies.has(x.id) ? " new" : ""}" data-t="${x.id}"><span class="medal" aria-hidden="true">${esc(x.m)}</span><b>${esc(x.name)}</b>${x.lock ? `<span class="t-plus">Plus</span>` : ""}</button>`).join("");
   freshTrophies.clear();
   $("trophy-sheet").hidden = false;
 }
 $("trophy-grid").addEventListener("click", (e) => {
   const b = e.target.closest("[data-t]"); if (!b) return;
-  const x = TROPHIES.find((t) => t.id === b.dataset.t), on = b.classList.contains("on");
+  const x = TROPHIES.find((t) => t.id === b.dataset.t), on = b.classList.contains("on"), lock = !plusTrophyOk(x);
   $("trophy-grid").querySelectorAll(".sel").forEach((o) => o.classList.remove("sel")); b.classList.add("sel");
-  $("trophy-detail").textContent = `${x.name} : ${x.how.charAt(0).toLowerCase() + x.how.slice(1)}. ${on ? "Gagné, " : ""}+${nf(x.pts)} points.`;
+  $("trophy-detail").textContent = `${x.name} : ${x.how.charAt(0).toLowerCase() + x.how.slice(1)}. ${on ? "Gagné, " : ""}+${nf(x.pts)} points.${lock ? " Avec Zieuton Plus seulement." : ""}`;
   haptic("selection");
 });
 $("tile-trophies").addEventListener("click", openTrophies);
@@ -4680,7 +4659,16 @@ function spinWheel() {
 }
 
 // ---------- Anniversaires d'abonnement ----------
+// Gardé pour la journée tant que la liste d'abonnés ne change pas (gros comptes : recalcul évité à chaque point gagné).
+let anniMemo = null;
 function anniversaries() {
+  const key = todayKey();
+  if (anniMemo && anniMemo.f === state.followers && anniMemo.k === key) return anniMemo.r;
+  const r = anniversariesNow();
+  anniMemo = { f: state.followers, k: key, r };
+  return r;
+}
+function anniversariesNow() {
   const now = new Date(), y = now.getFullYear(), day0 = new Date(y, now.getMonth(), now.getDate());
   const today = [], soon = [];
   for (const [u, t] of Object.entries(state.followers)) {
@@ -4797,7 +4785,7 @@ const PAGES = { games: $("pg-games"), stats: $("pg-stats") };
 const REST = { games: -100, stats: 100 };
 let page = "home";
 const pageW = () => window.innerWidth || 1;
-const overlayOpen = () => ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-remind", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
+const overlayOpen = () => ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "zy-sheet", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
 function placePage(p, pct, dragging) {
   const el = PAGES[p];
   el.classList.toggle("dragging", !!dragging);
@@ -5032,7 +5020,7 @@ function renderStatsPage() {
   if (show("g-grow-block", stamps.length >= 3)) setupGrow(now);
 
   // Nouveaux abonnés par mois, année par année
-  if (show("g-month-block", stamps.length >= 3)) { GM.now = now; GM.first = Math.min(...stamps); GM.off = 0; drawMonths(); }
+  if (show("g-month-block", stamps.length >= 3)) { GM.now = now; GM.first = stamps.reduce((m, t) => Math.min(m, t), Infinity); GM.off = 0; drawMonths(); }
 
   // Jour de la semaine
   if (show("g-day-block", stamps.length >= 7)) {
@@ -5184,9 +5172,10 @@ const GM = { now: 0, first: 0, off: 0 };
 function drawMonths() {
   const end = new Date(GM.now), months = [];
   for (let k = 11; k >= 0; k--) { const d = new Date(end.getFullYear(), end.getMonth() - k - 12 * GM.off, 1); months.push({ y: d.getFullYear(), m: d.getMonth(), n: 0 }); }
+  const byKey = new Map(months.map((x) => [x.y * 12 + x.m, x]));
   for (const u in state.followers) {
     const t = state.followers[u]; if (!Number.isInteger(t) || t <= 0) continue;
-    const d = new Date(t * 1000), mo = months.find((x) => x.y === d.getFullYear() && x.m === d.getMonth()); if (mo) mo.n++;
+    const d = new Date(t * 1000), mo = byKey.get(d.getFullYear() * 12 + d.getMonth()); if (mo) mo.n++;
   }
   const f = months[0], l = months[11], firstD = new Date(GM.first);
   $("gm-range").textContent = `${MONTHS[f.m]} ${f.y} – ${MONTHS[l.m]} ${l.y}`;
@@ -5216,7 +5205,7 @@ function openWho({ title, sub, rows, cls = "" }) {
 function renderWho() {
   const q = $("who-search").value.trim().toLowerCase();
   const rows = q ? whoRows.filter((r) => r.u.toLowerCase().includes(q)) : whoRows;
-  $("who-list").innerHTML = rows.slice(0, whoShown).map((r, i) => `
+  $("who-list").innerHTML = rows.slice(0, whoShown).map((r) => (typeof r.sub === "function" ? { ...r, sub: r.sub() } : r)).map((r, i) => `
     <li${i < 12 ? ` style="animation-delay:${i * 0.03}s"` : ""}><span class="av ${r.cls || ""}" aria-hidden="true"><i>${esc((r.u || "?")[0])}</i></span>
       <span class="who"><a href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer">${esc(r.u)}</a>${r.sub ? `<small class="${r.cls || ""}">${r.sub}</small>` : ""}</span>
       <a class="btn ghost small" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">Voir</a></li>`).join("")
