@@ -430,7 +430,8 @@ extension WebViewController: WKScriptMessageHandler {
                 wait: d["wait"] as? [String] ?? [], final: d["final"] as? Bool ?? false,
                 ok: d["ok"] as? [String], bad: d["bad"] as? [String] ?? [],
                 free: d["free"] as? Bool ?? false, pick: d["pick"] as? Bool ?? false,
-                redo: d["redo"] as? Int ?? -1, oops: d["oops"] as? String ?? "", redoOops: d["redoOops"] as? String ?? "")
+                redo: d["redo"] as? Int ?? -1, oops: d["oops"] as? String ?? "", redoOops: d["redoOops"] as? String ?? "",
+                screen: d["screen"] as? String ?? "")
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
         meta.onRequested = { [weak self] downloadsBefore in
@@ -573,6 +574,7 @@ final class MetaViewController: UIViewController {
         var redo = -1            // étape où revenir si on a enregistré sans le bon choix
         var oops = ""            // conseil quand on touche un mauvais choix
         var redoOops = ""        // conseil quand on a enregistré sans le bon choix
+        var screen = ""          // l'écran d'Instagram de cette étape (home, profile, dest, summary:info, pick, period…)
     }
 
     /// Alerte « mauvais bouton » affichée dans le bandeau.
@@ -601,6 +603,10 @@ final class MetaViewController: UIViewController {
     private var codeShown = ""
     private var seenCode = Date.distantPast
     private var codeKind = ""
+    /// Écran d'Instagram vu en dernier, depuis quand, et la dernière fois qu'un cadre l'a signalé.
+    private var screenKey = ""
+    private var screenSince = Date.distantPast
+    private var seenScreen = Date.distantPast
     private var downloading = false
     /// « Commencer l'exportation » touché : on attend qu'Instagram ait bien pris la demande.
     private var sentAt: Date?
@@ -679,6 +685,51 @@ final class MetaViewController: UIViewController {
               return names.indexOf(t) >= 0 && vis(el);
             });
           };
+          // Quel écran d'Instagram est affiché ? On lit seulement les titres et les libellés visibles.
+          var low = function (el) { return (el.innerText || '').trim().replace(/’/g, "'").toLowerCase(); };
+          var seeAny = function (names) {
+            var els = document.querySelectorAll('h1,h2,h3,[role=heading],span,div,label,button,a,[role=button],[role=radio],[role=checkbox]');
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (el.childElementCount > 3) continue;
+              var t = low(el);
+              if (t.length > 60 || names.indexOf(t) < 0) continue;
+              if (vis(el)) return true;
+            }
+            return false;
+          };
+          // Ligne du résumé (« Période », « Format »…) avec la valeur choisie en dessous : le plus petit bloc visible qui commence par le libellé.
+          var rowVal = function (labels) {
+            var best = null, els = document.querySelectorAll('div,a,button,[role=button],[role=link]');
+            for (var i = 0; i < els.length; i++) {
+              var t = low(els[i]);
+              if (t.length > 120) continue;
+              for (var k = 0; k < labels.length; k++) {
+                if (t.indexOf(labels[k]) === 0 && t.length > labels[k].length + 2 && (!best || t.length < best.length) && vis(els[i])) best = t;
+              }
+            }
+            return best;
+          };
+          var hasWord = function (t, words) { return words.some(function (w) { return t.indexOf(w) >= 0; }); };
+          var screen = function () {
+            if (has(START)) {
+              var info = rowVal(['personnaliser les informations', 'customize information']);
+              var per = rowVal(['période', 'date range']);
+              var fmt = rowVal(['format']);
+              if (info === null || per === null || fmt === null) return 'summary';
+              if (hasWord(info, ['toutes les informations', 'all available', 'all information'])) return 'summary:info';
+              if (hasWord(per, ['dernière', 'dernier', 'derniers', 'last '])) return 'summary:period';
+              if (hasWord(fmt, ['html'])) return 'summary:format';
+              return 'summary:start';
+            }
+            if (seeAny(['choisissez un profil', 'choose a profile'])) return 'profile';
+            if (seeAny(['exporter vers un service externe', 'export to external service', 'choisir où exporter', 'choose where to export'])) return 'dest';
+            if (seeAny(['depuis le début', 'all time'])) return 'period';
+            if (seeAny(['json']) && seeAny(['html'])) return 'format';
+            if (seeAny(['tout effacer', 'clear all', 'tout sélectionner', 'select all'])) return 'pick';
+            if (has(CREATE)) return 'home';
+            return '';
+          };
           setInterval(function () {
             var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username]'), vis);
             // Code de sécurité : on regarde seulement s'il y a une case pour un code, et si la page parle de WhatsApp, SMS ou e-mail.
@@ -690,7 +741,7 @@ final class MetaViewController: UIViewController {
                 : (txt.indexOf('sms') >= 0 || txt.indexOf('texto') >= 0 || txt.indexOf('text message') >= 0) ? 'sms'
                 : (txt.indexOf('e-mail') >= 0 || txt.indexOf('email') >= 0) ? 'email' : 'app';
             }
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, screen: login || code ? '' : screen(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -1145,6 +1196,10 @@ final class MetaViewController: UIViewController {
         let now = Date()
         if state["login"] as? Bool == true { seenLogin = now }
         if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
+        if let scr = state["screen"] as? String, !scr.isEmpty {
+            if scr != screenKey { screenKey = scr; screenSince = now }
+            seenScreen = now
+        }
         if state["start"] as? Bool == true { seenStart = now; sawStart = true }
         if state["create"] as? Bool == true { seenCreate = now }
         if !finished, let dl = state["dl"] as? Int { downloadsSeen = max(downloadsSeen, dl) }
@@ -1181,6 +1236,8 @@ final class MetaViewController: UIViewController {
             showStep()
             return
         }
+        // Le bandeau suit l'écran d'Instagram : si l'écran affiché correspond à une autre étape, on s'y cale.
+        syncToScreen(now)
         // « Commencer l'exportation » a été touché, et Instagram a quitté cet écran (retour à « Créer une exportation »,
         // ou le bouton a disparu) : la demande est partie. Si la touche n'a pas été vue, le retour à l'accueil
         // d'Instagram juste après l'écran final suffit aussi.
@@ -1190,6 +1247,25 @@ final class MetaViewController: UIViewController {
         } else if sawStart, index >= steps.count - 1, createVisible, !startVisible {
             finishRequest()
         }
+    }
+
+    /// Cale le bandeau sur l'étape qui correspond à l'écran d'Instagram (vu depuis au moins 1 s, sans touche récente).
+    private func syncToScreen(_ now: Date) {
+        guard sentAt == nil, codeShown.isEmpty, !loginShown,
+              now.timeIntervalSince(seenScreen) < 1.6, now.timeIntervalSince(screenSince) > 1.0,
+              now.timeIntervalSince(lastTapAt) > 0.8,
+              !(sawStart && index >= steps.count - 1) else { return }
+        // Une alerte toute fraîche reste lisible 3 s avant que le bandeau ne bouge.
+        if warning != nil, now.timeIntervalSince(warningAt) < 3 { return }
+        let scr = screenKey
+        guard !steps[index].screen.isEmpty, steps[index].screen != scr,
+              let target = steps.firstIndex(where: { $0.screen == scr }) else { return }
+        index = target
+        if !steps[target].pick { pickedAt = -1 }
+        warning = nil
+        createSince = nil
+        UISelectionFeedbackGenerator().selectionChanged()
+        showStep()
     }
 
     private func finishRequest() {
