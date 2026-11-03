@@ -1172,6 +1172,46 @@ final class ExportWatcher: NSObject {
     private enum Id {
         static let asked = "zy-asked", ready = "zy-ready", reminder = "zy-reminder", lastDay = "zy-last-day"
         static let all = [asked, ready, reminder, lastDay, "zyeuto-export"]
+        /// Notifications avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
+        static let readyCategory = "zy-ready-actions"
+    }
+
+    override init() {
+        super.init()
+        let update = UNNotificationAction(identifier: "zy-update", title: "Mettre à jour maintenant", options: [.foreground],
+                                          icon: UNNotificationActionIcon(systemImageName: "arrow.down.circle"))
+        UNUserNotificationCenter.current().setNotificationCategories([
+            UNNotificationCategory(identifier: Id.readyCategory, actions: [update], intentIdentifiers: [], options: []),
+        ])
+    }
+
+    // MARK: Textes précis (heures et durées en français)
+
+    private static func formatter(_ format: String) -> DateFormatter {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "fr_FR")
+        f.setLocalizedDateFormatFromTemplate(format)
+        return f
+    }
+    /// « 14:47 »
+    static func hour(_ d: Date) -> String { formatter("Hm").string(from: d) }
+    /// « mercredi 5 novembre à 14:47 »
+    static func day(_ d: Date) -> String { formatter("EEEEdMMMM").string(from: d) + " à " + hour(d) }
+    /// « 1 min 12 s », « 7 min », « 1 h 05 »
+    static func duration(_ t: TimeInterval) -> String {
+        let s = Int(t.rounded())
+        if s < 60 { return "\(s) s" }
+        if s < 600 { return s % 60 == 0 ? "\(s / 60) min" : "\(s / 60) min \(s % 60) s" }
+        if s < 3600 { return "\(s / 60) min" }
+        return String(format: "%d h %02d", s / 3600, (s % 3600) / 60)
+    }
+
+    /// Vignette du bonhomme (iOS déplace le fichier joint : on en écrit un nouveau à chaque fois).
+    private static func mascot() -> UNNotificationAttachment? {
+        guard let data = Data(base64Encoded: WebViewController.logoPNG) else { return nil }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("zieuton-\(UUID().uuidString).png")
+        guard (try? data.write(to: url)) != nil else { return nil }
+        return try? UNNotificationAttachment(identifier: "bonhomme", url: url, options: nil)
     }
 
     var onReady: (() -> Void)?
@@ -1204,9 +1244,13 @@ final class ExportWatcher: NSObject {
         center.removeDeliveredNotifications(withIdentifiers: Id.all)
         center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             guard granted, let self else { return }
-            self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive dans 5 à 10 minutes.", after: 1)
-            self.notify(Id.reminder, "Ton fichier devrait être prêt", "Instagram a sans doute fini. Touche pour le récupérer et mettre Zieuton à jour.", after: 12 * 60)
-            self.notify(Id.lastDay, "Dernier jour pour ton fichier Instagram", "Il ne reste qu'un jour pour le télécharger. Touche pour mettre Zieuton à jour.", after: 3 * 86400)
+            let now = Date()
+            self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive d'ici 10 minutes maximum. Je te préviens dès qu'il est là.",
+                        subtitle: "Demande envoyée à Instagram à \(Self.hour(now))", after: 1)
+            self.notify(Id.reminder, "Instagram traîne un peu 👀", "Demandé à \(Self.hour(now)) et toujours pas de nouvelles. Touche pour aller voir si ton fichier est là.",
+                        after: 12 * 60, category: Id.readyCategory)
+            self.notify(Id.lastDay, "⏳ Dernier jour pour ton fichier", "Ta demande de \(Self.day(now)) expire bientôt. Touche pour mettre Zieuton à jour avant qu'elle disparaisse.",
+                        after: 3 * 86400, category: Id.readyCategory)
         }
         DispatchQueue.main.async {
             self.startTimer()
@@ -1234,18 +1278,27 @@ final class ExportWatcher: NSObject {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [Id.reminder, Id.lastDay])
         center.removeDeliveredNotifications(withIdentifiers: [Id.asked])
-        notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour le récupérer : Zieuton se met à jour tout seul. Tu as 4 jours.", after: 1, badge: true)
-        notify(Id.lastDay, "Dernier jour pour ton fichier Instagram", "Il ne reste qu'un jour pour le télécharger. Touche pour mettre Zieuton à jour.", after: 3 * 86400)
+        let now = Date(), expires = now.addingTimeInterval(4 * 86400)
+        let took = requestedAt.map { Self.duration(now.timeIntervalSince($0)) }
+        notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour mettre Zieuton à jour : tu sauras qui est parti et qui est arrivé. Valable jusqu'au \(Self.day(expires)).",
+               subtitle: took.map { "Instagram a mis \($0)" }, after: 1, badge: true, category: Id.readyCategory)
+        notify(Id.lastDay, "⏳ Ton fichier expire demain à \(Self.hour(expires))", "Après, il faudra refaire une demande. Touche pour mettre Zieuton à jour maintenant.",
+               after: 3 * 86400, badge: true, category: Id.readyCategory)
         DispatchQueue.main.async { self.onReady?() }
     }
 
-    private func notify(_ id: String, _ title: String, _ body: String, after seconds: TimeInterval, badge: Bool = false) {
+    private func notify(_ id: String, _ title: String, _ body: String, subtitle: String? = nil, after seconds: TimeInterval,
+                        badge: Bool = false, category: String? = nil) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
+        if let subtitle { content.subtitle = subtitle }
         content.sound = .default
         content.threadIdentifier = "zyeuto-export"
         if badge { content.badge = 1 }
+        if let category { content.categoryIdentifier = category }
+        // Le bonhomme de Zieuton en vignette, à droite de la notification.
+        if let attachment = Self.mascot() { content.attachments = [attachment] }
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
     }
@@ -1308,7 +1361,8 @@ final class ExportWatcher: NSObject {
             if outcome == .ready { self.markReady() }
             if outcome == .pending, let r = self.requestedAt, Date().timeIntervalSince(r) > 10 * 60 {
                 // Instagram prend son temps : on repousse le rappel au lieu d'annoncer un fichier pas encore là.
-                self.notify(Id.reminder, "Ton fichier devrait être prêt", "Instagram a sans doute fini. Touche pour le récupérer et mettre Zieuton à jour.", after: 10 * 60)
+                self.notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
+                            subtitle: "Demandé à \(Self.hour(r))", after: 10 * 60)
             }
             done(outcome == .ready)
         }
