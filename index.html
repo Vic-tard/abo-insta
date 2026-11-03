@@ -1376,6 +1376,107 @@
   .qz-goal { font: 700 14px var(--round); background: rgb(255 255 255 / .55); border-radius: 999px; padding: 8px 14px; }
   #quiz-acts .qz-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   #quiz-acts .qz-row .qz-ghost { padding: 13px 8px; font-size: 14px; }
+  /* ---- Mini-jeux, version premium : écrin sombre propre à chaque jeu, anneau chrono, cartes en verre ---- */
+  .pg-head.has-trophy { position: relative; }
+  .pg-trophy { position: absolute; right: 0; top: 50%; translate: 0 -50%; width: 46px; height: 46px; border: 0; padding: 0; border-radius: 15px; cursor: pointer; display: grid; place-items: center;
+    background: linear-gradient(135deg, #f9e08e, #d9a63a); box-shadow: 0 6px 16px rgb(201 138 30 / .35), inset 0 0 0 1.5px rgb(255 255 255 / .45); overflow: hidden; }
+  .pg-trophy .t-cup { width: auto; height: auto; background: none; }
+  .pg-trophy .t-cup svg { width: 30px; height: 30px; display: block; filter: drop-shadow(0 1px 1px rgb(120 70 10 / .35)); }
+  .pg-trophy::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / .6) 50%, transparent 65%); transform: translateX(-130%); }
+  @media (prefers-reduced-motion: no-preference) { .pg-trophy::after { animation: shine 5s 1s ease-in-out infinite; } }
+  .pg-trophy:active { transform: scale(.94); }
+  .pg-trophy:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+  #quiz.quiz-oldest, .game-card.g-oldest { --ac: #f6c95a; --ac2: #d39a2a; --bg1: #5c3d17; --bg2: #2b1c0c; --bg3: #150e07; }
+  #quiz.quiz-first, .game-card.g-first { --ac: #ff958a; --ac2: #e2566a; --bg1: #622038; --bg2: #2d0f1b; --bg3: #17080e; }
+  #quiz.quiz-back, .game-card.g-back { --ac: #c9adff; --ac2: #8f78e6; --bg1: #3f2c66; --bg2: #1e1635; --bg3: #0f0b1b; }
+  /* Tuiles de la page */
+  .pg .game-card { grid-template-columns: 78px 1fr 44px; padding: 14px 14px 14px 12px; color: #fff; border-radius: 26px;
+    background: radial-gradient(130% 140% at 0% 0%, var(--bg1) 0%, var(--bg2) 60%, var(--bg3) 100%);
+    box-shadow: 0 12px 28px rgb(30 15 25 / .28), inset 0 0 0 1px rgb(255 255 255 / .08); }
+  .pg .game-card::before { right: -50px; top: -60px; width: 170px; height: 170px; background: radial-gradient(circle, color-mix(in srgb, var(--ac) 30%, transparent), transparent 70%); }
+  .g-ring { width: 78px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; position: relative;
+    background: conic-gradient(var(--ac) calc(var(--p, 0) * 1%), rgb(255 255 255 / .1) 0); box-shadow: 0 0 22px color-mix(in srgb, var(--ac) 25%, transparent); }
+  .g-ring::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--bg2); }
+  .pg .game-card .g-av { width: 64px; border-radius: 50%; transform: none; position: relative; box-shadow: 0 6px 14px rgb(0 0 0 / .35); }
+  .pg .game-card .g-txt b { font: 800 19px/1.1 var(--round); color: #fff; }
+  .pg .game-card .g-txt em { color: rgb(255 255 255 / .68); opacity: 1; }
+  .pg .game-card .g-txt small { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: none; padding: 0; margin-top: 5px; color: var(--ac); font: 700 12px/1 var(--round); }
+  .g-st { display: flex; gap: 1px; }
+  .g-st svg { width: 14px; height: 14px; fill: rgb(255 255 255 / .18); }
+  .g-st svg.on { fill: #f6c95a; filter: drop-shadow(0 0 3px rgb(246 201 90 / .6)); }
+  .g-ok, .g-new { font: 800 10.5px/1 var(--round); letter-spacing: .03em; border-radius: 999px; padding: 4px 7px; }
+  .g-ok { background: #4fc282; color: #fff; }
+  .g-new { background: color-mix(in srgb, var(--ac) 22%, transparent); color: var(--ac); text-transform: uppercase; }
+  .pg .game-card .g-go { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; opacity: 1;
+    background: linear-gradient(135deg, var(--ac), var(--ac2)); box-shadow: 0 6px 16px color-mix(in srgb, var(--ac) 40%, transparent); }
+  .g-go svg { width: 20px; height: 20px; fill: #2a1a10; margin-left: 2px; }
+  .pg .game-card:disabled { filter: grayscale(.7); opacity: .55; }
+  /* Écran de jeu */
+  #quiz.bilan.fullpage { background: radial-gradient(120% 60% at 50% 0%, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%); }
+  #quiz .card { color: #fff; gap: 16px; }
+  #quiz .fp-head p { color: #fff; }
+  #quiz .fp-back { background: rgb(255 255 255 / .1); color: #fff; }
+  #quiz-score:not(:empty) { background: rgb(255 255 255 / .1); color: var(--ac); }
+  #quiz .pips i { height: 6px; background: rgb(255 255 255 / .12); transition: background .3s, box-shadow .3s; }
+  #quiz .pips i.cur { background: var(--ac); box-shadow: 0 0 10px var(--ac); }
+  #quiz .pips i.ok { background: #4fc282; } #quiz .pips i.no { background: #ef5b5b; }
+  #quiz .qz-hero { align-items: center; padding-top: 2px; }
+  .qz-ring { position: relative; width: 140px; aspect-ratio: 1; display: grid; place-items: center; flex: none; }
+  .qz-ring::before { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 46px color-mix(in srgb, var(--ac) 22%, transparent); }
+  .qz-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; overflow: visible; }
+  .qz-ring > svg circle { fill: none; stroke-width: 6; }
+  .qz-ring .trk { stroke: rgb(255 255 255 / .1); }
+  .qz-ring .arc { stroke: var(--ac); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; filter: drop-shadow(0 0 5px var(--ac)); }
+  .qz-ring.late .arc { stroke: #ef5b5b; filter: drop-shadow(0 0 5px #ef5b5b); }
+  #quiz .qz-av { width: 112px; border-radius: 50%; position: relative; box-shadow: 0 0 0 4px rgb(255 255 255 / .06), 0 14px 30px rgb(0 0 0 / .45); }
+  #quiz .qz-av svg { clip-path: circle(50%); }
+  #quiz .qz-av.party { padding: 0; width: 112px; }
+  #quiz .pips[hidden] + .qz-hero { margin-top: auto; }
+  #quiz .qz-bub { left: calc(50% + 52px); top: 0; box-shadow: 0 8px 20px rgb(0 0 0 / .3); }
+  #quiz .quiz-q { color: #fff; font: 800 22px/1.25 var(--round); }
+  #quiz .qz-opt { background: rgb(255 255 255 / .07); color: #fff; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12); }
+  #quiz .qz-opt small { color: rgb(255 255 255 / .6); }
+  #quiz .qz-opt i { box-shadow: inset 0 0 0 2px rgb(255 255 255 / .25); }
+  #quiz .qz-opt:active:not(:disabled) { background: rgb(255 255 255 / .13); }
+  #quiz .qz-opt.ok { background: linear-gradient(135deg, #4fc282, #2b8a57); box-shadow: 0 8px 24px rgb(79 194 130 / .35); }
+  #quiz .qz-opt.ok small, #quiz .qz-opt.miss small { color: rgb(255 255 255 / .85); }
+  #quiz .qz-opt.miss { background: linear-gradient(135deg, #ef6b6b, #c13a48); box-shadow: 0 8px 24px rgb(239 91 91 / .3); }
+  #quiz .qz-opt:disabled:not(.ok):not(.miss) { opacity: .4; }
+  #quiz .qz-opt .bigi.yes { background: linear-gradient(135deg, #ff8fa3, #e2566a); } #quiz .qz-opt .bigi.no { background: rgb(255 255 255 / .16); }
+  #quiz .qz-me { border-radius: 50%; box-shadow: 0 0 0 3px var(--ac); }
+  #quiz .g-msg { color: rgb(255 255 255 / .75); text-align: center; }
+  #quiz .qz-go { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #2a1a10; box-shadow: 0 10px 28px color-mix(in srgb, var(--ac) 38%, transparent); }
+  #quiz .qz-go::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / .5) 50%, transparent 65%); transform: translateX(-130%); }
+  @media (prefers-reduced-motion: no-preference) { #quiz .qz-go::after { animation: shine 3.5s 1s ease-in-out infinite; } }
+  #quiz .qz-go:active { transform: scale(.98); box-shadow: 0 6px 16px color-mix(in srgb, var(--ac) 30%, transparent); }
+  #quiz .qz-ghost { background: rgb(255 255 255 / .08); color: #fff; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12); }
+  #quiz .qz-intro { gap: 12px; }
+  #quiz .qz-big { color: #fff; margin-top: 2px; }
+  #quiz .qz-sub { color: rgb(255 255 255 / .7); }
+  .qz-rec { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .qz-rec .qz-st { display: flex; gap: 4px; }
+  .qz-rec .qz-st svg { width: 28px; height: 28px; fill: rgb(255 255 255 / .14); }
+  .qz-rec .qz-st svg.on { fill: #f6c95a; filter: drop-shadow(0 0 6px rgb(246 201 90 / .6)); }
+  .qz-rec > span:last-child { font: 700 14px var(--round); color: var(--ac); }
+  .qz-chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .qz-chips span { font: 600 12.5px/1 var(--round); color: rgb(255 255 255 / .75); background: rgb(255 255 255 / .07); border-radius: 999px; padding: 8px 12px; }
+  .qz-chips b { color: #fff; font-weight: 800; }
+  #quiz .qz-daily.big { flex-direction: column; align-items: stretch; gap: 10px; }
+  #quiz .qz-daily { background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 16%, transparent), color-mix(in srgb, var(--ac) 4%, transparent));
+    border: 1px solid color-mix(in srgb, var(--ac) 30%, transparent); border-radius: 20px; color: #fff; margin-top: 4px; }
+  #quiz .qz-daily .qz-k { font: 800 11px/1 var(--round); letter-spacing: .08em; text-transform: uppercase; color: var(--ac); opacity: 1; }
+  #quiz .qz-daily > div { display: grid; grid-template-columns: 38px 1fr auto; gap: 12px; align-items: center; }
+  #quiz .qz-daily i { width: 38px; height: 38px; background: var(--ac); color: #2a1a10; }
+  #quiz .qz-daily em { font: 800 13px var(--round); font-style: normal; color: #2a1a10; background: var(--ac); border-radius: 999px; padding: 6px 10px; }
+  #quiz .qz-daily span small { opacity: .62; }
+  #quiz .qz-daily.done i { background: #4fc282; color: #fff; }
+  #quiz .score b { color: #fff; text-shadow: 0 0 30px color-mix(in srgb, var(--ac) 45%, transparent); }
+  #quiz .score p { color: rgb(255 255 255 / .7); }
+  #quiz .qz-stars span svg { fill: rgb(255 255 255 / .12); }
+  #quiz .qz-stars span.on svg { fill: #f6c95a; stroke: #fff2a8; filter: drop-shadow(0 0 10px rgb(246 201 90 / .7)); }
+  #quiz .qz-pts { background: var(--ac); color: #2a1a10; }
+  #quiz .record { background: #fff; color: #2a1a10; }
+  #quiz .qz-goal { background: rgb(255 255 255 / .08); color: #fff; }
   /* Écran de bienvenue : le petit bonhomme sort de derrière son mur */
   .wl { flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; position: relative; }
   .gf.welcome { background: radial-gradient(120% 60% at 50% 0%, var(--rose-soft), var(--bg) 70%); }
@@ -1934,8 +2035,7 @@
   <div class="card">
     <div class="fp-head"><button class="fp-back" id="quiz-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="quiz-title"></p><span id="quiz-score" aria-live="polite"></span></div>
     <div class="pips" id="quiz-pips" aria-hidden="true"></div>
-    <div class="qz-hero"><span class="qz-av" id="quiz-av"></span><span class="qz-bub" id="quiz-bub" aria-live="polite"></span></div>
-    <div class="qz-time" id="quiz-time" aria-hidden="true"><i id="quiz-timer"></i></div>
+    <div class="qz-hero"><span class="qz-ring" id="quiz-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="56"/><circle class="arc" id="quiz-arc" cx="60" cy="60" r="56" pathLength="100"/></svg><span class="qz-av" id="quiz-av"></span></span><span class="qz-bub" id="quiz-bub" aria-live="polite"></span></div>
     <div class="quiz-body" id="quiz-body"></div>
     <p class="g-msg" id="quiz-msg" role="status"></p>
     <div class="acts" id="quiz-acts"></div>
@@ -1995,21 +2095,20 @@
 <div class="demo-bar" id="demo-bar" role="status" hidden><b class="demo-tag">Démo</b><span>Données inventées</span><button type="button" id="demo-quit">Quitter la démo</button></div>
 <div class="pg off" id="pg-games" role="region" aria-label="Mini-jeux" inert>
   <div class="wrap">
-    <div class="pg-head center"><div><h1 class="pg-title-big">Mini-jeux</h1></div></div>
+    <div class="pg-head center has-trophy"><div><h1 class="pg-title-big">Mini-jeux</h1></div><button class="pg-trophy" id="tile-trophies" type="button" aria-label="Trophées"><span class="t-cup" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M15 8h18v11a9 9 0 0 1-18 0z" fill="#fff6d8"/><path d="M15 11H9a6 6 0 0 0 6 8M33 11h6a6 6 0 0 1-6 8" fill="none" stroke="#fff6d8" stroke-width="3" stroke-linecap="round"/><path d="M21 27h6v6h-6z" fill="#fff6d8"/><rect x="15" y="33" width="18" height="6" rx="2" fill="#fff6d8"/><path d="M19 12v6" stroke="#e8b442" stroke-width="2.4" stroke-linecap="round"/></svg></span></button></div>
     <button class="zy-level" id="zy-level" type="button" aria-label="Mon niveau et mon zieuteur"></button>
     <div class="zy-duo" id="zy-duo">
       <button class="zy-tile t-wheel" id="tile-wheel" type="button"><span class="zt-art" id="tile-wheel-art"></span><b>La roue du jour</b><small id="tile-wheel-sub"></small></button>
       <button class="zy-tile t-prono" id="tile-prono" type="button"><span class="zt-art" id="tile-prono-art"></span><b>Mes pronostics</b><small id="tile-prono-sub"></small></button>
     </div>
     <section class="games" id="games" aria-label="Mini-jeux">
-    <button class="game-card g-oldest" id="tile-oldest" data-game="oldest" type="button"><span class="g-av" data-look="oldest"></span><span class="g-txt"><b>Le Vétéran</b><em>Qui te suit depuis le plus longtemps&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
-    <button class="game-card g-first" id="tile-first" data-game="first" type="button"><span class="g-av" data-look="first"></span><span class="g-txt"><b>Coup de foudre</b><em>Qui a craqué en premier, toi ou l'autre&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
-    <button class="game-card g-back" id="tile-back" data-game="back" type="button"><span class="g-av" data-look="back"></span><span class="g-txt"><b>Ça match ?</b><em>Il te suit en retour, ou pas&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true">›</span></button>
+    <button class="game-card g-oldest" id="tile-oldest" data-game="oldest" type="button"><span class="g-ring"><span class="g-av" data-look="oldest"></span></span><span class="g-txt"><b>Le Vétéran</b><em>Qui te suit depuis le plus longtemps&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
+    <button class="game-card g-first" id="tile-first" data-game="first" type="button"><span class="g-ring"><span class="g-av" data-look="first"></span></span><span class="g-txt"><b>Coup de foudre</b><em>Qui a craqué en premier, toi ou l'autre&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
+    <button class="game-card g-back" id="tile-back" data-game="back" type="button"><span class="g-ring"><span class="g-av" data-look="back"></span></span><span class="g-txt"><b>Ça match ?</b><em>Il te suit en retour, ou pas&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
   </section>
     <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
     <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
     <div class="goal flashy" id="goal"></div>
-    <button class="trophy-line" id="tile-trophies" type="button"><span class="t-cup" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M15 8h18v11a9 9 0 0 1-18 0z" fill="#fff6d8"/><path d="M15 11H9a6 6 0 0 0 6 8M33 11h6a6 6 0 0 1-6 8" fill="none" stroke="#fff6d8" stroke-width="3" stroke-linecap="round"/><path d="M21 27h6v6h-6z" fill="#fff6d8"/><rect x="15" y="33" width="18" height="6" rx="2" fill="#fff6d8"/><path d="M19 12v6" stroke="#e8b442" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="t-txt"><b>Trophées</b><small id="trophy-count"></small><span class="t-bar"><i id="trophy-bar"></i></span></span><span class="t-medals" id="trophy-medals" aria-hidden="true"></span></button>
   </div>
 </div>
 <!-- Page de droite : graphiques -->
@@ -3964,7 +4063,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1415";
+const BUILD = "2026-11-03-1600";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4454,13 +4553,13 @@ function renderGames() {
     tile.disabled = ok !== true;
     const sm = tile.querySelector("small"), st = starsOf(best);
     if (ok !== true) sm.textContent = id === "gone" ? "Après un départ" : id === "back" || id === "first" ? "Réimporte le .zip" : "Bientôt";
-    else sm.innerHTML = best ? `<span class="g-stars"><b>${"★".repeat(st)}</b>${"★".repeat(3 - st)}</span> · Record ${best}/${QUIZ_LEN}${stats(id).day === todayKey() ? " · Défi ✓" : ""}` : "Jamais joué · Défi du jour +50";
+    else sm.innerHTML = best ? `<span class="g-st">${[0, 1, 2].map((i) => `<svg viewBox="0 0 24 24"${i < st ? ' class="on"' : ""}><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>`).join("")}</span><span>Record ${best}/${QUIZ_LEN}</span>${stats(id).day === todayKey() ? `<span class="g-ok">Défi ✓</span>` : ""}`
+      : `<span class="g-new">Défi du jour</span><span>+${DAILY_BONUS} points</span>`;
+    tile.style.setProperty("--p", ok === true ? (best / QUIZ_LEN * 100).toFixed(0) : 0);
     tile.title = ok === true ? "" : ok;
   }
   const t = trophyStatus(), on = t.filter((x) => x.on);
-  $("trophy-count").textContent = `${on.length} sur ${t.length} débloqués`;
-  $("trophy-bar").style.width = (on.length / t.length * 100).toFixed(1) + "%";
-  $("trophy-medals").innerHTML = on.slice(-3).map((x) => `<i>${esc(x.m)}</i>`).join("");
+  $("tile-trophies").setAttribute("aria-label", `Trophées : ${on.length} sur ${t.length}`);
   document.querySelectorAll("[data-look]").forEach((el) => { if (!el.firstChild) el.innerHTML = avatarSVG(GAME_LOOKS[el.dataset.look]); });
   renderZy();
 }
@@ -4479,28 +4578,35 @@ const avColor = (u) => { let h = 0; for (const c of u) h = (h * 31 + c.charCodeA
 const ICON_YES = `<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.7a4.2 4.2 0 0 1 7.5 2.5c0 5.7-7.5 10.3-7.5 10.3z" fill="#fff"/></svg>`;
 const ICON_NO = `<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.7l-1.5 3.8 2.6 1.8-1.6 3.4 2.9-3.7-2.4-1.9 1.4-3.4a4.2 4.2 0 0 1 6.1 2.5c0 5.7-7.5 10.3-7.5 10.3z" fill="#fff"/></svg>`;
 const ICON_STAR = `<svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>`;
-let quiz = null, quizTimer = null;
+let quiz = null, quizTimer = null, quizLate = null;
+// Anneau autour du bonhomme : record sur l'accueil du jeu, chrono pendant les questions, score à la fin.
+function ringTo(from, to, secs, ease = "cubic-bezier(.3,1,.4,1)") {
+  const a = $("quiz-arc"); clearTimeout(quizLate); $("quiz-ring").classList.remove("late");
+  a.style.transition = "none"; a.style.strokeDashoffset = 100 - from; void a.getBoundingClientRect();
+  a.style.transition = `stroke-dashoffset ${secs}s ${ease}, stroke .3s`; a.style.strokeDashoffset = 100 - to;
+}
 const replayAnim2 = (el) => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; };
 function setBub(t, kind) { const b = $("quiz-bub"); b.textContent = t; b.className = "qz-bub" + (kind ? " " + kind : ""); replayAnim2(b); }
 function setMood(m) { const a = $("quiz-av"); a.className = "qz-av"; void a.offsetWidth; a.className = "qz-av " + m; }
 function openQuiz(id) {
   if (GAMES[id].ready() !== true) return;
-  clearTimeout(quizTimer);
+  clearTimeout(quizTimer); clearTimeout(quizLate);
   quiz = { id, n: 0, score: 0, streak: 0, pts: 0, used: new Set(), results: [] };
   $("quiz").className = "bilan fullpage quiz-" + id;
   $("quiz-title").textContent = GAMES[id].title;
   $("quiz-av").innerHTML = avatarSVG(GAME_LOOKS[id]);
   setMood("idle"); setBub("Prêt ?");
   $("quiz-score").textContent = "";
-  $("quiz-pips").hidden = true; $("quiz-time").hidden = true;
+  $("quiz-pips").hidden = true;
   const sg = stats(id), best = sg.best, st = starsOf(best), daily = sg.day === todayKey();
-  $("quiz-body").innerHTML = `<div class="qz-intro"><p class="qz-big">${esc(GAMES[id].title)}</p><p>${esc(QUIZ_INFO[id])}</p>
-    <div class="qz-best"><span class="qz-st">${[0, 1, 2].map((i) => ICON_STAR.replace("<svg", `<svg class="${i < st ? "on" : ""}"`)).join("")}</span><span>${best ? `Record ${best}/${QUIZ_LEN}` : "Pas encore de record"}<small>${sg.played ? `${sg.played} partie${sg.played > 1 ? "s" : ""} jouée${sg.played > 1 ? "s" : ""}` : "Première partie"}</small></span></div>
-    <ul class="qz-rules"><li><b>5</b>questions</li><li><b>${QUIZ_TIME} s</b>chrono</li><li><b>×3</b>série = bonus</li></ul>
-    <div class="qz-daily${daily ? " done" : ""}"><i>${daily ? "✓" : "★"}</i><span>${daily ? "Défi du jour réussi" : `Défi du jour : ${DAILY_GOAL}/${QUIZ_LEN} ou plus`}<small>${daily ? "Reviens demain pour un nouveau défi" : `+${DAILY_BONUS} points en bonus, une fois par jour`}</small></span></div></div>`;
+  ringTo(0, best / QUIZ_LEN * 100, 1.1);
+  $("quiz-body").innerHTML = `<div class="qz-intro"><p class="qz-big">${esc(GAMES[id].title)}</p><p class="qz-sub">${esc(QUIZ_INFO[id])}</p>
+    <div class="qz-rec"><span class="qz-st">${[0, 1, 2].map((i) => ICON_STAR.replace("<svg", `<svg class="${i < st ? "on" : ""}"`)).join("")}</span><span>${best ? `Record ${best}/${QUIZ_LEN}` : "Pas encore de record"}${sg.played ? ` · ${sg.played} partie${sg.played > 1 ? "s" : ""}` : ""}</span></div>
+    <div class="qz-chips"><span><b>${QUIZ_LEN}</b> questions</span><span><b>${QUIZ_TIME} s</b> chacune</span><span><b>×3</b> série = bonus</span></div>
+    <div class="qz-daily big${daily ? " done" : ""}"><small class="qz-k">Défi du jour</small><div><i>${daily ? "✓" : "★"}</i><span>${daily ? "Réussi, bravo !" : `Fais ${DAILY_GOAL}/${QUIZ_LEN} ou plus`}<small>${daily ? "Reviens demain pour un nouveau défi" : "Une fois par jour"}</small></span>${daily ? "" : `<em>+${DAILY_BONUS}</em>`}</div></div></div>`;
   replayAnim2($("quiz-body"));
   $("quiz-msg").textContent = "";
-  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-start">C'est parti !</button>`;
+  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-start">Jouer</button>`;
   $("quiz-start").addEventListener("click", nextQuestion);
   $("quiz").hidden = false;
 }
@@ -4513,7 +4619,7 @@ function nextQuestion() {
   const q = quiz.n < QUIZ_LEN ? GAMES[quiz.id].question(quiz.used) : null;
   if (!q) return endQuiz();
   quiz.q = q; quiz.t0 = Date.now(); quiz.done = false;
-  $("quiz-pips").hidden = false; $("quiz-time").hidden = false;
+  $("quiz-pips").hidden = false;
   setMood("idle"); setBub(pick(["À toi !", "Facile ?", "Réfléchis bien…", "Vas-y !", "Hmm…", "Alors ?"]));
   const opt = (a, label, sub, i, big) => `<button class="g-opt qz-opt${big ? " big" : ""}" type="button" data-a="${esc(a)}" style="--d:${i * 80}ms">${big || `<i style="background:${avColor(label)}">${esc(label[0])}</i>`}<span class="txt"><span>${esc(label)}</span>${sub ? `<small hidden>${esc(sub)}</small>` : ""}</span><em class="mark" aria-hidden="true"></em></button>`;
   const body = $("quiz-body");
@@ -4525,9 +4631,8 @@ function nextQuestion() {
   $("quiz-msg").textContent = "";
   $("quiz-acts").innerHTML = "";
   renderPips();
-  const bar = $("quiz-timer");
-  bar.style.transition = "none"; bar.style.width = "100%"; void bar.offsetWidth;
-  bar.style.transition = `width ${QUIZ_TIME}s linear`; bar.style.width = "0%";
+  ringTo(100, 0, QUIZ_TIME, "linear");
+  quizLate = setTimeout(() => $("quiz-ring").classList.add("late"), (QUIZ_TIME - 4) * 1000);
   quizTimer = setTimeout(() => answer(null), QUIZ_TIME * 1000);
 }
 function floatPts(b, text) {
@@ -4539,7 +4644,8 @@ function floatPts(b, text) {
 function answer(b) {
   if (!quiz || quiz.done) return;
   quiz.done = true; clearTimeout(quizTimer);
-  const bar = $("quiz-timer"); bar.style.width = getComputedStyle(bar).width; bar.style.transition = "none";
+  clearTimeout(quizLate);
+  const arc = $("quiz-arc"); arc.style.strokeDashoffset = getComputedStyle(arc).strokeDashoffset; arc.style.transition = "none";
   const q = quiz.q, right = !!b && b.dataset.a === q.answer;
   $("quiz-body").querySelectorAll(".g-opt").forEach((o) => {
     o.disabled = true;
@@ -4585,7 +4691,8 @@ function endQuiz() {
   gainXP(bonus, "", true);
   const stars = starsOf(quiz.score, total);
   const line = ["Tu connais tes abonnés ? Rejoue !", "Pas mal du tout.", "Presque parfait.", "Sans faute !"][stars];
-  $("quiz-pips").hidden = true; $("quiz-time").hidden = true;
+  $("quiz-pips").hidden = true;
+  ringTo(0, quiz.score / total * 100, 1.4);
   setMood(stars >= 2 ? "party" : stars ? "happy" : "sad");
   setBub(["On retente ?", "Pas mal !", "Bien joué !", "Incroyable !"][stars], stars ? "ok" : "");
   $("quiz-score").textContent = "";
@@ -4603,7 +4710,7 @@ function endQuiz() {
   $("quiz-done").addEventListener("click", closeQuiz);
   if (stars >= 2 || record || dailyWon) confetti();
 }
-function closeQuiz() { clearTimeout(quizTimer); $("quiz").hidden = true; quiz = null; renderGames(); checkTrophies(); }
+function closeQuiz() { clearTimeout(quizTimer); clearTimeout(quizLate); $("quiz").hidden = true; quiz = null; renderGames(); checkTrophies(); }
 $("quiz-close").addEventListener("click", closeQuiz);
 document.querySelectorAll("[data-game]").forEach((t) => t.addEventListener("click", () => openQuiz(t.dataset.game)));
 
