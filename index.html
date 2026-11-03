@@ -1376,6 +1376,36 @@
   .qz-goal { font: 700 14px var(--round); background: rgb(255 255 255 / .55); border-radius: 999px; padding: 8px 14px; }
   #quiz-acts .qz-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   #quiz-acts .qz-row .qz-ghost { padding: 13px 8px; font-size: 14px; }
+  /* ---- Anniversaires, version premium : écrin de soirée, gâteau doré, badges métal selon les années ---- */
+  #zy-anni-card.anni-lux { position: relative; overflow: hidden; color: #fff; border-radius: 26px; padding: 18px 14px 14px; gap: 12px;
+    background:
+      radial-gradient(circle at 12% 18%, #f6c95a 0 2px, transparent 3px), radial-gradient(circle at 86% 12%, #ff958a 0 2.5px, transparent 3.5px),
+      radial-gradient(circle at 78% 30%, #c9adff 0 2px, transparent 3px), radial-gradient(circle at 20% 34%, #4fc282 0 1.8px, transparent 2.8px),
+      radial-gradient(circle at 92% 44%, #f6c95a 0 1.6px, transparent 2.6px), radial-gradient(circle at 6% 48%, #ff958a 0 1.6px, transparent 2.6px),
+      radial-gradient(110% 55% at 50% 0%, #5a2f52 0%, #2c1832 55%, #1a0f1e 100%);
+    box-shadow: 0 14px 30px rgb(30 15 25 / .3), inset 0 0 0 1px rgb(255 255 255 / .08); }
+  .an-head { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; position: relative; }
+  .an-head::before { content: ""; position: absolute; top: -10px; left: 50%; width: 150px; height: 110px; translate: -50% 0; background: radial-gradient(closest-side, rgb(246 201 90 / .3), transparent); pointer-events: none; }
+  .an-cake { width: 64px; height: 64px; position: relative; filter: drop-shadow(0 6px 14px rgb(0 0 0 / .35)); }
+  .an-head small { font: 800 11px/1 var(--round); letter-spacing: .08em; text-transform: uppercase; color: #f6c95a; margin-top: 4px; position: relative; }
+  #zy-anni-card .an-head h2 { font: 800 22px/1.15 var(--round); color: #fff; margin: 0; justify-content: center; position: relative; }
+  #zy-anni-card .zy-anni { gap: 8px; }
+  #zy-anni-card .zy-anni li { background: rgb(255 255 255 / .07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1); border-radius: 18px; padding: 10px 10px 10px 10px; gap: 12px; }
+  #zy-anni-card .zy-anni li span { color: #fff; font: 700 14.5px/1.2 var(--round); overflow: hidden; text-overflow: ellipsis; }
+  #zy-anni-card .zy-anni li span small { color: rgb(255 255 255 / .6); font: 600 12px var(--font); margin-top: 2px; }
+  .an-badge { flex: none; width: 44px; height: 44px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    font: 800 17px/1 var(--round); font-style: normal; color: #2e2328; box-shadow: inset 0 0 0 3px rgb(255 255 255 / .35), inset 0 -6px 10px rgb(0 0 0 / .15), 0 6px 14px rgb(0 0 0 / .3); }
+  .an-badge small { font: 800 8.5px/1 var(--round); text-transform: uppercase; letter-spacing: .04em; opacity: .75; }
+  .an-badge.tier-diamond { color: #2e2160; } .an-badge.tier-bronze { color: #4a2a12; }
+  #zy-anni-card .an-badge.tier-bronze { background: linear-gradient(135deg, #f6cfa8, #b06a35); } #zy-anni-card .an-badge.tier-silver { background: linear-gradient(135deg, #ffffff, #9aa3b2); }
+  #zy-anni-card .an-badge.tier-gold { background: linear-gradient(135deg, #fff0b0, #d39a2a); } #zy-anni-card .an-badge.tier-diamond { background: linear-gradient(135deg, #e9e2ff, #8f78e6); }
+  #zy-anni-card .zy-anni li button { background: linear-gradient(135deg, #f9e08e, #d9a63a); color: #2a1a10; font: 800 13px var(--round); padding: 9px 13px; box-shadow: 0 6px 16px rgb(217 166 58 / .35); }
+  #zy-anni-card .zy-anni li button b { color: #2a1a10; }
+  #zy-anni-card .zy-anni li button:disabled { background: rgb(79 194 130 / .18); color: #7fe0a9; box-shadow: none; }
+  #zy-anni-card .zy-anni li em { background: rgb(246 201 90 / .14); color: #f6c95a; box-shadow: inset 0 0 0 1px rgb(246 201 90 / .3); }
+  #zy-anni-card > p { color: rgb(255 255 255 / .6); text-align: center; font: 700 13px var(--round); margin: 0; }
+  @media (prefers-reduced-motion: no-preference) { .an-flame { transform-origin: 32px 10px; animation: anFlame 1.2s ease-in-out infinite alternate; } }
+  @keyframes anFlame { from { transform: scale(1, 1) rotate(-4deg); } to { transform: scale(.9, 1.12) rotate(4deg); } }
   /* ---- Mini-jeux, version premium : écrin sombre propre à chaque jeu, anneau chrono, cartes en verre ---- */
   .pg-head.has-trophy { position: relative; }
   .pg-trophy { position: absolute; right: 0; top: 50%; translate: 0 -50%; width: 46px; height: 46px; border: 0; padding: 0; border-radius: 15px; cursor: pointer; display: grid; place-items: center;
@@ -2102,11 +2132,11 @@
       <button class="zy-tile t-prono" id="tile-prono" type="button"><span class="zt-art" id="tile-prono-art"></span><b>Mes pronostics</b><small id="tile-prono-sub"></small></button>
     </div>
     <section class="games" id="games" aria-label="Mini-jeux">
-    <button class="game-card g-oldest" id="tile-oldest" data-game="oldest" type="button"><span class="g-ring"><span class="g-av" data-look="oldest"></span></span><span class="g-txt"><b>Le Vétéran</b><em>Qui te suit depuis le plus longtemps&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
+    <button class="game-card g-oldest" id="tile-oldest" data-game="oldest" type="button"><span class="g-ring"><span class="g-av" data-look="oldest"></span></span><span class="g-txt"><b>L'Ancien</b><em>Qui te suit depuis le plus longtemps&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
     <button class="game-card g-first" id="tile-first" data-game="first" type="button"><span class="g-ring"><span class="g-av" data-look="first"></span></span><span class="g-txt"><b>Coup de foudre</b><em>Qui a craqué en premier, toi ou l'autre&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
     <button class="game-card g-back" id="tile-back" data-game="back" type="button"><span class="g-ring"><span class="g-av" data-look="back"></span></span><span class="g-txt"><b>Ça match ?</b><em>Il te suit en retour, ou pas&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
   </section>
-    <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
+    <section class="zy-card anni-lux" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
     <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
   </div>
 </div>
@@ -4062,7 +4092,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1625";
+const BUILD = "2026-11-03-1640";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4504,7 +4534,7 @@ function stats(id) { prefs.games = prefs.games || {}; return prefs.games[id] || 
 // Chaque jeu dit s'il est jouable (sinon pourquoi) et fabrique une question.
 const GAMES = {
   oldest: {
-    title: "Le Vétéran",
+    title: "L'Ancien",
     ready() { return Object.values(state.followers).filter(Boolean).length >= 6 || "Pas assez d'abonnés datés dans ton export."; },
     question(used) {
       const pool = Object.entries(state.followers).filter(([u, t]) => t && !used.has(u));
@@ -5159,9 +5189,9 @@ const ansText = (n) => `${n} an${n > 1 ? "s" : ""}`;
 // Anniversaires : carte de fête (fanions, ballons), 10 points par année d'abonnement.
 const ANNI_COLORS = ["#f2c45a", "#ef7f6a", "#9b86d6", "#5fb592", "#e8909c"];
 const anniPts = (n) => 10 * n;
-const BUNTING = `<svg class="zy-bunting" viewBox="0 0 320 26" preserveAspectRatio="none" aria-hidden="true"><path d="M0 3Q160 16 320 3" fill="none" stroke="rgb(46 35 40 / .35)" stroke-width="1.4"/>${
-  Array.from({ length: 11 }, (_, k) => { const x = 8 + k * 28.5, y = 3 + 13 * (1 - ((x - 160) / 160) ** 2) * .95; return `<path d="M${x - 9} ${y}L${x + 9} ${y}L${x} ${y + 15}z" fill="${ANNI_COLORS[k % 5]}"/>`; }).join("")}</svg>`;
-const balloon = (n, k) => `<i class="zy-balloon" style="--bc:${ANNI_COLORS[k % 5]}">${n}<small>${n > 1 ? "ans" : "an"}</small></i>`;
+const ANNI_CAKE = `<svg class="an-cake" viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="57" rx="27" ry="4" fill="#f6c95a" opacity=".3"/><rect x="9" y="36" width="46" height="19" rx="6" fill="url(#anG)"/><path d="M9 42c4.6 0 4.6 5 9.2 5s4.6-5 9.2-5 4.6 5 9.2 5 4.6-5 9.2-5 4.6 5 9.2 5v-5a6 6 0 0 0-6-6H15a6 6 0 0 0-6 6z" fill="#fff3cf"/><rect x="17" y="22" width="30" height="15" rx="5" fill="#f2a7bd"/><path d="M17 27c3.3 0 3.3 4 6.6 4s3.3-4 6.6-4 3.3 4 6.6 4 3.3-4 6.6-4 3.3 4 3.6 4v-4a5 5 0 0 0-5-5H22a5 5 0 0 0-5 5z" fill="#fff"/><rect x="30" y="10" width="4" height="12" rx="1.6" fill="#fff"/><path d="M30 13l4-2M30 17l4-2" stroke="#f2a7bd" stroke-width="1.4"/><path class="an-flame" d="M32 1.5c3.4 3.6 3.6 6.8 0 8.6-3.6-1.8-3.4-5 0-8.6z" fill="#ffc35a"/><circle cx="20" cy="46" r="1.6" fill="#e2566a"/><circle cx="44" cy="46" r="1.6" fill="#8f78e6"/><circle cx="32" cy="49" r="1.6" fill="#4fc282"/><defs><linearGradient id="anG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbe7a0"/><stop offset="1" stop-color="#d9a63a"/></linearGradient></defs></svg>`;
+const anniTier = (n) => n >= 5 ? "diamond" : n >= 3 ? "gold" : n >= 2 ? "silver" : "bronze";
+const balloon = (n) => `<i class="an-badge tier-${anniTier(n)}">${n}<small>${n > 1 ? "ans" : "an"}</small></i>`;
 function renderAnni() {
   const card = $("zy-anni-card");
   if (!Object.keys(state.followers).length) { card.hidden = true; return; }
@@ -5169,14 +5199,13 @@ function renderAnni() {
   card.hidden = !today.length && !soon.length;
   if (card.hidden) return;
   card.classList.toggle("party", !!today.length);
-  card.innerHTML = BUNTING + (today.length
-    ? `<h2>C'est la fête aujourd'hui !</h2>
+  card.innerHTML = `<div class="an-head">${ANNI_CAKE}<small>Anniversaires d'abonnement</small><h2>${today.length ? "C'est la fête aujourd'hui !" : "Bientôt la fête"}</h2></div>` + (today.length
+    ? `
        <ul class="zy-anni">${today.slice(0, 4).map((a, k) => {
          const done = z.anni[a.u + "|" + y];
          return `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>${ansText(a.years)} qu'il te suit !</small></span><button type="button" data-anni="${esc(a.u)}" data-y="${a.years}" ${done ? "disabled" : ""}>${done ? "Fêté ✓" : `Fêter <b>+${anniPts(a.years)}</b>`}</button></li>`;
        }).join("")}</ul>${today.length > 4 ? `<p>Et ${today.length - 4 > 1 ? `${today.length - 4} autres` : "1 autre"} aujourd'hui !</p>` : ""}`
-    : `<h2>Bientôt la fête</h2>
-       <ul class="zy-anni">${soon.slice(0, 3).map((a, k) => `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>${ansText(a.years)} d'abonnement</small></span><em>${a.days === 1 ? "Demain" : `Dans ${a.days} j`}</em></li>`).join("")}</ul>`);
+    : `<ul class="zy-anni">${soon.slice(0, 3).map((a, k) => `<li>${balloon(a.years, k)}<span>${esc(a.u)}<small>${ansText(a.years)} d'abonnement</small></span><em>${a.days === 1 ? "Demain" : `Dans ${a.days} j`}</em></li>`).join("")}</ul>`);
 }
 $("zy-anni-card").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-anni]");
