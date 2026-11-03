@@ -612,6 +612,15 @@ final class MetaViewController: UIViewController {
     private var offSince: Date?
     private var lostCheckFrom = Date()
     private var seenFlow = Date.distantPast
+    /// Cases à cocher : nombre de cases cochées, et « Followers et suivi(e)s » cochée ou non.
+    private var pickChecked = 0
+    private var pickFollowers = false
+    private var seenPick = Date.distantPast
+    /// « Enregistrer » touché avec de mauvaises cases : on reste sur « Personnaliser les informations » jusqu'au retour sur les cases.
+    private var pickRedo = false
+    private var pickFresh: Bool { Date().timeIntervalSince(seenPick) < 1.6 }
+    /// Bon réglage : une seule case cochée, et c'est « Followers et suivi(e)s ».
+    private var pickGood: Bool { pickFollowers && pickChecked == 1 }
     private var downloading = false
     /// « Commencer l'exportation » touché : on attend qu'Instagram ait bien pris la demande.
     private var sentAt: Date?
@@ -728,6 +737,25 @@ final class MetaViewController: UIViewController {
             }
             return false;
           };
+          // Page des cases à cocher : combien sont cochées, et « Followers et suivi(e)s » l'est-elle ? (aucun autre contenu lu)
+          var pickState = function () {
+            var boxes = document.querySelectorAll('input[type=checkbox],[role=checkbox]');
+            var n = 0, f = false, seen = 0;
+            for (var i = 0; i < boxes.length; i++) {
+              var el = boxes[i];
+              var row = el.closest('label,[role=listitem],[role=row],li') || el.parentElement;
+              // Case sans texte autour : on remonte (4 niveaux max) jusqu'au libellé de la ligne.
+              for (var up = 0; up < 4 && row && !low(row) && row.parentElement; up++) row = row.parentElement;
+              if (!row || row.getClientRects().length === 0) continue;
+              seen++;
+              var on = el.checked === true || el.getAttribute('aria-checked') === 'true';
+              if (!on) continue;
+              n++;
+              var t = low(row);
+              if (t.indexOf('followers et suivi') >= 0 || t.indexOf('followers and following') >= 0) f = true;
+            }
+            return seen ? { n: n, f: f } : null;
+          };
           var hasWord = function (t, words) { return words.some(function (w) { return t.indexOf(w) >= 0; }); };
           var screen = function () {
             if (has(START)) {
@@ -759,7 +787,7 @@ final class MetaViewController: UIViewController {
                 : (txt.indexOf('sms') >= 0 || txt.indexOf('texto') >= 0 || txt.indexOf('text message') >= 0) ? 'sms'
                 : (txt.indexOf('e-mail') >= 0 || txt.indexOf('email') >= 0) ? 'email' : 'app';
             }
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, screen: login || code ? '' : screen(), flow: inFlow(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -1073,6 +1101,19 @@ final class MetaViewController: UIViewController {
         if let w = warning {
             return Step(verb: "", target: w.title, tip: w.text, look: steps[index].look)
         }
+        // Page des cases : le bandeau dit exactement ce qu'il reste à faire, et n'avance pas tant que ce n'est pas bon.
+        if steps[index].screen == "pick", pickFresh {
+            if !pickFollowers {
+                return Step(verb: "Coche", target: "Followers et suivi(e)s",
+                            tip: "Dans la rubrique Contacts. C'est la seule case qui compte.", look: "check", screen: "pick")
+            }
+            if pickChecked > 1 {
+                let more = pickChecked - 1
+                return Step(verb: "Encore \(more) case\(more > 1 ? "s" : "") à décocher :", target: "garde seulement Followers et suivi(e)s",
+                            tip: "Le plus rapide : « Tout effacer » dans chaque rubrique, puis recoche « Followers et suivi(e)s ».", look: "check", screen: "pick")
+            }
+            return Step(verb: "Parfait ! Maintenant,", target: "Enregistrer", tip: "Tout en bas de la liste.", look: "button", screen: "pick")
+        }
         return steps[index]
     }
 
@@ -1113,6 +1154,7 @@ final class MetaViewController: UIViewController {
             self.prevButton.isEnabled = self.index > 0
             // Pas de « Suivant » sur la dernière étape : c'est le vrai bouton d'Instagram qui valide.
             self.nextButton.isEnabled = self.index < self.steps.count - 1
+                && !(self.steps[self.index].screen == "pick" && self.pickFresh && !self.pickGood)
         }
         // Pas de fondu sur tout le bandeau (l'ancien texte restait visible derrière le nouveau) :
         // on remplace le contenu d'un coup, seul le texte apparaît en fondu, et la taille du bandeau suit en douceur.
@@ -1142,6 +1184,7 @@ final class MetaViewController: UIViewController {
     }
 
     private func go(_ delta: Int) {
+        if delta > 0, steps[index].screen == "pick", pickFresh, !pickGood { UINotificationFeedbackGenerator().notificationOccurred(.warning); return }
         let n = max(0, min(steps.count - 1, index + delta))
         guard n != index || warning != nil else { return }
         index = n
@@ -1169,6 +1212,15 @@ final class MetaViewController: UIViewController {
         for i in index...last {
             let step = steps[i]
             guard has(step.wait) else { continue }
+            // « Enregistrer » sur la page des cases sans le bon réglage : on n'avance pas, on renvoie à « Personnaliser les informations ».
+            if checking, step.screen == "pick", steps[index].screen == "pick", pickFresh, !pickGood {
+                index = steps.firstIndex(where: { $0.screen == "summary:info" }) ?? index
+                pickRedo = true
+                warn("Attention, pas les bonnes cases !", pickFollowers
+                     ? "Il restait d'autres cases cochées. Touche encore « Personnaliser les informations » et garde seulement « Followers et suivi(e)s »."
+                     : "« Followers et suivi(e)s » n'était pas cochée. Touche encore « Personnaliser les informations » et coche-la.")
+                return
+            }
             // « Enregistrer » sans avoir choisi la bonne option : Instagram a gardé son réglage par défaut.
             if checking, step.pick, pickedAt != i, step.redo >= 0, step.redo < steps.count {
                 index = step.redo
@@ -1232,8 +1284,16 @@ final class MetaViewController: UIViewController {
         if state["login"] as? Bool == true { seenLogin = now }
         if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
         if state["flow"] as? Bool == true { seenFlow = now }
+        if let pick = state["pick"] as? [String: Any], let n = pick["n"] as? Int {
+            let before = (pickChecked, pickFollowers)
+            pickChecked = n
+            pickFollowers = pick["f"] as? Bool == true
+            seenPick = now
+            if before != (pickChecked, pickFollowers), steps[index].screen == "pick" { showStep() }
+        }
         if let scr = state["screen"] as? String, !scr.isEmpty {
             if scr != screenKey { screenKey = scr; screenSince = now }
+            if scr == "pick" || scr == "home" { pickRedo = false }
             seenScreen = now
         }
         if state["start"] as? Bool == true { seenStart = now; sawStart = true }
@@ -1302,6 +1362,7 @@ final class MetaViewController: UIViewController {
         // Une alerte toute fraîche reste lisible 3 s avant que le bandeau ne bouge.
         if warning != nil, now.timeIntervalSince(warningAt) < 3 { return }
         let scr = screenKey
+        if pickRedo, scr.hasPrefix("summary") { return }
         guard !steps[index].screen.isEmpty, steps[index].screen != scr,
               let target = steps.firstIndex(where: { $0.screen == scr }) else { return }
         index = target
