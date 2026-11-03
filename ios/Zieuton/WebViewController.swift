@@ -607,6 +607,11 @@ final class MetaViewController: UIViewController {
     private var screenKey = ""
     private var screenSince = Date.distantPast
     private var seenScreen = Date.distantPast
+    /// Hors du parcours d'export (Espace Comptes, autre rubrique…) : le bandeau propose d'y revenir.
+    private var lostShown = false
+    private var offSince: Date?
+    private var lostCheckFrom = Date()
+    private var seenFlow = Date.distantPast
     private var downloading = false
     /// « Commencer l'exportation » touché : on attend qu'Instagram ait bien pris la demande.
     private var sentAt: Date?
@@ -710,6 +715,19 @@ final class MetaViewController: UIViewController {
             }
             return best;
           };
+          // Un libellé du parcours d'export est-il dans la page, même plus bas (hors de l'écran) ? Sert à savoir si on est « perdu ».
+          var FLOW = ['créer une exportation', 'create export', 'choisissez un profil', 'choose a profile', 'choisir où exporter', 'choose where to export',
+            'exporter sur mon appareil', 'export to device', 'tout effacer', 'clear all', 'depuis le début', 'all time', "commencer l'exportation", 'start export',
+            'télécharger', 'download', 'personnaliser les informations', 'customize information'];
+          var inFlow = function () {
+            var els = document.querySelectorAll('h1,h2,h3,[role=heading],span,div,label,button,a,[role=button]');
+            for (var i = 0; i < els.length; i++) {
+              if (els[i].childElementCount > 3) continue;
+              var t = low(els[i]);
+              if (t.length <= 60 && FLOW.indexOf(t) >= 0 && els[i].getBoundingClientRect().width > 0) return true;
+            }
+            return false;
+          };
           var hasWord = function (t, words) { return words.some(function (w) { return t.indexOf(w) >= 0; }); };
           var screen = function () {
             if (has(START)) {
@@ -741,7 +759,7 @@ final class MetaViewController: UIViewController {
                 : (txt.indexOf('sms') >= 0 || txt.indexOf('texto') >= 0 || txt.indexOf('text message') >= 0) ? 'sms'
                 : (txt.indexOf('e-mail') >= 0 || txt.indexOf('email') >= 0) ? 'email' : 'app';
             }
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, screen: login || code ? '' : screen(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, screen: login || code ? '' : screen(), flow: inFlow(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -939,6 +957,19 @@ final class MetaViewController: UIViewController {
     }
 
     @objc private func bannerTapped() {
+        // Hors du parcours d'export : on ramène sur la page d'export d'Instagram, et le bandeau repart de là.
+        if lostShown {
+            lostShown = false
+            index = 0
+            pickedAt = -1
+            warning = nil
+            seenScreen = .distantPast
+            lostCheckFrom = Date()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            webView.load(URLRequest(url: url))
+            showStep()
+            return
+        }
         guard warning != nil else { return }
         warning = nil
         showStep()
@@ -1035,6 +1066,10 @@ final class MetaViewController: UIViewController {
                             ? "Rien ne bouge ? Touche encore « Commencer l'exportation » sur la page."
                             : "Zieuton vérifie que c'est bien parti.")
         }
+        if lostShown {
+            return Step(verb: "Tu t'es un peu éloigné :", target: "Revenir à l'export",
+                        tip: "Touche ici, je te ramène sur la bonne page d'Instagram.", look: "button")
+        }
         if let w = warning {
             return Step(verb: "", target: w.title, tip: w.text, look: steps[index].look)
         }
@@ -1047,7 +1082,7 @@ final class MetaViewController: UIViewController {
     private func showStep(animated: Bool = true) {
         let step = currentStep
         let normal = pageKnown && codeShown.isEmpty && !(loginShown || downloading || sentAt != nil)
-        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!"].joined(separator: "|")
+        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : ""].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
         let apply = {
@@ -1073,8 +1108,8 @@ final class MetaViewController: UIViewController {
             if normal && !step.look.isEmpty { self.drawReplica(self.warning == nil ? step : self.steps[self.index]) }
             self.progress.isHidden = !normal || self.steps.count < 2
             // À la première étape, pas de flèche « précédent » grisée : elle n'apparaît qu'à partir de l'étape 2.
-            self.prevButton.isHidden = !normal || self.steps.count < 2 || self.index == 0
-            self.nextButton.isHidden = !normal || self.steps.count < 2
+            self.prevButton.isHidden = !normal || self.lostShown || self.steps.count < 2 || self.index == 0
+            self.nextButton.isHidden = !normal || self.lostShown || self.steps.count < 2
             self.prevButton.isEnabled = self.index > 0
             // Pas de « Suivant » sur la dernière étape : c'est le vrai bouton d'Instagram qui valide.
             self.nextButton.isEnabled = self.index < self.steps.count - 1
@@ -1130,7 +1165,7 @@ final class MetaViewController: UIViewController {
         lastTapAt = Date()
         let last = min(steps.count - 1, index + 2)
         guard index <= last else { return }
-        let checking = guarded && pageKnown && !loginShown && codeShown.isEmpty && sentAt == nil
+        let checking = guarded && pageKnown && !loginShown && codeShown.isEmpty && !lostShown && sentAt == nil
         for i in index...last {
             let step = steps[i]
             guard has(step.wait) else { continue }
@@ -1196,6 +1231,7 @@ final class MetaViewController: UIViewController {
         let now = Date()
         if state["login"] as? Bool == true { seenLogin = now }
         if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
+        if state["flow"] as? Bool == true { seenFlow = now }
         if let scr = state["screen"] as? String, !scr.isEmpty {
             if scr != screenKey { screenKey = scr; screenSince = now }
             seenScreen = now
@@ -1221,6 +1257,14 @@ final class MetaViewController: UIViewController {
         if login != loginShown { loginShown = login; showStep() }
         let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
         if code != codeShown { codeShown = code; warning = nil; showStep() }
+        // Perdu ? Aucun écran du parcours reconnu depuis 2 s, et l'adresse n'est plus celle de l'export (ou rien de reconnu depuis 6 s).
+        let urlNow = webView.url?.absoluteString.lowercased() ?? ""
+        let offPath = !urlNow.isEmpty && !urlNow.contains("/dyi") && !onLoginURL
+        if offPath { if offSince == nil { offSince = now } } else { offSince = nil }
+        let unknownFor = now.timeIntervalSince(max(seenScreen, seenFlow, lostCheckFrom))
+        let lost = !login && code.isEmpty && sentAt == nil && !webView.isLoading && unknownFor > 2
+            && ((offSince.map { now.timeIntervalSince($0) > 1.5 } ?? false) || unknownFor > 6)
+        if lost != lostShown { lostShown = lost; warning = nil; showStep() }
         // L'alerte s'efface toute seule au bout de 10 s : le bandeau remontre l'étape à faire.
         if warning != nil, now.timeIntervalSince(warningAt) > 10 { warning = nil; showStep() }
         guard requesting, !login else { return }
