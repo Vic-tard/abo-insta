@@ -3037,6 +3037,7 @@ $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) close
 $("file").addEventListener("change", (e) => {
   const files = [...e.target.files];
   e.target.value = "";
+  if (files.length === 1 && isBackupName(files[0].name)) return restoreBackup(files[0]);
   if (files.length) importFiles(files);
 });
 async function importFiles(files) {
@@ -3210,6 +3211,8 @@ $("undo").addEventListener("click", async () => {
 
 function flash(text, kind) {
   const m = $("backup-msg");
+  // Page Sauvegarde fermée (ex. « J'ai une sauvegarde » à l'arrivée) : le message s'affiche en bas de l'écran.
+  if ($("st-backup").hidden) { haptic(kind === "ok" ? "success" : "error"); return toast(text, false); }
   m.textContent = text; m.className = "msg " + kind; m.hidden = false;
   m.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -3230,8 +3233,11 @@ $("more").addEventListener("click", () => { shown += 40; renderList(); });
 $("backup").addEventListener("click", async () => {
   if (DEMO) return flash("C'est la démo : rien à sauvegarder. Tes vraies données ne sont pas touchées.", "err");
   if (!state.snapshots.length) return flash("Rien à sauvegarder pour l'instant : importe d'abord un export.", "err");
-  const data = JSON.stringify({ app: "zyeuto", version: 1, savedAt: new Date().toISOString(), state, avatar: avatar || undefined, zy: prefs.zy, games: prefs.games });
-  const name = `zieuton-sauvegarde-${toDateInput(new Date())}.json`;
+  // Fichier « .zieuton » : seul type que le bouton « J'ai une sauvegarde » laisse choisir dans l'app.
+  // Le sceau (empreinte du contenu) prouve que le fichier vient bien de Zieuton et n'a pas été modifié.
+  const body = { state, avatar: avatar || undefined, zy: prefs.zy, games: prefs.games };
+  const data = JSON.stringify({ app: "zieuton", kind: "sauvegarde", version: 2, savedAt: new Date().toISOString(), seal: backupSeal(body), ...body });
+  const name = `zieuton-sauvegarde-${toDateInput(new Date())}.zieuton`;
   const file = new File([data], name, { type: "application/json" });
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3269,17 +3275,43 @@ $("restore").addEventListener("click", () => $("restore-file").click());
 $("restore-file").addEventListener("change", async (e) => {
   const f = e.target.files[0];
   e.target.value = "";
-  if (!f) return;
-  leaveDemo(true);
+  if (f) await restoreBackup(f);
+});
+// Empreinte du contenu d'une sauvegarde (le « sceau ») : calculée tout de suite, sans attendre,
+// pour que la feuille de partage de l'iPhone s'ouvre bien au toucher.
+function backupSeal(body) {
+  const str = "zieuton-sauvegarde|" + JSON.stringify(body);
+  const h = (seed) => {
+    let a = 0xdeadbeef ^ seed, b = 0x41c6ce57 ^ seed;
+    for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); a = Math.imul(a ^ c, 2654435761); b = Math.imul(b ^ c, 1597334677); }
+    a = Math.imul(a ^ (a >>> 16), 2246822507) ^ Math.imul(b ^ (b >>> 13), 3266489909);
+    b = Math.imul(b ^ (b >>> 16), 2246822507) ^ Math.imul(a ^ (a >>> 13), 3266489909);
+    return (b >>> 0).toString(16).padStart(8, "0") + (a >>> 0).toString(16).padStart(8, "0");
+  };
+  return h(1) + h(7) + h(42);
+}
+const isBackupName = (name) => /\.zieuton$/i.test(name || "");
+// Restaure seulement une vraie sauvegarde Zieuton : bon type de fichier, bon contenu, sceau intact.
+async function restoreBackup(f) {
+  const nope = "Ce fichier n'est pas une sauvegarde Zieuton. Choisis un fichier « zieuton-sauvegarde », créé dans Réglages → Sauvegarde.";
+  if (f.size > 60 * 1024 * 1024) return flash(nope, "err");
   let s, data;
   try {
     data = JSON.parse(await f.text());
-    // Les copies faites avant le changement de nom portent encore l'ancien identifiant.
-    s = data && (data.app === "zyeuto" || data.app === "abo-insta") && data.state;
+    // Anciennes copies (avant le sceau) : nom d'app d'avant le renommage, fichier .json.
+    const legacy = data && (data.app === "zyeuto" || data.app === "abo-insta") && data.version === 1;
+    const sealed = data && data.app === "zieuton" && data.kind === "sauvegarde" && data.version === 2 && typeof data.seal === "string";
+    if (!legacy && !sealed) throw new Error();
+    s = data.state;
     if (!isState(s)) throw new Error();
+    if (sealed) {
+      const body = { state: data.state, avatar: data.avatar, zy: data.zy, games: data.games };
+      if (backupSeal(body) !== data.seal) return flash("Cette sauvegarde a été modifiée ou abîmée : Zieuton ne peut pas la reprendre.", "err");
+    }
   } catch {
-    return flash("Ce fichier n'est pas une sauvegarde Zieuton.", "err");
+    return flash(nope, "err");
   }
+  leaveDemo(true);
   const restoredNames = Object.keys(s.followers);
   if (s.snapshots.length && isOtherAccount(restoredNames)) return flash("Cette sauvegarde vient d'un autre compte Instagram que celui affiché. Va dans Réglages → Mon compte : passe sur ce compte ou ajoute-le, puis restaure à nouveau.", "err");
   state = s;
@@ -3289,7 +3321,10 @@ $("restore-file").addEventListener("change", async (e) => {
   render();
   await save();
   flash(`Historique restauré : ${s.snapshots.length} import${s.snapshots.length > 1 ? "s" : ""}.`, "ok");
-});
+}
+// Le sélecteur de fichiers ne propose que les sauvegardes Zieuton. Dans l'app (version 5 et plus), le type
+// « Sauvegarde Zieuton » est déclaré à l'iPhone : les autres fichiers (JSON de Spotify, de Canva…) sont grisés.
+$("restore-file").accept = window.ZYEUTO_APP && (window.ZYEUTO_APP.version || 1) >= 5 ? ".zieuton" : ".zieuton,.json,application/json";
 $("reset").addEventListener("click", () => {
   if (DEMO) return flash("C'est la démo : rien à effacer. Touche « Quitter » en haut pour en sortir.", "err");
   if (!state.snapshots.length) return flash("Il n'y a encore rien à effacer.", "err");
@@ -4250,7 +4285,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-2130";
+const BUILD = "2026-11-03-2200";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4453,10 +4488,11 @@ window.zyeutoFile = {
     this.parts.push(u);
   },
   async end() {
-    const file = new File(this.parts, this.name, { type: /\.json$/i.test(this.name) ? "application/json" : "application/zip" });
+    const file = new File(this.parts, this.name, { type: /\.(json|zieuton)$/i.test(this.name) ? "application/json" : "application/zip" });
     this.parts = [];
     nativePost({ type: "received" });
-    try { await importFiles([file]); } finally { sharedBusy = false; }
+    // Une sauvegarde Zieuton ouverte avec « Partager → Zieuton » : on la restaure (après vérification).
+    try { await (isBackupName(file.name) ? restoreBackup(file) : importFiles([file])); } finally { sharedBusy = false; }
   },
 };
 async function checkUpdate() {
