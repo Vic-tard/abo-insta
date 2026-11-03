@@ -2106,9 +2106,8 @@
     <button class="game-card g-first" id="tile-first" data-game="first" type="button"><span class="g-ring"><span class="g-av" data-look="first"></span></span><span class="g-txt"><b>Coup de foudre</b><em>Qui a craqué en premier, toi ou l'autre&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
     <button class="game-card g-back" id="tile-back" data-game="back" type="button"><span class="g-ring"><span class="g-av" data-look="back"></span></span><span class="g-txt"><b>Ça match ?</b><em>Il te suit en retour, ou pas&nbsp;?</em><small></small></span><span class="g-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span></button>
   </section>
-    <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
     <section class="zy-card flashy" id="zy-anni-card" aria-label="Anniversaires d'abonnement"></section>
-    <div class="goal flashy" id="goal"></div>
+    <button class="replay" id="replay-bilan" type="button"><span class="big">±</span><b>Regratte ton dernier bilan</b><small id="replay-sub"></small></button>
   </div>
 </div>
 <!-- Page de droite : graphiques -->
@@ -4063,7 +4062,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-1600";
+const BUILD = "2026-11-03-1625";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -5417,11 +5416,6 @@ function lastResult() {
 function renderGamesPage() {
   const lr = lastResult();
   $("replay-bilan").disabled = !lr;
-  // Prochain cap : barre de progression qui se remplit à l'ouverture de la page.
-  const n = state.snapshots.length ? state.snapshots[state.snapshots.length - 1].count : 0;
-  const g = growthAt(n), nextCap = state.snapshots.length ? GROWTH_CAPS.find((m) => m > g) : 0, prevCap = [...GROWTH_CAPS].reverse().find((m) => m <= g) || 0;
-  $("goal").hidden = !nextCap;
-  if (nextCap) $("goal").innerHTML = `<div><b>Prochain cap : +${nf(nextCap)} abonnés</b><span>${g > 0 ? `Tu en es à +${nf(g)} depuis ton départ` : g < 0 ? `Tu en es à −${nf(-g)} depuis ton départ` : "Compté depuis ton premier import"}</span></div><div class="track"><i style="--w:${(Math.max(0, g - prevCap) / (nextCap - prevCap) * 100).toFixed(1)}%"></i></div>`;
   $("replay-sub").textContent = lr ? `Import du ${fmtDate(state.snapshots[state.snapshots.length - 1].takenAt)}. Parie, gratte, et découvre qui est parti.` : "Disponible après ton deuxième import.";
 }
 
