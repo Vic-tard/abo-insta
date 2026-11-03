@@ -4284,7 +4284,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-2320";
+const BUILD = "2026-11-03-2330";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4331,7 +4331,9 @@ function freeLeftPart(next) {
   return total > 0 ? Math.min(1, Math.max(0, (next.getTime() - Date.now()) / total)) : 0;
 }
 // Compte ajouté sur ce téléphone (un ami) : pas de version gratuite, Plus dès le 1er import.
-const guestAcct = () => curSlot() > 1;
+// Compte ajouté : son propre Plus dès le 1er import… seulement si le compte principal a déjà servi.
+// Compte principal encore vide (jamais importé) : le compte ajouté profite des imports gratuits.
+const guestAcct = () => curSlot() > 1 && accts().some((a) => a.slot === 1 && a.n >= 10);
 function canUpdateFree() {
   // Sur le site (hors app), rien n'est vendu : pas de limite pour l'instant.
   if (!storeApp() || hasPlus()) return true;
