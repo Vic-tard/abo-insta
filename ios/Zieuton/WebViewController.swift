@@ -919,9 +919,15 @@ final class MetaViewController: UIViewController {
         return steps[index]
     }
 
+    /// Ce que le bandeau affiche en ce moment : on ne le redessine que si ça change vraiment.
+    private var shownKey = ""
+
     private func showStep(animated: Bool = true) {
         let step = currentStep
         let normal = pageKnown && !(loginShown || downloading || sentAt != nil)
+        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index)].joined(separator: "|")
+        guard key != shownKey else { return }
+        shownKey = key
         let apply = {
             let say = NSMutableAttributedString()
             if !step.verb.isEmpty {
@@ -943,11 +949,24 @@ final class MetaViewController: UIViewController {
             // Pas de « Suivant » sur la dernière étape : c'est le vrai bouton d'Instagram qui valide.
             self.nextButton.isEnabled = self.index < self.steps.count - 1
         }
+        // Pas de fondu sur tout le bandeau (l'ancien texte restait visible derrière le nouveau) :
+        // on remplace le contenu d'un coup, seul le texte apparaît en fondu, et la taille du bandeau suit en douceur.
+        banner.layer.removeAllAnimations()
+        if animated {
+            for v in [sayLabel, tipLabel, replica] as [UIView] {
+                v.layer.removeAllAnimations()
+                let fade = CATransition()
+                fade.type = .fade
+                fade.duration = 0.2
+                v.layer.add(fade, forKey: "zyFade")
+            }
+        }
+        apply()
         progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
         if animated {
-            UIView.transition(with: banner, duration: 0.25, options: .transitionCrossDissolve, animations: apply)
-        } else {
-            apply()
+            UIView.animate(withDuration: 0.25, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
+                self.view.layoutIfNeeded()
+            }
         }
     }
 
