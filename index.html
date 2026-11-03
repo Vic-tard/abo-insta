@@ -1163,7 +1163,21 @@
   #wheel-page.bilan.fullpage { background: linear-gradient(170deg, #ffe0b8, #f39a5c); }
   #prono-page.bilan.fullpage { background: linear-gradient(170deg, #e6dcfd, #9c84e0); }
   .wp-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; }
-  .wp-body .zy-wheel-box { width: min(300px, 78vw) !important; --wr: min(150px, 39vw); }
+  /* La scène : la roue, et le petit bonhomme blanc qui la lance avec la main */
+  .wp-stage { position: relative; width: min(340px, 88vw); aspect-ratio: 340 / 300; --sw: min(340px, 88vw); }
+  .wp-stage .zy-wheel-box { position: absolute; left: 0; top: 6.7%; width: 76.5% !important; --wr: calc(var(--sw) * .3825); }
+  .wp-guy { position: absolute; left: 61%; top: 51%; width: 40%; aspect-ratio: 120 / 130; z-index: 3; filter: drop-shadow(0 10px 14px rgb(46 35 40 / .25)); }
+  .wp-guy svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .wp-arm { transform-box: view-box; transform-origin: 50px 78px; transition: transform .25s ease-out; }
+  .wp-eyes { transition: transform .3s; }
+  .wp-stage.push .wp-arm { transform: rotate(-38deg); transition: transform .14s ease-in; }
+  .wp-stage.swing .wp-arm { transform: rotate(34deg); transition: transform .22s cubic-bezier(.3,1.5,.5,1); }
+  .wp-stage.watch .wp-eyes { transform: translate(-2px, -3px); }
+  @media (prefers-reduced-motion: no-preference) {
+    .wp-guy { animation: qzFloat 2.6s ease-in-out infinite; }
+    .wp-stage.cheer .wp-guy { animation: qzParty 1s cubic-bezier(.3,1.6,.5,1) 2; }
+    .wp-stage.nod .wp-guy { animation: qzJump .6s cubic-bezier(.3,1.6,.5,1); }
+  }
   .wp-body .zy-wheel span { font-size: 16px !important; }
   .wp-body .zy-res { font: 800 20px/1.3 var(--round); margin: 0; min-height: 1.3em; }
   .wp-body .qz-go, #prono-acts .qz-go { max-width: 420px; }
@@ -3812,7 +3826,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-0600";
+const BUILD = "2026-11-03-0630";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4702,6 +4716,15 @@ const todayKey = () => toDateInput(new Date());
 let wheelTurn = 0, wheelBusy = false;
 const wheelHTML = (id) => `<div class="zy-wheel-box"><div class="zy-wheel"${id ? ` id="${id}"` : ""} style="transform:rotate(${wheelTurn}deg);background:conic-gradient(${WHEEL.map((w, i) => `${WHEEL_COLORS[w.pts]} ${wheelStarts[i]}deg ${wheelStarts[i] + w.deg}deg`).join(",")})">${WHEEL.map((w, i) =>
   `<span style="transform:rotate(${wheelStarts[i] + w.deg / 2 - 90}deg) translate(calc(var(--wr) * ${w.pts === 100 ? .52 : .58}),-50%)">${w.pts}</span>`).join("")}</div></div>`;
+// Le petit bonhomme blanc de la roue : la main posée sur le bord, il la lance vers le bas.
+const WHEEL_GUY = `<svg viewBox="0 0 120 130" aria-hidden="true">
+  <g class="wp-arm"><path d="M50 78C38 64 30 46 30 28" fill="none" stroke="#e9dadd" stroke-width="15" stroke-linecap="round"/><path d="M50 78C38 64 30 46 30 28" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round"/>
+    <ellipse cx="29" cy="24" rx="10" ry="9" fill="#fff" stroke="#e9dadd" stroke-width="2"/><path d="M22 20l-3-5M27 17l-1-6M33 17l1-6" stroke="#e9dadd" stroke-width="2" stroke-linecap="round"/></g>
+  <circle cx="76" cy="88" r="36" fill="#fff"/><path d="M52 70a30 30 0 0 1 18-16" stroke="#f3e9eb" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <g class="wp-eyes"><ellipse cx="64" cy="80" rx="6" ry="7.2" fill="#2e2328"/><ellipse cx="86" cy="80" rx="6" ry="7.2" fill="#2e2328"/><circle cx="62" cy="77.5" r="2.2" fill="#fff"/><circle cx="84" cy="77.5" r="2.2" fill="#fff"/></g>
+  <ellipse cx="55" cy="92" rx="5.5" ry="3.2" fill="#f2b3bc"/><ellipse cx="97" cy="92" rx="5.5" ry="3.2" fill="#f2b3bc"/>
+  <path d="M69 95c4 4.5 10 4.5 14 0" fill="none" stroke="#2e2328" stroke-width="2.6" stroke-linecap="round"/>
+  <rect x="96" y="96" width="16" height="12" rx="6" fill="#fff" stroke="#e9dadd" stroke-width="1.5"/></svg>`;
 function renderWheel() {
   const z = zy(), done = z.spun === todayKey();
   $("tile-wheel").classList.toggle("done", done);
@@ -4709,7 +4732,7 @@ function renderWheel() {
   const sub = $("tile-wheel-sub");
   sub.textContent = done ? "Reviens demain" : "1 tour gratuit"; sub.classList.toggle("on", !done);
   if (wheelBusy) return;
-  $("wheel-body").innerHTML = `${wheelHTML("zy-wheel")}
+  $("wheel-body").innerHTML = `<div class="wp-stage" id="wp-stage">${wheelHTML("zy-wheel")}<span class="wp-guy">${WHEEL_GUY}</span></div>
     <p class="zy-res" id="zy-wheel-res">${done ? esc(z.spunText || "Déjà tournée aujourd'hui.") : "Jusqu'à 100 points !"}</p>
     <button class="qz-go" type="button" id="zy-spin" ${done ? "disabled" : ""}>${done ? "Reviens demain" : "Tourner"}</button>`;
   $("zy-spin").addEventListener("click", spinWheel);
@@ -4725,16 +4748,27 @@ function spinWheel() {
   const a = Math.random() * 360, i = wheelStarts.findLastIndex((st) => st <= a), w = WHEEL[i];
   const target = 360 - a;
   wheelTurn = wheelTurn - (wheelTurn % 360) + 360 * 5 + target;
-  const el = $("zy-wheel"), btn = $("zy-spin");
-  btn.disabled = true; haptic("light");
-  el.style.transitionDuration = calm() ? ".01s" : "";
-  el.style.transform = `rotate(${wheelTurn}deg)`;
+  const el = $("zy-wheel"), btn = $("zy-spin"), stage = $("wp-stage");
+  btn.disabled = true;
+  // Le bonhomme prend son élan, donne un coup de main vers le bas, puis regarde tourner.
+  const go = () => {
+    haptic("light");
+    el.style.transitionDuration = calm() ? ".01s" : "";
+    el.style.transform = `rotate(${wheelTurn}deg)`;
+  };
+  if (calm() || !stage) go();
+  else {
+    stage.classList.add("push", "watch");
+    setTimeout(() => { stage.classList.replace("push", "swing"); setTimeout(go, 90); }, 260);
+    setTimeout(() => stage.classList.remove("swing"), 900);
+  }
   const done = () => {
     const text = w.pts === 100 ? "Jackpot : +100 points !" : `+${w.pts} points !`;
     z.spun = todayKey(); z.spunText = text; z.spins = (z.spins || 0) + 1; if (w.pts === 100) z.jackpots = (z.jackpots || 0) + 1; savePrefs();
     $("zy-wheel-res").textContent = text;
     btn.textContent = "Reviens demain";
     wheelBusy = false; renderWheel();
+    $("wp-stage")?.classList.add(w.pts >= 30 ? "cheer" : "nod");
     if (w.pts >= 50) confetti();
     gainXP(w.pts, "Roue du jour"); checkTrophies();
   };
