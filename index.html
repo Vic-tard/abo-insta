@@ -3363,6 +3363,10 @@ $("reset").addEventListener("click", () => {
 $("reset-no").addEventListener("click", () => { $("reset-row").hidden = false; $("reset-confirm").hidden = true; });
 $("reset-yes").addEventListener("click", async () => {
   state = emptyState();
+  // Une ancienne demande d'export ne doit pas survivre : sinon le guide dit « Ta liste est sûrement prête » tout de suite.
+  delete prefs.requestedAt; delete prefs.readyAt; delete prefs.lastImportAt;
+  prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; gfTaps = [];
+  savePrefs();
   $("reset-row").hidden = false; $("reset-confirm").hidden = true;
   render();
   await save();
@@ -3662,7 +3666,8 @@ const DRIVE = {
 };
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 // Google refuse la connexion dans une app (vue web intégrée) : le mode Drive reste réservé au site.
-const driveReady = () => !!DRIVE.clientId && !nativeApp;
+// Drive abandonné (2026-11) : plus proposé nulle part, le parcours « Exporter sur mon appareil » sert à tout le monde.
+const driveReady = () => false;
 const DRIVE_TOKEN = "abo-drive-token-ro";
 function driveToken() {
   try { const t = JSON.parse(localStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
@@ -3814,7 +3819,8 @@ function wkGo() {
     nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep) });
   } else {
     const dl = metaStep(GET_SHOTS[1]);
-    dl.tip = "À côté de ton export. Pas encore là ? Instagram n'a pas fini : reviens un peu plus tard. Ensuite, Zieuton importe tout seul.";
+    // Le bandeau ne peut pas savoir si le fichier est prêt : il dit quoi faire dans les deux cas.
+    dl.tip = "Je le touche pour toi dès qu'il apparaît. Encore « En cours » ? Reviens plus tard, je te préviens.";
     nativePost({ type: "meta", mode: "get", url: IG_EXPORT_URL, steps: [dl] });
   }
 }
@@ -4017,6 +4023,8 @@ function setRepeat(on) {
 const gfOn = () => !loading && !DEMO && (gfRepeat || (!state.snapshots.length && !prefs.manualStart));
 // Une demande est « en cours » si elle est plus récente que le dernier import.
 function reqPending() {
+  // Instagram garde le fichier 4 jours : une demande plus vieille que 5 jours n'attend plus rien.
+  if (prefs.requestedAt && Date.now() - Date.parse(prefs.requestedAt) > 5 * 864e5) return false;
   const last = state.snapshots[state.snapshots.length - 1];
   if (!prefs.requestedAt || !last) return !!prefs.requestedAt;
   return Date.parse(prefs.requestedAt) > Date.parse(prefs.lastImportAt || last.takenAt);
@@ -4142,15 +4150,17 @@ function renderGuided() {
     const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
     const ready = !!prefs.readyAt || since >= READY_AFTER_MIN;
     const ago = since < 60 ? since + " min" : Math.round(since / 60) + " h";
-    const say = ready ? "Ta liste est sûrement prête&nbsp;! On va la chercher 🏃"
+    const sure = !!prefs.readyAt;
+    const say = ready ? (sure ? "Ta liste est prête&nbsp;! On va la chercher 🏃" : "Ta liste devrait être prête&nbsp;! On va voir 🏃")
       : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste."
       : `Demandé il y a ${ago}. Instagram y travaille encore…`;
     body.innerHTML = `${guide(say)}
-      <h2 id="gf-title">${ready ? "Ta liste est prête" : "Instagram prépare ta liste"}</h2>
+      <h2 id="gf-title">${ready ? (sure ? "Ta liste est prête" : "Ta liste devrait être prête") : "Instagram prépare ta liste"}</h2>
       <div class="gf-wait${ready ? " ready" : ""}"><div class="radar" aria-hidden="true"></div>${ready ? `<span class="done-ic" aria-hidden="true">📬</span>` : ""}
         <b>${ready ? "Plus qu'une touche" : "En général, 2 à 10 minutes"}</b>
         <small>${ready
-          ? "Touche le bouton&nbsp;: Instagram s'ouvre ici, tu touches « Télécharger », et je m'occupe du reste."
+          ? (sure ? "Touche le bouton&nbsp;: Instagram s'ouvre ici, je touche « Télécharger » pour toi et je m'occupe du reste."
+            : "Touche le bouton&nbsp;: Instagram s'ouvre ici. Si ton export est encore « En cours », reviens un peu plus tard, je te préviens.")
           : "Tu peux fermer l'app&nbsp;: je t'envoie une notification dès que c'est prêt. Ensuite, tu as 4 jours pour la récupérer."}</small></div>
       <div class="gf-foot">
         <button class="btn ${ready ? "cheer" : "ghost"} big" id="gf-get" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>${ready ? "Récupérer ma liste" : "Regarder si c'est prêt"}</button>
@@ -4166,7 +4176,8 @@ function renderGuided() {
       : last
       ? `<button class="btn cheer big" id="gf-done" type="button">C'est fait, j'ai touché « Commencer »</button>
          <div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button">Précédent</button><a class="btn ghost" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer" id="gf-ig">Rouvrir Instagram</a></div>`
-      : `<div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button"${i ? "" : " disabled"}>Précédent</button><button class="btn primary big" id="sh-next" type="button">C'est fait, la suite</button></div>${SWAP}`;
+      : `<div class="sh-nav"><button class="btn ghost prev" id="sh-prev" type="button"${i ? "" : " disabled"}>Précédent</button><button class="btn primary big" id="sh-next" type="button">C'est fait, la suite</button></div>${SWAP}
+         ${i ? `<button class="alt" id="gf-done" type="button">J'ai déjà tout fait, jusqu'à « Commencer l'exportation »</button>` : ""}`;
     const say = shLost ? "Pas de panique, ça arrive&nbsp;!" : !prefs.igOpened
       ? (gfRepeat ? "On remet ça&nbsp;? Même chemin que la dernière fois, je te montre tout 😉" : "À chaque étape, je t'entoure où toucher&nbsp;!")
       : last ? "Dernière touche&nbsp;! 🎉" : IG_CHEERS[Math.min(i, IG_CHEERS.length - 1)];
@@ -4370,7 +4381,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-04-1210";
+const BUILD = "2026-11-04-1620";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

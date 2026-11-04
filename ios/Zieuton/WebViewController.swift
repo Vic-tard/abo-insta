@@ -754,17 +754,21 @@ final class MetaViewController: UIViewController {
               var t = low(row);
               if (t.indexOf('followers et suivi') >= 0 || t.indexOf('followers and following') >= 0) f = true;
             }
-            return seen ? { n: n, f: f } : null;
+            return seen ? { n: n, f: f, t: seen } : null;
           };
           var hasWord = function (t, words) { return words.some(function (w) { return t.indexOf(w) >= 0; }); };
           var screen = function () {
-            if (has(START)) {
+            // Résumé « Confirmer votre exportation » : reconnu par son titre aussi (le bouton « Commencer » est souvent plus bas, hors de l'écran).
+            if (has(START) || seeAny(['confirmer votre exportation', 'confirm your export'])) {
               var info = rowVal(['personnaliser les informations', 'customize information']);
               var per = rowVal(['période', 'date range']);
               var fmt = rowVal(['format']);
-              if (info === null || per === null || fmt === null) return 'summary';
+              // On décide dans l'ordre du résumé : une ligne pas encore visible laisse la décision en attente.
+              if (info === null) return 'summary';
               if (hasWord(info, ['toutes les informations', 'all available', 'all information'])) return 'summary:info';
+              if (per === null) return 'summary';
               if (hasWord(per, ['dernière', 'dernier', 'derniers', 'last '])) return 'summary:period';
+              if (fmt === null) return 'summary';
               if (hasWord(fmt, ['html'])) return 'summary:format';
               return 'summary:start';
             }
@@ -773,6 +777,9 @@ final class MetaViewController: UIViewController {
             if (seeAny(['depuis le début', 'all time'])) return 'period';
             if (seeAny(['json']) && seeAny(['html'])) return 'format';
             if (seeAny(['tout effacer', 'clear all', 'tout sélectionner', 'select all'])) return 'pick';
+            // Page des cases défilée (les « Tout effacer » sont plus haut) : beaucoup de cases à cocher, c'est elle.
+            var ps = pickState();
+            if (ps && ps.t >= 6) return 'pick';
             if (has(CREATE)) return 'home';
             return '';
           };
@@ -1134,8 +1141,8 @@ final class MetaViewController: UIViewController {
             }
             if pickChecked > 1 {
                 let more = pickChecked - 1
-                return Step(verb: "Encore \(more) case\(more > 1 ? "s" : "") à décocher :", target: "garde seulement Followers et suivi(e)s",
-                            tip: "Le plus rapide : « Tout effacer » dans chaque rubrique, puis recoche « Followers et suivi(e)s ».", look: "check", screen: "pick")
+                return Step(verb: "Encore \(more) case\(more > 1 ? "s" : "") en trop :", target: "Tout effacer",
+                            tip: "Touche « Tout effacer » dans chaque rubrique, puis recoche seulement « Followers et suivi(e)s ».", look: "link", screen: "pick")
             }
             return Step(verb: "Parfait ! Maintenant,", target: "Enregistrer", tip: "Tout en bas de la liste.", look: "button", screen: "pick")
         }
@@ -1261,6 +1268,10 @@ final class MetaViewController: UIViewController {
                 index = min(steps.count - 1, i + 1)
                 UISelectionFeedbackGenerator().selectionChanged()
             }
+            // L'écran vu avant la touche ne compte plus : pendant qu'Instagram charge le suivant,
+            // le bandeau ne doit pas revenir en arrière (vu sur la vidéo de Victor du 4 novembre).
+            screenKey = ""
+            screenSince = Date()
             warning = nil
             showStep()
             return
@@ -1371,7 +1382,9 @@ final class MetaViewController: UIViewController {
         // ou le bouton a disparu) : la demande est partie. Si la touche n'a pas été vue, le retour à l'accueil
         // d'Instagram juste après l'écran final suffit aussi.
         if let sent = sentAt {
-            if now.timeIntervalSince(sent) > 1.5, createVisible || !startVisible { finishRequest() }
+            // Retour sur « Créer une exportation » : c'est parti. Bouton disparu (Instagram tourne encore) : on attend un peu plus.
+            let gone = now.timeIntervalSince(sent)
+            if (gone > 1.5 && createVisible) || (gone > 5 && !startVisible && !webView.isLoading) { finishRequest() }
             else if now.timeIntervalSince(sent) > 15 { showStep(animated: false) }
         } else if sawStart, index >= steps.count - 1, createVisible, !startVisible {
             finishRequest()
@@ -1408,8 +1421,10 @@ final class MetaViewController: UIViewController {
         sayLabel.attributedText = NSAttributedString(string: "C'est parti ! Instagram prépare ta liste.",
                                                      attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink])
         tipLabel.text = "Zieuton te prévient dès que ton fichier est prêt."
+        // La page passe tout de suite sur « Instagram prépare ta liste », derrière : pas d'ancien écran au retour.
+        done?(before)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
-            self?.dismiss(animated: true) { done?(before) }
+            self?.dismiss(animated: true)
         }
     }
 
