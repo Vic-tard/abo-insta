@@ -1,9 +1,17 @@
 # Zieuton pour iPhone
 
-L'app affiche Zieuton (le site https://vic-tard.github.io/abo-insta/) et ajoute « Partager → Zieuton » :
+L'app contient la page Zieuton (`index.html`, le logo et les images du guide, à la racine du dépôt) :
+elle s'ouvre tout de suite, même sans internet. Elle ajoute « Partager → Zieuton » :
 touche ton fichier Instagram (.zip) dans Safari ou dans Fichiers, puis Partager, puis Zieuton. L'import se fait tout seul.
 
-Les mises à jour du site arrivent dans l'app sans la réinstaller.
+Mises à jour de la page : à chaque ouverture (et à chaque retour dans l'app), l'app regarde si une version plus
+récente est en ligne sur https://vic-tard.github.io/abo-insta/ (ligne `const BUILD` de `index.html`).
+Si oui, elle la télécharge, la garde sur le téléphone et l'affiche aussitôt (sauf pendant un import ou quand
+Instagram est ouvert dans l'app). Pas besoin de réinstaller l'app pour une retouche de page.
+Xcode ne sert que pour la partie native (achats, notifications, partage, icône, écran de lancement)
+et pour envoyer une nouvelle version à Apple. Chaque nouvelle version envoyée embarque la page du moment.
+
+La page s'affiche toujours à l'adresse du site : les données gardées sur le téléphone ne changent pas.
 
 L'app s'appelait Zyeuto avant. Les identifiants techniques (`fr.zyeuto.app`, achats `fr.zyeuto.plus.*`)
 gardent l'ancien nom exprès : personne ne les voit, et Apple ne permet pas de les changer une fois créés.
@@ -47,7 +55,7 @@ La page de confidentialité demandée par Apple : https://vic-tard.github.io/abo
 
 Gratuit : les deux premiers imports, puis une mise à jour par mois. Zieuton Plus débloque les mises à jour illimitées :
 `fr.zyeuto.plus.mois` (2,99 €/mois), `fr.zyeuto.plus.an` (14,99 €/an), `fr.zyeuto.plus.avie` (29,99 € une fois).
-Sur le site (hors app), rien n'est vendu et il n'y a pas de limite.
+Dans Safari, le site n'affiche plus que « Zieuton arrive sur l'App Store » : tout se passe dans l'app.
 
 ### Tester sans payer (faux magasin)
 
@@ -65,3 +73,12 @@ programme petites entreprises (15 %), et les trois produits avec exactement les 
 ## Pour la suite
 
 `Zieuton.xcodeproj` a été généré avec le script Ruby `xcodeproj`. On peut aussi le modifier directement dans Xcode.
+
+## Sauvegarde iCloud automatique
+
+Après chaque changement, l'app range tout l'historique du téléphone (les 3 comptes, réglages, zieuteurs, jeux)
+dans un fichier caché de l'iCloud de l'utilisateur (`zieuton-icloud.zieuton`, conteneur `iCloud.fr.zyeuto.app`).
+Sur un nouvel iPhone (ou après réinstallation), Zieuton propose « Reprendre mon historique ». Rien ne passe par un serveur.
+
+Dans Xcode, une seule fois : Signing & Capabilities → la rubrique iCloud (déjà présente grâce à `Zieuton.entitlements`)
+→ cocher « iCloud Documents » et le conteneur `iCloud.fr.zyeuto.app` (bouton « + » s'il n'existe pas encore).

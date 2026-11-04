@@ -14,7 +14,6 @@ final class WebViewController: UIViewController {
     private static let chunkSize = 512 * 1024
 
     private var webView: WKWebView!
-    private let offline = UIView()
     private var pageReady = false
     private var sending = false
     /// Fichiers reçus, gardés jusqu'à ce que la page confirme les avoir reçus.
@@ -22,9 +21,11 @@ final class WebViewController: UIViewController {
     private var downloads: [ObjectIdentifier: URL] = [:]
     private let splash = UIView()
     private var splashShownAt = Date()
-    /// Vrai quand on affiche la copie gardée sur le téléphone (pas d'internet).
-    private var offlineMode = false
-    private static var offlineCopy: URL {
+    /// Version de la page affichée (sa ligne « const BUILD »).
+    private var loadedBuild = ""
+    private var checkingUpdate = false
+    /// Dernière version de la page téléchargée (plus récente que celle rangée dans l'app).
+    private static var savedPage: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("zyeuto-hors-ligne.html")
@@ -44,8 +45,11 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 5 };",
+            source: "window.ZYEUTO_APP = { version: 6, embedded: true, icloud: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
+        content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        content.addUserScript(WKUserScript(source: Self.fixImages, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         // Ressenti d'app : pas de zoom, pas de sélection de texte ni de menu « Copier » à l'appui long
         // (sauf dans les champs de saisie), pas de surlignage gris au toucher.
         content.addUserScript(WKUserScript(source: Self.nativeFeel, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
@@ -68,12 +72,10 @@ final class WebViewController: UIViewController {
         webView.uiDelegate = self
         view.addSubview(webView)
 
-        buildOfflineView()
         buildSplash()
-        webView.load(URLRequest(url: Self.home))
+        loadPage()
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
-                                               object: nil, queue: .main) { [weak self] _ in
-            self?.retryOnline()
+                                               object: nil, queue: .main) { _ in
             ExportWatcher.shared.appBecameActive()
         }
         Self.current = self
@@ -220,34 +222,83 @@ final class WebViewController: UIViewController {
         } completion: { _ in self.splash.removeFromSuperview() }
     }
 
-    // MARK: Sans internet : copie gardée sur le téléphone
+    // MARK: Page rangée dans l'app (+ mises à jour)
 
-    /// Garde la dernière version de la page pour pouvoir s'ouvrir sans réseau.
-    private func saveOfflineCopy() {
-        var request = URLRequest(url: Self.home)
+    /// La page est rangée dans l'app : elle s'ouvre tout de suite, même sans internet.
+    /// Quand une version plus récente est en ligne, l'app la télécharge et la garde sur le téléphone.
+    /// La page s'affiche toujours à l'adresse du site, donc avec les mêmes données qu'avant.
+    private func loadPage() {
+        let bundled = Bundle.main.url(forResource: "index", withExtension: "html")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
+        let saved = try? String(contentsOf: Self.savedPage, encoding: .utf8)
+        let candidates = [bundled, saved].compactMap { $0 }.filter { Self.build(of: $0) != nil }
+        guard let html = candidates.max(by: { Self.build(of: $0)! < Self.build(of: $1)! }) else {
+            webView.load(URLRequest(url: Self.home)) // ne devrait pas arriver : la page est toujours dans l'app
+            return
+        }
+        loadedBuild = Self.build(of: html)!
+        webView.loadHTMLString(html, baseURL: Self.home)
+    }
+
+    /// Numéro de version d'une page (ex. « 2026-11-04-1210 »), qui se compare comme du texte.
+    private static func build(of html: String) -> String? {
+        guard let r = html.range(of: #"const BUILD = "([^"]+)""#, options: .regularExpression) else { return nil }
+        return String(html[r].dropFirst(15).dropLast())
+    }
+
+    /// La page demande s'il y a du nouveau (à l'ouverture et à chaque retour dans l'app).
+    private func checkForUpdate() {
+        guard !checkingUpdate else { return }
+        checkingUpdate = true
+        let current = loadedBuild
+        var comps = URLComponents(url: Self.home, resolvingAgainstBaseURL: false)!
+        comps.queryItems = [URLQueryItem(name: "v", value: String(Int(Date().timeIntervalSince1970)))]
+        var request = URLRequest(url: comps.url!, timeoutInterval: 15)
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        URLSession.shared.dataTask(with: request) { data, response, _ in
-            guard (response as? HTTPURLResponse)?.statusCode == 200, let data,
-                  let html = String(data: data, encoding: .utf8), html.contains("const BUILD") else { return }
-            try? data.write(to: Self.offlineCopy, options: .atomic)
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, _ in
+            var newer = false
+            if (response as? HTTPURLResponse)?.statusCode == 200, let data,
+               let html = String(data: data, encoding: .utf8), html.contains("</html>"),
+               let build = Self.build(of: html), build > current {
+                newer = (try? data.write(to: Self.savedPage, options: .atomic)) != nil
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.checkingUpdate = false
+                // On recharge seulement si rien n'est en cours (fichier reçu, Instagram ouvert…).
+                if newer, !self.sending, self.pending.isEmpty, self.presentedViewController == nil { self.loadPage() }
+            }
         }.resume()
     }
 
-    /// Pas de réseau : on ouvre la copie, à la même adresse (donc avec les mêmes données).
-    private func openOfflineCopy() -> Bool {
-        guard !offlineMode, let html = try? String(contentsOf: Self.offlineCopy, encoding: .utf8) else { return false }
-        offlineMode = true
-        offline.isHidden = true
-        webView.loadHTMLString(html, baseURL: Self.home)
-        return true
-    }
+    /// Les images rangées dans l'app, prêtes à être affichées par la page (« guide/ig-01.jpg » → image).
+    private static let assetsScript: String = {
+        guard let root = Bundle.main.resourceURL else { return "" }
+        var names = ["icone-v5-180.png"]
+        let guide = root.appendingPathComponent("guide")
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: guide.path)) ?? []
+        names += files.filter { $0.hasSuffix(".jpg") || $0.hasSuffix(".png") }.sorted().map { "guide/" + $0 }
+        var map: [String: String] = [:]
+        for name in names {
+            guard let data = try? Data(contentsOf: root.appendingPathComponent(name)) else { continue }
+            let type = name.hasSuffix(".png") ? "image/png" : "image/jpeg"
+            map[name] = "data:\(type);base64,\(data.base64EncodedString())"
+        }
+        guard let json = try? JSONSerialization.data(withJSONObject: map),
+              let text = String(data: json, encoding: .utf8) else { return "" }
+        return "window.ZYEUTO_ASSETS = \(text);"
+    }()
 
-    /// De retour dans l'app : si on était sans réseau, on retente la version en ligne.
-    private func retryOnline() {
-        guard offlineMode, !sending, pending.isEmpty else { return }
-        offlineMode = false
-        webView.load(URLRequest(url: Self.home))
-    }
+    /// Les images écrites directement dans la page (le logo) prennent la version rangée dans l'app.
+    private static let fixImages = """
+    (function () {
+      var a = window.ZYEUTO_ASSETS || {};
+      document.querySelectorAll('img[src]').forEach(function (img) {
+        var src = img.getAttribute('src');
+        if (a[src]) img.src = a[src];
+      });
+    })();
+    """
 
     private static func isNetworkError(_ error: Error) -> Bool {
         let e = error as NSError
@@ -314,39 +365,6 @@ final class WebViewController: UIViewController {
         return String(json.dropFirst().dropLast())
     }
 
-    // MARK: Hors ligne
-
-    private func buildOfflineView() {
-        offline.frame = view.bounds
-        offline.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        offline.backgroundColor = view.backgroundColor
-        offline.isHidden = true
-        let label = UILabel()
-        label.text = "Pas de connexion internet.\nZieuton en a besoin pour s'ouvrir."
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.textColor = .label
-        var button = UIButton.Configuration.filled()
-        button.title = "Réessayer"
-        button.baseBackgroundColor = UIColor(red: 0xd4 / 255, green: 0x91 / 255, blue: 0x9b / 255, alpha: 1)
-        button.cornerStyle = .capsule
-        let retry = UIButton(configuration: button, primaryAction: UIAction { [weak self] _ in
-            self?.offline.isHidden = true
-            self?.webView.load(URLRequest(url: WebViewController.home))
-        })
-        let stack = UIStackView(arrangedSubviews: [label, retry])
-        stack.axis = .vertical
-        stack.spacing = 20
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        offline.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.centerXAnchor.constraint(equalTo: offline.centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: offline.centerYAnchor),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: offline.leadingAnchor, constant: 32),
-        ])
-        view.addSubview(offline)
-    }
-
     private func isHome(_ url: URL?) -> Bool {
         guard let url else { return false }
         return url.host == Self.home.host && url.path.hasPrefix(Self.home.path)
@@ -375,6 +393,8 @@ extension WebViewController: WKScriptMessageHandler {
             if !pending.isEmpty { pending.removeFirst() }
             sending = false
             flush()
+        case "update":
+            checkForUpdate()
         case "haptic":
             switch body["kind"] as? String {
             case "success": UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -385,12 +405,51 @@ extension WebViewController: WKScriptMessageHandler {
             }
         case "meta":
             openMeta(body)
+        case "icloud":
+            handleICloud(body)
         case "exportState":
             // La page n'attend plus d'export (fichier importé, demande annulée) : on arrête de guetter.
             if body["pending"] as? Bool == false { ExportWatcher.shared.clear() }
         default:
             break
         }
+    }
+
+    /// Sauvegarde iCloud : enregistrer, regarder s'il y en a une, ou la reprendre.
+    private func handleICloud(_ body: [String: Any]) {
+        switch body["action"] as? String {
+        case "save":
+            guard let text = body["data"] as? String else { return }
+            let count = body["count"] as? Int ?? 0
+            ICloudBackup.save(Data(text.utf8)) { [weak self] ok in
+                self?.sendICloud("{\"action\":\"saved\",\"ok\":\(ok),\"count\":\(count)}")
+            }
+        case "check":
+            ICloudBackup.find { [weak self] date in
+                guard let self else { return }
+                guard ICloudBackup.available else { return self.sendICloud("{\"action\":\"off\"}") }
+                if let date {
+                    let iso = ISO8601DateFormatter().string(from: date)
+                    self.sendICloud("{\"action\":\"found\",\"found\":true,\"savedAt\":\"\(iso)\"}")
+                } else {
+                    self.sendICloud("{\"action\":\"found\",\"found\":false}")
+                }
+            }
+        case "restore":
+            ICloudBackup.read { [weak self] data in
+                guard let self else { return }
+                guard let data else { return self.sendICloud("{\"action\":\"restoreFail\"}") }
+                // Même chemin qu'une sauvegarde partagée : la page vérifie le sceau puis reprend tout.
+                self.pending.append((ICloudBackup.fileName, data))
+                self.flush()
+            }
+        default:
+            break
+        }
+    }
+
+    private func sendICloud(_ json: String) {
+        webView.evaluateJavaScript("window.zyeutoICloud && window.zyeutoICloud(\(json)); true")
     }
 
     /// Zieuton Plus : acheter, restaurer, gérer l'abonnement, ou juste redemander l'état.
@@ -497,20 +556,17 @@ extension WebViewController: WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         hideSplash()
-        if !offlineMode, isHome(webView.url) { saveOfflineCopy() }
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        // Une page du site demandée sans internet : on revient à la page rangée dans l'app.
         guard Self.isNetworkError(error) else { return } // ex. lien ouvert dans Safari : rien à faire
-        if !openOfflineCopy() {
-            offline.isHidden = false
-            hideSplash()
-        }
+        loadPage()
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         pageReady = false
-        webView.reload()
+        loadPage()
     }
 
     // alert / confirm de la page.
@@ -816,24 +872,6 @@ final class MetaViewController: UIViewController {
         """
     }
 
-    static let autoDownloadScript = """
-    (function () {
-      var taps = 0, last = 0;
-      setInterval(function () {
-        if (taps >= 2 || Date.now() - last < 5000) return;
-        if (document.querySelector('input[type=password], input[autocomplete=one-time-code]')) return;
-        var btn = Array.prototype.find.call(document.querySelectorAll('button,a,[role=button]'), function (el) {
-          var t = (el.innerText || '').trim().toLowerCase(); var r = el.getBoundingClientRect();
-          return (t === 'télécharger' || t === 'download') && r.width > 0 && r.height > 0 && !el.disabled
-            && el.getAttribute('aria-disabled') !== 'true';
-        });
-        if (!btn) return;
-        taps++; last = Date.now();
-        btn.scrollIntoView({ block: 'center' });
-        setTimeout(function () { btn.click(); }, 600);
-      }, 1200);
-    })();
-    """
 
     init(url: URL, requesting: Bool, steps: [Step]) {
         self.url = url
@@ -876,12 +914,7 @@ final class MetaViewController: UIViewController {
         config.websiteDataStore = .default() // on reste connecté à Instagram d'une fois sur l'autre
         let content = WKUserContentController()
         content.addUserScript(WKUserScript(source: watcherScript(), injectionTime: .atDocumentEnd, forMainFrameOnly: false))
-        // Ouvert pour récupérer le fichier (notification « prêt ») : Zieuton touche lui-même « Télécharger »,
-        // le fichier s'importe tout seul ensuite. Deux essais au plus (Instagram redemande parfois une confirmation),
-        // jamais pendant un mot de passe ou un code.
-        if !requesting {
-            content.addUserScript(WKUserScript(source: Self.autoDownloadScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
-        }
+        // Ouvert pour récupérer le fichier : c'est toi qui touches « Télécharger » (Zieuton ne touche jamais rien sur Instagram).
         content.add(WeakHandler(self), name: "zyeutoTap")
         content.add(WeakHandler(self), name: "zyeutoState")
         config.userContentController = content
@@ -2009,5 +2042,86 @@ final class PlusStore {
         if let result { dict["result"] = result }
         let data = (try? JSONSerialization.data(withJSONObject: dict)) ?? Data("{}".utf8)
         return String(data: data, encoding: .utf8) ?? "{}"
+    }
+}
+
+// MARK: Sauvegarde iCloud
+
+/// Un seul fichier caché dans l'iCloud de l'utilisateur (Drive iCloud, conteneur de l'app) : tout l'historique du téléphone.
+/// Rien ne passe par un serveur à nous. Il est réécrit après chaque changement et revient tout seul sur un nouvel iPhone.
+enum ICloudBackup {
+    static let container = "iCloud.fr.zyeuto.app"
+    static let fileName = "zieuton-icloud.zieuton"
+    private static let queue = DispatchQueue(label: "fr.zyeuto.icloud", qos: .utility)
+
+    /// Connecté à iCloud sur cet iPhone (et Drive iCloud allumé pour Zieuton).
+    static var available: Bool { FileManager.default.ubiquityIdentityToken != nil }
+
+    /// À appeler hors du fil principal : la première fois, iOS peut mettre un moment à préparer le dossier.
+    private static func fileURL() -> URL? {
+        guard available, let root = FileManager.default.url(forUbiquityContainerIdentifier: container) else { return nil }
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return root.appendingPathComponent(fileName)
+    }
+
+    static func save(_ data: Data, done: @escaping (Bool) -> Void) {
+        queue.async {
+            var ok = false
+            if let url = fileURL() {
+                var err: NSError?
+                NSFileCoordinator().coordinate(writingItemAt: url, options: .forReplacing, error: &err) { target in
+                    ok = (try? data.write(to: target, options: .atomic)) != nil
+                }
+                if err != nil { ok = false }
+            }
+            DispatchQueue.main.async { done(ok) }
+        }
+    }
+
+    /// Date de la sauvegarde trouvée dans iCloud (nil s'il n'y en a pas). Attend jusqu'à 30 s qu'elle soit téléchargée.
+    static func find(done: @escaping (Date?) -> Void) {
+        queue.async {
+            let date = download().flatMap { url in
+                (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
+            }
+            DispatchQueue.main.async { done(date) }
+        }
+    }
+
+    static func read(done: @escaping (Data?) -> Void) {
+        queue.async {
+            var data: Data?
+            if let url = download() {
+                var err: NSError?
+                NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: &err) { target in
+                    data = try? Data(contentsOf: target)
+                }
+            }
+            DispatchQueue.main.async { done(data) }
+        }
+    }
+
+    /// Le fichier, une fois présent sur le téléphone. Sur un nouvel iPhone, iCloud ne l'a souvent pas encore téléchargé.
+    private static func download() -> URL? {
+        guard let url = fileURL() else { return nil }
+        let fm = FileManager.default
+        if fm.fileExists(atPath: url.path), isCurrent(url) { return url }
+        // Pas encore là : on demande à iCloud de le descendre (s'il existe), puis on attend un peu.
+        try? fm.startDownloadingUbiquitousItem(at: url)
+        // Sur un iPhone tout neuf, la liste des fichiers iCloud peut mettre quelques secondes à arriver : on attend 30 s au plus.
+        let placeholder = url.deletingLastPathComponent().appendingPathComponent("." + fileName + ".icloud")
+        for i in 0..<60 {
+            Thread.sleep(forTimeInterval: 0.5)
+            if fm.fileExists(atPath: url.path), isCurrent(url) { return url }
+            if i % 6 == 5, fm.fileExists(atPath: placeholder.path) || fm.isUbiquitousItem(at: url) {
+                try? fm.startDownloadingUbiquitousItem(at: url)
+            }
+        }
+        return nil
+    }
+
+    private static func isCurrent(_ url: URL) -> Bool {
+        let status = (try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]))?.ubiquitousItemDownloadingStatus
+        return status == nil || status == .current
     }
 }
