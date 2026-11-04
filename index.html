@@ -311,6 +311,7 @@
   .st-foot { margin: -14px 8px 22px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
   .st-confirm { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .st-confirm p { margin: 0; font-size: 14px; color: var(--ink); }
+  .acct-new-in { width: 100%; box-sizing: border-box; font: 500 16px var(--font); color: var(--ink); background: var(--bg, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
   .st-table { padding: 6px 14px 10px; }
   .st-table table { width: 100%; }
   #settings .msg { margin: -10px 0 22px; }
@@ -2009,13 +2010,19 @@
       <div class="st-group" id="acct-list" hidden></div>
       <div class="st-group">
         <button class="st-row" id="acct-add" type="button"><span class="st-ic" style="background:#c9a24a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b>Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
+        <div class="st-confirm" id="acct-new" hidden>
+          <p id="acct-new-p">Chaque compte a son prénom, pour savoir chez qui on est.</p>
+          <input class="acct-new-in" id="acct-new-me" type="text" maxlength="24" placeholder="Ton prénom (compte 1)" autocomplete="given-name" enterkeyhint="next">
+          <input class="acct-new-in" id="acct-new-name" type="text" maxlength="24" placeholder="Son prénom" autocomplete="off" enterkeyhint="done">
+          <div class="row"><button class="btn primary" id="acct-new-yes" type="button" disabled>Ajouter</button><button class="btn ghost" id="acct-new-no" type="button">Annuler</button></div>
+        </div>
         <div id="acct-del-row" hidden><button class="st-row danger" id="acct-del" type="button"><span class="st-ic" style="background:#b8502e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b id="acct-del-t">Supprimer ce compte</b><small>Ses données sont effacées de ce téléphone</small></span></button></div>
         <div class="st-confirm" id="acct-del-confirm" hidden>
           <p id="acct-del-p"></p>
           <div class="row"><button class="btn danger" id="acct-del-yes" type="button">Oui, supprimer</button><button class="btn ghost" id="acct-del-no" type="button">Annuler</button></div>
         </div>
       </div>
-      <p class="st-foot">Chaque compte a ses propres données et son propre Zieuton Plus. Un compte ajouté prend Plus dès son 1er import. 3 comptes au maximum par téléphone.</p>
+      <p class="st-foot">Chaque compte a ses propres données et son propre Zieuton Plus. La version gratuite va au premier compte qui importe : les autres prennent Plus dès leur 1er import. 3 comptes au maximum par téléphone.</p>
     </div>
     <div class="st-label">Connexion</div>
     <div class="st-group">
@@ -2652,7 +2659,24 @@ function knownAcct(names) {
   const print = acctPrint(names), cur = curAcct();
   return accts().find((a) => a !== cur && sameAcct(a, print)) || null;
 }
-function rememberAccount(names) { if (DEMO || !names.length) return; const a = curAcct(); a.h = acctPrint(names); a.n = names.length; savePrefs(); }
+// Le compte qui a la version gratuite : retenu au 1er import (anciens téléphones : le compte 1 s'il a servi).
+function freeAcctId() {
+  const list = accts();
+  if (prefs.freeAcct && list.some((a) => a.id === prefs.freeAcct)) return prefs.freeAcct;
+  const used = list.filter((a) => a.n >= 10);
+  const f = used.find((a) => a.slot === 1) || used[0];
+  if (!f) return null;
+  if (!DEMO) { prefs.freeAcct = f.id; savePrefs(); }
+  return f.id;
+}
+function rememberAccount(names) {
+  if (DEMO || !names.length) return;
+  const a = curAcct();
+  if (!freeAcctId()) prefs.freeAcct = a.id;
+  a.h = acctPrint(names); a.n = names.length; savePrefs();
+}
+// « Compte 2 · Mathéo » : pour la pastille, la liste et le changement de compte.
+const acctLabel = (a) => { const n = acctMe(a).name, c = `Compte ${accts().indexOf(a) + 1}`; return n && n !== c ? `${c} · ${n}` : c; };
 // Pendant la démo, les comptes rangés restent en mémoire.
 let demoParked = {};
 async function parkState(id, s) {
@@ -2738,14 +2762,14 @@ function renderAcct() {
   const list = accts(), multi = list.length > 1;
   // Plusieurs comptes : le prénom du compte affiché en haut de l'accueil, pour savoir chez qui on est.
   $("acct-pill").hidden = $("acct-group").hidden || !multi;
-  if (multi) $("acct-pill").innerHTML = `<i>${esc(acctName(curAcct()).slice(0, 1).toUpperCase())}</i><span>${esc(acctName(curAcct()))}</span>`;
+  if (multi) $("acct-pill").innerHTML = `<i>${esc(acctName(curAcct()).slice(0, 1).toUpperCase())}</i><span>${esc(acctLabel(curAcct()))}</span>`;
   if ($("acct-group").hidden) return;
   $("acct-list").hidden = !multi;
   $("acct-list").innerHTML = multi ? list.map((a) => {
     const on = a.id === curAcct().id, me = acctMe(a), name = acctName(a);
     const plus = planOfSlot(a.slot) ? " · Plus" : "";
     const sub = [me.ig ? "@" + me.ig : "", a.n ? nf(a.n) + " abonnés" : "Pas encore importé"].filter(Boolean).join(" · ") + plus;
-    return `<button class="st-row acct-item${on ? " on" : ""}" type="button" data-acct="${a.id}"><span class="st-ic" style="background:${on ? "#c27583" : "#b9aeb2"}"><b>${esc(name.slice(0, 1).toUpperCase())}</b></span><span class="st-t"><b>${esc(name)}${on ? " · affiché" : ""}</b><small>${esc(sub)}</small></span>${on ? "" : '<span class="st-go" aria-hidden="true">›</span>'}</button>`;
+    return `<button class="st-row acct-item${on ? " on" : ""}" type="button" data-acct="${a.id}"><span class="st-ic" style="background:${on ? "#c27583" : "#b9aeb2"}"><b>${esc(name.slice(0, 1).toUpperCase())}</b></span><span class="st-t"><b>${esc(acctLabel(a))}${on ? " · affiché" : ""}</b><small>${esc(sub)}</small></span>${on ? "" : '<span class="st-go" aria-hidden="true">›</span>'}</button>`;
   }).join("") : "";
   $("acct-add").hidden = list.length >= MAX_ACCTS;
   // Seul un compte ajouté (pas le compte principal du téléphone) peut être supprimé, depuis ce compte.
@@ -2753,7 +2777,7 @@ function renderAcct() {
   $("acct-del-row").hidden = !delOk || !$("acct-del-confirm").hidden;
   if (!delOk) $("acct-del-confirm").hidden = true;
   $("acct-del-t").textContent = `Supprimer le compte de ${acctName(curAcct())}`;
-  $("acct-add-s").textContent = "Pour un ami : il prend son propre Plus";
+  $("acct-add-s").textContent = "Pour un ami : son prénom, puis son propre Plus";
 }
 
 // ---------- Comparaison ----------
@@ -3364,11 +3388,38 @@ $("acct-del-yes").addEventListener("click", async () => {
   if (await deleteAccount()) { haptic("success"); toast(`Compte de ${name} supprimé.`, false); }
   renderAcct();
 });
-$("acct-add").addEventListener("click", async () => {
+// Ajouter un compte : le prénom est obligatoire (et celui du compte affiché, s'il n'en a pas encore).
+function acctNewCheck() {
+  const needMe = !$("acct-new-me").hidden;
+  $("acct-new-yes").disabled = !$("acct-new-name").value.trim() || (needMe && !$("acct-new-me").value.trim());
+}
+$("acct-add").addEventListener("click", () => {
   if (DEMO) return toast("C'est la démo : touche « Quitter » en haut pour ajouter un vrai compte.", false);
-  if (!(await addAccount())) return;
-  renderAcct();
-  toast("Compte ajouté : mets son prénom, puis importe son export (avec son propre Plus).", false);
+  if (accts().length >= MAX_ACCTS) return;
+  const curName = (prefs.me || {}).name;
+  $("acct-new-me").hidden = !!curName;
+  $("acct-new-me").placeholder = `Ton prénom (compte ${accts().indexOf(curAcct()) + 1})`;
+  $("acct-new-name").placeholder = `Son prénom (compte ${accts().length + 1})`;
+  $("acct-new-me").value = ""; $("acct-new-name").value = "";
+  $("acct-new-p").textContent = curName ? `Le prénom de la personne, pour l'afficher à côté de « Compte ${accts().length + 1} ».` : "Chaque compte a son prénom, pour savoir chez qui on est.";
+  $("acct-add").hidden = true; $("acct-new").hidden = false;
+  acctNewCheck();
+  (curName ? $("acct-new-name") : $("acct-new-me")).focus();
+});
+for (const id of ["acct-new-me", "acct-new-name"]) {
+  $(id).addEventListener("input", acctNewCheck);
+  $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); if (!$("acct-new-yes").disabled) $("acct-new-yes").click(); else if (id === "acct-new-me") $("acct-new-name").focus(); } });
+}
+$("acct-new-no").addEventListener("click", () => { $("acct-new").hidden = true; renderAcct(); });
+$("acct-new-yes").addEventListener("click", async () => {
+  const me = $("acct-new-me").value.trim(), name = $("acct-new-name").value.trim();
+  if (!name || (!$("acct-new-me").hidden && !me)) return;
+  if (!$("acct-new-me").hidden) { prefs.me = { ...(prefs.me || {}), name: me }; curAcct().lastName = me; savePrefs(); }
+  $("acct-new").hidden = true;
+  if (!(await addAccount())) return renderAcct();
+  prefs.me = { ...(prefs.me || {}), name }; curAcct().lastName = name; savePrefs();
+  renderAll(); renderAcct();
+  toast(`${acctLabel(curAcct())} ajouté : importe son export.${guestAcct() ? " Il lui faudra son propre Plus." : ""}`, false);
 });
 
 // ---------- Nouvel export ----------
@@ -3581,7 +3632,15 @@ function renderSettings() {
 for (const [id, k, clean] of [["st-name", "name", (v) => v.trim()], ["st-ig", "ig", (v) => v.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase()]]) {
   $(id).addEventListener("input", () => { prefs.me = { ...(prefs.me || {}), [k]: clean($(id).value) }; savePrefs(); renderSettings(); });
   $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") $(id).blur(); });
-  $(id).addEventListener("blur", () => renderSettings());
+  $(id).addEventListener("blur", () => {
+    if (k === "name" && !DEMO && accts().length > 1 && !((prefs.me || {}).name)) {
+      const back = curAcct().lastName || `Compte ${accts().indexOf(curAcct()) + 1}`;
+      prefs.me = { ...(prefs.me || {}), name: back }; savePrefs();
+      toast("Avec plusieurs comptes, chacun garde un prénom.", false);
+    }
+    if (k === "name" && (prefs.me || {}).name) curAcct().lastName = prefs.me.name;
+    renderSettings(); try { renderAcct(); } catch {}
+  });
 }
 $("st-photo2").addEventListener("click", () => $("avatar-btn").click());
 $("st-look-btn").addEventListener("click", () => openLook());
@@ -4244,7 +4303,7 @@ function renderGuided() {
     top.className = "gf-top";
     const ch = document.createElement("button");
     ch.className = "gf-acct"; ch.type = "button"; ch.id = "gf-acct";
-    ch.innerHTML = `<i>${esc(acctName(cur).slice(0, 1).toUpperCase())}</i><span>${esc(acctName(cur))}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>`;
+    ch.innerHTML = `<i>${esc(acctName(cur).slice(0, 1).toUpperCase())}</i><span>${esc(acctLabel(cur))}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>`;
     ch.setAttribute("aria-label", `Compte affiché : ${acctName(cur)}. Passer sur le compte de ${acctName(next)}`);
     ch.onclick = async () => {
       haptic("selection");
@@ -4311,7 +4370,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-03-2340";
+const BUILD = "2026-11-04-1210";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4358,9 +4417,9 @@ function freeLeftPart(next) {
   return total > 0 ? Math.min(1, Math.max(0, (next.getTime() - Date.now()) / total)) : 0;
 }
 // Compte ajouté sur ce téléphone (un ami) : pas de version gratuite, Plus dès le 1er import.
-// Compte ajouté : son propre Plus dès le 1er import… seulement si le compte principal a déjà servi.
-// Compte principal encore vide (jamais importé) : le compte ajouté profite des imports gratuits.
-const guestAcct = () => curSlot() > 1 && accts().some((a) => a.slot === 1 && a.n >= 10);
+// La version gratuite appartient au PREMIER compte qui importe sur ce téléphone (compte 1 ou compte ajouté).
+// Tous les autres prennent leur propre Plus dès leur 1er import.
+const guestAcct = () => { const f = freeAcctId(); return !!f && curAcct().id !== f; };
 function canUpdateFree() {
   // Sur le site (hors app), rien n'est vendu : pas de limite pour l'instant.
   if (!storeApp() || hasPlus()) return true;
@@ -4401,7 +4460,7 @@ function openPlus(why) {
       ? "Ta mise à jour gratuite du mois est déjà faite. Avec Plus, pas besoin d'attendre."
       : "C'est gratuit pour commencer. Ensuite, une mise à jour par mois, ou illimité avec Plus.";
   // Plusieurs comptes sur ce téléphone : chacun prend son propre Plus. Un compte ajouté n'a pas de version gratuite.
-  if (guestAcct()) $("plus-why").textContent = `${acctMe(curAcct()).name ? "Le compte de " + acctMe(curAcct()).name : "Ce compte"} a été ajouté sur ce téléphone : il lui faut son propre Zieuton Plus dès le 1er import. Ensuite, c'est illimité.`;
+  if (guestAcct()) $("plus-why").textContent = `${acctMe(curAcct()).name ? "Le compte de " + acctMe(curAcct()).name : "Ce compte"} n'a pas la version gratuite : elle est déjà prise par ${acctName(accts().find((a) => a.id === freeAcctId()))} sur ce téléphone. Il lui faut son propre Zieuton Plus dès le 1er import. Ensuite, c'est illimité.`;
   else if (accts().length > 1) $("plus-why").textContent += ` Ce Plus est pour le compte de ${acctName(curAcct())} seulement.`;
   // Aperçu : ton bonhomme tel qu'il sera avec Plus, en or.
   $("plus-av").innerHTML = avatarSVG(prefs.zy?.look || {}, true);
@@ -4420,7 +4479,7 @@ function closePlus() {
 // Où en est l'utilisateur dans la version gratuite : 1er import, 2e (comparaison), puis 1 par mois.
 function freeRules() {
   const n = state.snapshots.length, next = nextFreeAt(), monthOk = canUpdateFree();
-  if (guestAcct()) return [{ k: "Compte ajouté", t: "Plus dès le 1er import", used: false }];
+  if (guestAcct()) return [{ k: "Autre compte", t: "Plus dès le 1er import", used: false }];
   return [
     { k: "1er import", t: "ton point de départ", used: n >= 1 },
     { k: "2e import", t: "ta première comparaison", used: n >= 2 },
@@ -4433,7 +4492,7 @@ function renderPlusMini() {
   const n = state.snapshots.length, next = nextFreeAt();
   $("plus-mini").classList.toggle("on", hasPlus());
   if (hasPlus()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = "Zieuton Plus activé"; $("plus-mini-s").textContent = "Mises à jour illimitées, et ton zieuteur en or."; return; }
-  if (guestAcct()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = acctMe(curAcct()).name ? `Plus pour ${acctMe(curAcct()).name}` : "Plus pour ce compte"; $("plus-mini-s").textContent = "Compte ajouté : Plus dès le 1er import"; return; }
+  if (guestAcct()) { $("plus-mini-bar").hidden = true; $("plus-mini-t").textContent = acctMe(curAcct()).name ? `Plus pour ${acctMe(curAcct()).name}` : "Plus pour ce compte"; $("plus-mini-s").textContent = "La version gratuite est prise par un autre compte"; return; }
   $("plus-mini-t").textContent = n === 0 ? "Gratuit pour commencer"
     : n === 1 ? "Ta comparaison est offerte"
     : canUpdateFree() ? "Ta mise à jour du mois est offerte" : `Prochaine offerte dans ${freeLeft(next)}`;
@@ -4452,7 +4511,7 @@ function renderPlusBlock() {
   $("plus-status").textContent = on
     ? `${accts().length > 1 ? acctName(curAcct()) + " a" : "Tu as"} Zieuton Plus ${PLUS_PLANS[curPlan()] || ""} : mises à jour illimitées. Merci !`
     : guestAcct()
-      ? "Compte ajouté sur ce téléphone : Zieuton Plus est nécessaire dès le 1er import."
+      ? "La version gratuite est déjà prise par un autre compte de ce téléphone : Zieuton Plus est nécessaire dès le 1er import."
     : canUpdateFree()
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
       : `Version gratuite : une mise à jour par mois. La prochaine gratuite dans ${freeLeft(next)}`;
