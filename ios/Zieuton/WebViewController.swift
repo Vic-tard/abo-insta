@@ -3,6 +3,7 @@ import WebKit
 import UserNotifications
 import BackgroundTasks
 import StoreKit
+import PhotosUI
 
 /// Affiche l'app web Zieuton et lui transmet les fichiers partagés.
 final class WebViewController: UIViewController {
@@ -45,7 +46,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 6, embedded: true, icloud: true };",
+            source: "window.ZYEUTO_APP = { version: 7, embedded: true, icloud: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
         content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -407,6 +408,8 @@ extension WebViewController: WKScriptMessageHandler {
             openMeta(body)
         case "icloud":
             handleICloud(body)
+        case "photo":
+            pickPhoto()
         case "exportState":
             // La page n'attend plus d'export (fichier importé, demande annulée) : on arrête de guetter.
             if body["pending"] as? Bool == false { ExportWatcher.shared.clear() }
@@ -2123,5 +2126,69 @@ enum ICloudBackup {
     private static func isCurrent(_ url: URL) -> Bool {
         let status = (try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]))?.ubiquitousItemDownloadingStatus
         return status == nil || status == .current
+    }
+}
+
+// MARK: Photo de profil
+
+/// Menu de l'iPhone avec seulement « Photothèque » et « Prendre une photo » (pas de « Choisir le fichier »).
+extension WebViewController: PHPickerViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func pickPhoto() {
+        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        sheet.addAction(UIAlertAction(title: "Photothèque", style: .default) { [weak self] _ in
+            var config = PHPickerConfiguration()
+            config.filter = .images
+            config.selectionLimit = 1
+            let picker = PHPickerViewController(configuration: config)
+            picker.delegate = self
+            self?.present(picker, animated: true)
+        })
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            sheet.addAction(UIAlertAction(title: "Prendre une photo", style: .default) { [weak self] _ in
+                let picker = UIImagePickerController()
+                picker.sourceType = .camera
+                picker.cameraDevice = .front
+                picker.delegate = self
+                self?.present(picker, animated: true)
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "Annuler", style: .cancel))
+        // iPad : le menu s'accroche au milieu de l'écran.
+        if let pop = sheet.popoverPresentationController {
+            pop.sourceView = view
+            pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+            pop.permittedArrowDirections = []
+        }
+        present(sheet, animated: true)
+    }
+
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else { return }
+        provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
+            guard let image = object as? UIImage else { return }
+            DispatchQueue.main.async { self?.sendPhoto(image) }
+        }
+    }
+
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        picker.dismiss(animated: true)
+        if let image = info[.originalImage] as? UIImage { sendPhoto(image) }
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+    }
+
+    /// Photo réduite (1024 px au plus) puis envoyée à la page, qui la recadre comme avant.
+    private func sendPhoto(_ image: UIImage) {
+        let side: CGFloat = 1024
+        let scale = min(1, side / max(image.size.width, image.size.height))
+        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let small = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+        guard let data = small.jpegData(compressionQuality: 0.85) else { return }
+        webView.evaluateJavaScript("window.zyeutoPhoto && window.zyeutoPhoto(\"data:image/jpeg;base64,\(data.base64EncodedString())\"); true")
     }
 }
