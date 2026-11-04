@@ -4240,7 +4240,7 @@ function wkGo() {
   } else {
     const dl = metaStep(GET_SHOTS[1]);
     // Le bandeau ne peut pas savoir si le fichier est prêt : il dit quoi faire dans les deux cas.
-    dl.tip = "Je le touche pour toi dès qu'il apparaît. Encore « En cours » ? Reviens plus tard, je te préviens.";
+    dl.tip = "Dès qu'il apparaît, touche-le : je m'occupe du reste. Encore « En cours » ? Reviens plus tard, je te préviens.";
     nativePost({ type: "meta", mode: "get", url: IG_EXPORT_URL, steps: [dl] });
   }
 }
