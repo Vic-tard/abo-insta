@@ -753,6 +753,8 @@ if (!window.ZYEUTO_APP) {
   .wk-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
   .wk-steps li { display: flex; align-items: center; gap: 5px; background: rgb(255 255 255 / .55); border-radius: 999px; padding: 5px 10px 5px 5px; font-size: 12.5px; color: rgb(46 35 40 / .8); }
   .wk-steps i { width: 17px; height: 17px; border-radius: 50%; background: #2e2328; color: #fff; font: 700 10px/17px var(--font); text-align: center; font-style: normal; }
+  .wk-steps li { cursor: pointer; }
+  .wk-steps li:active { transform: scale(.96); }
   .wk-steps li.on { background: #2e2328; color: #fff; }
   .wk-steps li.on i { background: #fff; color: #2e2328; }
   .wk-steps li.done i { background: #3f7f68; }
@@ -2074,7 +2076,7 @@ if (!window.ZYEUTO_APP) {
     </div>
     <!-- Bouton « Mettre à jour » : 3 étapes, la carte suit où on en est (demandé, prêt). -->
     <ol class="wk-steps" id="wk-steps" aria-label="Les étapes">
-      <li><i>1</i>Demander</li><li><i>2</i>Attendre</li><li><i>3</i>Télécharger</li>
+      <li data-step="request" role="button" tabindex="0"><i>1</i>Demander</li><li data-step="wait" role="button" tabindex="0"><i>2</i>Attendre</li><li data-step="get" role="button" tabindex="0"><i>3</i>Télécharger</li>
     </ol>
     <button class="wk-redo" id="wk-redo" type="button" hidden>Pas fait&nbsp;? Recommencer la demande</button>
     <button class="wk-redo" id="wk-help" type="button" aria-expanded="false" aria-controls="wk-sos" hidden>Un souci&nbsp;?</button>
@@ -4358,12 +4360,14 @@ function guardOf(img) {
   return { screen: META_SCREEN[img] || "", ok: (g.ok || []).concat(g.pick ? [] : META_ALWAYS_OK), bad: g.bad || [], free: !!g.free, pick: !!g.pick, oops: g.oops || "", redoOops: g.redoOops || "",
     redo: g.redo ? IG_SHOTS.findIndex((s) => s.img === g.redo) : -1 };
 }
-function wkGo() {
+// mode : "get" = aller tout de suite au téléchargement (pastille « 3 Télécharger »), "request" = refaire une demande.
+function wkGo(mode) {
+  if (typeof mode !== "string") mode = "";
   if (DEMO) { haptic("light"); return leaveDemo(); }
-  if (!reqPending() && !canUpdateFree()) { haptic("light"); return openPlus("update"); }
+  if (mode !== "get" && !reqPending() && !canUpdateFree()) { haptic("light"); return openPlus("update"); }
   if (!metaInApp()) return openRepeat();
   haptic("light");
-  if (!reqPending()) {
+  if (mode === "request" || (mode !== "get" && !reqPending())) {
     nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep) });
   } else {
     const dl = metaStep(GET_SHOTS[1]);
@@ -4411,7 +4415,16 @@ $("first-notback").addEventListener("click", () => {
   $("first").hidden = true;
   openList("notback");
 });
-$("wk-go").addEventListener("click", wkGo);
+$("wk-go").addEventListener("click", () => wkGo());
+// Les 3 pastilles se touchent : Demander = nouvelle demande, Télécharger = droit à l'écran de téléchargement d'Instagram.
+$("wk-steps").addEventListener("click", (e) => {
+  const li = e.target.closest("li[data-step]");
+  if (!li) return;
+  if (li.dataset.step === "get") return wkGo("get");
+  if (li.dataset.step === "request") { if (reqPending()) $("wk-redo").click(); return wkGo("request"); }
+  haptic("light");
+  toast(reqPending() ? "Instagram prépare ton fichier. Je te préviens dès qu'il est prêt, ou touche « Télécharger » pour aller voir." : "Commence par « Demander » : Instagram prépare ensuite ton fichier.", false);
+});
 $("wk-help").addEventListener("click", () => {
   const open = $("wk-sos").hidden;
   $("wk-sos").hidden = !open; $("wk-help").setAttribute("aria-expanded", String(open)); haptic("light");
@@ -4930,7 +4943,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-04-2225";
+const BUILD = "2026-11-04-2240";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
