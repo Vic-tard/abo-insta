@@ -1941,6 +1941,41 @@
     #imports-page.open .ip-list li { animation: rise .35s both; }
     #imports-page.open .ip-list li:nth-child(2) { animation-delay: .04s; } #imports-page.open .ip-list li:nth-child(3) { animation-delay: .08s; } #imports-page.open .ip-list li:nth-child(n+4) { animation-delay: .12s; }
   }
+
+  /* ---------- Listes (nov. 2026) : groupes par date, lignes légères, étiquettes ---------- */
+  ul.people.people { gap: 14px; }
+  ul.people li.pp-grp { display: block; padding: 0; background: none !important; box-shadow: none !important; border-radius: 0; }
+  .pp-h { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px; font: 800 13px var(--round); color: #2e2328; text-transform: none; }
+  .pp-h em { font-style: normal; font: 800 11.5px/1 var(--round); padding: 4px 8px; border-radius: 999px; background: rgb(255 255 255 / .6); }
+  .pp-list { list-style: none; margin: 0; padding: 4px 0; background: rgb(255 255 255 / .92); border-radius: 20px; box-shadow: 0 4px 12px rgb(46 35 40 / .08); }
+  ul.people .pp-list li.pp, #who-list li.pp { display: block; padding: 0; background: none; box-shadow: none; border-radius: 0; }
+  .pp + .pp .pp-a::before { content: ""; position: absolute; left: 62px; right: 14px; top: 0; height: 1px; background: rgb(46 35 40 / .07); }
+  .pp-a { position: relative; display: flex; align-items: center; gap: 12px; padding: 9px 12px; color: #2e2328; text-decoration: none; }
+  .pp-a:active { background: rgb(46 35 40 / .04); }
+  .pp-av { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 15px var(--round); text-shadow: 0 1px 2px rgb(0 0 0 / .15); box-shadow: inset 0 0 0 2px rgb(255 255 255 / .35); }
+  .pp-t { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+  .pp-t b { font: 700 14.5px/1.2 var(--font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .pp-t small { font-size: 12.5px; color: rgb(46 35 40 / .6); }
+  .pp-tag { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; font: 700 11.5px/1.25 var(--round); padding: 3px 8px; border-radius: 999px; background: #f4eaec; color: #6e5560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pp-tag.zap { background: #fff0c7; color: #7a5410; }
+  .pp-tag.heart { background: #ffe1e6; color: #a0405a; }
+  .pp-tag.gold { background: linear-gradient(135deg, #fff1c4, #ffd977); color: #6a4a08; }
+  .pp-tag.new { background: #dff4ea; color: #276a4f; }
+  .pp-tag.cold { background: #e3ecfb; color: #3b5684; }
+  .pp-go svg { width: 16px; height: 16px; fill: none; stroke: rgb(46 35 40 / .3); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; display: block; }
+  /* À la une */
+  .lp-hi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lp-hi:has(> :only-child) { grid-template-columns: 1fr; }
+  .hi-c { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 12px; border-radius: 18px; text-decoration: none; color: #fff; background: linear-gradient(160deg, #4a2636, #2c1622); box-shadow: 0 8px 16px rgb(46 35 40 / .18); }
+  .hi-c small { font: 800 11px/1.2 var(--round); color: rgb(255 255 255 / .7); }
+  .hi-c b { font: 800 15px/1.2 var(--round); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hi-c span { font: 600 12px/1.25 var(--round); color: #f6c95a; }
+  .hi-c.new span { color: #9fe8c4; } .hi-c.zap span { color: #ffd76a; } .hi-c.heart span { color: #ffb4c0; } .hi-c.cold span { color: #b9d0ff; }
+  #who-list { gap: 0; background: rgb(255 255 255 / .92); border-radius: 20px; padding: 4px 0; box-shadow: 0 4px 12px rgb(46 35 40 / .08); }
+  #who-list li.empty { background: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #who-list { background: #241b1e; } :root:not([data-theme="light"]) #who-list .pp-a { color: #f5ecee; } :root:not([data-theme="light"]) #who-list .pp-tag:not(.gold) { background: rgb(255 255 255 / .08); color: #e6d6da; } }
+  :root[data-theme="dark"] #who-list { background: #241b1e; } :root[data-theme="dark"] #who-list .pp-a { color: #f5ecee; } :root[data-theme="dark"] #who-list .pp-tag:not(.gold) { background: rgb(255 255 255 / .08); color: #e6d6da; }
+  @media (prefers-reduced-motion: no-preference) { .people.anim .pp { animation: rise .35s both; } }
 </style>
 
 <div class="wrap">
@@ -2089,6 +2124,7 @@
         <button role="tab" id="tab-recent" data-tab="recent" aria-selected="false">Abonnés</button>
       </div>
       <p class="note" id="list-note" hidden></p>
+      <div id="lp-hi"></div>
       <div class="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input type="search" id="search" placeholder="Rechercher" autocomplete="off" autocapitalize="none" aria-label="Rechercher un compte">
@@ -3113,50 +3149,152 @@ function relations() {
   };
 }
 
+// ---------- Les listes : rangées par date, avec une petite étiquette sympa pour chacun ----------
+// Couleur d'avatar stable pour un pseudo (6 dégradés de la palette).
+const AV_GRADS = [["#f4a7b4", "#d9667f"], ["#ffc9a3", "#ee8a5a"], ["#cfc1fa", "#9a80e0"], ["#bfe9d4", "#5fbf93"], ["#ffe3a3", "#e8b23c"], ["#f9c6de", "#c96aa1"]];
+function avGrad(u) { let h = 0; for (let i = 0; i < u.length; i++) h = (h * 31 + u.charCodeAt(i)) | 0; const g = AV_GRADS[Math.abs(h) % AV_GRADS.length]; return `background:linear-gradient(135deg,${g[0]},${g[1]})`; }
+function lenTxt(days) {
+  if (days < 1) return "moins d'un jour";
+  if (days < 30) { const d = Math.round(days); return `${d} jour${d > 1 ? "s" : ""}`; }
+  if (days < 365) return `${Math.max(1, Math.round(days / 30.4))} mois`;
+  const y = Math.floor(days / 365), m = Math.round((days - y * 365) / 30.4);
+  return `${y} an${y > 1 ? "s" : ""}${m && m < 12 ? ` et ${m} mois` : ""}`;
+}
+// Version courte pour les étiquettes : « 2 ans », « 5 mois », « 12 jours ».
+function lenShort(days) {
+  if (days < 1) return "1 jour";
+  if (days < 30) { const d = Math.round(days); return `${d} jour${d > 1 ? "s" : ""}`; }
+  if (days < 365) return `${Math.max(1, Math.round(days / 30.4))} mois`;
+  const y = Math.floor(days / 365); return `${y} an${y > 1 ? "s" : ""}`;
+}
+const MONTHS_FULL = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+// Une ligne : avatar coloré, pseudo, étiquette. Toute la ligne ouvre le profil Instagram.
+function personHTML(r, i = 0) {
+  const tag = r.tag ? `<span class="pp-tag ${r.tag.k || ""}">${r.tag.e ? `<span aria-hidden="true">${r.tag.e}</span>` : ""}${esc(r.tag.t)}</span>` : "";
+  const sub = typeof r.sub === "function" ? r.sub() : r.sub;
+  return `<li class="pp${r.cls === "down" ? " dep" : ""}"${i < 14 ? ` style="animation-delay:${(i * 0.025).toFixed(3)}s"` : ""}><a class="pp-a" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">
+    <span class="pp-av" style="${avGrad(r.u)}" aria-hidden="true">${esc((r.u[0] || "?").toUpperCase())}</span>
+    <span class="pp-t"><b>${esc(r.u)}</b>${tag || (sub ? `<small class="${r.cls || ""}">${sub}</small>` : "")}</span>
+    <span class="pp-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></a></li>`;
+}
+// Petites cartes « À la une » en haut de la liste.
+function hiHTML(items) {
+  items = items.filter(Boolean);
+  if (!items.length) return "";
+  return `<div class="lp-hi">${items.map((h) => `<a class="hi-c ${h.k || ""}" href="${profileUrl(h.u)}" target="_blank" rel="noopener noreferrer"><small>${h.e} ${esc(h.l)}</small><b>${esc(h.u)}</b><span>${esc(h.v)}</span></a>`).join("")}</div>`;
+}
 function renderList() {
   const q = $("search").value.trim().toLowerCase();
   const rel = relations();
   const relTab = tab === "notback" || tab === "fans";
-  $("list-note").hidden = !(relTab && rel);
-  if (relTab && rel) $("list-note").textContent = tab === "notback"
-    ? `Tu les suis, mais ils ne te suivent pas. D'après ton export du ${fmtDate(state.followingAt)}.`
-    : `Ils te suivent, mais tu ne les suis pas. D'après ton export du ${fmtDate(state.followingAt)}.`;
-  let rows;
+  const nowS = Date.now() / 1000;
+  $("list-note").hidden = true;
+  let rows, hi = [];
+  const yearsOf = (ts) => (nowS - ts) / (365 * 86400);
   if (relTab) {
     const src = tab === "notback" ? state.following : state.followers;
     rows = (rel ? rel[tab === "notback" ? "notBack" : "fans"] : [])
       .filter((u) => u.includes(q))
       .sort((a, b) => (src[b] ?? -1) - (src[a] ?? -1))
-      .map((u) => ({ u, cls: "", sub: () => src[u] ? `${tab === "notback" ? "suivi" : "abonné"} depuis le ${fmtDate(src[u] * 1000)}` : "" }));
+      .map((u) => {
+        const ts = src[u] > 0 ? src[u] : 0, y = ts ? yearsOf(ts) : 0;
+        const tag = !ts ? null : tab === "notback"
+          ? (y >= 2 ? { e: "🥶", t: `${lenShort(y * 365)} sans retour`, k: "cold" } : y < 30 / 365 ? { e: "⏳", t: `Suivi il y a ${lenShort(y * 365)} seulement`, k: "" } : { e: "👀", t: `Tu le suis depuis ${lenShort(y * 365)}`, k: "" })
+          : (y >= 3 ? { e: "🏅", t: `Fan depuis ${lenShort(y * 365)}`, k: "gold" } : y < 30 / 365 ? { e: "✨", t: "Nouveau fan", k: "new" } : { e: "💌", t: `Te suit depuis ${lenShort(y * 365)}`, k: "" });
+        return { u, ts, tag, g: ts ? String(new Date(ts * 1000).getFullYear()) : "Date inconnue" };
+      });
+    if (!q && rows.length) {
+      const old = rows.filter((r) => r.ts).at(-1);
+      if (old) hi.push(tab === "notback"
+        ? { e: "🥶", l: "Le plus ancien sans retour", u: old.u, v: `suivi depuis ${lenShort(yearsOf(old.ts) * 365)}`, k: "cold" }
+        : { e: "🏅", l: "Ton plus vieux fan", u: old.u, v: `depuis ${lenShort(yearsOf(old.ts) * 365)}`, k: "gold" });
+      if (rows[0].ts && rows[0] !== old) hi.push({ e: "✨", l: tab === "notback" ? "Le dernier que tu as suivi" : "Le plus récent", u: rows[0].u, v: `il y a ${lenShort(yearsOf(rows[0].ts) * 365)}`, k: "new" });
+    }
   } else if (tab === "recent") {
+    const fol = state.following || {};
     rows = Object.entries(state.followers)
       .filter(([u]) => u.includes(q))
       .sort((a, b) => (b[1] ?? -1) - (a[1] ?? -1))
-      .map(([u, ts]) => ({ u, cls: "", sub: () => ts ? `abonné depuis le ${fmtDate(ts * 1000)}` : "" }));
+      .map(([u, ts]) => {
+        const ok = ts > 0, y = ok ? yearsOf(ts) : 0;
+        const tag = !ok ? null : y >= 3 ? { e: "🏅", t: `Abonné depuis ${lenShort(y * 365)}`, k: "gold" }
+          : y < 7 / 365 ? { e: "✨", t: "Arrivé cette semaine", k: "new" }
+          : state.following && u in fol ? { e: "🤝", t: `Vous vous suivez · depuis ${lenShort(y * 365)}`, k: "" }
+          : { e: "💌", t: `Abonné depuis ${lenShort(y * 365)}`, k: "" };
+        const d = ok ? new Date(ts * 1000) : null;
+        return { u, ts: ok ? ts : 0, tag, g: d ? `${MONTHS_FULL[d.getMonth()].replace(/^./, (c) => c.toUpperCase())} ${d.getFullYear()}` : "Date inconnue" };
+      });
+    if (!q && rows.length) {
+      const first = rows.filter((r) => r.ts).at(-1);
+      if (first) hi.push({ e: "👑", l: "Ton plus ancien abonné", u: first.u, v: `depuis ${lenShort(yearsOf(first.ts) * 365)}`, k: "gold" });
+      if (rows[0].ts) hi.push({ e: "✨", l: "Le dernier arrivé", u: rows[0].u, v: `il y a ${lenShort(yearsOf(rows[0].ts) * 365)}`, k: "new" });
+    }
   } else {
+    const gone = new Set(), fol = state.following || {};
+    if (tab === "follow") for (const e of state.events) if (e.kind === "unfollow") gone.add(e.u);
     rows = state.events
       .filter((e) => e.kind === tab && e.u.includes(q))
       .sort((a, b) => b.at.localeCompare(a.at) || a.u.localeCompare(b.u))
-      .map((e) => ({ u: e.u, cls: tab === "unfollow" ? "down" : "up",
-        sub: `${tab === "unfollow" ? "parti" : "arrivé"} entre le ${fmtShort(e.since)} et le ${fmtShort(e.at)}` }));
+      .map((e) => {
+        let tag = null, stay = null;
+        if (tab === "unfollow") {
+          if (e.ts) {
+            stay = Math.max(0, (Date.parse(e.at) / 1000 - e.ts) / 86400);
+            tag = stay < 30 ? { e: "⚡", t: `Coup de vent : resté ${lenShort(stay)}`, k: "zap" }
+              : stay >= 730 ? { e: "💔", t: `Resté ${lenShort(stay)}, quand même`, k: "heart" }
+              : { e: "👋", t: `Resté ${lenShort(stay)}`, k: "" };
+            if (e.u in fol) tag = { e: "😬", t: `Tu le suis encore · ${lenShort(stay)}`, k: "zap" };
+          } else tag = e.u in fol ? { e: "😬", t: "Tu le suis encore", k: "zap" } : { e: "👋", t: "Parti", k: "" };
+        } else {
+          tag = gone.has(e.u) ? { e: "🔁", t: "Revenu ! Il était parti", k: "gold" }
+            : e.u in fol ? { e: "🤝", t: "Tu le suivais déjà", k: "" }
+            : { e: "✨", t: "Tout nouveau", k: "new" };
+        }
+        return { u: e.u, cls: tab === "unfollow" ? "down" : "up", tag, stay, at: e.at, since: e.since };
+      });
+    if (!q && rows.length) {
+      if (tab === "unfollow") {
+        const st = rows.filter((r) => r.stay != null);
+        if (st.length) {
+          const loyal = st.reduce((m, r) => (r.stay > m.stay ? r : m)), fast = st.reduce((m, r) => (r.stay < m.stay ? r : m));
+          hi.push({ e: "💔", l: "Le plus fidèle parti", u: loyal.u, v: `resté ${lenShort(loyal.stay)}`, k: "heart" });
+          if (fast !== loyal) hi.push({ e: "⚡", l: "Le plus rapide", u: fast.u, v: `resté ${lenShort(fast.stay)}`, k: "zap" });
+        }
+      } else {
+        const back = rows.filter((r) => r.tag.k === "gold");
+        if (back.length) hi.push({ e: "🔁", l: back.length > 1 ? `${back.length} sont revenus` : "Revenu", u: back[0].u, v: "il était parti", k: "gold" });
+        hi.push({ e: "✨", l: "Le dernier arrivé", u: rows[0].u, v: `à l'import du ${fmtShort(rows[0].at)}`, k: "new" });
+      }
+    }
+    for (const r of rows) r.g = `Import du ${fmtShort(r.at)}`;
   }
-  const html = rows.slice(0, shown).map((r) => (typeof r.sub === "function" ? { ...r, sub: r.sub() } : r)).map((r) => `
-    <li${r.cls === "down" ? ' class="dep"' : ""}><span class="av ${r.cls}" aria-hidden="true"><i>${esc(r.u[0])}</i></span>
-      <span class="who"><a href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer">${esc(r.u)}</a>${r.sub ? `<small class="${r.cls}">${r.sub}</small>` : ""}</span>
-      <a class="btn ghost small" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">Voir</a></li>`).join("");
+  // Rangement par groupes (import, année, mois), avec le nombre de comptes de chaque groupe.
+  const cnt = {};
+  for (const r of rows) cnt[r.g] = (cnt[r.g] || 0) + 1;
+  let html = "", cur = null, k = 0;
+  for (const r of rows.slice(0, shown)) {
+    if (r.g !== cur) {
+      if (cur !== null) html += `</ul></li>`;
+      cur = r.g;
+      html += `<li class="pp-grp"><p class="pp-h"><span>${esc(r.g)}</span><em>${nf(cnt[r.g])}</em></p><ul class="pp-list">`;
+    }
+    html += personHTML(r, k++);
+  }
+  if (cur !== null) html += `</ul></li>`;
   const n = state.snapshots.length;
   const empty = loading ? "Chargement…"
     : q ? "Aucun compte ne correspond."
-    : relTab && !rel ? "Ton dernier export ne contenait pas la liste des comptes que tu suis. Au prochain, garde bien « Followers et suivi(e)s » coché : cet onglet se remplira tout seul."
+    : relTab && !rel ? "Ton dernier export ne contenait pas la liste des comptes que tu suis. Au prochain, garde bien « Followers et suivi(e)s » coché : cette liste se remplira toute seule."
     : tab === "notback" ? "Tout le monde te suit en retour. 🎉"
     : tab === "fans" ? "Tu suis tous tes abonnés."
     : tab === "recent" ? "Importe ton export pour voir tes abonnés."
     : n < 2 ? "Il faut deux imports pour comparer. Refais un export dès que tu en as envie."
     : tab === "unfollow" ? "Personne n'est parti. 🎉" : "Aucun nouvel abonné détecté.";
   $("list-card").dataset.tab = tab;
+  $("lp-hi").innerHTML = hiHTML(hi);
   $("people").innerHTML = html || `<li class="empty"><span class="zy-av">${avatarSVG(prefs.zy?.look || {})}</span><span>${empty}</span></li>`;
   $("more").hidden = rows.length <= shown;
-  $("more").textContent = shown <= PAGE ? `Voir tout (${rows.length})` : `Voir plus (${rows.length - shown})`;
+  $("more").textContent = `Voir plus (${nf(rows.length - shown)} restants)`;
 }
 
 // On touche une barre, une part ou un point : la liste des comptes concernés s'ouvre en plein écran.
@@ -3179,8 +3317,11 @@ const followersWhere = (test) => rowsOf(Object.keys(state.followers).filter((u) 
 // Qui est arrivé et qui est parti à un import donné.
 const importWho = (snap) => () => {
   const ev = state.events.filter((e) => e.at === snap.takenAt);
-  const up = ev.filter((e) => e.kind === "follow").map((e) => ({ u: e.u, cls: "up", sub: "arrivé à cet import" }));
-  const down = ev.filter((e) => e.kind === "unfollow").map((e) => ({ u: e.u, cls: "down", sub: e.ts ? `parti, abonné depuis le ${fmtDate(e.ts * 1000)}` : "parti à cet import" }));
+  const up = ev.filter((e) => e.kind === "follow").map((e) => ({ u: e.u, cls: "up", tag: { e: "✨", t: "Arrivé", k: "new" } }));
+  const down = ev.filter((e) => e.kind === "unfollow").map((e) => {
+    const stay = e.ts ? Math.max(0, (Date.parse(e.at) / 1000 - e.ts) / 86400) : null;
+    return { u: e.u, cls: "down", tag: stay == null ? { e: "👋", t: "Parti", k: "" } : stay < 30 ? { e: "⚡", t: `Parti après ${lenShort(stay)}`, k: "zap" } : { e: "👋", t: `Parti après ${lenShort(stay)}`, k: stay >= 730 ? "heart" : "" } };
+  });
   return { title: `Import du ${fmtShort(snap.takenAt)}`, sub: `${up.length} arrivée${up.length > 1 ? "s" : ""} et ${down.length} départ${down.length > 1 ? "s" : ""}`, rows: [...down, ...up], cls: "st-moves" };
 };
 function renderChart() {
@@ -3531,7 +3672,7 @@ function selectTab(t) {
 }
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { selectTab(b.dataset.tab); shown = PAGE; renderList(); animateList(); }));
 $("search").addEventListener("input", () => { shown = PAGE; renderList(); });
-$("more").addEventListener("click", () => { shown += 40; renderList(); });
+$("more").addEventListener("click", () => { shown += 60; renderList(); });
 
 // ---------- Copie / restauration ----------
 $("backup").addEventListener("click", async () => {
@@ -6403,10 +6544,7 @@ function openWho({ title, sub, rows, cls = "" }) {
 function renderWho() {
   const q = $("who-search").value.trim().toLowerCase();
   const rows = q ? whoRows.filter((r) => r.u.toLowerCase().includes(q)) : whoRows;
-  $("who-list").innerHTML = rows.slice(0, whoShown).map((r) => (typeof r.sub === "function" ? { ...r, sub: r.sub() } : r)).map((r, i) => `
-    <li${i < 12 ? ` style="animation-delay:${i * 0.03}s"` : ""}><span class="av ${r.cls || ""}" aria-hidden="true"><i>${esc((r.u || "?")[0])}</i></span>
-      <span class="who"><a href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer">${esc(r.u)}</a>${r.sub ? `<small class="${r.cls || ""}">${r.sub}</small>` : ""}</span>
-      <a class="btn ghost small" href="${profileUrl(r.u)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir le profil de ${esc(r.u)}">Voir</a></li>`).join("")
+  $("who-list").innerHTML = rows.slice(0, whoShown).map((r, i) => personHTML(r, i)).join("")
     || `<li class="empty" style="display:block">${q ? "Aucun compte ne correspond." : "Personne ici."}</li>`;
   $("who-more").hidden = rows.length <= whoShown;
   $("who-more").textContent = `Voir plus (${nf(rows.length - whoShown)} restants)`;
