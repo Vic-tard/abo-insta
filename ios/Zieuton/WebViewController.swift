@@ -14,7 +14,6 @@ final class WebViewController: UIViewController {
     private static let chunkSize = 512 * 1024
 
     private var webView: WKWebView!
-    private let offline = UIView()
     private var pageReady = false
     private var sending = false
     /// Fichiers reçus, gardés jusqu'à ce que la page confirme les avoir reçus.
@@ -22,9 +21,11 @@ final class WebViewController: UIViewController {
     private var downloads: [ObjectIdentifier: URL] = [:]
     private let splash = UIView()
     private var splashShownAt = Date()
-    /// Vrai quand on affiche la copie gardée sur le téléphone (pas d'internet).
-    private var offlineMode = false
-    private static var offlineCopy: URL {
+    /// Version de la page affichée (sa ligne « const BUILD »).
+    private var loadedBuild = ""
+    private var checkingUpdate = false
+    /// Dernière version de la page téléchargée (plus récente que celle rangée dans l'app).
+    private static var savedPage: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("zyeuto-hors-ligne.html")
@@ -44,8 +45,11 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 5 };",
+            source: "window.ZYEUTO_APP = { version: 5, embedded: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
+        content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        content.addUserScript(WKUserScript(source: Self.fixImages, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         // Ressenti d'app : pas de zoom, pas de sélection de texte ni de menu « Copier » à l'appui long
         // (sauf dans les champs de saisie), pas de surlignage gris au toucher.
         content.addUserScript(WKUserScript(source: Self.nativeFeel, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
@@ -68,12 +72,10 @@ final class WebViewController: UIViewController {
         webView.uiDelegate = self
         view.addSubview(webView)
 
-        buildOfflineView()
         buildSplash()
-        webView.load(URLRequest(url: Self.home))
+        loadPage()
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
-                                               object: nil, queue: .main) { [weak self] _ in
-            self?.retryOnline()
+                                               object: nil, queue: .main) { _ in
             ExportWatcher.shared.appBecameActive()
         }
         Self.current = self
@@ -220,34 +222,83 @@ final class WebViewController: UIViewController {
         } completion: { _ in self.splash.removeFromSuperview() }
     }
 
-    // MARK: Sans internet : copie gardée sur le téléphone
+    // MARK: Page rangée dans l'app (+ mises à jour)
 
-    /// Garde la dernière version de la page pour pouvoir s'ouvrir sans réseau.
-    private func saveOfflineCopy() {
-        var request = URLRequest(url: Self.home)
+    /// La page est rangée dans l'app : elle s'ouvre tout de suite, même sans internet.
+    /// Quand une version plus récente est en ligne, l'app la télécharge et la garde sur le téléphone.
+    /// La page s'affiche toujours à l'adresse du site, donc avec les mêmes données qu'avant.
+    private func loadPage() {
+        let bundled = Bundle.main.url(forResource: "index", withExtension: "html")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
+        let saved = try? String(contentsOf: Self.savedPage, encoding: .utf8)
+        let candidates = [bundled, saved].compactMap { $0 }.filter { Self.build(of: $0) != nil }
+        guard let html = candidates.max(by: { Self.build(of: $0)! < Self.build(of: $1)! }) else {
+            webView.load(URLRequest(url: Self.home)) // ne devrait pas arriver : la page est toujours dans l'app
+            return
+        }
+        loadedBuild = Self.build(of: html)!
+        webView.loadHTMLString(html, baseURL: Self.home)
+    }
+
+    /// Numéro de version d'une page (ex. « 2026-11-04-1210 »), qui se compare comme du texte.
+    private static func build(of html: String) -> String? {
+        guard let r = html.range(of: #"const BUILD = "([^"]+)""#, options: .regularExpression) else { return nil }
+        return String(html[r].dropFirst(15).dropLast())
+    }
+
+    /// La page demande s'il y a du nouveau (à l'ouverture et à chaque retour dans l'app).
+    private func checkForUpdate() {
+        guard !checkingUpdate else { return }
+        checkingUpdate = true
+        let current = loadedBuild
+        var comps = URLComponents(url: Self.home, resolvingAgainstBaseURL: false)!
+        comps.queryItems = [URLQueryItem(name: "v", value: String(Int(Date().timeIntervalSince1970)))]
+        var request = URLRequest(url: comps.url!, timeoutInterval: 15)
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        URLSession.shared.dataTask(with: request) { data, response, _ in
-            guard (response as? HTTPURLResponse)?.statusCode == 200, let data,
-                  let html = String(data: data, encoding: .utf8), html.contains("const BUILD") else { return }
-            try? data.write(to: Self.offlineCopy, options: .atomic)
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, _ in
+            var newer = false
+            if (response as? HTTPURLResponse)?.statusCode == 200, let data,
+               let html = String(data: data, encoding: .utf8), html.contains("</html>"),
+               let build = Self.build(of: html), build > current {
+                newer = (try? data.write(to: Self.savedPage, options: .atomic)) != nil
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.checkingUpdate = false
+                // On recharge seulement si rien n'est en cours (fichier reçu, Instagram ouvert…).
+                if newer, !self.sending, self.pending.isEmpty, self.presentedViewController == nil { self.loadPage() }
+            }
         }.resume()
     }
 
-    /// Pas de réseau : on ouvre la copie, à la même adresse (donc avec les mêmes données).
-    private func openOfflineCopy() -> Bool {
-        guard !offlineMode, let html = try? String(contentsOf: Self.offlineCopy, encoding: .utf8) else { return false }
-        offlineMode = true
-        offline.isHidden = true
-        webView.loadHTMLString(html, baseURL: Self.home)
-        return true
-    }
+    /// Les images rangées dans l'app, prêtes à être affichées par la page (« guide/ig-01.jpg » → image).
+    private static let assetsScript: String = {
+        guard let root = Bundle.main.resourceURL else { return "" }
+        var names = ["icone-v5-180.png"]
+        let guide = root.appendingPathComponent("guide")
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: guide.path)) ?? []
+        names += files.filter { $0.hasSuffix(".jpg") || $0.hasSuffix(".png") }.sorted().map { "guide/" + $0 }
+        var map: [String: String] = [:]
+        for name in names {
+            guard let data = try? Data(contentsOf: root.appendingPathComponent(name)) else { continue }
+            let type = name.hasSuffix(".png") ? "image/png" : "image/jpeg"
+            map[name] = "data:\(type);base64,\(data.base64EncodedString())"
+        }
+        guard let json = try? JSONSerialization.data(withJSONObject: map),
+              let text = String(data: json, encoding: .utf8) else { return "" }
+        return "window.ZYEUTO_ASSETS = \(text);"
+    }()
 
-    /// De retour dans l'app : si on était sans réseau, on retente la version en ligne.
-    private func retryOnline() {
-        guard offlineMode, !sending, pending.isEmpty else { return }
-        offlineMode = false
-        webView.load(URLRequest(url: Self.home))
-    }
+    /// Les images écrites directement dans la page (le logo) prennent la version rangée dans l'app.
+    private static let fixImages = """
+    (function () {
+      var a = window.ZYEUTO_ASSETS || {};
+      document.querySelectorAll('img[src]').forEach(function (img) {
+        var src = img.getAttribute('src');
+        if (a[src]) img.src = a[src];
+      });
+    })();
+    """
 
     private static func isNetworkError(_ error: Error) -> Bool {
         let e = error as NSError
@@ -314,39 +365,6 @@ final class WebViewController: UIViewController {
         return String(json.dropFirst().dropLast())
     }
 
-    // MARK: Hors ligne
-
-    private func buildOfflineView() {
-        offline.frame = view.bounds
-        offline.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        offline.backgroundColor = view.backgroundColor
-        offline.isHidden = true
-        let label = UILabel()
-        label.text = "Pas de connexion internet.\nZieuton en a besoin pour s'ouvrir."
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.textColor = .label
-        var button = UIButton.Configuration.filled()
-        button.title = "Réessayer"
-        button.baseBackgroundColor = UIColor(red: 0xd4 / 255, green: 0x91 / 255, blue: 0x9b / 255, alpha: 1)
-        button.cornerStyle = .capsule
-        let retry = UIButton(configuration: button, primaryAction: UIAction { [weak self] _ in
-            self?.offline.isHidden = true
-            self?.webView.load(URLRequest(url: WebViewController.home))
-        })
-        let stack = UIStackView(arrangedSubviews: [label, retry])
-        stack.axis = .vertical
-        stack.spacing = 20
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        offline.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.centerXAnchor.constraint(equalTo: offline.centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: offline.centerYAnchor),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: offline.leadingAnchor, constant: 32),
-        ])
-        view.addSubview(offline)
-    }
-
     private func isHome(_ url: URL?) -> Bool {
         guard let url else { return false }
         return url.host == Self.home.host && url.path.hasPrefix(Self.home.path)
@@ -375,6 +393,8 @@ extension WebViewController: WKScriptMessageHandler {
             if !pending.isEmpty { pending.removeFirst() }
             sending = false
             flush()
+        case "update":
+            checkForUpdate()
         case "haptic":
             switch body["kind"] as? String {
             case "success": UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -497,20 +517,17 @@ extension WebViewController: WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         hideSplash()
-        if !offlineMode, isHome(webView.url) { saveOfflineCopy() }
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        // Une page du site demandée sans internet : on revient à la page rangée dans l'app.
         guard Self.isNetworkError(error) else { return } // ex. lien ouvert dans Safari : rien à faire
-        if !openOfflineCopy() {
-            offline.isHidden = false
-            hideSplash()
-        }
+        loadPage()
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         pageReady = false
-        webView.reload()
+        loadPage()
     }
 
     // alert / confirm de la page.

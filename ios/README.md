@@ -1,9 +1,17 @@
 # Zieuton pour iPhone
 
-L'app affiche Zieuton (le site https://vic-tard.github.io/abo-insta/) et ajoute « Partager → Zieuton » :
+L'app contient la page Zieuton (`index.html`, le logo et les images du guide, à la racine du dépôt) :
+elle s'ouvre tout de suite, même sans internet. Elle ajoute « Partager → Zieuton » :
 touche ton fichier Instagram (.zip) dans Safari ou dans Fichiers, puis Partager, puis Zieuton. L'import se fait tout seul.
 
-Les mises à jour du site arrivent dans l'app sans la réinstaller.
+Mises à jour de la page : à chaque ouverture (et à chaque retour dans l'app), l'app regarde si une version plus
+récente est en ligne sur https://vic-tard.github.io/abo-insta/ (ligne `const BUILD` de `index.html`).
+Si oui, elle la télécharge, la garde sur le téléphone et l'affiche aussitôt (sauf pendant un import ou quand
+Instagram est ouvert dans l'app). Pas besoin de réinstaller l'app pour une retouche de page.
+Xcode ne sert que pour la partie native (achats, notifications, partage, icône, écran de lancement)
+et pour envoyer une nouvelle version à Apple. Chaque nouvelle version envoyée embarque la page du moment.
+
+La page s'affiche toujours à l'adresse du site : les données gardées sur le téléphone ne changent pas.
 
 L'app s'appelait Zyeuto avant. Les identifiants techniques (`fr.zyeuto.app`, achats `fr.zyeuto.plus.*`)
 gardent l'ancien nom exprès : personne ne les voit, et Apple ne permet pas de les changer une fois créés.
