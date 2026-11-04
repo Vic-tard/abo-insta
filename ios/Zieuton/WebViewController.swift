@@ -826,7 +826,9 @@ final class MetaViewController: UIViewController {
           var hasWord = function (t, words) { return words.some(function (w) { return t.indexOf(w) >= 0; }); };
           var screen = function () {
             // Résumé « Confirmer votre exportation » : reconnu par son titre aussi (le bouton « Commencer » est souvent plus bas, hors de l'écran).
-            if (has(START) || seeAny(['confirmer votre exportation', 'confirm your export'])) {
+            // … ou par ses lignes « Période » et « Format » visibles avec leur valeur (le titre n'est pas toujours affiché).
+            if (has(START) || seeAny(['confirmer votre exportation', 'confirm your export'])
+                || (rowVal(['période', 'date range']) !== null && rowVal(['format']) !== null)) {
               var info = rowVal(['personnaliser les informations', 'customize information']);
               var per = rowVal(['période', 'date range']);
               var fmt = rowVal(['format']);
