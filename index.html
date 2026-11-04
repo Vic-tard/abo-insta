@@ -4927,7 +4927,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-04-2130";
+const BUILD = "2026-11-04-2205";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4998,7 +4998,10 @@ function renderPlusPrices() {
   const num = (t) => t ? parseFloat(t.replace(/[^0-9,.]/g, "").replace(",", ".")) : NaN;
   const a = num(an || fb[0]), m = num(mois || fb[1]);
   if (a && m) {
-    $("plus-an-sub").textContent = `soit ${(a / 12).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/mois`;
+    // Même monnaie et même écriture que le prix affiché par l'App Store (« 12,99 $US » → « 1,08 $US »).
+    const ref = an || fb[0], comma = /\d,\d/.test(ref);
+    const per = (a / 12).toFixed(2).replace(".", comma ? "," : ".");
+    $("plus-an-sub").textContent = `soit ${ref.replace(/\d[\d\s.,\u00a0\u202f]*\d|\d/, per)}/mois`;
     $("plus-save").textContent = `−${Math.round((1 - a / (m * 12)) * 100)} %`;
   }
 }
