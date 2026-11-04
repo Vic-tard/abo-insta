@@ -2543,9 +2543,9 @@
       <li><i>✓</i>Sans pub, tes données chez toi</li>
     </ul>
     <div class="plus-plans" role="radiogroup" aria-label="Formule">
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span class="badge" id="plus-save">−58 %</span><b>À l'année</b><span class="pr" id="plus-an-pr">9,99 €</span><small id="plus-an-sub">soit 0,83 €/mois</small></button>
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.mois"><b>Au mois</b><span class="pr" id="plus-mois-pr">1,99 €</span><small>sans engagement</small></button>
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.avie"><b>À vie</b><span class="pr" id="plus-avie-pr">19,99 €</span><small>un seul paiement</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span class="badge" id="plus-save">−58 %</span><b>À l'année</b><span class="pr" id="plus-an-pr">14,99 €</span><small id="plus-an-sub">soit 1,25 €/mois</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.mois"><b>Au mois</b><span class="pr" id="plus-mois-pr">2,99 €</span><small>sans engagement</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.avie"><b>À vie</b><span class="pr" id="plus-avie-pr">29,99 €</span><small>un seul paiement</small></button>
     </div>
     <button class="asked-go plus-buy" id="plus-buy" type="button">Continuer</button>
     <p class="plus-msg" id="plus-msg" hidden></p>
@@ -4867,7 +4867,7 @@ function renderPlusPrices() {
   if (avie) $("plus-avie-pr").textContent = avie;
   // « soit x € par mois » et l'économie, calculés sur les vrais prix du magasin quand on les a.
   const num = (t) => t ? parseFloat(t.replace(/[^0-9,.]/g, "").replace(",", ".")) : NaN;
-  const a = num(an || "9,99"), m = num(mois || "1,99");
+  const a = num(an || "14,99"), m = num(mois || "2,99");
   if (a && m) {
     $("plus-an-sub").textContent = `soit ${(a / 12).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/mois`;
     $("plus-save").textContent = `−${Math.round((1 - a / (m * 12)) * 100)} %`;
