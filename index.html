@@ -31,6 +31,8 @@ if (!window.ZYEUTO_APP) {
 </script>
 <style>
   html.web-off body > *:not(#web-off) { display: none !important; }
+  .plus-plan.mine { opacity: .45; }
+  .plus-plan.mine::after { content: "Ta formule"; display: block; font-size: 11px; margin-top: 4px; }
   #icloud-offer { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-end; justify-content: center; background: rgba(20, 12, 14, .45); padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
   #icloud-offer .ico-card { width: 100%; max-width: 420px; box-sizing: border-box; background: var(--surface, #fff); color: var(--ink, #2e2328); border-radius: 24px; padding: 24px 20px 16px; text-align: center; font-family: var(--round, -apple-system, sans-serif); }
   #icloud-offer .ico-ic svg { width: 44px; height: 44px; fill: none; stroke: var(--rose-ink, #8e4552); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -2275,6 +2277,7 @@ if (!window.ZYEUTO_APP) {
     <div class="st-plus-hero"><span class="plus-tag">Zieuton Plus</span><p id="plus-status"></p></div>
     <div class="st-group st-gold">
       <button class="st-row" id="plus-open" type="button"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Découvrir Plus</b><small>Mises à jour illimitées, zieuteur en or</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" id="plus-change" type="button" hidden><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Voir les offres</b><small id="plus-change-sub">Passer à l'année ou à vie</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" id="plus-manage" type="button" hidden><span class="st-ic st-ic-none"></span><span class="st-t"><b>Gérer mon abonnement</b></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" id="plus-restore" type="button"><span class="st-ic st-ic-none"></span><span class="st-t"><b>Restaurer mes achats</b><small>Si tu as déjà payé sur un autre iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
@@ -4927,7 +4930,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-04-2215";
+const BUILD = "2026-11-04-2225";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -5028,6 +5031,15 @@ function openPlus(why) {
   $("plus-av").innerHTML = avatarSVG(prefs.zy?.look || {}, true);
   $("plus-rules").innerHTML = freeRules().map((r) => `<li class="${r.used ? "off" : "on"}"><b>${r.k}</b><span>${r.t}${r.used ? " ✓" : ""}</span></li>`).join("")
     + `<li class="gold"><b>Avec Plus</b><span>illimité</span></li>`;
+  // Changer de formule : la formule actuelle est grisée, la suivante est choisie d'avance.
+  const cur = why === "change" && hasPlus() ? curPlan() : "";
+  $("plus-rules").hidden = !!cur; // les règles de la version gratuite ne servent plus
+  document.querySelectorAll(".plus-plan").forEach((b) => { const mine = b.dataset.plan === cur; b.disabled = mine; b.classList.toggle("mine", mine); });
+  if (cur) {
+    $("plus-why").textContent = `Tu as Plus ${PLUS_PLANS[cur] || ""}. Choisis une autre formule : l'App Store fait le changement.`
+      + (cur !== "fr.zyeuto.plus.avie" ? " Si tu prends À vie, arrête ensuite ton abonnement dans « Gérer mon abonnement »." : "");
+    plusPlan = cur === "fr.zyeuto.plus.an" ? "fr.zyeuto.plus.avie" : "fr.zyeuto.plus.an";
+  }
   selectPlan(plusPlan); renderPlusPrices(); plusMsg("");
   $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer";
   $("plus").hidden = false;
@@ -5078,12 +5090,15 @@ function renderPlusBlock() {
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
       : `Version gratuite : une mise à jour par mois. La prochaine gratuite dans ${freeLeft(next)}`;
   $("plus-open").hidden = on;
+  // Déjà Plus au mois ou à l'année : les autres offres restent accessibles (passer à l'année ou à vie).
+  $("plus-change").hidden = !on || curPlan() === "fr.zyeuto.plus.avie";
+  $("plus-change-sub").textContent = curPlan() === "fr.zyeuto.plus.an" ? "Passer à vie" : "Passer à l'année ou à vie";
   $("plus-manage").hidden = !on || curPlan() === "fr.zyeuto.plus.avie";
 }
-async function plusUnlocked() {
+async function plusUnlocked(changed) {
   $("plus").hidden = true;
   haptic("success"); confetti();
-  toast("Bienvenue dans Zieuton Plus ! Ton zieuteur est passé en or.", false);
+  toast(changed ? `C'est fait : tu as maintenant Plus ${PLUS_PLANS[curPlan()] || ""}.` : "Bienvenue dans Zieuton Plus ! Ton zieuteur est passé en or.", false);
   renderPlusBlock();
   // Un fichier attendait : on l'importe maintenant.
   if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
@@ -5106,7 +5121,7 @@ window.zyeutoPlus = (d) => {
   if (was !== hasPlus()) { try { renderHomeZy(); renderZy(); render(); } catch {} }
   const r = d.result;
   if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
-  if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked();
+  if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked(was && r === "ok");
   if (r === "restored" && !hasPlus()) return plusMsg(`Aucun Zieuton Plus trouvé pour le compte de ${acctName(curAcct())}. Chaque compte a son propre Plus.`);
   if (r === "none") return plusMsg("Aucun achat Zieuton Plus trouvé sur ce compte Apple.");
   if (r === "pending") return plusMsg("Achat en attente : il doit encore être accepté (par exemple par un parent). Plus s'activera tout seul.");
@@ -5127,6 +5142,7 @@ $("plus-later").addEventListener("click", closePlus);
 $("plus-x").addEventListener("click", closePlus);
 $("plus").addEventListener("click", (e) => { if (e.target === $("plus")) closePlus(); });
 $("plus-open").addEventListener("click", () => openPlus());
+$("plus-change").addEventListener("click", () => { haptic("light"); openPlus("change"); });
 $("plus-mini").addEventListener("click", () => { haptic("light"); hasPlus() ? openStPage("st-plus") : openPlus(); });
 $("plus-manage").addEventListener("click", () => nativePost({ type: "plus", action: "manage" }));
 window.zyeutoFile = {
