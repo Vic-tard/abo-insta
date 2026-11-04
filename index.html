@@ -3918,15 +3918,17 @@ const GET_SHOTS = [
 ];
 const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀", "Nickel, on continue&nbsp;!", "Tu gères&nbsp;!", "Maintenant, on fait le tri 🧹", "Une seule case cochée&nbsp;: ça ne supprime rien de ton compte&nbsp;!", "Et on enregistre&nbsp;!", "Plus que quelques touches 💪", "Le plus important&nbsp;: depuis le début&nbsp;!", "On y est presque&nbsp;!", "JSON, c'est ma langue 😄", "Dernière touche&nbsp;! 🎉"];
 let shDir = 1, shLost = false;
+// Dans l'app, les images sont rangées dans l'app elle-même : elles s'affichent même sans internet.
+const asset = (p) => (window.ZYEUTO_ASSETS && window.ZYEUTO_ASSETS[p]) || p;
 function shotHTML(id, cls = "") {
   const [r, x, y, w, h] = SHOT[id];
   return `<figure class="shot ${cls}" id="sh-fig" style="aspect-ratio:${r};width:min(100%, calc(38svh * ${r}));--from:${shDir * 24}px">
-    <img src="guide/${id}.jpg" alt="" draggable="false"><i class="sh-ring" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i><i class="tapme" style="left:${w > 50 ? x + w * .9 : x + w}%;top:${w > 50 ? y + h / 2 : y + h}%"></i></figure>`;
+    <img src="${asset(`guide/${id}.jpg`)}" alt="" draggable="false"><i class="sh-ring" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i><i class="tapme" style="left:${w > 50 ? x + w * .9 : x + w}%;top:${w > 50 ? y + h / 2 : y + h}%"></i></figure>`;
 }
 // Vue « une étape à la fois » partagée par la demande et la récupération.
 function shotsView(list, i, foot) {
   if (shLost) return `<h2 id="gf-title">Quel écran ressemble au tien&nbsp;?</h2>
-    <div class="sh-grid">${list.map((x, k) => `<button type="button" data-go="${k}" class="${k === i ? "now" : ""}"><img src="guide/${x.img}.jpg" alt="" loading="lazy">Étape ${k + 1}</button>`).join("")}</div>
+    <div class="sh-grid">${list.map((x, k) => `<button type="button" data-go="${k}" class="${k === i ? "now" : ""}"><img src="${asset(`guide/${x.img}.jpg`)}" alt="" loading="lazy">Étape ${k + 1}</button>`).join("")}</div>
     <div class="gf-foot"><button class="alt" id="sh-lost-x" type="button">Revenir à l'étape ${i + 1}</button></div>`;
   const x = list[i];
   // Une barre qui avance plutôt qu'un « 1 sur 12 » : ça fait moins peur.
@@ -3951,7 +3953,7 @@ function shotsWire(body, list, get, set) {
   if (lx) lx.onclick = () => { shLost = false; renderGuided(); };
   body.querySelectorAll("[data-go]").forEach((b) => b.onclick = () => { shLost = false; shDir = 1; set(+b.dataset.go); savePrefs(); renderGuided(); });
   // Précharge l'image suivante pour qu'elle s'affiche tout de suite.
-  const nxt = list[get() + 1]; if (nxt) new Image().src = `guide/${nxt.img}.jpg`;
+  const nxt = list[get() + 1]; if (nxt) new Image().src = asset(`guide/${nxt.img}.jpg`);
 }
 // Comment revenir au guide depuis Instagram : ça dépend d'où l'app est ouverte (test réel : sans ça, on reste bloqué dans Instagram).
 const TABS_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="13" height="13" rx="2.5"/><path d="M16 19.5a1.5 1.5 0 0 1-1.5 1.5H5a2 2 0 0 1-2-2V9.5A1.5 1.5 0 0 1 4.5 8"/></svg>`;
@@ -4370,7 +4372,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-04-1210";
+const BUILD = "2026-11-04-1530";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -4584,6 +4586,8 @@ window.zyeutoFile = {
 };
 async function checkUpdate() {
   if (sharedBusy) return false; // pas de rechargement pendant l'import d'un fichier partagé
+  // Page rangée dans l'app : c'est l'app qui télécharge la nouvelle version et la recharge.
+  if (window.ZYEUTO_APP && window.ZYEUTO_APP.embedded) { if (!document.hidden) nativePost({ type: "update" }); return false; }
   if (Date.now() - updChecked < 30000 || !navigator.onLine) return false;
   updChecked = Date.now();
   try {
