@@ -2847,10 +2847,6 @@ function accts() {
 }
 const curAcct = () => accts().find((a) => a.id === prefs.acctCur) || accts()[0];
 const curSlot = () => curAcct().slot || 1;
-// Les comptes 2 et 3 ne peuvent prendre leur Plus que si le compte 1 (le compte principal du téléphone) a déjà le sien.
-const mainHasPlus = () => !!planOfSlot(1);
-const plusLocked = () => storeApp() && curSlot() > 1 && !mainHasPlus();
-const mainName = () => acctName(accts().find((a) => a.slot === 1) || curAcct());
 // Prénom (ou « Compte 2 ») d'un compte, pour la liste et les messages.
 const acctMe = (a) => (a.id === curAcct().id ? prefs.me : a.p && a.p.me) || {};
 const acctName = (a) => acctMe(a).name || `Compte ${accts().indexOf(a) + 1}`;
@@ -2989,7 +2985,7 @@ function renderAcct() {
   $("acct-del-row").hidden = !delOk || !$("acct-del-confirm").hidden;
   if (!delOk) $("acct-del-confirm").hidden = true;
   $("acct-del-t").textContent = `Supprimer le compte de ${acctName(curAcct())}`;
-  $("acct-add-s").textContent = storeApp() && !mainHasPlus() ? "Possible quand ton compte a Zieuton Plus" : "Pour un ami : son prénom, puis son Plus dès 1,99 €";
+  $("acct-add-s").textContent = "Pour un ami : son prénom, puis son Plus dès 1,99 €";
 }
 
 // ---------- Comparaison ----------
@@ -3820,7 +3816,6 @@ function acctNewCheck() {
 $("acct-add").addEventListener("click", () => {
   if (DEMO) return toast("C'est la démo : touche « Quitter » en haut pour ajouter un vrai compte.", false);
   if (accts().length >= MAX_ACCTS) return;
-  if (storeApp() && !mainHasPlus()) { haptic("selection"); return openPlus("acct"); }
   const curName = (prefs.me || {}).name;
   $("acct-new-me").hidden = !!curName;
   $("acct-new-me").placeholder = `Ton prénom (compte ${accts().indexOf(curAcct()) + 1})`;
@@ -4905,11 +4900,6 @@ function openPlus(why) {
     + `<li class="gold"><b>Avec Plus</b><span>illimité</span></li>`;
   selectPlan(plusPlan); renderPlusPrices(); plusMsg("");
   $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer";
-  if (why === "acct") $("plus-why").textContent = "Pour ajouter le compte d'un ami, ton compte doit d'abord avoir Zieuton Plus. Ensuite, son Plus à lui coûte dès 1,99 €.";
-  if (plusLocked()) {
-    $("plus-why").textContent = `D'abord, ${mainName()} (compte 1) doit avoir Zieuton Plus. Ensuite, ce compte pourra prendre le sien, dès 1,99 €.`;
-    $("plus-buy").disabled = true; $("plus-buy").textContent = "Plus du compte 1 d'abord";
-  }
   $("plus").hidden = false;
   nativePost({ type: "plus", action: "get" });
 }
@@ -4996,7 +4986,6 @@ window.zyeutoPlus = (d) => {
 document.querySelectorAll(".plus-plan").forEach((b) => b.addEventListener("click", () => { haptic("selection"); selectPlan(b.dataset.plan); }));
 $("plus-buy").addEventListener("click", () => {
   if (plusBusy) return;
-  if (plusLocked()) return plusMsg(`D'abord, ${mainName()} (compte 1) doit avoir Zieuton Plus.`);
   plusBusy = true; plusMsg("");
   $("plus-buy").disabled = true; $("plus-buy").textContent = "Un instant…";
   nativePost({ type: "plus", action: "buy", id: slotId(plusPlan, curSlot()) });
