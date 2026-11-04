@@ -46,7 +46,7 @@ La page de confidentialité demandée par Apple : https://vic-tard.github.io/abo
 ## Zieuton Plus (achats intégrés)
 
 Gratuit : les deux premiers imports, puis une mise à jour par mois. Zieuton Plus débloque les mises à jour illimitées :
-`fr.zyeuto.plus.mois` (1,99 €/mois), `fr.zyeuto.plus.an` (9,99 €/an), `fr.zyeuto.plus.avie` (19,99 € une fois).
+`fr.zyeuto.plus.mois` (2,99 €/mois), `fr.zyeuto.plus.an` (14,99 €/an), `fr.zyeuto.plus.avie` (29,99 € une fois).
 Sur le site (hors app), rien n'est vendu et il n'y a pas de limite.
 
 ### Tester sans payer (faux magasin)

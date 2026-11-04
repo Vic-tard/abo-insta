@@ -2543,9 +2543,9 @@
       <li><i>✓</i>Sans pub, tes données chez toi</li>
     </ul>
     <div class="plus-plans" role="radiogroup" aria-label="Formule">
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span class="badge" id="plus-save">−58 %</span><b>À l'année</b><span class="pr" id="plus-an-pr">9,99 €</span><small id="plus-an-sub">soit 0,83 €/mois</small></button>
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.mois"><b>Au mois</b><span class="pr" id="plus-mois-pr">1,99 €</span><small>sans engagement</small></button>
-      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.avie"><b>À vie</b><span class="pr" id="plus-avie-pr">19,99 €</span><small>un seul paiement</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.an"><span class="badge" id="plus-save">−58 %</span><b>À l'année</b><span class="pr" id="plus-an-pr">14,99 €</span><small id="plus-an-sub">soit 1,25 €/mois</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.mois"><b>Au mois</b><span class="pr" id="plus-mois-pr">2,99 €</span><small>sans engagement</small></button>
+      <button class="plus-plan" type="button" role="radio" data-plan="fr.zyeuto.plus.avie"><b>À vie</b><span class="pr" id="plus-avie-pr">29,99 €</span><small>un seul paiement</small></button>
     </div>
     <button class="asked-go plus-buy" id="plus-buy" type="button">Continuer</button>
     <p class="plus-msg" id="plus-msg" hidden></p>
@@ -2985,7 +2985,7 @@ function renderAcct() {
   $("acct-del-row").hidden = !delOk || !$("acct-del-confirm").hidden;
   if (!delOk) $("acct-del-confirm").hidden = true;
   $("acct-del-t").textContent = `Supprimer le compte de ${acctName(curAcct())}`;
-  $("acct-add-s").textContent = "Pour un ami : son prénom, puis son propre Plus";
+  $("acct-add-s").textContent = "Pour un ami : son prénom, puis son Plus dès 1,99 €";
 }
 
 // ---------- Comparaison ----------
@@ -4861,13 +4861,15 @@ function canUpdateFree() {
 let plusWaiting = null, plusPlan = "fr.zyeuto.plus.an", plusBusy = false;
 function plusPrice(id) { return (prefs.plusPrices || {})[id]; }
 function renderPlusPrices() {
-  const an = plusPrice("fr.zyeuto.plus.an"), mois = plusPrice("fr.zyeuto.plus.mois"), avie = plusPrice("fr.zyeuto.plus.avie");
-  if (an) $("plus-an-pr").textContent = an;
-  if (mois) $("plus-mois-pr").textContent = mois;
-  if (avie) $("plus-avie-pr").textContent = avie;
+  // Les comptes ajoutés (2 et 3) ont leur propre Plus, moins cher : on affiche les prix de leurs produits.
+  const slot = curSlot(), fb = slot > 1 ? ["9,99 €", "1,99 €", "19,99 €"] : ["14,99 €", "2,99 €", "29,99 €"];
+  const an = plusPrice(slotId("fr.zyeuto.plus.an", slot)), mois = plusPrice(slotId("fr.zyeuto.plus.mois", slot)), avie = plusPrice(slotId("fr.zyeuto.plus.avie", slot));
+  $("plus-an-pr").textContent = an || fb[0];
+  $("plus-mois-pr").textContent = mois || fb[1];
+  $("plus-avie-pr").textContent = avie || fb[2];
   // « soit x € par mois » et l'économie, calculés sur les vrais prix du magasin quand on les a.
   const num = (t) => t ? parseFloat(t.replace(/[^0-9,.]/g, "").replace(",", ".")) : NaN;
-  const a = num(an || "9,99"), m = num(mois || "1,99");
+  const a = num(an || fb[0]), m = num(mois || fb[1]);
   if (a && m) {
     $("plus-an-sub").textContent = `soit ${(a / 12).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/mois`;
     $("plus-save").textContent = `−${Math.round((1 - a / (m * 12)) * 100)} %`;
