@@ -14,6 +14,35 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-v5-180.png">
 <link rel="icon" href="icone-v5-512.png">
+<!-- Pour l'instant, Zieuton ne s'utilise que dans l'app iPhone : dans Safari, on affiche seulement « Bientôt sur l'App Store ». -->
+<script>
+if (!window.ZYEUTO_APP) {
+  document.documentElement.classList.add("web-off");
+  document.addEventListener("DOMContentLoaded", function () {
+    var d = document.createElement("div");
+    d.id = "web-off";
+    d.innerHTML = '<img src="icone-v5-180.png" alt="" width="96" height="96">'
+      + '<h1>Zieuton arrive sur l\'App Store</h1>'
+      + '<p>Zieuton se trouve maintenant uniquement dans l\'app iPhone. Elle sera bientôt disponible sur l\'App Store.</p>'
+      + '<p class="wo-small"><a href="confidentialite.html">Confidentialité</a> · <a href="aide.html">Aide</a></p>';
+    document.body.prepend(d);
+  });
+}
+</script>
+<style>
+  html.web-off body > *:not(#web-off) { display: none !important; }
+  #web-off { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px 24px; background: #faf5f5; color: #2e2328; font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #web-off img { border-radius: 22px; margin-bottom: 20px; }
+  #web-off h1 { font-size: 24px; margin: 0 0 10px; }
+  #web-off p { font-size: 16px; line-height: 1.45; color: #7d6e74; max-width: 340px; margin: 0; }
+  #web-off .wo-small { margin-top: 28px; font-size: 14px; }
+  #web-off a { color: #a0505f; }
+  @media (prefers-color-scheme: dark) {
+    #web-off { background: #161112; color: #f4ecee; }
+    #web-off p { color: #b3a3a9; }
+    #web-off a { color: #f0b3bd; }
+  }
+</style>
 <style>
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; }
