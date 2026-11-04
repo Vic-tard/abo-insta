@@ -618,6 +618,12 @@ final class MetaViewController: UIViewController {
     private var seenPick = Date.distantPast
     /// « Enregistrer » touché avec de mauvaises cases : on reste sur « Personnaliser les informations » jusqu'au retour sur les cases.
     private var pickRedo = false
+    /// Nom de la première case cochée en trop (« Applications et sites Web »…).
+    private var pickExtra = ""
+    /// Instagram a dit « mot de passe incorrect ».
+    private var badPassword = false
+    /// Un cran trop haut (« Vos informations et autorisations ») : le bandeau montre « Exporter vos informations ».
+    private var upShown = false
     private var pickFresh: Bool { Date().timeIntervalSince(seenPick) < 1.6 }
     /// Bon réglage : une seule case cochée, et c'est « Followers et suivi(e)s ».
     private var pickGood: Bool { pickFollowers && pickChecked == 1 }
@@ -727,7 +733,7 @@ final class MetaViewController: UIViewController {
           // Un libellé du parcours d'export est-il dans la page, même plus bas (hors de l'écran) ? Sert à savoir si on est « perdu ».
           var FLOW = ['créer une exportation', 'create export', 'choisissez un profil', 'choose a profile', 'choisir où exporter', 'choose where to export',
             'exporter sur mon appareil', 'export to device', 'tout effacer', 'clear all', 'depuis le début', 'all time', "commencer l'exportation", 'start export',
-            'télécharger', 'download', 'personnaliser les informations', 'customize information'];
+            'télécharger', 'download', 'personnaliser les informations', 'customize information', 'exporter vos informations', 'export your information'];
           var inFlow = function () {
             var els = document.querySelectorAll('h1,h2,h3,[role=heading],span,div,label,button,a,[role=button]');
             for (var i = 0; i < els.length; i++) {
@@ -740,7 +746,7 @@ final class MetaViewController: UIViewController {
           // Page des cases à cocher : combien sont cochées, et « Followers et suivi(e)s » l'est-elle ? (aucun autre contenu lu)
           var pickState = function () {
             var boxes = document.querySelectorAll('input[type=checkbox],[role=checkbox]');
-            var n = 0, f = false, seen = 0;
+            var n = 0, f = false, seen = 0, x = '';
             for (var i = 0; i < boxes.length; i++) {
               var el = boxes[i];
               var row = el.closest('label,[role=listitem],[role=row],li') || el.parentElement;
@@ -753,8 +759,10 @@ final class MetaViewController: UIViewController {
               n++;
               var t = low(row);
               if (t.indexOf('followers et suivi') >= 0 || t.indexOf('followers and following') >= 0) f = true;
+              // La première case cochée en trop : son nom, pour que le bandeau dise laquelle décocher.
+              else if (!x) x = (row.innerText || '').trim().split('\\n')[0].slice(0, 40);
             }
-            return seen ? { n: n, f: f, t: seen } : null;
+            return seen ? { n: n, f: f, t: seen, x: x } : null;
           };
           var hasWord = function (t, words) { return words.some(function (w) { return t.indexOf(w) >= 0; }); };
           var screen = function () {
@@ -772,6 +780,10 @@ final class MetaViewController: UIViewController {
               if (hasWord(fmt, ['html'])) return 'summary:format';
               return 'summary:start';
             }
+            // « Choisir où exporter » pour le compte Facebook ou Threads (l'en-tête dit « Prénom Nom • Facebook ») : mauvais compte.
+            if (seeAny(['choisir où exporter', 'choose where to export']) && Array.prototype.some.call(document.querySelectorAll('span,div,h2,h3'), function (el) {
+              return el.childElementCount <= 3 && /[•·]\\s*(facebook|threads)\\s*$/.test(low(el)) && low(el).length < 80 && vis(el);
+            })) return 'wrongprofile';
             if (seeAny(['choisissez un profil', 'choose a profile'])) return 'profile';
             if (seeAny(['exporter vers un service externe', 'export to external service', 'choisir où exporter', 'choose where to export'])) return 'dest';
             if (seeAny(['depuis le début', 'all time'])) return 'period';
@@ -781,10 +793,14 @@ final class MetaViewController: UIViewController {
             var ps = pickState();
             if (ps && ps.t >= 6) return 'pick';
             if (has(CREATE)) return 'home';
+            // Un cran trop haut : « Vos informations et autorisations », avec la ligne « Exporter vos informations ».
+            if (seeAny(['vos informations et autorisations', 'your information and permissions']) && seeAny(['exporter vos informations', 'export your information'])) return 'up';
             return '';
           };
           setInterval(function () {
-            var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username]'), vis);
+            // Champ du mot de passe, même quand l'œil l'affiche en clair (il n'est plus de type « password »).
+            var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username],input[autocomplete=current-password],input[name*=pass i],input[aria-label*="mot de passe" i],input[aria-label*=password i]'), vis);
+            var badpw = login && /mot de passe incorrect|mot de passe est incorrect|incorrect password|password was incorrect/.test((document.body.innerText || '').toLowerCase());
             // Code de sécurité : on regarde seulement s'il y a une case pour un code, et si la page parle de WhatsApp, SMS ou e-mail.
             var codeIn = Array.prototype.some.call(document.querySelectorAll('input[autocomplete="one-time-code"],input[name*="code" i],input[aria-label*="code" i],input[placeholder*="code" i]'), vis);
             var code = '';
@@ -794,7 +810,7 @@ final class MetaViewController: UIViewController {
                 : (txt.indexOf('sms') >= 0 || txt.indexOf('texto') >= 0 || txt.indexOf('text message') >= 0) ? 'sms'
                 : (txt.indexOf('e-mail') >= 0 || txt.indexOf('email') >= 0) ? 'email' : 'app';
             }
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, code: code, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, badpw: badpw, code: code, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -1117,8 +1133,11 @@ final class MetaViewController: UIViewController {
             return index == 0 && sentAt == nil
                 ? Step(verb: "D'abord,", target: "connecte-toi à Instagram",
                        tip: "Ton mot de passe se tape chez Instagram : Zieuton ne le voit jamais. Tu ne le feras qu'une fois.")
+                : badPassword
+                ? Step(verb: "Mot de passe incorrect :", target: "réessaie",
+                       tip: "Vérifie les majuscules. Oublié ? Touche « Mot de passe oublié ? » juste en dessous, chez Instagram.")
                 : Step(verb: "Instagram vérifie que c'est toi :", target: "tape ton mot de passe",
-                       tip: "Chez Instagram, comme d'habitude. Zieuton ne le voit jamais.")
+                       tip: "Puis touche « Continuer ». Chez Instagram, comme d'habitude : Zieuton ne le voit jamais.")
         }
         if let sent = sentAt {
             return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…",
@@ -1133,11 +1152,19 @@ final class MetaViewController: UIViewController {
         if let w = warning {
             return Step(verb: "", target: w.title, tip: w.text, look: steps[index].look)
         }
+        if upShown {
+            return Step(verb: "Presque :", target: "Exporter vos informations",
+                        tip: "Tu es revenu un cran trop loin. Touche cette ligne sur la page.", look: "row")
+        }
         // Page des cases : le bandeau dit exactement ce qu'il reste à faire, et n'avance pas tant que ce n'est pas bon.
         if steps[index].screen == "pick", pickFresh {
             if !pickFollowers {
                 return Step(verb: "Coche", target: "Followers et suivi(e)s",
                             tip: "Dans la rubrique Contacts. C'est la seule case qui compte.", look: "check", screen: "pick")
+            }
+            if pickChecked == 2, !pickExtra.isEmpty {
+                return Step(verb: "Encore 1 case en trop, décoche :", target: pickExtra,
+                            tip: "Fais défiler la liste pour la trouver. Garde seulement « Followers et suivi(e)s ».", look: "check", screen: "pick")
             }
             if pickChecked > 1 {
                 let more = pickChecked - 1
@@ -1155,7 +1182,7 @@ final class MetaViewController: UIViewController {
     private func showStep(animated: Bool = true) {
         let step = currentStep
         let normal = pageKnown && codeShown.isEmpty && !(loginShown || downloading || sentAt != nil)
-        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : ""].joined(separator: "|")
+        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : ""].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
         let apply = {
@@ -1191,16 +1218,13 @@ final class MetaViewController: UIViewController {
         // Pas de fondu sur tout le bandeau (l'ancien texte restait visible derrière le nouveau) :
         // on remplace le contenu d'un coup, seul le texte apparaît en fondu, et la taille du bandeau suit en douceur.
         banner.layer.removeAllAnimations()
-        if animated {
-            for v in [sayLabel, tipLabel, replica] as [UIView] {
-                v.layer.removeAllAnimations()
-                let fade = CATransition()
-                fade.type = .fade
-                fade.duration = 0.2
-                v.layer.add(fade, forKey: "zyFade")
-            }
-        }
+        // Fondu d'entrée seulement : l'ancien texte disparaît d'un coup, on ne voit jamais deux textes superposés.
+        let faded = [sayLabel, tipLabel, replica] as [UIView]
+        if animated { faded.forEach { $0.layer.removeAllAnimations(); $0.alpha = 0 } }
         apply()
+        if animated {
+            UIView.animate(withDuration: 0.18, delay: 0, options: [.allowUserInteraction]) { faded.forEach { $0.alpha = 1 } }
+        }
         if animated, warning != nil, normal {
             let shake = CAKeyframeAnimation(keyPath: "transform.translation.x")
             shake.values = [0, -9, 9, -6, 6, -3, 0]
@@ -1237,13 +1261,20 @@ final class MetaViewController: UIViewController {
         let loose = text.hasPrefix("~")
         let t = Self.norm(loose ? String(text.dropFirst()) : text)
         let has: ([String]) -> Bool = { list in list.contains { !$0.isEmpty && t.contains(Self.norm($0)) } }
+        // Bouton qui termine une étape : une ligne du bouton touché porte exactement ce nom (ou commence par lui).
+        // Sinon « Personnaliser les informations » contenait « format » et le bandeau sautait à « Choisis JSON ».
+        let lines = t.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+        let hit: ([String]) -> Bool = { list in list.contains { w in
+            let n = Self.norm(w)
+            return !n.isEmpty && (t.hasPrefix(n) || lines.contains(n))
+        } }
         lastTapAt = Date()
         let last = min(steps.count - 1, index + 2)
         guard index <= last else { return }
         let checking = guarded && pageKnown && !loginShown && codeShown.isEmpty && !lostShown && sentAt == nil
         for i in index...last {
             let step = steps[i]
-            guard has(step.wait) else { continue }
+            guard hit(step.wait) else { continue }
             // « Enregistrer » sur la page des cases sans le bon réglage : on n'avance pas, on renvoie à « Personnaliser les informations ».
             if checking, step.screen == "pick", steps[index].screen == "pick", pickFresh, !pickGood {
                 index = steps.firstIndex(where: { $0.screen == "summary:info" }) ?? index
@@ -1293,7 +1324,9 @@ final class MetaViewController: UIViewController {
             return
         }
         // « Créer une exportation » retouché plus tard : on reprend au début, sans gronder.
-        if index > 0, has(steps[0].wait) { index = 1; warning = nil; showStep(); return }
+        if index > 0, hit(steps[0].wait) { index = 1; warning = nil; showStep(); return }
+        // « Exporter vos informations » (un cran trop haut) : c'est le bon chemin pour revenir.
+        if has(["Exporter vos informations", "Export your information"]) { return }
         // Flèche retour, croix, Annuler : la personne revient en arrière, très bien.
         if ["retour", "back", "fermer", "close", "annuler", "cancel", "precedent", "previous"].contains(t.trimmingCharacters(in: .whitespacesAndNewlines)) {
             if warning != nil { warning = nil; showStep() }
@@ -1317,13 +1350,18 @@ final class MetaViewController: UIViewController {
     /// Un cadre de la page dit ce qu'il affiche.
     private func received(state: [String: Any], mainFrame: Bool) {
         let now = Date()
-        if state["login"] as? Bool == true { seenLogin = now }
+        if state["login"] as? Bool == true {
+            seenLogin = now
+            let bad = state["badpw"] as? Bool == true
+            if bad != badPassword { badPassword = bad; showStep() }
+        }
         if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
         if state["flow"] as? Bool == true { seenFlow = now }
         if let pick = state["pick"] as? [String: Any], let n = pick["n"] as? Int {
             let before = (pickChecked, pickFollowers)
             pickChecked = n
             pickFollowers = pick["f"] as? Bool == true
+            pickExtra = pick["x"] as? String ?? ""
             seenPick = now
             if before != (pickChecked, pickFollowers), steps[index].screen == "pick" { showStep() }
         }
@@ -1361,6 +1399,16 @@ final class MetaViewController: UIViewController {
         let lost = !login && code.isEmpty && sentAt == nil && !webView.isLoading && unknownFor > 2
             && ((offSince.map { now.timeIntervalSince($0) > 1.5 } ?? false) || unknownFor > 6)
         if lost != lostShown { lostShown = lost; warning = nil; showStep() }
+        let screenFresh = now.timeIntervalSince(seenScreen) < 1.6
+        // Compte Facebook ou Threads choisi : l'alerte reste tant que cet écran est affiché.
+        let wrongTitle = "Oups, ce n'est pas le bon compte !"
+        if screenFresh, screenKey == "wrongprofile", sentAt == nil, !login {
+            if warning?.title != wrongTitle || now.timeIntervalSince(warningAt) > 8 {
+                warn(wrongTitle, "C'est ton compte Facebook ou Threads. Touche la flèche ‹ en haut à gauche, puis ton compte marqué Instagram.")
+            }
+        } else if warning?.title == wrongTitle { warning = nil; showStep() }
+        let up = screenFresh && screenKey == "up" && sentAt == nil && !login && code.isEmpty
+        if up != upShown { upShown = up; showStep() }
         // L'alerte s'efface toute seule au bout de 10 s : le bandeau remontre l'étape à faire.
         if warning != nil, now.timeIntervalSince(warningAt) > 10 { warning = nil; showStep() }
         guard requesting, !login else { return }
@@ -1384,7 +1432,9 @@ final class MetaViewController: UIViewController {
         if let sent = sentAt {
             // Retour sur « Créer une exportation » : c'est parti. Bouton disparu (Instagram tourne encore) : on attend un peu plus.
             let gone = now.timeIntervalSince(sent)
-            if (gone > 1.5 && createVisible) || (gone > 5 && !startVisible && !webView.isLoading) { finishRequest() }
+            // Jamais juste après un écran de mot de passe (l'œil peut cacher le champ à la détection).
+            let calm = now.timeIntervalSince(seenLogin) > 4
+            if (gone > 1.5 && createVisible) || (gone > 5 && calm && !startVisible && !webView.isLoading) { finishRequest() }
             else if now.timeIntervalSince(sent) > 15 { showStep(animated: false) }
         } else if sawStart, index >= steps.count - 1, createVisible, !startVisible {
             finishRequest()
