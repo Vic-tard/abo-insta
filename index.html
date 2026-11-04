@@ -4927,7 +4927,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-04-2205";
+const BUILD = "2026-11-04-2215";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6752,8 +6752,16 @@ async function shrinkImage(file) {
   cv.getContext("2d").drawImage(src, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
   return cv.toDataURL("image/jpeg", 0.85);
 }
-$("avatar-btn").addEventListener("click", () => avatar ? openSheet("photo") : $("avatar-file").click());
-$("photo-change").addEventListener("click", () => { closeSheet(); $("avatar-file").click(); });
+// Dans l'app (version 7 et plus) : menu de l'iPhone avec seulement « Photothèque » et « Prendre une photo ».
+const pickPhoto = () => window.ZYEUTO_APP && (window.ZYEUTO_APP.version || 1) >= 7 ? nativePost({ type: "photo" }) : $("avatar-file").click();
+window.zyeutoPhoto = async (url) => {
+  try {
+    const blob = await (await fetch(url)).blob();
+    setAvatar(await shrinkImage(new File([blob], "photo.jpg", { type: "image/jpeg" }))); confetti();
+  } catch { toast("Cette image n'a pas pu être ouverte. Essaie une autre photo.", false); }
+};
+$("avatar-btn").addEventListener("click", () => avatar ? openSheet("photo") : pickPhoto());
+$("photo-change").addEventListener("click", () => { closeSheet(); pickPhoto(); });
 $("photo-remove").addEventListener("click", () => { closeSheet(); setAvatar(null); });
 $("photo-cancel").addEventListener("click", closeSheet);
 $("avatar-file").addEventListener("change", async (e) => {
