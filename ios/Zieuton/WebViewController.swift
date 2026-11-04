@@ -45,7 +45,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 5, embedded: true };",
+            source: "window.ZYEUTO_APP = { version: 6, embedded: true, icloud: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
         content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -405,12 +405,51 @@ extension WebViewController: WKScriptMessageHandler {
             }
         case "meta":
             openMeta(body)
+        case "icloud":
+            handleICloud(body)
         case "exportState":
             // La page n'attend plus d'export (fichier importé, demande annulée) : on arrête de guetter.
             if body["pending"] as? Bool == false { ExportWatcher.shared.clear() }
         default:
             break
         }
+    }
+
+    /// Sauvegarde iCloud : enregistrer, regarder s'il y en a une, ou la reprendre.
+    private func handleICloud(_ body: [String: Any]) {
+        switch body["action"] as? String {
+        case "save":
+            guard let text = body["data"] as? String else { return }
+            let count = body["count"] as? Int ?? 0
+            ICloudBackup.save(Data(text.utf8)) { [weak self] ok in
+                self?.sendICloud("{\"action\":\"saved\",\"ok\":\(ok),\"count\":\(count)}")
+            }
+        case "check":
+            ICloudBackup.find { [weak self] date in
+                guard let self else { return }
+                guard ICloudBackup.available else { return self.sendICloud("{\"action\":\"off\"}") }
+                if let date {
+                    let iso = ISO8601DateFormatter().string(from: date)
+                    self.sendICloud("{\"action\":\"found\",\"found\":true,\"savedAt\":\"\(iso)\"}")
+                } else {
+                    self.sendICloud("{\"action\":\"found\",\"found\":false}")
+                }
+            }
+        case "restore":
+            ICloudBackup.read { [weak self] data in
+                guard let self else { return }
+                guard let data else { return self.sendICloud("{\"action\":\"restoreFail\"}") }
+                // Même chemin qu'une sauvegarde partagée : la page vérifie le sceau puis reprend tout.
+                self.pending.append((ICloudBackup.fileName, data))
+                self.flush()
+            }
+        default:
+            break
+        }
+    }
+
+    private func sendICloud(_ json: String) {
+        webView.evaluateJavaScript("window.zyeutoICloud && window.zyeutoICloud(\(json)); true")
     }
 
     /// Zieuton Plus : acheter, restaurer, gérer l'abonnement, ou juste redemander l'état.
@@ -2003,5 +2042,86 @@ final class PlusStore {
         if let result { dict["result"] = result }
         let data = (try? JSONSerialization.data(withJSONObject: dict)) ?? Data("{}".utf8)
         return String(data: data, encoding: .utf8) ?? "{}"
+    }
+}
+
+// MARK: Sauvegarde iCloud
+
+/// Un seul fichier caché dans l'iCloud de l'utilisateur (Drive iCloud, conteneur de l'app) : tout l'historique du téléphone.
+/// Rien ne passe par un serveur à nous. Il est réécrit après chaque changement et revient tout seul sur un nouvel iPhone.
+enum ICloudBackup {
+    static let container = "iCloud.fr.zyeuto.app"
+    static let fileName = "zieuton-icloud.zieuton"
+    private static let queue = DispatchQueue(label: "fr.zyeuto.icloud", qos: .utility)
+
+    /// Connecté à iCloud sur cet iPhone (et Drive iCloud allumé pour Zieuton).
+    static var available: Bool { FileManager.default.ubiquityIdentityToken != nil }
+
+    /// À appeler hors du fil principal : la première fois, iOS peut mettre un moment à préparer le dossier.
+    private static func fileURL() -> URL? {
+        guard available, let root = FileManager.default.url(forUbiquityContainerIdentifier: container) else { return nil }
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return root.appendingPathComponent(fileName)
+    }
+
+    static func save(_ data: Data, done: @escaping (Bool) -> Void) {
+        queue.async {
+            var ok = false
+            if let url = fileURL() {
+                var err: NSError?
+                NSFileCoordinator().coordinate(writingItemAt: url, options: .forReplacing, error: &err) { target in
+                    ok = (try? data.write(to: target, options: .atomic)) != nil
+                }
+                if err != nil { ok = false }
+            }
+            DispatchQueue.main.async { done(ok) }
+        }
+    }
+
+    /// Date de la sauvegarde trouvée dans iCloud (nil s'il n'y en a pas). Attend jusqu'à 30 s qu'elle soit téléchargée.
+    static func find(done: @escaping (Date?) -> Void) {
+        queue.async {
+            let date = download().flatMap { url in
+                (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
+            }
+            DispatchQueue.main.async { done(date) }
+        }
+    }
+
+    static func read(done: @escaping (Data?) -> Void) {
+        queue.async {
+            var data: Data?
+            if let url = download() {
+                var err: NSError?
+                NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: &err) { target in
+                    data = try? Data(contentsOf: target)
+                }
+            }
+            DispatchQueue.main.async { done(data) }
+        }
+    }
+
+    /// Le fichier, une fois présent sur le téléphone. Sur un nouvel iPhone, iCloud ne l'a souvent pas encore téléchargé.
+    private static func download() -> URL? {
+        guard let url = fileURL() else { return nil }
+        let fm = FileManager.default
+        if fm.fileExists(atPath: url.path), isCurrent(url) { return url }
+        // Pas encore là : on demande à iCloud de le descendre (s'il existe), puis on attend un peu.
+        try? fm.startDownloadingUbiquitousItem(at: url)
+        // Sur un iPhone tout neuf, la liste des fichiers iCloud peut mettre quelques secondes à arriver : on attend 30 s au plus.
+        let placeholder = url.deletingLastPathComponent().appendingPathComponent("." + fileName + ".icloud")
+        for i in 0..<60 {
+            Thread.sleep(forTimeInterval: 0.5)
+            if fm.fileExists(atPath: url.path), isCurrent(url) { return url }
+            if i % 6 == 5, fm.fileExists(atPath: placeholder.path) || fm.isUbiquitousItem(at: url) {
+                try? fm.startDownloadingUbiquitousItem(at: url)
+            }
+        }
+        return nil
+    }
+
+    private static func isCurrent(_ url: URL) -> Bool {
+        let status = (try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]))?.ubiquitousItemDownloadingStatus
+        return status == nil || status == .current
     }
 }

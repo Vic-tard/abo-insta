@@ -55,7 +55,7 @@ La page de confidentialité demandée par Apple : https://vic-tard.github.io/abo
 
 Gratuit : les deux premiers imports, puis une mise à jour par mois. Zieuton Plus débloque les mises à jour illimitées :
 `fr.zyeuto.plus.mois` (2,99 €/mois), `fr.zyeuto.plus.an` (14,99 €/an), `fr.zyeuto.plus.avie` (29,99 € une fois).
-Sur le site (hors app), rien n'est vendu et il n'y a pas de limite.
+Dans Safari, le site n'affiche plus que « Zieuton arrive sur l'App Store » : tout se passe dans l'app.
 
 ### Tester sans payer (faux magasin)
 
@@ -73,3 +73,12 @@ programme petites entreprises (15 %), et les trois produits avec exactement les 
 ## Pour la suite
 
 `Zieuton.xcodeproj` a été généré avec le script Ruby `xcodeproj`. On peut aussi le modifier directement dans Xcode.
+
+## Sauvegarde iCloud automatique
+
+Après chaque changement, l'app range tout l'historique du téléphone (les 3 comptes, réglages, zieuteurs, jeux)
+dans un fichier caché de l'iCloud de l'utilisateur (`zieuton-icloud.zieuton`, conteneur `iCloud.fr.zyeuto.app`).
+Sur un nouvel iPhone (ou après réinstallation), Zieuton propose « Reprendre mon historique ». Rien ne passe par un serveur.
+
+Dans Xcode, une seule fois : Signing & Capabilities → la rubrique iCloud (déjà présente grâce à `Zieuton.entitlements`)
+→ cocher « iCloud Documents » et le conteneur `iCloud.fr.zyeuto.app` (bouton « + » s'il n'existe pas encore).

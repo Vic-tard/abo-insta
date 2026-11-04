@@ -31,6 +31,12 @@ if (!window.ZYEUTO_APP) {
 </script>
 <style>
   html.web-off body > *:not(#web-off) { display: none !important; }
+  #icloud-offer { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-end; justify-content: center; background: rgba(20, 12, 14, .45); padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+  #icloud-offer .ico-card { width: 100%; max-width: 420px; box-sizing: border-box; background: var(--surface, #fff); color: var(--ink, #2e2328); border-radius: 24px; padding: 24px 20px 16px; text-align: center; font-family: var(--round, -apple-system, sans-serif); }
+  #icloud-offer .ico-ic svg { width: 44px; height: 44px; fill: none; stroke: var(--rose-ink, #8e4552); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  #icloud-offer h2 { font-size: 21px; margin: 8px 0 8px; }
+  #icloud-offer p { color: var(--muted, #7d6e74); font-size: 15.5px; line-height: 1.45; margin: 0 0 18px; }
+  #icloud-offer .btn { display: block; width: 100%; margin-top: 8px; font-size: 16px; padding: 14px 16px; border-radius: 14px; }
   #web-off { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px 24px; background: #faf5f5; color: #2e2328; font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   #web-off img { border-radius: 22px; margin-bottom: 20px; }
   #web-off h1 { font-size: 24px; margin: 0 0 10px; }
@@ -2688,7 +2694,7 @@ async function save() {
   lsSet(state);
   try { localStorage.getItem(LS_KEY) && (ok = true); } catch {}
   showStorageBanner(ok ? "" : "<strong>Ce navigateur n'enregistre rien</strong> (navigation privée ?). Sauvegarde une copie après chaque import.");
-  renderBackup();
+  renderBackup();  icloudQueue();
 }
 
 // ---------- Lecture de l'export Instagram ----------
@@ -3734,13 +3740,21 @@ $("backup").addEventListener("click", async () => {
 });
 function renderBackup() {
   const last = hasRealData() ? state.snapshots[state.snapshots.length - 1] : null;
-  const upToDate = !last || (prefs.backupAt && prefs.backupCount === state.snapshots.length);
+  const inCloud = !!(last && icloudApp() && prefs.icloudAt && prefs.icloudCount === state.snapshots.length);
+  const upToDate = !last || inCloud || (prefs.backupAt && prefs.backupCount === state.snapshots.length);
   if (!last) setSync("ok", "Sur ce téléphone");
+  else if (inCloud) setSync("ok", "Sauvegardé sur iCloud");
   else if (upToDate) setSync("ok", "Copie à jour");
+  else if (icloudApp() && prefs.icloudOff) setSync("warn", "iCloud désactivé");
+  else if (icloudApp()) setSync("wait", "Sauvegarde iCloud…");
   else setSync("warn", "Copie à faire");
-  $("backup").classList.toggle("hot", !!(last && !upToDate));
-  $("st-backup-row").classList.toggle("hot", !!(last && !upToDate));
-  $("backup-status").textContent = !last ? "" : prefs.backupAt
+  $("backup").classList.toggle("hot", !!(last && !upToDate && !(icloudApp() && !prefs.icloudOff)));
+  $("st-backup-row").classList.toggle("hot", !!(last && !upToDate && !(icloudApp() && !prefs.icloudOff)));
+  $("backup-status").textContent = !last ? "" : inCloud
+    ? `Sauvegarde iCloud automatique : ${fmtDate(prefs.icloudAt)}. Elle revient toute seule sur un nouvel iPhone.`
+    : icloudApp() && prefs.icloudOff
+    ? "La sauvegarde iCloud est coupée : connecte-toi à iCloud dans les Réglages de l'iPhone (ton nom, iCloud, Drive iCloud). En attendant, garde une copie."
+    : prefs.backupAt
     ? `Dernière copie : ${fmtDate(prefs.backupAt)}${upToDate ? "." : ", avant ton dernier import."}`
     : "Aucune copie pour l'instant.";
   $("st-backup-sub").textContent = $("backup-status").textContent || "Garde une copie de ton historique";
@@ -3774,6 +3788,7 @@ async function restoreBackup(f) {
   try {
     data = JSON.parse(await f.text());
     // Anciennes copies (avant le sceau) : nom d'app d'avant le renommage, fichier .json.
+    if (data && data.app === "zieuton" && data.kind === "icloud") return restoreICloud(data);
     const legacy = data && (data.app === "zyeuto" || data.app === "abo-insta") && data.version === 1;
     const sealed = data && data.app === "zieuton" && data.kind === "sauvegarde" && data.version === 2 && typeof data.seal === "string";
     if (!legacy && !sealed) throw new Error();
@@ -3796,6 +3811,87 @@ async function restoreBackup(f) {
   render();
   await save();
   flash(`Historique restauré : ${s.snapshots.length} import${s.snapshots.length > 1 ? "s" : ""}.`, "ok");
+}
+// ---------- Sauvegarde iCloud automatique (app iPhone, version 6 et plus) ----------
+// Après chaque enregistrement, tout le téléphone (les 3 comptes, réglages, zieuteurs, jeux) part dans l'iCloud
+// de l'utilisateur (un fichier caché, rien chez nous). Sur un nouvel iPhone, Zieuton propose de la reprendre.
+const icloudApp = () => !!(window.ZYEUTO_APP && window.ZYEUTO_APP.icloud);
+let icloudTimer = null, icloudBusy = false, icloudAgain = false;
+function icloudQueue() {
+  if (DEMO || loading || !icloudApp()) return;
+  // Rien encore sur ce téléphone et jamais sauvegardé : on ne touche pas à une sauvegarde iCloud existante.
+  if (!prefs.icloudArmed && !state.snapshots.length) return;
+  clearTimeout(icloudTimer);
+  icloudTimer = setTimeout(icloudSend, 2500);
+}
+async function icloudSend() {
+  if (DEMO || !icloudApp()) return;
+  if (icloudBusy) { icloudAgain = true; return; }
+  icloudBusy = true;
+  try {
+    const parked = {};
+    for (const a of accts()) if (a.id !== prefs.acctCur) parked[a.id] = await unparkState(a.id);
+    const body = { prefs, state, parked, avatar: avatar || null };
+    const data = JSON.stringify({ app: "zieuton", kind: "icloud", version: 1, savedAt: new Date().toISOString(), imports: state.snapshots.length, seal: backupSeal(body), ...body });
+    nativePost({ type: "icloud", action: "save", data, count: state.snapshots.length });
+  } catch {}
+  icloudBusy = false;
+  if (icloudAgain) { icloudAgain = false; icloudQueue(); }
+}
+// Réponses de l'app : « saved » (c'est dans iCloud), « off » (iCloud coupé), « found » (sauvegarde trouvée).
+window.zyeutoICloud = (m) => {
+  if (!m || DEMO) return;
+  if (m.action === "saved") {
+    if (m.ok) { prefs.icloudAt = new Date().toISOString(); prefs.icloudCount = m.count; prefs.icloudArmed = true; delete prefs.icloudOff; }
+    else prefs.icloudOff = true;
+    savePrefs(); renderBackup();
+  } else if (m.action === "off") {
+    prefs.icloudOff = true; savePrefs(); renderBackup();
+  } else if (m.action === "restoreFail") {
+    const o = $("icloud-offer"); if (o) o.remove();
+    flash("La sauvegarde iCloud n'a pas pu être récupérée. Vérifie ta connexion, puis rouvre Zieuton.", "err");
+  } else if (m.action === "found") {
+    if (m.found && !state.snapshots.length && !accts().some((a) => a.n)) icloudOffer(m);
+    else if (!m.found && !state.snapshots.length) { prefs.icloudArmed = true; savePrefs(); }
+  }
+};
+// Nouveau téléphone (ou app réinstallée) : « On a retrouvé ta sauvegarde iCloud ».
+function icloudOffer(m) {
+  if ($("icloud-offer")) return;
+  const when = m.savedAt ? fmtDate(m.savedAt) : "";
+  const d = document.createElement("div");
+  d.id = "icloud-offer";
+  d.innerHTML = `<div class="ico-card" role="dialog" aria-modal="true" aria-labelledby="ico-t">
+    <div class="ico-ic" aria-hidden="true">${ICONS.ok}</div>
+    <h2 id="ico-t">Ta sauvegarde iCloud est là</h2>
+    <p>On a retrouvé ton historique Zieuton${when ? ` du ${when}` : ""}. Tu le reprends sur ce téléphone ?</p>
+    <button class="btn primary" id="ico-yes" type="button">Reprendre mon historique</button>
+    <button class="btn ghost" id="ico-no" type="button">Non, repartir de zéro</button>
+  </div>`;
+  document.body.append(d);
+  haptic("light");
+  $("ico-yes").onclick = () => { $("ico-yes").disabled = true; $("ico-yes").textContent = "Je récupère ton historique…"; nativePost({ type: "icloud", action: "restore" }); };
+  $("ico-no").onclick = () => { d.remove(); prefs.icloudArmed = true; savePrefs(); };
+}
+async function restoreICloud(data) {
+  const offer = $("icloud-offer");
+  const body = { prefs: data.prefs, state: data.state, parked: data.parked, avatar: data.avatar };
+  if (data.version !== 1 || backupSeal(body) !== data.seal || !isState(data.state) || !data.prefs || typeof data.prefs !== "object") {
+    if (offer) offer.remove();
+    return flash("Cette sauvegarde iCloud est abîmée : Zieuton ne peut pas la reprendre.", "err");
+  }
+  leaveDemo(true);
+  const keep = { plus: prefs.plus, plusSlots: prefs.plusSlots, plusPrices: prefs.plusPrices };
+  prefs = Object.assign({}, data.prefs, keep, { icloudArmed: true });
+  for (const [id, st] of Object.entries(data.parked || {})) if (isState(st)) await parkState(id, st);
+  state = data.state;
+  savePrefs();
+  setAvatar(typeof data.avatar === "string" && data.avatar.startsWith("data:image/") ? data.avatar : null);
+  await save();
+  renderAll();
+  if (offer) offer.remove();
+  haptic("success");
+  flash(`Historique retrouvé : ${state.snapshots.length} import${state.snapshots.length > 1 ? "s" : ""}.`, "ok");
 }
 // Le sélecteur de fichiers ne propose que les sauvegardes Zieuton. Dans l'app (version 5 et plus), le type
 // « Sauvegarde Zieuton » est déclaré à l'iPhone : les autres fichiers (JSON de Spotify, de Canva…) sont grisés.
@@ -4831,7 +4927,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-04-2100";
+const BUILD = "2026-11-04-2130";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6843,7 +6939,13 @@ render();
   }
   render();
   // Dans l'app : d'abord la mise à jour éventuelle, puis on dit à l'app qu'elle peut envoyer le fichier partagé.
-  if (nativeApp) checkUpdate().then((reloading) => { if (!reloading) nativePost({ type: "ready" }); });
+  if (nativeApp) checkUpdate().then((reloading) => {
+    if (reloading) return;
+    nativePost({ type: "ready" });
+    // Téléphone vide : on regarde s'il y a une sauvegarde iCloud à reprendre.
+    if (icloudApp() && !prefs.icloudArmed && !state.snapshots.length) nativePost({ type: "icloud", action: "check" });
+    else icloudQueue();
+  });
   else setTimeout(checkUpdate, 1500);
   if (state.snapshots.length) playIntro();
   checkTrophies();
