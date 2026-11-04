@@ -1307,6 +1307,18 @@ final class MetaViewController: UIViewController {
             return !n.isEmpty && (t.hasPrefix(n) || lines.contains(n))
         } }
         lastTapAt = Date()
+        // « Commencer l'exportation » compte toujours, même si le bandeau s'est trompé d'étape avant :
+        // sinon la demande n'est jamais notée et aucune notification ne part (vu par Victor le 4 novembre).
+        if requesting, sentAt == nil, !loose, let f = steps.lastIndex(where: { $0.final }), index < f, hit(steps[f].wait) {
+            index = f
+            sentAt = Date()
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            screenKey = ""
+            screenSince = Date()
+            warning = nil
+            showStep()
+            return
+        }
         let last = min(steps.count - 1, index + 2)
         guard index <= last else { return }
         let checking = guarded && pageKnown && !loginShown && codeShown.isEmpty && !lostShown && sentAt == nil
