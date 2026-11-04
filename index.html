@@ -1799,17 +1799,158 @@
   @keyframes cheer { 50% { transform: scale(1.03); } }
   @keyframes float { 50% { transform: translateY(-6px) rotate(-2deg); } }
   @keyframes nudge { 50% { transform: translateY(-4px); } }
+
+  /* ---------- Accueil premium (nov. 2026) ---------- */
+  /* En haut : le logo, le prénom en entier au centre, l'engrenage. */
+  .top { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; min-height: 48px; }
+  .top .brand { justify-self: start; }
+  .top .top-actions { justify-self: end; gap: 8px; }
+  .acct-pill { justify-self: center; height: auto; min-height: 44px; max-width: 100%; padding: 4px 14px 4px 4px; background: transparent; border-radius: 26px; gap: 9px; }
+  .acct-pill:not(.named) { padding: 0; cursor: default; }
+  .acct-pill.named { background: var(--surface-2); box-shadow: inset 0 0 0 1px rgb(194 117 131 / .18); }
+  .acct-pill.named:active { transform: scale(.97); }
+  .acct-pill i { width: 36px; height: 36px; font: 800 16px var(--round); background: linear-gradient(135deg, #d98c9a, #a8566a); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px #e7b65a; }
+  .acct-pill .tn-t { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; overflow: visible; min-width: 0; }
+  .acct-pill .tn-t b { font: 800 19px/1.15 var(--round); letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52vw; }
+  .acct-pill .tn-t small { font: 600 11.5px var(--round); color: var(--muted); }
+  .acct-pill .tn-chev svg { width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; display: block; }
+  .tn-brand { font: 800 22px/1.2 var(--round); }
+
+  /* La carte des chiffres : écrin prune, liseré doré, petite courbe en fond. */
+  .home-hero { overflow: visible; isolation: isolate; padding: 20px 16px 16px;
+    background: radial-gradient(120% 90% at 100% 0%, rgb(239 127 142 / .35), transparent 60%), linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%);
+    box-shadow: 0 14px 30px rgb(58 29 44 / .32), inset 0 0 0 1px rgb(246 201 90 / .28); }
+  .home-hero::before { z-index: -1; }
+  .hh-spark { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 42%; border-radius: 0 0 24px 24px; opacity: .3; z-index: -1; pointer-events: none; }
+  .home-hero .stats { gap: 0; }
+  .home-hero .stat { position: relative; padding: 2px 0; }
+  .home-hero .stat + .stat::before { content: ""; position: absolute; left: 0; top: 14%; bottom: 14%; width: 1px; background: rgb(255 255 255 / .14); }
+  .home-hero .stat b { font-size: 25px; }
+  .home-hero .profile { gap: 14px; }
+  .home-hero .stat:first-child b { color: #fff3d1; }
+  .home-hero .stat > span { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: rgb(255 255 255 / .62); }
+  .home-hero .caption { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+  .hh-net { flex: none; font: 800 13px/1 var(--round); padding: 6px 9px; border-radius: 999px; background: rgb(255 255 255 / .12); color: #fff; font-variant-numeric: tabular-nums; }
+  .hh-net.up { background: rgb(159 232 196 / .18); color: #9fe8c4; } .hh-net.down { background: rgb(255 180 166 / .18); color: #ffb4a6; }
+
+  /* 4 petites cases, façon Mini-jeux */
+  .hm-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hm-tile { position: relative; overflow: hidden; border: 0; border-radius: 24px; padding: 14px 14px 13px; text-align: left; cursor: pointer; color: #2e2328; font: inherit;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 148px; box-shadow: 0 10px 20px rgb(46 35 40 / .12), inset 0 1px 0 rgb(255 255 255 / .5); }
+  .hm-tile::before { content: ""; position: absolute; right: -34px; top: -38px; width: 110px; height: 110px; border-radius: 50%; background: rgb(255 255 255 / .22); pointer-events: none; }
+  .hm-tile > * { position: relative; }
+  .hm-tile:active { transform: scale(.97); }
+  .hm-tile.t-down { background: linear-gradient(160deg, #ffd4ca, #ec7262); }
+  .hm-tile.t-up { background: linear-gradient(160deg, #d3f4e3, #6fc79e); }
+  .hm-tile.t-notback { background: linear-gradient(160deg, #e6dcfd, #a28be3); }
+  .hm-tile.t-fans { background: linear-gradient(160deg, #ffe6c4, #f5a262); }
+  .hm-top { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 8px; }
+  .hm-ic { width: 34px; height: 34px; border-radius: 11px; background: rgb(255 255 255 / .6); display: grid; place-items: center; box-shadow: 0 2px 6px rgb(46 35 40 / .08); }
+  .hm-ic svg { width: 18px; height: 18px; fill: none; stroke: #2e2328; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .hm-faces { display: flex; }
+  .hm-faces i { width: 24px; height: 24px; border-radius: 50%; margin-left: -4px; display: grid; place-items: center; font: 800 11px var(--round); font-style: normal; color: #fff; background: #2e2328; box-shadow: 0 0 0 2px rgb(255 255 255 / .9); }
+  .hm-faces i:nth-child(2) { background: #5a3f4a; } .hm-faces i:nth-child(3) { background: #8a6a76; }
+  .hm-faces i:first-child { margin-left: 0; }
+  .hm-n { font: 800 32px/1.05 var(--round); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .hm-l { font: 800 15.5px/1.2 var(--round); }
+  .hm-s { margin-top: auto; padding-top: 8px; font: 700 11.5px/1.25 var(--round); color: rgb(46 35 40 / .7); }
+  .hm-tile .hm-s { display: inline-block; }
+  /* Mes abonnés : la grande carte sous les 4 cases */
+  .hm-all { position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%; border: 0; border-radius: 24px; padding: 16px 16px 16px 18px; cursor: pointer; text-align: left; font: inherit; color: #fff;
+    background: radial-gradient(90% 120% at 100% 100%, rgb(246 201 90 / .35), transparent 60%), linear-gradient(135deg, #ef8796, #c45a74 60%, #a8466a);
+    box-shadow: 0 12px 24px rgb(168 70 106 / .28), inset 0 1px 0 rgb(255 255 255 / .3); margin-top: -6px; }
+  .hm-all::before { content: ""; position: absolute; left: -40px; top: -60px; width: 150px; height: 150px; border-radius: 50%; background: rgb(255 255 255 / .12); pointer-events: none; }
+  .hm-all > * { position: relative; }
+  .hm-all:active { transform: scale(.98); }
+  .hm-all-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .hm-all-t small { font: 800 11.5px var(--round); text-transform: uppercase; letter-spacing: .08em; color: rgb(255 255 255 / .8); }
+  .hm-all-t > b { font: 800 34px/1.05 var(--round); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .hm-all-s { display: flex; align-items: center; gap: 8px; margin-top: 4px; font: 700 12.5px var(--round); color: rgb(255 255 255 / .85); }
+  .hm-all .hm-faces i { background: #fff3d1; color: #7a3450; box-shadow: 0 0 0 2px #d96f85; } .hm-all .hm-faces i:nth-child(2) { background: #ffe0a0; } .hm-all .hm-faces i:nth-child(3) { background: #f6c95a; }
+  .hm-all-go { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #ffe7a6, #f2c45a); box-shadow: 0 6px 14px rgb(120 50 60 / .3); }
+  .hm-all-go svg { width: 20px; height: 20px; fill: none; stroke: #5a2c40; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-reduced-motion: no-preference) {
+    body.intro .hm-tile { animation: pop .45s cubic-bezier(.3,1.5,.5,1) both; }
+    body.intro .hm-tile:nth-child(2) { animation-delay: .06s; } body.intro .hm-tile:nth-child(3) { animation-delay: .12s; } body.intro .hm-tile:nth-child(4) { animation-delay: .18s; }
+    body.intro .hm-all { animation: rise .45s .22s both; }
+  }
+
+  /* Mes imports, sur l'accueil : petites barres des derniers imports */
+  .imp-row { position: relative; overflow: hidden; padding: 15px 16px; border-radius: 24px; background: linear-gradient(150deg, #e9e0ff, #b9a5f0 55%, #9d86e4); box-shadow: 0 10px 20px rgb(110 80 180 / .2), inset 0 1px 0 rgb(255 255 255 / .5); }
+  .imp-row::before { content: ""; position: absolute; right: 40px; top: -60px; width: 130px; height: 130px; border-radius: 50%; background: rgb(255 255 255 / .2); pointer-events: none; }
+  .imp-row > * { position: relative; }
+  .imp-ic { width: 42px; height: 42px; border-radius: 13px; background: rgb(255 255 255 / .65); }
+  .imp-ic svg { stroke-width: 2.2; stroke-linejoin: round; }
+  .imp-bars { display: flex; align-items: flex-end; gap: 3px; height: 26px; flex: none; }
+  .imp-bars i { width: 4px; border-radius: 3px; background: rgb(46 35 40 / .22); }
+  .imp-bars i.on { background: #2e2328; }
+  .imp-go { width: 30px; height: 30px; border-radius: 50%; background: rgb(255 255 255 / .55); display: grid; place-items: center; font-size: 18px; opacity: 1; line-height: 1; padding-bottom: 2px; }
+
+  /* Page d'une liste (ouverte depuis une case) */
+  #list-page .tabs { display: none; }
+  #list-page .st-in > h1 { display: none; }
+  #list-page .tabs-wrap { padding: 16px 14px; }
+  .lp-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 2px 2px 4px; color: #2e2328; }
+  .lp-ic { width: 40px; height: 40px; border-radius: 13px; background: rgb(255 255 255 / .6); display: grid; place-items: center; margin-bottom: 6px; }
+  .lp-ic svg { width: 21px; height: 21px; fill: none; stroke: #2e2328; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  #list-page .lp-head h1 { margin: 0; font: 800 30px/1.1 var(--round); color: #2e2328; }
+  .lp-n { font: 800 15px var(--round); color: rgb(46 35 40 / .75); }
+  .lp-sub { margin: 4px 0 0; font-size: 13.5px; color: rgb(46 35 40 / .75); }
+  .lp-sub:empty { display: none; }
+  #list-page #list-note { display: none; }
+
+  /* Page Mes imports : écrin prune en haut, puis la frise des imports */
+  .ip-hero { position: relative; overflow: hidden; isolation: isolate; border-radius: 24px; padding: 18px 18px 16px; color: #fff; display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px;
+    background: radial-gradient(120% 90% at 100% 0%, rgb(185 165 240 / .35), transparent 60%), linear-gradient(160deg, #4a2a4a, #2c1a31 70%, #1f1222);
+    box-shadow: 0 14px 30px rgb(44 26 49 / .3), inset 0 0 0 1px rgb(246 201 90 / .25); }
+  .ip-hero:empty { display: none; }
+  .ip-hero > small { font: 800 11.5px var(--round); text-transform: uppercase; letter-spacing: .08em; color: rgb(255 255 255 / .62); }
+  .ip-hero > b { font: 800 34px/1.1 var(--round); color: #fff3d1; }
+  .ip-spark { display: block; width: 100%; height: 46px; margin: 10px 0 0; opacity: .9; }
+  .ip-kpis { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 12px; padding-top: 12px; border-top: 1px solid rgb(255 255 255 / .12); }
+  .ip-kpis > span { display: flex; flex-direction: column; font: 700 11.5px var(--round); color: rgb(255 255 255 / .65); position: relative; padding-left: 10px; }
+  .ip-kpis > span:first-child { padding-left: 0; }
+  .ip-kpis > span + span::before { content: ""; position: absolute; left: 0; top: 10%; bottom: 10%; width: 1px; background: rgb(255 255 255 / .14); }
+  .ip-kpis b { font: 800 21px/1.2 var(--round); color: #fff; font-variant-numeric: tabular-nums; }
+  .ip-kpis b.up { color: #9fe8c4; } .ip-kpis b.down { color: #ffb4a6; }
+  .ip-cap { margin: 0 4px 10px; font: 600 13px var(--round); color: var(--muted); }
+  .ip-list { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-direction: column; gap: 10px; position: relative; }
+  .ip-row { width: 100%; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 20px; padding: 12px 12px 12px 12px; background: var(--grp); color: var(--ink); text-align: left; font: inherit; cursor: pointer; box-shadow: 0 4px 14px rgb(46 35 40 / .07); }
+  .ip-row:disabled { cursor: default; opacity: 1; }
+  .ip-row:not(:disabled):active { transform: scale(.98); }
+  .ip-date { flex: none; width: 50px; height: 54px; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(160deg, #ffd0d7, #e88d9c); color: #4a2636; }
+  .ip-row.first .ip-date { background: linear-gradient(160deg, #ffe9b8, #f2c45a); }
+  .ip-date b { font: 800 21px/1 var(--round); }
+  .ip-date small { font: 700 11px/1.2 var(--round); }
+  .ip-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .ip-line { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+  .ip-line b { font: 800 17px var(--round); font-variant-numeric: tabular-nums; }
+  .ip-line > span { font-size: 13px; color: var(--muted); }
+  .ip-mid > small { font-size: 12px; color: var(--muted); }
+  .ip-tag { font: 800 10.5px/1 var(--round); font-style: normal; padding: 4px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); align-self: center; }
+  .ip-tag.gold { background: linear-gradient(135deg, #ffe7a6, #f2c45a); color: #5a3a10; }
+  .ip-bar { display: flex; gap: 2px; height: 5px; border-radius: 3px; overflow: hidden; margin-top: 3px; max-width: 160px; }
+  .ip-bar i { border-radius: 3px; } .ip-bar i.down { background: var(--down); } .ip-bar i.up { background: var(--up); }
+  .ip-chips { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .ip-chips .c { font: 800 13px/1 var(--round); padding: 5px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; background: var(--surface-2); color: var(--muted); }
+  .ip-chips .c.down { background: var(--down-soft); color: var(--down); } .ip-chips .c.up { background: var(--up-soft); color: var(--up); }
+  .ip-go { flex: none; font: 800 20px/1 var(--round); color: var(--muted); opacity: .6; }
+  .ip-empty { text-align: center; padding: 24px; color: var(--muted); background: var(--grp); border-radius: 20px; }
+  @media (prefers-reduced-motion: no-preference) {
+    #imports-page.open .ip-hero { animation: pop .45s .05s cubic-bezier(.3,1.4,.5,1) both; }
+    #imports-page.open .ip-list li { animation: rise .35s both; }
+    #imports-page.open .ip-list li:nth-child(2) { animation-delay: .04s; } #imports-page.open .ip-list li:nth-child(3) { animation-delay: .08s; } #imports-page.open .ip-list li:nth-child(n+4) { animation-delay: .12s; }
+  }
 </style>
 
 <div class="wrap">
   <div class="top">
     <div class="brand">
-      <img src="icone-v5-180.png" alt="" width="28" height="28" style="border-radius:7px;display:block">
-      <h1>Zieuton</h1>
+      <img src="icone-v5-180.png" alt="" width="34" height="34" style="border-radius:10px;display:block">
     </div>
+    <button class="acct-pill" id="acct-pill" type="button"><h1 class="tn-brand">Zieuton</h1></button>
     <div class="top-actions">
       <button class="sync needs-data" id="sync" type="button" hidden></button>
-      <button class="acct-pill" id="acct-pill" type="button" hidden></button>
       <button class="set-btn" id="set-btn" type="button" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="set-dot" id="set-dot" hidden></span></button>
     </div>
   </div>
@@ -1906,7 +2047,20 @@
     </div>
   </section>
   <p class="needs-data caption" id="caption">Chargement…</p>
+  <svg class="hh-spark" id="hh-spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"></svg>
   </div>
+
+  <!-- Les listes : 4 petites cases, puis les abonnés. Chaque case ouvre sa liste en plein écran. -->
+  <div class="hm-tiles needs-data" id="hm-tiles">
+    <button class="hm-tile t-down" type="button" data-list="unfollow"><span class="hm-top"><span class="hm-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 9v8H9"/></svg></span><span class="hm-faces" id="hf-unfollow"></span></span><b class="hm-n" id="hn-unfollow">–</b><span class="hm-l">Départs</span><small class="hm-s" id="hs-unfollow"></small></button>
+    <button class="hm-tile t-up" type="button" data-list="follow"><span class="hm-top"><span class="hm-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 17 7 7M7 15V7h8"/></svg></span><span class="hm-faces" id="hf-follow"></span></span><b class="hm-n" id="hn-follow">–</b><span class="hm-l">Arrivées</span><small class="hm-s" id="hs-follow"></small></button>
+    <button class="hm-tile t-notback" type="button" data-list="notback"><span class="hm-top"><span class="hm-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12h6M14 12h6M9 8l-4 4 4 4M15 8l4 4-4 4"/></svg></span><span class="hm-faces" id="hf-notback"></span></span><b class="hm-n" id="hn-notback">–</b><span class="hm-l">Pas en retour</span><small class="hm-s" id="hs-notback"></small></button>
+    <button class="hm-tile t-fans" type="button" data-list="fans"><span class="hm-top"><span class="hm-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="hm-faces" id="hf-fans"></span></span><b class="hm-n" id="hn-fans">–</b><span class="hm-l">Fans</span><small class="hm-s" id="hs-fans"></small></button>
+  </div>
+  <button class="hm-all needs-data" id="hm-all" type="button" data-list="recent">
+    <span class="hm-all-t"><small>Mes abonnés</small><b id="hn-recent">–</b><span class="hm-all-s"><span class="hm-faces" id="hf-recent"></span><span id="hs-recent"></span></span></span>
+    <span class="hm-all-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
+  </button>
   <button class="plus-mini" id="plus-mini" type="button" hidden>
     <span class="plus-mini-tag">Plus</span>
     <span class="plus-mini-txt"><b id="plus-mini-t">Gratuit pour commencer</b><small id="plus-mini-s"></small><span class="plus-mini-bar" id="plus-mini-bar" hidden><i></i></span></span>
@@ -1914,26 +2068,35 @@
   </button>
 
 
-  <button class="imp-row needs-data" id="imp-row" type="button"><span class="imp-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span><span class="imp-t"><b>Mes imports</b><small id="imp-sub"></small></span><span class="imp-go" aria-hidden="true">›</span></button>
+  <button class="imp-row needs-data" id="imp-row" type="button"><span class="imp-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2"/><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6L3.5 8.5M3.5 4v4.5H8"/></svg></span><span class="imp-t"><b>Mes imports</b><small id="imp-sub"></small></span><span class="imp-bars" id="imp-bars" aria-hidden="true"></span><span class="imp-go" aria-hidden="true">›</span></button>
 
+
+
+
+</div>
+
+<!-- Une liste (Départs, Arrivées, Pas en retour, Fans, Abonnés), ouverte depuis sa case de l'accueil -->
+<div class="st-page" id="list-page" role="dialog" aria-modal="true" aria-labelledby="lp-title" hidden>
+  <div class="st-in">
+    <button class="st-back" type="button" data-close="list-page">‹ Accueil</button>
   <section class="needs-data tabs-wrap" id="list-card" data-tab="unfollow">
-    <div class="tabs" role="tablist" aria-label="Listes">
-      <button role="tab" id="tab-unfollow" data-tab="unfollow" aria-selected="true">Départs</button>
-      <button role="tab" id="tab-follow" data-tab="follow" aria-selected="false">Arrivées</button>
-      <button role="tab" id="tab-notback" data-tab="notback" aria-selected="false">Pas en retour</button>
-      <button role="tab" id="tab-fans" data-tab="fans" aria-selected="false">Fans</button>
-      <button role="tab" id="tab-recent" data-tab="recent" aria-selected="false">Abonnés</button>
-    </div>
-    <p class="note" id="list-note" hidden></p>
-    <div class="search">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input type="search" id="search" placeholder="Rechercher" autocomplete="off" autocapitalize="none" aria-label="Rechercher un compte">
-    </div>
-    <ul class="people" id="people"></ul>
-    <button class="more" id="more" hidden>Voir plus</button>
-  </section>
-
-
+      <div class="lp-head" id="lp-head"><span class="lp-ic" id="lp-ic" aria-hidden="true"></span><h1 id="lp-title">Départs</h1><b class="lp-n" id="lp-n"></b><p class="lp-sub" id="lp-sub"></p></div>
+      <div class="tabs" role="tablist" aria-label="Listes">
+        <button role="tab" id="tab-unfollow" data-tab="unfollow" aria-selected="true">Départs</button>
+        <button role="tab" id="tab-follow" data-tab="follow" aria-selected="false">Arrivées</button>
+        <button role="tab" id="tab-notback" data-tab="notback" aria-selected="false">Pas en retour</button>
+        <button role="tab" id="tab-fans" data-tab="fans" aria-selected="false">Fans</button>
+        <button role="tab" id="tab-recent" data-tab="recent" aria-selected="false">Abonnés</button>
+      </div>
+      <p class="note" id="list-note" hidden></p>
+      <div class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="search" placeholder="Rechercher" autocomplete="off" autocapitalize="none" aria-label="Rechercher un compte">
+      </div>
+      <ul class="people" id="people"></ul>
+      <button class="more" id="more" hidden>Voir plus</button>
+    </section>
+  </div>
 </div>
 
 <!-- Mes imports : la liste complète, ouverte depuis la ligne « Mes imports » de l'accueil -->
@@ -1941,7 +2104,9 @@
   <div class="st-in">
     <button class="st-back" type="button" data-close="imports-page">‹ Accueil</button>
     <h1 id="imports-title">Mes imports</h1>
-    <div class="st-group st-table"><div class="scroll"><table id="imports"></table></div></div>
+    <div class="ip-hero" id="ip-hero"></div>
+    <p class="ip-cap" id="ip-cap" hidden>Touche un import pour voir qui est parti et qui est arrivé.</p>
+    <ol class="ip-list" id="imports"></ol>
     <div class="st-group">
       <div id="drop-row"><button class="st-row danger" id="drop-last" type="button"><span class="st-ic" style="background:#b8502e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b>Supprimer le dernier import</b><small>Si tu t'es trompé de fichier</small></span></button></div>
       <div class="st-confirm" id="drop-confirm" hidden>
@@ -2761,8 +2926,14 @@ function renderAcct() {
   $("acct-group").hidden = !acctLockOn() && !DEMO;
   const list = accts(), multi = list.length > 1;
   // Plusieurs comptes : le prénom du compte affiché en haut de l'accueil, pour savoir chez qui on est.
-  $("acct-pill").hidden = $("acct-group").hidden || !multi;
-  if (multi) $("acct-pill").innerHTML = `<i>${esc(acctName(curAcct()).slice(0, 1).toUpperCase())}</i><span>${esc(acctLabel(curAcct()))}</span>`;
+  // En haut, au centre : le prénom en entier (« Victor »), et « Compte 1 sur 2 » s'il y a plusieurs comptes.
+  const showAcct = !$("acct-group").hidden && multi, myName = (prefs.me && prefs.me.name || "").trim();
+  const nm = showAcct ? acctName(curAcct()) : myName;
+  $("acct-pill").classList.toggle("named", !!nm);
+  $("acct-pill").innerHTML = nm
+    ? `<i aria-hidden="true">${esc(nm.slice(0, 1).toUpperCase())}</i><span class="tn-t"><b>${esc(nm)}</b>${showAcct ? `<small>Compte ${list.indexOf(curAcct()) + 1} sur ${list.length}</small>` : ""}</span>${showAcct ? `<span class="tn-chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg></span>` : ""}`
+    : `<h1 class="tn-brand">Zieuton</h1>`;
+  $("acct-pill").setAttribute("aria-label", nm ? `${nm}, ouvrir Mon compte` : "Zieuton");
   if ($("acct-group").hidden) return;
   $("acct-list").hidden = !multi;
   $("acct-list").innerHTML = multi ? list.map((a) => {
@@ -2836,7 +3007,10 @@ function render() {
   if (loading) cap = "Chargement de ton historique…";
   else if (!last) cap = "Aucun import pour l'instant.";
   else if (!compared) cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · premier import`;
-  else cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · comparé au ${fmtDate(snaps[snaps.length - 2].takenAt)}`;
+  else {
+    const net = last.follows - last.unfollows;
+    cap = `<span class="hh-net ${net > 0 ? "up" : net < 0 ? "down" : ""}">${net > 0 ? "+" : net < 0 ? "−" : "±"}${nf(Math.abs(net))}</span><span><strong>Au ${fmtDate(last.takenAt)}</strong> · comparé au ${fmtDate(snaps[snaps.length - 2].takenAt)}</span>`;
+  }
   $("caption").innerHTML = cap;
   const counts = { unfollow: 0, follow: 0 };
   for (const e of state.events) counts[e.kind]++;
@@ -2846,10 +3020,87 @@ function render() {
   const rel = relations();
   $("tab-notback").innerHTML = `Pas en retour${rel ? `<span class="n">${nf(rel.notBack.length)}</span>` : ""}`;
   $("tab-fans").innerHTML = `Fans${rel ? `<span class="n">${nf(rel.fans.length)}</span>` : ""}`;
+  renderTiles(counts, rel, last, compared);
+  renderSpark($("hh-spark"), snaps);
   renderList();
   renderChart();
   renderImports();
   renderGames();
+}
+
+// ---------- Accueil : les 4 cases et le bloc Abonnés ----------
+// Les 3 plus récents d'une liste, sans trier toute la liste (rapide même avec 200 000 abonnés).
+function top3(keys, src) {
+  const best = [];
+  for (const u of keys) {
+    const t = src ? (src[u] ?? -1) : 0;
+    if (best.length < 3) { best.push([u, t]); best.sort((a, b) => b[1] - a[1]); }
+    else if (t > best[2][1]) { best[2] = [u, t]; best.sort((a, b) => b[1] - a[1]); }
+  }
+  return best.map((b) => b[0]);
+}
+function facesHTML(users) { return users.map((u) => `<i>${esc((u[0] || "?").toUpperCase())}</i>`).join(""); }
+var LISTS = {
+  unfollow: { t: "Départs", ic: '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 9v8H9"/></svg>' },
+  follow: { t: "Arrivées", ic: '<svg viewBox="0 0 24 24"><path d="M17 17 7 7M7 15V7h8"/></svg>' },
+  notback: { t: "Pas en retour", ic: '<svg viewBox="0 0 24 24"><path d="M4 12h6M14 12h6M9 8l-4 4 4 4M15 8l4 4-4 4"/></svg>' },
+  fans: { t: "Fans", ic: '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>' },
+  recent: { t: "Mes abonnés", ic: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.6c2 .6 3.2 2.4 3.5 5.4"/></svg>' },
+};
+var listInfo = {};
+function renderTiles(counts, rel, last, compared) {
+  const n = state.snapshots.length;
+  const evTop = (kind) => state.events.filter((e) => e.kind === kind).slice(-3).reverse().map((e) => e.u);
+  const nFol = Object.keys(state.followers).length;
+  const info = {
+    unfollow: { n: n >= 2 ? counts.unfollow : null, s: !compared ? "Dès ton 2e import" : last.unfollows ? `−${nf(last.unfollows)} au dernier import` : "Personne au dernier import", f: evTop("unfollow") },
+    follow: { n: n >= 2 ? counts.follow : null, s: !compared ? "Dès ton 2e import" : last.follows ? `+${nf(last.follows)} au dernier import` : "Personne au dernier import", f: evTop("follow") },
+    notback: { n: rel ? rel.notBack.length : null, s: rel ? "Tu les suis, pas eux" : "Au prochain export", f: rel ? top3(rel.notBack, state.following) : [] },
+    fans: { n: rel ? rel.fans.length : null, s: rel ? "Ils te suivent, pas toi" : "Au prochain export", f: rel ? top3(rel.fans, state.followers) : [] },
+  };
+  for (const [k, v] of Object.entries(info)) {
+    $("hn-" + k).textContent = v.n == null ? "–" : nf(v.n);
+    $("hs-" + k).textContent = v.s;
+    $("hf-" + k).innerHTML = facesHTML(v.f);
+  }
+  const firstAt = state.snapshots[0]?.takenAt;
+  $("hn-recent").textContent = n ? nf(nFol) : "–";
+  $("hf-recent").innerHTML = facesHTML(top3(Object.keys(state.followers), state.followers));
+  $("hs-recent").textContent = n ? "Les derniers arrivés en tête" : "";
+  info.recent = { n: n ? nFol : null, s: firstAt ? `Suivis par Zieuton depuis le ${fmtDate(firstAt)}` : "" };
+  info.unfollow.s2 = "Ceux qui ne te suivent plus, du plus récent au plus ancien.";
+  info.follow.s2 = "Tes nouveaux abonnés, du plus récent au plus ancien.";
+  info.notback.s2 = rel ? `Tu les suis, mais ils ne te suivent pas. D'après ton export du ${fmtDate(state.followingAt)}.` : "";
+  info.fans.s2 = rel ? `Ils te suivent, mais tu ne les suis pas. D'après ton export du ${fmtDate(state.followingAt)}.` : "";
+  info.recent.s2 = info.recent.s;
+  listInfo = info;
+  if (!$("list-page").hidden) renderListHead();
+}
+function renderListHead() {
+  const L = LISTS[tab], v = listInfo[tab] || {};
+  $("lp-ic").innerHTML = L.ic;
+  $("lp-title").textContent = L.t;
+  $("lp-n").textContent = v.n == null ? "" : `${nf(v.n)} compte${v.n > 1 ? "s" : ""}`;
+  $("lp-sub").textContent = v.s2 || "";
+}
+function openList(t) {
+  selectTab(t); shown = 40; $("search").value = "";
+  renderListHead(); renderList();
+  openStPage("list-page");
+  animateList();
+}
+document.querySelectorAll("[data-list]").forEach((b) => b.addEventListener("click", () => openList(b.dataset.list)));
+
+// Petite courbe décorative des abonnés (fond de la carte d'accueil, Mes imports).
+function renderSpark(svg, snaps, W = 300, H = 60) {
+  if (!svg) return;
+  if (snaps.length < 2) { svg.innerHTML = ""; return; }
+  const ys = snaps.map((x) => x.count), lo = Math.min(...ys), hi = Math.max(...ys), r = (hi - lo) || 1;
+  const pts = ys.map((y, i) => [i / (ys.length - 1) * W, H - 6 - (y - lo) / r * (H - 16)]);
+  const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const id = svg.id + "-g";
+  svg.innerHTML = `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f6c95a" stop-opacity=".35"/><stop offset="1" stop-color="#f6c95a" stop-opacity="0"/></linearGradient></defs>
+    <path d="${d} L${W} ${H} L0 ${H} Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="#f6c95a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
 }
 
 // Comptes que tu suis sans qu'ils te suivent, et l'inverse. null si l'export ne contenait pas following.json.
@@ -2990,19 +3241,42 @@ function niceStep(range) {
 
 function renderImports() {
   const snaps = state.snapshots;
-  if (snaps.length) {
-    const d = daysSince(snaps[snaps.length - 1].takenAt);
-    $("imp-sub").textContent = `${snaps.length} import${snaps.length > 1 ? "s" : ""} · le dernier ${d === 0 ? "aujourd'hui" : d === 1 ? "hier" : `il y a ${d} jours`}`;
+  const ago = (iso) => { const d = daysSince(iso); return d === 0 ? "aujourd'hui" : d === 1 ? "hier" : `il y a ${d} jours`; };
+  if (snaps.length) $("imp-sub").textContent = `${snaps.length} import${snaps.length > 1 ? "s" : ""} · ${ago(snaps[snaps.length - 1].takenAt)}`;
+  // Petites barres sur la ligne de l'accueil : les 6 derniers imports.
+  const lastSix = snaps.slice(-6), mx = Math.max(1, ...lastSix.map((x) => x.follows + x.unfollows));
+  $("imp-bars").innerHTML = snaps.length > 1 ? lastSix.map((x, i) => `<i style="height:${Math.max(18, Math.round((x.follows + x.unfollows) / mx * 100))}%"${i === lastSix.length - 1 ? ' class="on"' : ""}></i>`).join("") : "";
+  $("ip-cap").hidden = snaps.length < 2;
+  if (!snaps.length) {
+    $("ip-hero").innerHTML = "";
+    $("imports").innerHTML = `<li class="ip-empty">${loading ? "Chargement…" : "Aucun import pour l'instant."}</li>`; return;
   }
-  if (!snaps.length) { $("imports").innerHTML = `<tr><td class="empty">${loading ? "Chargement…" : "Aucun import pour l'instant."}</td></tr>`; return; }
-  $("imports").innerHTML = `<tr><th>Date</th><th>Abonnés</th><th>Départs</th><th>Arrivées</th></tr>` +
-    snaps.slice().reverse().map((s, i) => {
-      const first = i === snaps.length - 1;
-      return `<tr><td>${fmtDate(s.takenAt)}</td><td>${nf(s.count)}</td>
-        <td style="color:var(--down)">${first ? "–" : (s.unfollows ? "−" + s.unfollows : "0")}</td>
-        <td style="color:var(--up)">${first ? "–" : (s.follows ? "+" + s.follows : "0")}</td></tr>`;
-    }).join("");
+  const first = snaps[0], last = snaps[snaps.length - 1], net = last.count - first.count;
+  const tUp = snaps.reduce((t, x) => t + (x.follows || 0), 0), tDown = snaps.reduce((t, x) => t + (x.unfollows || 0), 0);
+  $("ip-hero").innerHTML = `<small>Depuis le ${fmtDate(first.takenAt)}</small>
+    <b>${nf(snaps.length)} import${snaps.length > 1 ? "s" : ""}</b>
+    <svg class="ip-spark" id="ip-spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <span class="ip-kpis"><span><b class="${net >= 0 ? "up" : "down"}">${net > 0 ? "+" : net < 0 ? "−" : ""}${nf(Math.abs(net))}</b>abonnés en tout</span><span><b class="down">${nf(tDown)}</b>départs</span><span><b class="up">${nf(tUp)}</b>arrivées</span></span>`;
+  renderSpark($("ip-spark"), snaps);
+  const MO = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  $("imports").innerHTML = snaps.map((x, i) => ({ x, i })).reverse().map(({ x, i }) => {
+    const d = new Date(x.takenAt), isFirst = i === 0, isLast = i === snaps.length - 1;
+    const dn = isFirst ? 0 : x.follows - x.unfollows, tot = (x.follows || 0) + (x.unfollows || 0);
+    const tag = isLast ? '<em class="ip-tag gold">Le dernier</em>' : isFirst ? '<em class="ip-tag">Point de départ</em>' : "";
+    const bar = isFirst || !tot ? "" : `<span class="ip-bar"><i class="down" style="flex:${x.unfollows}"></i><i class="up" style="flex:${x.follows}"></i></span>`;
+    const chips = isFirst ? `<span class="ip-chips"><span class="c">${nf(x.count)} au départ</span></span>`
+      : `<span class="ip-chips"><span class="c down">−${nf(x.unfollows)}</span><span class="c up">+${nf(x.follows)}</span></span>`;
+    return `<li><button type="button" class="ip-row${isFirst ? " first" : ""}" data-imp="${i}"${isFirst || !tot ? " disabled" : ""}>
+      <span class="ip-date"><b>${d.getDate()}</b><small>${MO[d.getMonth()]}</small></span>
+      <span class="ip-mid"><span class="ip-line"><b>${nf(x.count)}</b><span>abonnés</span>${tag}</span><small>${d.getFullYear()} · ${ago(x.takenAt)}${isFirst ? "" : ` · ${dn > 0 ? "+" : dn < 0 ? "−" : "±"}${nf(Math.abs(dn))} net`}</small>${bar}</span>
+      ${chips}${isFirst || !tot ? "" : '<span class="ip-go" aria-hidden="true">›</span>'}</button></li>`;
+  }).join("");
 }
+$("imports").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-imp]"); if (!b || b.disabled) return;
+  const r = importWho(state.snapshots[+b.dataset.imp])();
+  if (r.rows.length) openWho(r);
+});
 
 // Retire le dernier import : on reconstitue la liste d'avant à partir des départs et arrivées de cet import.
 async function dropLastImport() {
@@ -3604,7 +3878,11 @@ document.querySelectorAll(".st-page").forEach((el) => {
   el.addEventListener("touchend", end); el.addEventListener("touchcancel", end);
 });
 $("set-btn").addEventListener("click", () => openStPage("settings"));
-$("acct-pill").addEventListener("click", () => { haptic("light"); openStPage("st-account"); setTimeout(() => $("acct-group").scrollIntoView({ behavior: "smooth", block: "center" }), 350); });
+$("acct-pill").addEventListener("click", () => {
+  if (!$("acct-pill").classList.contains("named")) return;
+  haptic("light"); openStPage("st-account");
+  if (!$("acct-group").hidden) setTimeout(() => $("acct-group").scrollIntoView({ behavior: "smooth", block: "center" }), 350);
+});
 document.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openStPage(b.dataset.open)));
 // Apparence : automatique, clair ou sombre
 function applyTheme() {
@@ -3653,7 +3931,7 @@ $("imp-row").addEventListener("click", () => openStPage("imports-page"));
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeStPage(b.dataset.close)));
 $("st-photo").addEventListener("click", () => $("avatar-btn").click());
 new MutationObserver(() => renderSettings()).observe($("avatar-core"), { childList: true, subtree: true, attributes: true });
-const ST_PAGES = ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy"];
+const ST_PAGES = ["settings", "imports-page", "list-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy"];
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const top = ST_PAGES.filter((id) => !$(id).hidden).pop(); if (top) closeStPage(top); } });
 
 // ---------- Import depuis Google Drive ----------
@@ -3861,8 +4139,7 @@ function openFirst(n) {
 $("first-ok").addEventListener("click", () => { $("first").hidden = true; });
 $("first-notback").addEventListener("click", () => {
   $("first").hidden = true;
-  selectTab("notback"); shown = PAGE; renderList(); animateList();
-  $("list-card").scrollIntoView({ behavior: "smooth", block: "start" });
+  openList("notback");
 });
 $("wk-go").addEventListener("click", wkGo);
 $("wk-help").addEventListener("click", () => {
@@ -5639,7 +5916,7 @@ const PAGES = { games: $("pg-games"), stats: $("pg-stats") };
 const REST = { games: -100, stats: 100 };
 let page = "home";
 const pageW = () => window.innerWidth || 1;
-const overlayOpen = () => ["settings", "imports-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "rec-sheet", "zy-sheet", "wheel-page", "prono-page", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
+const overlayOpen = () => ["settings", "imports-page", "list-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "rec-sheet", "zy-sheet", "wheel-page", "prono-page", "who-sheet", "sheet"].some((id) => $(id) && !$(id).hidden);
 function placePage(p, pct, dragging) {
   const el = PAGES[p];
   el.classList.toggle("dragging", !!dragging);
