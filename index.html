@@ -512,14 +512,14 @@ if (!window.ZYEUTO_APP) {
   body[data-mode="data"] .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   /* Mode démo : bandeau fixe en haut, sur l'accueil, les jeux et les graphiques */
   .demo-bar { position: fixed; z-index: 16; left: 50%; translate: -50% 0; top: max(8px, env(safe-area-inset-top, 0px)); width: min(568px, calc(100% - 32px));
-    display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 999px; background: var(--rose-soft); color: var(--rose-ink);
-    box-shadow: 0 4px 14px rgb(46 35 40 / .10); font-size: 13px; }
+    display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 999px; color: #fff; font: 600 13px var(--round);
+    background: linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%); box-shadow: 0 8px 22px rgb(58 29 44 / .3), inset 0 0 0 1px rgb(246 201 90 / .3); }
   .demo-bar[hidden] { display: none; }
-  .demo-bar.go button { background: var(--coral, #d9604a); color: #fff; }
-  .demo-bar .demo-tag { flex: none; background: var(--rose-ink); color: var(--surface); font: 600 11px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; }
+  .demo-bar.go button { background: var(--gold); color: var(--gold-ink); }
+  .demo-bar .demo-tag { flex: none; background: var(--gold); color: var(--gold-ink); box-shadow: inset 0 1px 0 rgb(255 255 255 / .6); font: 800 11px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; }
   .demo-bar span:not(.demo-tag) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--btn); color: var(--btn-ink); font: 600 13px var(--font); cursor: pointer; }
-  .demo-bar button:active { background: var(--btn-press); }
+  .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: rgb(255 255 255 / .14); color: #fff3d1; font: 700 13px var(--round); cursor: pointer; }
+  .demo-bar button:active { background: rgb(255 255 255 / .24); }
   body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 54px); }
   /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
   .gf .alt.gf-demo { display: inline-flex; align-items: center; gap: 8px; align-self: center; text-decoration: none; padding: 11px 20px; border-radius: 999px;
@@ -1014,17 +1014,42 @@ if (!window.ZYEUTO_APP) {
   .gf-how li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; background: var(--surface-2); border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.4; }
   .gf-how li > i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); font: 700 13px var(--font); font-style: normal; }
   .gf-how small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
-  .gm { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0 2px; }
-  .gm-env { font-size: 58px; line-height: 1; animation: gmBob 1.8s ease-in-out infinite; }
-  @keyframes gmBob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
-  .gm-bar { width: 100%; height: 12px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
-  .gm-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--rose), var(--coral, #d9604a)); transition: width .6s; }
-  .gm-row { width: 100%; display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); }
-  .gm-row b { font-size: 16px; color: var(--ink); }
-  .gm-pts { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-  .gm-pts li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; background: var(--surface-2); border-radius: 14px; padding: 11px 13px; font-size: 14.5px; line-height: 1.4; }
-  .gm-pts i { font-style: normal; font-size: 19px; line-height: 1.2; }
-  @media (prefers-reduced-motion: reduce) { .gm-env { animation: none; } }
+  /* Écrans « en route » / « prête » : carte prune et or (comme l'accueil) + lignes façon Réglages */
+  .gx { position: relative; overflow: hidden; isolation: isolate; border-radius: 24px; padding: 18px 18px 16px; color: #fff; display: flex; flex-direction: column; gap: 14px;
+    background: radial-gradient(120% 90% at 100% 0%, rgb(239 127 142 / .35), transparent 60%), linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%);
+    box-shadow: 0 14px 30px rgb(58 29 44 / .32), inset 0 0 0 1px rgb(246 201 90 / .28); }
+  .gx::before { content: ""; position: absolute; right: -50px; bottom: -80px; width: 180px; height: 180px; border-radius: 50%; background: rgb(255 255 255 / .06); z-index: -1; }
+  .gx-top { display: flex; align-items: center; gap: 14px; }
+  .gx-top small { display: block; font: 800 11.5px var(--round); text-transform: uppercase; letter-spacing: .08em; color: rgb(255 255 255 / .62); }
+  .gx-top b { display: block; font: 800 30px/1.1 var(--round); letter-spacing: -.01em; color: #fff3d1; }
+  .gx.ready .gx-top b { font-size: 24px; }
+  .gx-ic { flex: none; width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; background: var(--gold); box-shadow: 0 6px 16px rgb(244 205 99 / .35), inset 0 1px 0 rgb(255 255 255 / .6); }
+  .gx-ic svg { width: 28px; height: 28px; fill: none; stroke: var(--gold-ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .gx-track { height: 8px; border-radius: 999px; background: rgb(255 255 255 / .14); overflow: hidden; }
+  .gx-track i { display: block; height: 100%; border-radius: inherit; background: var(--gold); transition: width .6s ease; }
+  .gx-steps { list-style: none; margin: -4px 0 0; padding: 0; display: flex; justify-content: space-between; gap: 6px; }
+  .gx-steps li { display: flex; align-items: center; gap: 6px; font: 700 12px var(--round); color: rgb(255 255 255 / .5); white-space: nowrap; }
+  .gx-steps li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgb(255 255 255 / .3); flex: none; }
+  .gx-steps li.done { color: rgb(255 255 255 / .85); }
+  .gx-steps li.done::before { background: #f4cd63; }
+  .gx-steps li.now { color: #fff3d1; }
+  .gx-steps li.now::before { background: #f4cd63; box-shadow: 0 0 0 0 rgb(244 205 99 / .6); animation: gxPing 1.6s ease-out infinite; }
+  @keyframes gxPing { 0% { box-shadow: 0 0 0 0 rgb(244 205 99 / .6); } 100% { box-shadow: 0 0 0 9px rgb(244 205 99 / 0); } }
+  .gx-list { list-style: none; margin: 0; padding: 0; border-radius: 20px; background: var(--surface); box-shadow: 0 6px 20px rgb(46 35 40 / .06), inset 0 0 0 1px var(--line); overflow: hidden; }
+  :root[data-theme="dark"] .gx-list { background: var(--surface-2); box-shadow: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gx-list { background: var(--surface-2); box-shadow: none; } }
+  .gx-row { position: relative; display: flex; align-items: center; gap: 13px; padding: 13px 15px; }
+  .gx-row + .gx-row::before { content: ""; position: absolute; top: 0; left: 62px; right: 0; height: 1px; background: var(--line); }
+  .gx-row b { display: block; font: 700 15.5px/1.25 var(--round); }
+  .gx-row small { display: block; margin-top: 2px; font-size: 13.5px; line-height: 1.35; color: var(--muted); }
+  .gx-b { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
+  .gx-b svg { width: 19px; height: 19px; fill: none; stroke: #fff; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+  .gx-b.gold { background: var(--gold); box-shadow: inset 0 1px 0 rgb(255 255 255 / .5); }
+  .gx-b.gold svg { stroke: var(--gold-ink); }
+  .gx-b.rose { background: linear-gradient(135deg, #ef7f8e, #d9604a); }
+  .gx-b.plum { background: linear-gradient(135deg, #8a4560, #4a2636); }
+  @media (prefers-reduced-motion: no-preference) { .gx { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; } .gx-list { animation: rise .35s .08s both; } }
+  @media (prefers-reduced-motion: reduce) { .gx-steps li.now::before { animation: none; } }
   .gf-wait.ready .radar { display: none; }
   .gf-wait .done-ic { font-size: 54px; line-height: 1; }
   .gf-wait { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 18px 0 4px; }
@@ -4737,18 +4762,30 @@ function renderGuided() {
     const say = ready ? (sure ? "Ta liste est prête&nbsp;! On va la chercher 🏃" : "Ta liste devrait être prête&nbsp;! On va voir 🏃")
       : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste."
       : `Demandé il y a ${ago}. Instagram y travaille encore…`;
+    // Attente puis « prête » : même carte prune et or que l'accueil, puis des lignes façon Réglages.
+    const SV = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+    const I_MAIL = SV('<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 7.5 8 6 8-6"/>');
+    const I_BELL = SV('<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>');
+    const I_PHONE = SV('<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>');
+    const I_CHECK = SV('<path d="m5 12.5 4.5 4.5L19 7.5"/>');
+    const I_TAP = SV('<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>');
+    const I_OUT = SV('<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>');
+    const row = (ic, cls, t, d) => `<li class="gx-row"><span class="gx-b ${cls}">${ic}</span><span><b>${t}</b><small>${d}</small></span></li>`;
+    const track = (pct, st) => `<div class="gx-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+        <ol class="gx-steps">${["Demandé", "Instagram prépare", "Prête"].map((t, k) => `<li class="${k < st ? "done" : k === st ? "now" : ""}">${t}</li>`).join("")}</ol>`;
     if (!ready) {
       // Attente : on rassure (2 à 10 min, notification, pas besoin du mail) et on emmène vers la démo.
       const pct = Math.min(94, 6 + Math.round(since / READY_AFTER_MIN * 88));
       body.innerHTML = `${guide(say)}
       <h2 id="gf-title">Ta liste est en route</h2>
-      <div class="gm"><div class="gm-env" aria-hidden="true">📩</div>
-        <div class="gm-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
-        <div class="gm-row"><span>Demandé</span><b>2 à 10 min</b><span>Arrivée</span></div></div>
-      <ul class="gm-pts">
-        <li><i aria-hidden="true">🔔</i><span>Je t'envoie une <b>notification</b> dès qu'elle arrive. Touche-la&nbsp;: je récupère tout pour toi.</span></li>
-        <li><i aria-hidden="true">✉️</i><span>Instagram t'envoie aussi un mail&nbsp;: <b>pas besoin de l'ouvrir</b>, tout se fait ici.</span></li>
-        <li><i aria-hidden="true">📱</i><span>Tu peux fermer l'app, rien ne se perd.</span></li>
+      <div class="gx">
+        <div class="gx-top"><span class="gx-ic">${I_MAIL}</span><div><small>Temps d'attente</small><b>2 à 10 min</b></div></div>
+        ${track(pct, 1)}
+      </div>
+      <ul class="gx-list">
+        ${row(I_BELL, "gold", "Une notification arrive", "Touche-la&nbsp;: je récupère tout pour toi.")}
+        ${row(I_MAIL, "rose", "Pas besoin d'ouvrir le mail", "Instagram t'en envoie un aussi, mais tout se fait ici.")}
+        ${row(I_PHONE, "plum", "Tu peux fermer l'app", "Rien ne se perd, je te préviens.")}
       </ul>
       <div class="gf-foot">
         <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>En attendant, découvre l'app</button>
@@ -4760,15 +4797,18 @@ function renderGuided() {
       clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get") renderGuided(); }, 60000);
     } else {
     body.innerHTML = `${guide(say)}
-      <h2 id="gf-title">${ready ? (sure ? "Ta liste est prête" : "Ta liste devrait être prête") : "Instagram prépare ta liste"}</h2>
-      <div class="gf-wait${ready ? " ready" : ""}"><div class="radar" aria-hidden="true"></div>${ready ? `<span class="done-ic" aria-hidden="true">📬</span>` : ""}
-        <b>${ready ? "Plus qu'une touche" : "En général, 2 à 10 minutes"}</b>
-        <small>${ready
-          ? (sure ? "Touche le bouton&nbsp;: Instagram s'ouvre ici, touche « Télécharger » et je m'occupe du reste."
-            : "Touche le bouton&nbsp;: Instagram s'ouvre ici. Si ton export est encore « En cours », reviens un peu plus tard, je te préviens.")
-          : "Tu peux fermer l'app&nbsp;: je t'envoie une notification dès que c'est prêt. Ensuite, tu as 4 jours pour la récupérer."}</small></div>
+      <h2 id="gf-title">${sure ? "Ta liste est prête" : "Ta liste devrait être prête"}</h2>
+      <div class="gx ready">
+        <div class="gx-top"><span class="gx-ic">${I_CHECK}</span><div><small>${sure ? "Arrivée" : "Sans doute arrivée"}</small><b>Plus qu'une touche</b></div></div>
+        ${track(100, sure ? 3 : 2)}
+      </div>
+      <ul class="gx-list">
+        ${row(I_TAP, "gold", "Touche « Récupérer ma liste »", "Juste en dessous.")}
+        ${row(I_OUT, "rose", "Instagram s'ouvre ici", sure ? "Touche « Télécharger » à côté de ton export." : "Si l'export est encore « En cours », reviens un peu plus tard&nbsp;: je te préviens.")}
+        ${row(I_CHECK, "plum", "Je m'occupe du reste", "Ta liste s'affiche toute seule.")}
+      </ul>
       <div class="gf-foot">
-        <button class="btn ${ready ? "cheer" : "ghost"} big" id="gf-get" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>${ready ? "Récupérer ma liste" : "Regarder si c'est prêt"}</button>
+        <button class="btn cheer big" id="gf-get" type="button">${I_TAP}Récupérer ma liste</button>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
     }
@@ -4987,7 +5027,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-05-1330";
+const BUILD = "2026-11-05-1345";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6973,7 +7013,7 @@ function realWait() {
 }
 function renderDemoBar() {
   const w = realWait(), sp = $("demo-bar").querySelector("span:not(.demo-tag)");
-  sp.textContent = !w ? "Données inventées" : w.ready ? "Ta vraie liste est prête 🎉" : `Ta liste arrive · ~${w.left} min`;
+  sp.textContent = !w ? "Données inventées" : w.ready ? "Ta liste est prête 🎉" : `Ta liste arrive · ~${w.left} min`;
   $("demo-quit").textContent = w && w.ready ? "Récupérer ma liste" : w ? "Ma liste" : "Quitter la démo";
   $("demo-bar").classList.toggle("go", !!(w && w.ready));
 }
