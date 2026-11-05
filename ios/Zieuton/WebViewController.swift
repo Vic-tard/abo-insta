@@ -694,6 +694,7 @@ final class MetaViewController: UIViewController {
     private var pageKnown = false
     /// Derniers moments où chaque cadre de la page a vu : la connexion, « Commencer l'exportation », « Créer une exportation ».
     private var seenLogin = Date.distantPast
+    private var seenMainScreen = Date.distantPast
     private var seenStart = Date.distantPast
     private var seenCreate = Date.distantPast
     private var sawStart = false
@@ -861,6 +862,9 @@ final class MetaViewController: UIViewController {
           setInterval(function () {
             // Champ du mot de passe, même quand l'œil l'affiche en clair (il n'est plus de type « password »).
             var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username],input[autocomplete=current-password],input[name*=pass i],input[aria-label*="mot de passe" i],input[aria-label*=password i]'), vis);
+            // Page des cases bien visible (« Tout sélectionner », « Followers et suivi(e)s ») : ce n'est pas une demande de mot de passe,
+            // même si Instagram garde un champ caché dans la page.
+            if (login && seeAny(['tout sélectionner', 'select all', 'tout effacer', 'clear all', 'followers et suivi(e)s', 'followers and following'])) login = false;
             var badpw = login && /mot de passe incorrect|mot de passe est incorrect|incorrect password|password was incorrect/.test((document.body.innerText || '').toLowerCase());
             // Code de sécurité : on regarde seulement s'il y a une case pour un code, et si la page parle de WhatsApp, SMS ou e-mail.
             var codeIn = Array.prototype.some.call(document.querySelectorAll('input[autocomplete="one-time-code"],input[name*="code" i],input[aria-label*="code" i],input[placeholder*="code" i]'), vis);
@@ -1400,7 +1404,9 @@ final class MetaViewController: UIViewController {
     /// Un cadre de la page dit ce qu'il affiche.
     private func received(state: [String: Any], mainFrame: Bool) {
         let now = Date()
-        if state["login"] as? Bool == true {
+        // Le cadre principal montre un écran de l'export : il a raison contre un cadre caché (connexion Meta préchargée) qui croit voir un mot de passe.
+        if mainFrame, state["login"] as? Bool != true, let scr = state["screen"] as? String, !scr.isEmpty { seenMainScreen = now }
+        if state["login"] as? Bool == true, mainFrame || now.timeIntervalSince(seenMainScreen) > 1.6 {
             seenLogin = now
             let bad = state["badpw"] as? Bool == true
             if bad != badPassword { badPassword = bad; showStep() }
