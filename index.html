@@ -2738,6 +2738,15 @@ async function save() {
   renderBackup();  icloudQueue();
 }
 
+// ===== ZIEUTON-CORE : début =====
+// Copie de js/zieuton-core.js. Ne modifie pas ce bloc ici : modifie js/zieuton-core.js, puis lance « node scripts/sync-core.mjs ».
+// Zieuton : lecture de l'export Instagram et comparaison des imports.
+// Ce fichier est recopié tel quel dans index.html (entre les repères ZIEUTON-CORE) : la page reste un seul fichier,
+// qui marche sans étape de construction, sur GitHub Pages comme dans l'app.
+// Après une modification ici : « node scripts/sync-core.mjs » (recopie dans index.html), puis « npm test ».
+//
+// Fourni par le reste de la page (et simulé par les tests) : state, nf, fmtDate, accts, curAcct, acctLockOn, otherAccountError.
+
 // ---------- Lecture de l'export Instagram ----------
 function cleanName(s) {
   if (!s || typeof s !== "string") return null;
@@ -2905,6 +2914,54 @@ function acctLikeness(a, b) {
   const union = [...new Set([...a, ...b])].sort((x, y) => x - y).slice(0, ACCT_K);
   return union.length ? union.filter((h) => sa.has(h) && sb.has(h)).length / union.length : 1;
 }
+const sameAcct = (a, print) => a.n >= 10 && acctLikeness(a.h, print) >= ACCT_SAME;
+function isOtherAccount(names) {
+  const cur = curAcct();
+  if (!acctLockOn() || !(cur.n >= 10)) return false;
+  return acctLikeness(cur.h, acctPrint(names)) < ACCT_SAME;
+}
+// Un autre compte déjà suivi sur ce téléphone qui correspond à cet export.
+function knownAcct(names) {
+  const print = acctPrint(names), cur = curAcct();
+  return accts().find((a) => a !== cur && sameAcct(a, print)) || null;
+}
+
+// ---------- Comparaison ----------
+async function recordSnapshot(followers, following, takenAt, source) {
+  const names = Object.keys(followers);
+  const hash = await hashNames(names);
+  const last = state.snapshots[state.snapshots.length - 1];
+  // Un autre compte déjà suivi sur ce téléphone : on le dit tout de suite.
+  const other = isOtherAccount(names);
+  if (other && knownAcct(names)) throw otherAccountError("Cet export", names);
+  // Garde-fou : un export « programmé » d'Instagram ne contient que les nouveaux abonnés depuis l'export précédent.
+  // Le comparer à la liste complète ferait croire que presque tout le monde est parti.
+  if (last && last.count >= 20 && names.length < last.count * 0.5) {
+    throw new Error(`Cet export ne contient que ${nf(names.length)} abonné${names.length > 1 ? "s" : ""}, contre ${nf(last.count)} au dernier import. C'est un export partiel : Instagram n'y met que les nouveaux abonnés depuis l'export précédent. Rien n'a été enregistré. Refais un export « Une fois », période « Depuis le début ».${acctLockOn() ? " Si c'est l'export d'un autre compte Instagram : Réglages → Mon compte → Ajouter un compte." : ""}`);
+  }
+  if (other) throw otherAccountError("Cet export", names);
+  if (last && new Date(takenAt) < new Date(last.takenAt)) {
+    throw new Error(`Cet export est daté du ${fmtDate(takenAt)}, avant ton dernier import (${fmtDate(last.takenAt)}). Importe tes exports dans l'ordre.`);
+  }
+  // La liste des comptes suivis n'a pas d'historique : on garde la plus récente.
+  if (following) { state.following = following; state.followingAt = takenAt; }
+  if (last && last.hash === hash) return { status: "same", withFollowing: !!following };
+  const prev = new Set(Object.keys(state.followers));
+  const cur = new Set(names);
+  const unfollows = last ? [...prev].filter((u) => !cur.has(u)).sort() : [];
+  const follows = last ? names.filter((u) => !prev.has(u)).sort() : [];
+  const id = (last ? last.id : 0) + 1;
+  state.snapshots.push({ id, takenAt, source, count: names.length, hash, unfollows: unfollows.length, follows: follows.length });
+  // ts = date d'abonnement, gardée pour pouvoir annuler l'import plus tard.
+  for (const u of unfollows) state.events.push({ u, kind: "unfollow", at: takenAt, since: last.takenAt, ts: state.followers[u] ?? null });
+  for (const u of follows) state.events.push({ u, kind: "follow", at: takenAt, since: last.takenAt });
+  state.followers = followers;
+  return { status: last ? "ok" : "first", unfollows, follows, count: names.length };
+}
+// ===== ZIEUTON-CORE : fin =====
+
+// ---------- Un seul compte Instagram par téléphone (suite) ----------
+// L'empreinte d'un compte et la détection d'un autre compte sont dans le bloc ZIEUTON-CORE, plus haut.
 // Comme la limite gratuite : seulement dans l'app, là où Plus est vendu.
 const acctLockOn = () => storeApp();
 // Plusieurs comptes sur un même téléphone (ex. Victor, puis son ami Mathéo) : chacun a ses données et son propre Zieuton Plus.
@@ -2926,17 +2983,6 @@ const curSlot = () => curAcct().slot || 1;
 // Prénom (ou « Compte 2 ») d'un compte, pour la liste et les messages.
 const acctMe = (a) => (a.id === curAcct().id ? prefs.me : a.p && a.p.me) || {};
 const acctName = (a) => acctMe(a).name || `Compte ${accts().indexOf(a) + 1}`;
-const sameAcct = (a, print) => a.n >= 10 && acctLikeness(a.h, print) >= ACCT_SAME;
-function isOtherAccount(names) {
-  const cur = curAcct();
-  if (!acctLockOn() || !(cur.n >= 10)) return false;
-  return acctLikeness(cur.h, acctPrint(names)) < ACCT_SAME;
-}
-// Un autre compte déjà suivi sur ce téléphone qui correspond à cet export.
-function knownAcct(names) {
-  const print = acctPrint(names), cur = curAcct();
-  return accts().find((a) => a !== cur && sameAcct(a, print)) || null;
-}
 // Le compte qui a la version gratuite : retenu au 1er import (anciens téléphones : le compte 1 s'il a servi).
 function freeAcctId() {
   const list = accts();
@@ -3062,39 +3108,6 @@ function renderAcct() {
   if (!delOk) $("acct-del-confirm").hidden = true;
   $("acct-del-t").textContent = `Supprimer le compte de ${acctName(curAcct())}`;
   $("acct-add-s").textContent = "Pour un ami : son prénom, puis son Plus dès 1,99 €";
-}
-
-// ---------- Comparaison ----------
-async function recordSnapshot(followers, following, takenAt, source) {
-  const names = Object.keys(followers);
-  const hash = await hashNames(names);
-  const last = state.snapshots[state.snapshots.length - 1];
-  // Un autre compte déjà suivi sur ce téléphone : on le dit tout de suite.
-  const other = isOtherAccount(names);
-  if (other && knownAcct(names)) throw otherAccountError("Cet export", names);
-  // Garde-fou : un export « programmé » d'Instagram ne contient que les nouveaux abonnés depuis l'export précédent.
-  // Le comparer à la liste complète ferait croire que presque tout le monde est parti.
-  if (last && last.count >= 20 && names.length < last.count * 0.5) {
-    throw new Error(`Cet export ne contient que ${nf(names.length)} abonné${names.length > 1 ? "s" : ""}, contre ${nf(last.count)} au dernier import. C'est un export partiel : Instagram n'y met que les nouveaux abonnés depuis l'export précédent. Rien n'a été enregistré. Refais un export « Une fois », période « Depuis le début ».${acctLockOn() ? " Si c'est l'export d'un autre compte Instagram : Réglages → Mon compte → Ajouter un compte." : ""}`);
-  }
-  if (other) throw otherAccountError("Cet export", names);
-  if (last && new Date(takenAt) < new Date(last.takenAt)) {
-    throw new Error(`Cet export est daté du ${fmtDate(takenAt)}, avant ton dernier import (${fmtDate(last.takenAt)}). Importe tes exports dans l'ordre.`);
-  }
-  // La liste des comptes suivis n'a pas d'historique : on garde la plus récente.
-  if (following) { state.following = following; state.followingAt = takenAt; }
-  if (last && last.hash === hash) return { status: "same", withFollowing: !!following };
-  const prev = new Set(Object.keys(state.followers));
-  const cur = new Set(names);
-  const unfollows = last ? [...prev].filter((u) => !cur.has(u)).sort() : [];
-  const follows = last ? names.filter((u) => !prev.has(u)).sort() : [];
-  const id = (last ? last.id : 0) + 1;
-  state.snapshots.push({ id, takenAt, source, count: names.length, hash, unfollows: unfollows.length, follows: follows.length });
-  // ts = date d'abonnement, gardée pour pouvoir annuler l'import plus tard.
-  for (const u of unfollows) state.events.push({ u, kind: "unfollow", at: takenAt, since: last.takenAt, ts: state.followers[u] ?? null });
-  for (const u of follows) state.events.push({ u, kind: "follow", at: takenAt, since: last.takenAt });
-  state.followers = followers;
-  return { status: last ? "ok" : "first", unfollows, follows, count: names.length };
 }
 
 // ---------- Affichage ----------
