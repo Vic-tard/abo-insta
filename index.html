@@ -515,6 +515,7 @@ if (!window.ZYEUTO_APP) {
     display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 999px; background: var(--rose-soft); color: var(--rose-ink);
     box-shadow: 0 4px 14px rgb(46 35 40 / .10); font-size: 13px; }
   .demo-bar[hidden] { display: none; }
+  .demo-bar.go button { background: var(--coral, #d9604a); color: #fff; }
   .demo-bar .demo-tag { flex: none; background: var(--rose-ink); color: var(--surface); font: 600 11px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; }
   .demo-bar span:not(.demo-tag) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--btn); color: var(--btn-ink); font: 600 13px var(--font); cursor: pointer; }
@@ -1013,6 +1014,17 @@ if (!window.ZYEUTO_APP) {
   .gf-how li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; background: var(--surface-2); border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.4; }
   .gf-how li > i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); font: 700 13px var(--font); font-style: normal; }
   .gf-how small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .gm { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0 2px; }
+  .gm-env { font-size: 58px; line-height: 1; animation: gmBob 1.8s ease-in-out infinite; }
+  @keyframes gmBob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
+  .gm-bar { width: 100%; height: 12px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .gm-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--rose), var(--coral, #d9604a)); transition: width .6s; }
+  .gm-row { width: 100%; display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); }
+  .gm-row b { font-size: 16px; color: var(--ink); }
+  .gm-pts { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .gm-pts li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; background: var(--surface-2); border-radius: 14px; padding: 11px 13px; font-size: 14.5px; line-height: 1.4; }
+  .gm-pts i { font-style: normal; font-size: 19px; line-height: 1.2; }
+  @media (prefers-reduced-motion: reduce) { .gm-env { animation: none; } }
   .gf-wait.ready .radar { display: none; }
   .gf-wait .done-ic { font-size: 54px; line-height: 1; }
   .gf-wait { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 18px 0 4px; }
@@ -4379,6 +4391,13 @@ function wkGo(mode) {
 }
 // Réponses de l'app iPhone : « requested » quand la demande est faite dans Instagram.
 window.zyeutoMeta = (ev) => {
+  // Pendant la démo : « prêt » est noté sur les vraies données (la barre du haut le dit), une notification touchée ramène aux vraies données.
+  if (DEMO && ev === "ready") {
+    if (realPrefs && !realPrefs.readyAt) { realPrefs.readyAt = new Date().toISOString(); try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch {} }
+    haptic("success"); renderDemoBar(); toast("Ta vraie liste est prête 🎉 Touche « Récupérer ma liste » en haut.", false);
+    return;
+  }
+  if (DEMO && (ev === "open" || ev === "home")) leaveDemo(true);
   // Fichier vu prêt par l'app : la carte passe à « Ton export est prêt ».
   if (ev === "ready") {
     if (reqPending() && !prefs.readyAt) { prefs.readyAt = new Date().toISOString(); savePrefs(); haptic("success"); renderWeekly(); if (gfOn()) renderGuided(); }
@@ -4574,6 +4593,7 @@ function wlPlay() {
   };
 }
 let gfLeftAt = 0, gfOnReturn = null;
+let gmTick = null;
 let gfTaps = [], gfChecking = false, gfTimer = null, gfStatus = "", gfAuthFailed = false;
 // gfRepeat : le même parcours, rouvert depuis « Nouvel export » pour les imports suivants.
 let gfRepeat = false, gfRepeatFrom = 0;
@@ -4717,18 +4737,41 @@ function renderGuided() {
     const say = ready ? (sure ? "Ta liste est prête&nbsp;! On va la chercher 🏃" : "Ta liste devrait être prête&nbsp;! On va voir 🏃")
       : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste."
       : `Demandé il y a ${ago}. Instagram y travaille encore…`;
+    if (!ready) {
+      // Attente : on rassure (2 à 10 min, notification, pas besoin du mail) et on emmène vers la démo.
+      const pct = Math.min(94, 6 + Math.round(since / READY_AFTER_MIN * 88));
+      body.innerHTML = `${guide(say)}
+      <h2 id="gf-title">Ta liste est en route</h2>
+      <div class="gm"><div class="gm-env" aria-hidden="true">📩</div>
+        <div class="gm-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+        <div class="gm-row"><span>Demandé</span><b>2 à 10 min</b><span>Arrivée</span></div></div>
+      <ul class="gm-pts">
+        <li><i aria-hidden="true">🔔</i><span>Je t'envoie une <b>notification</b> dès qu'elle arrive. Touche-la&nbsp;: je récupère tout pour toi.</span></li>
+        <li><i aria-hidden="true">✉️</i><span>Instagram t'envoie aussi un mail&nbsp;: <b>pas besoin de l'ouvrir</b>, tout se fait ici.</span></li>
+        <li><i aria-hidden="true">📱</i><span>Tu peux fermer l'app, rien ne se perd.</span></li>
+      </ul>
+      <div class="gf-foot">
+        <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>En attendant, découvre l'app</button>
+        <button class="alt" id="gf-get" type="button">Regarder si c'est prêt</button>
+        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
+      </div>`;
+      $("gf-wait-demo").onclick = () => enterDemo();
+      // La barre avance toute seule : on redessine chaque minute tant qu'on attend.
+      clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get") renderGuided(); }, 60000);
+    } else {
     body.innerHTML = `${guide(say)}
       <h2 id="gf-title">${ready ? (sure ? "Ta liste est prête" : "Ta liste devrait être prête") : "Instagram prépare ta liste"}</h2>
       <div class="gf-wait${ready ? " ready" : ""}"><div class="radar" aria-hidden="true"></div>${ready ? `<span class="done-ic" aria-hidden="true">📬</span>` : ""}
         <b>${ready ? "Plus qu'une touche" : "En général, 2 à 10 minutes"}</b>
         <small>${ready
-          ? (sure ? "Touche le bouton&nbsp;: Instagram s'ouvre ici, je touche « Télécharger » pour toi et je m'occupe du reste."
+          ? (sure ? "Touche le bouton&nbsp;: Instagram s'ouvre ici, touche « Télécharger » et je m'occupe du reste."
             : "Touche le bouton&nbsp;: Instagram s'ouvre ici. Si ton export est encore « En cours », reviens un peu plus tard, je te préviens.")
           : "Tu peux fermer l'app&nbsp;: je t'envoie une notification dès que c'est prêt. Ensuite, tu as 4 jours pour la récupérer."}</small></div>
       <div class="gf-foot">
         <button class="btn ${ready ? "cheer" : "ghost"} big" id="gf-get" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>${ready ? "Récupérer ma liste" : "Regarder si c'est prêt"}</button>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
+    }
     $("gf-get").onclick = wkGo;
     $("gf-back").onclick = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; gfTaps = []; savePrefs(); render(); };
   } else if (step === "insta" && !useDrive()) {
@@ -4891,7 +4934,7 @@ function renderGuided() {
     body.prepend(top);
   }
   // « Voir la démo » : pour découvrir l'app tout de suite, sans attendre Instagram.
-  if (!gfRepeat && !state.snapshots.length && step !== "install" && step !== "welcome") {
+  if (!gfRepeat && !state.snapshots.length && step !== "install" && step !== "welcome" && step !== "get") {
     const foot = body.querySelector(".gf-foot");
     if (foot) {
       const d = document.createElement("button");
@@ -4944,7 +4987,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-05-1120";
+const BUILD = "2026-11-05-1330";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6914,13 +6957,29 @@ function leaveDemo(quiet) {
   renderAll();
   setPage("home"); window.scrollTo(0, 0);
 }
-$("demo-quit").addEventListener("click", () => leaveDemo());
+$("demo-quit").addEventListener("click", () => { const w = realWait(); leaveDemo(); if (w && w.ready) wkGo(); });
 // Réglages → « Voir la démo » (ou « Quitter la démo ») : on referme les Réglages, puis on bascule.
 $("st-demo-row").addEventListener("click", () => {
   ST_PAGES.forEach((id) => { if (!$(id).hidden) closeStPage(id); });
   setTimeout(() => DEMO ? leaveDemo() : enterDemo(), 200);
 });
+// Démo pendant qu'Instagram prépare la vraie liste : la barre du haut dit où on en est.
+function realWait() {
+  if (!DEMO || !realPrefs || !realState) return null;
+  const sp = prefs, ss = state; prefs = realPrefs; state = realState;
+  let r = null;
+  try { if (reqPending()) { const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0; r = { ready: !!prefs.readyAt || since >= READY_AFTER_MIN, left: Math.max(1, READY_AFTER_MIN - since) }; } } finally { prefs = sp; state = ss; }
+  return r;
+}
+function renderDemoBar() {
+  const w = realWait(), sp = $("demo-bar").querySelector("span:not(.demo-tag)");
+  sp.textContent = !w ? "Données inventées" : w.ready ? "Ta vraie liste est prête 🎉" : `Ta liste arrive · ~${w.left} min`;
+  $("demo-quit").textContent = w && w.ready ? "Récupérer ma liste" : w ? "Ma liste" : "Quitter la démo";
+  $("demo-bar").classList.toggle("go", !!(w && w.ready));
+}
+setInterval(() => { if (DEMO) renderDemoBar(); }, 30000);
 function renderDemoRow() {
+  if (DEMO) renderDemoBar();
   $("st-demo-t").textContent = DEMO ? "Quitter la démo" : "Voir la démo";
   $("st-demo-s").textContent = DEMO ? "Revenir à tes vraies données." : "L'app avec des abonnés inventés. Tes données ne bougent pas.";
 }
