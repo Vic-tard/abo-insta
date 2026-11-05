@@ -513,12 +513,12 @@ if (!window.ZYEUTO_APP) {
   /* Mode démo : bandeau fixe en haut, sur l'accueil, les jeux et les graphiques */
   .demo-bar { position: fixed; z-index: 16; left: 50%; translate: -50% 0; top: max(8px, env(safe-area-inset-top, 0px)); width: min(568px, calc(100% - 32px));
     display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 999px; color: #fff; font: 600 13px var(--round);
-    background: linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%); box-shadow: 0 8px 22px rgb(58 29 44 / .3), inset 0 0 0 1px rgb(246 201 90 / .3); }
+    background: linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%); box-shadow: 0 8px 22px rgb(58 29 44 / .3), inset 0 0 0 1px rgb(185 165 240 / .35); }
   .demo-bar[hidden] { display: none; }
-  .demo-bar.go button { background: var(--gold); color: var(--gold-ink); }
-  .demo-bar .demo-tag { flex: none; background: var(--gold); color: var(--gold-ink); box-shadow: inset 0 1px 0 rgb(255 255 255 / .6); font: 800 11px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; }
+  .demo-bar.go button { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; box-shadow: 0 4px 12px rgb(239 127 106 / .4); }
+  .demo-bar .demo-tag { flex: none; background: linear-gradient(135deg, #c9b8f7, #9d86e4); color: #fff; box-shadow: inset 0 1px 0 rgb(255 255 255 / .4); font: 800 11px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; }
   .demo-bar span:not(.demo-tag) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: rgb(255 255 255 / .14); color: #fff3d1; font: 700 13px var(--round); cursor: pointer; }
+  .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: rgb(255 255 255 / .14); color: #fff; font: 700 13px var(--round); cursor: pointer; }
   .demo-bar button:active { background: rgb(255 255 255 / .24); }
   body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 54px); }
   /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
@@ -1016,25 +1016,25 @@ if (!window.ZYEUTO_APP) {
   .gf-how small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
   /* Écrans « en route » / « prête » : carte prune et or (comme l'accueil) + lignes façon Réglages */
   .gx { position: relative; overflow: hidden; isolation: isolate; border-radius: 24px; padding: 18px 18px 16px; color: #fff; display: flex; flex-direction: column; gap: 14px;
-    background: radial-gradient(120% 90% at 100% 0%, rgb(239 127 142 / .35), transparent 60%), linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%);
-    box-shadow: 0 14px 30px rgb(58 29 44 / .32), inset 0 0 0 1px rgb(246 201 90 / .28); }
+    background: radial-gradient(120% 90% at 100% 0%, rgb(185 165 240 / .38), transparent 60%), linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%);
+    box-shadow: 0 14px 30px rgb(58 29 44 / .32), inset 0 0 0 1px rgb(185 165 240 / .3); }
   .gx::before { content: ""; position: absolute; right: -50px; bottom: -80px; width: 180px; height: 180px; border-radius: 50%; background: rgb(255 255 255 / .06); z-index: -1; }
   .gx-top { display: flex; align-items: center; gap: 14px; }
   .gx-top small { display: block; font: 800 11.5px var(--round); text-transform: uppercase; letter-spacing: .08em; color: rgb(255 255 255 / .62); }
-  .gx-top b { display: block; font: 800 30px/1.1 var(--round); letter-spacing: -.01em; color: #fff3d1; }
+  .gx-top b { display: block; font: 800 30px/1.1 var(--round); letter-spacing: -.01em; color: #fff; }
   .gx.ready .gx-top b { font-size: 24px; }
-  .gx-ic { flex: none; width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; background: var(--gold); box-shadow: 0 6px 16px rgb(244 205 99 / .35), inset 0 1px 0 rgb(255 255 255 / .6); }
-  .gx-ic svg { width: 28px; height: 28px; fill: none; stroke: var(--gold-ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .gx-ic { flex: none; width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; background: linear-gradient(135deg, #ef7f6a, #f2a04a); box-shadow: 0 6px 16px rgb(239 127 106 / .4), inset 0 1px 0 rgb(255 255 255 / .4); }
+  .gx-ic svg { width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .gx-track { height: 8px; border-radius: 999px; background: rgb(255 255 255 / .14); overflow: hidden; }
-  .gx-track i { display: block; height: 100%; border-radius: inherit; background: var(--gold); transition: width .6s ease; }
+  .gx-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #b9a5f0, #ef7f6a); transition: width .6s ease; }
   .gx-steps { list-style: none; margin: -4px 0 0; padding: 0; display: flex; justify-content: space-between; gap: 6px; }
   .gx-steps li { display: flex; align-items: center; gap: 6px; font: 700 12px var(--round); color: rgb(255 255 255 / .5); white-space: nowrap; }
   .gx-steps li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgb(255 255 255 / .3); flex: none; }
   .gx-steps li.done { color: rgb(255 255 255 / .85); }
-  .gx-steps li.done::before { background: #f4cd63; }
-  .gx-steps li.now { color: #fff3d1; }
-  .gx-steps li.now::before { background: #f4cd63; box-shadow: 0 0 0 0 rgb(244 205 99 / .6); animation: gxPing 1.6s ease-out infinite; }
-  @keyframes gxPing { 0% { box-shadow: 0 0 0 0 rgb(244 205 99 / .6); } 100% { box-shadow: 0 0 0 9px rgb(244 205 99 / 0); } }
+  .gx-steps li.done::before { background: #c9b8f7; }
+  .gx-steps li.now { color: #fff; }
+  .gx-steps li.now::before { background: #f39a85; box-shadow: 0 0 0 0 rgb(243 154 133 / .6); animation: gxPing 1.6s ease-out infinite; }
+  @keyframes gxPing { 0% { box-shadow: 0 0 0 0 rgb(243 154 133 / .6); } 100% { box-shadow: 0 0 0 9px rgb(243 154 133 / 0); } }
   .gx-list { list-style: none; margin: 0; padding: 0; border-radius: 20px; background: var(--surface); box-shadow: 0 6px 20px rgb(46 35 40 / .06), inset 0 0 0 1px var(--line); overflow: hidden; }
   :root[data-theme="dark"] .gx-list { background: var(--surface-2); box-shadow: none; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gx-list { background: var(--surface-2); box-shadow: none; } }
@@ -1044,8 +1044,7 @@ if (!window.ZYEUTO_APP) {
   .gx-row small { display: block; margin-top: 2px; font-size: 13.5px; line-height: 1.35; color: var(--muted); }
   .gx-b { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
   .gx-b svg { width: 19px; height: 19px; fill: none; stroke: #fff; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
-  .gx-b.gold { background: var(--gold); box-shadow: inset 0 1px 0 rgb(255 255 255 / .5); }
-  .gx-b.gold svg { stroke: var(--gold-ink); }
+  .gx-b.lilac { background: linear-gradient(135deg, #c9b8f7, #9d86e4); }
   .gx-b.rose { background: linear-gradient(135deg, #ef7f8e, #d9604a); }
   .gx-b.plum { background: linear-gradient(135deg, #8a4560, #4a2636); }
   @media (prefers-reduced-motion: no-preference) { .gx { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; } .gx-list { animation: rise .35s .08s both; } }
@@ -4783,7 +4782,7 @@ function renderGuided() {
         ${track(pct, 1)}
       </div>
       <ul class="gx-list">
-        ${row(I_BELL, "gold", "Une notification arrive", "Touche-la&nbsp;: je récupère tout pour toi.")}
+        ${row(I_BELL, "lilac", "Une notification arrive", "Touche-la&nbsp;: je récupère tout pour toi.")}
         ${row(I_MAIL, "rose", "Pas besoin d'ouvrir le mail", "Instagram t'en envoie un aussi, mais tout se fait ici.")}
         ${row(I_PHONE, "plum", "Tu peux fermer l'app", "Rien ne se perd, je te préviens.")}
       </ul>
@@ -4803,7 +4802,7 @@ function renderGuided() {
         ${track(100, sure ? 3 : 2)}
       </div>
       <ul class="gx-list">
-        ${row(I_TAP, "gold", "Touche « Récupérer ma liste »", "Juste en dessous.")}
+        ${row(I_TAP, "lilac", "Touche « Récupérer ma liste »", "Juste en dessous.")}
         ${row(I_OUT, "rose", "Instagram s'ouvre ici", sure ? "Touche « Télécharger » à côté de ton export." : "Si l'export est encore « En cours », reviens un peu plus tard&nbsp;: je te préviens.")}
         ${row(I_CHECK, "plum", "Je m'occupe du reste", "Ta liste s'affiche toute seule.")}
       </ul>
@@ -5027,7 +5026,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-05-1345";
+const BUILD = "2026-11-05-1400";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
