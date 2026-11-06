@@ -24,6 +24,7 @@ Zieuton est une app iPhone qui compare les exports officiels Instagram d'un util
 6. Écris la description de PR en français simple, pour quelqu'un qui n'est pas développeur : ce qui change pour l'utilisateur, comment le vérifier.
 7. Reste dans le périmètre du ticket. Pas de refonte « au passage ».
 8. Ne laisse pas d'erreur muette : pas de nouveau `catch {}` vide.
+9. **Canaux de mise à jour (FOU-28, détails dans `docs/MISES-A-JOUR.md`).** Toute PR qui change la page incrémente `BUILD` ; elle n'arrive qu'aux iPhones en canal test. Pour la donner à tout le monde : après validation de Victor sur son iPhone, PR séparée avec `npm run canal -- valider` (cite le même ticket). Ne jamais retirer le message `started` de la fin du démarrage de `index.html`. Urgence : `npm run canal -- urgence on`.
 
 ## Interdits (promesses de l'app)
 

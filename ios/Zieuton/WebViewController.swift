@@ -25,12 +25,25 @@ final class WebViewController: UIViewController {
     /// Version de la page affichée (sa ligne « const BUILD »).
     private var loadedBuild = ""
     private var checkingUpdate = false
+    /// D'où vient la page affichée (rangée dans l'app, dernière bonne, ou tout juste téléchargée).
+    private var loadedSource: PageGuard.Source = .bundled
+    /// Le texte de la page affichée (recopié en « dernière bonne page » quand elle a bien démarré).
+    private var loadedHTML: String?
+    /// La page affichée a dit « je suis bien démarrée ».
+    private var started = false
+    /// Chronomètre du démarrage : sans signal à temps, la page est déclarée mauvaise.
+    private var startTimer: DispatchWorkItem?
     /// Dernière version de la page téléchargée (plus récente que celle rangée dans l'app).
-    private static var savedPage: URL {
+    private static var savedPage: URL { supportFile("zyeuto-hors-ligne.html") }
+    /// Dernière version téléchargée qui a bien démarré : le repli si la suivante est cassée.
+    private static var lastGoodPage: URL { supportFile("zyeuto-derniere-bonne.html") }
+    private static func supportFile(_ name: String) -> URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent("zyeuto-hors-ligne.html")
+        return dir.appendingPathComponent(name)
     }
+    /// Petit fichier en ligne qui dit quelle version est « stable », et l'interrupteur d'urgence.
+    private static let channelURL = URL(string: "channel.json", relativeTo: home)!.absoluteURL
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,7 +59,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 7, embedded: true, icloud: true };",
+            source: "window.ZYEUTO_APP = { version: 8, embedded: true, icloud: true, channels: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
         content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -76,8 +89,9 @@ final class WebViewController: UIViewController {
         buildSplash()
         loadPage()
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
-                                               object: nil, queue: .main) { _ in
+                                               object: nil, queue: .main) { [weak self] _ in
             ExportWatcher.shared.appBecameActive()
+            self?.pageCameBack()
         }
         Self.current = self
         // Fichier Instagram repéré prêt : la carte « Mettre à jour » passe à « Ton export est prêt ».
@@ -228,17 +242,55 @@ final class WebViewController: UIViewController {
     /// La page est rangée dans l'app : elle s'ouvre tout de suite, même sans internet.
     /// Quand une version plus récente est en ligne, l'app la télécharge et la garde sur le téléphone.
     /// La page s'affiche toujours à l'adresse du site, donc avec les mêmes données qu'avant.
+    ///
+    /// Sécurité (FOU-28) : une page téléchargée doit dire « je suis bien démarrée » (message « started »)
+    /// dans les secondes qui suivent. Sinon, ou si elle plante deux fois de suite, sa version est notée
+    /// mauvaise : l'app revient à la dernière page qui a démarré (ou à celle rangée dans l'app) et ne la
+    /// retélécharge plus. Les règles elles-mêmes sont dans `PageGuard`, en bas de ce fichier.
     private func loadPage() {
-        let bundled = Bundle.main.url(forResource: "index", withExtension: "html")
-            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
-        let saved = try? String(contentsOf: Self.savedPage, encoding: .utf8)
-        let candidates = [bundled, saved].compactMap { $0 }.filter { Self.build(of: $0) != nil }
-        guard let html = candidates.max(by: { Self.build(of: $0)! < Self.build(of: $1)! }) else {
+        // Une page qui a raté ses derniers démarrages (l'app ou la page a planté avant le signal) est écartée.
+        if let trying = guardStore.trying, PageGuard.tooManyFailedStarts(guardStore.tries) {
+            markBad(trying)
+        }
+        startTimer?.cancel()
+        startTimer = nil
+        started = false
+        guard let chosen = choosePage() else {
             webView.load(URLRequest(url: Self.home)) // ne devrait pas arriver : la page est toujours dans l'app
             return
         }
-        loadedBuild = Self.build(of: html)!
+        let (page, html) = chosen
+        loadedBuild = page.build
+        loadedSource = page.source
+        loadedHTML = html
+        if page.source != .bundled {
+            // Tentative notée AVANT d'afficher : si tout plante pendant le démarrage, on le saura au prochain lancement.
+            guardStore.countTry(page.build)
+            armStartTimer(for: page.build)
+        }
         webView.loadHTMLString(html, baseURL: Self.home)
+    }
+
+    /// Les pages présentes sur le téléphone, et celle qu'il faut afficher selon les règles.
+    private func choosePage() -> (PageGuard.Page, String)? {
+        let bundled = Bundle.main.url(forResource: "index", withExtension: "html")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
+        let texts: [(PageGuard.Source, String?)] = [
+            (.bundled, bundled),
+            (.lastGood, try? String(contentsOf: Self.lastGoodPage, encoding: .utf8)),
+            (.downloaded, try? String(contentsOf: Self.savedPage, encoding: .utf8)),
+        ]
+        var html: [PageGuard.Source: String] = [:]
+        var pages: [PageGuard.Page] = []
+        for (source, text) in texts {
+            guard let text, let build = Self.build(of: text) else { continue }
+            html[source] = text
+            pages.append(PageGuard.Page(source: source, build: build))
+        }
+        guard let page = PageGuard.choose(pages, bad: Set(guardStore.bad), channel: guardStore.channel,
+                                          config: guardStore.config),
+              let text = html[page.source] else { return nil }
+        return (page, text)
     }
 
     /// Numéro de version d'une page (ex. « 2026-11-04-1210 »), qui se compare comme du texte.
@@ -247,29 +299,113 @@ final class WebViewController: UIViewController {
         return String(html[r].dropFirst(15).dropLast())
     }
 
-    /// La page demande s'il y a du nouveau (à l'ouverture et à chaque retour dans l'app).
-    private func checkForUpdate() {
-        guard !checkingUpdate else { return }
-        checkingUpdate = true
-        let current = loadedBuild
-        var comps = URLComponents(url: Self.home, resolvingAgainstBaseURL: false)!
+    // MARK: Démarrage surveillé (FOU-28)
+
+    private let guardStore = PageGuardStore()
+
+    private func armStartTimer(for build: String) {
+        startTimer?.cancel()
+        let item = DispatchWorkItem { [weak self] in self?.startTimedOut(build) }
+        startTimer = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + PageGuard.startTimeout, execute: item)
+    }
+
+    /// Pas de signal « je suis bien démarrée » à temps : cette version est cassée, on revient en arrière.
+    private func startTimedOut(_ build: String) {
+        guard !started, loadedBuild == build, loadedSource != .bundled else { return }
+        // App en arrière-plan : la page est en pause, ce n'est pas sa faute (on rechronomètre au retour).
+        guard UIApplication.shared.applicationState == .active else { return }
+        markBad(build)
+        loadPage()
+    }
+
+    /// Retour dans l'app pendant le démarrage d'une page : on lui redonne tout son temps.
+    private func pageCameBack() {
+        guard !started, loadedSource != .bundled, !loadedBuild.isEmpty else { return }
+        armStartTimer(for: loadedBuild)
+    }
+
+    /// La page a bien démarré (accueil affiché).
+    private func pageStarted(_ build: String) {
+        guard build == loadedBuild else { return }
+        started = true
+        startTimer?.cancel()
+        startTimer = nil
+        if loadedSource != .bundled {
+            guardStore.clearTries()
+            // Elle devient le repli si une version suivante est cassée.
+            if loadedSource == .downloaded, let html = loadedHTML {
+                do { try Data(html.utf8).write(to: Self.lastGoodPage, options: .atomic) }
+                catch { NSLog("Zieuton : dernière bonne page non enregistrée (%@)", error.localizedDescription) }
+            }
+        }
+        sendChannel(toggled: false)
+    }
+
+    private func markBad(_ build: String) {
+        NSLog("Zieuton : la page %@ n'a pas démarré, retour à la version d'avant", build)
+        guardStore.markBad(build)
+    }
+
+    /// Réglage caché (5 touches sur la version) : canal « test » ⇄ canal normal.
+    private func toggleChannel() {
+        guardStore.channel = guardStore.channel == "test" ? "stable" : "test"
+        sendChannel(toggled: true)
+        checkForUpdate() // le nouveau canal s'applique tout de suite (ou au prochain retour si rien ne charge)
+    }
+
+    private func sendChannel(toggled: Bool) {
+        let js = "window.zyeutoChannel && window.zyeutoChannel({channel:\"\(guardStore.channel)\",toggled:\(toggled)}); true"
+        webView.evaluateJavaScript(js)
+    }
+
+    // MARK: Mises à jour
+
+    private static func fresh(_ url: URL) -> URLRequest {
+        var comps = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         comps.queryItems = [URLQueryItem(name: "v", value: String(Int(Date().timeIntervalSince1970)))]
         var request = URLRequest(url: comps.url!, timeoutInterval: 15)
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, _ in
-            var newer = false
-            if (response as? HTTPURLResponse)?.statusCode == 200, let data,
-               let html = String(data: data, encoding: .utf8), html.contains("</html>"),
-               let build = Self.build(of: html), build > current {
-                newer = (try? data.write(to: Self.savedPage, options: .atomic)) != nil
-            }
+        return request
+    }
+
+    /// La page demande s'il y a du nouveau (à l'ouverture et à chaque retour dans l'app).
+    /// 1. channel.json : version stable et interrupteur d'urgence. 2. la page en ligne, si elle est permise.
+    private func checkForUpdate() {
+        guard !checkingUpdate else { return }
+        checkingUpdate = true
+        URLSession.shared.dataTask(with: Self.fresh(Self.channelURL)) { [weak self] data, response, _ in
+            // Fichier absent, illisible ou pas d'internet : on garde les dernières consignes connues.
+            let config = (response as? HTTPURLResponse)?.statusCode == 200 ? data.flatMap(PageGuard.parseChannel) : nil
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.checkingUpdate = false
-                // On recharge seulement si rien n'est en cours (fichier reçu, Instagram ouvert…).
-                if newer, !self.sending, self.pending.isEmpty, self.presentedViewController == nil { self.loadPage() }
+                if let config { self.guardStore.config = config }
+                self.downloadPage()
             }
         }.resume()
+    }
+
+    private func downloadPage() {
+        let current = loadedBuild, bad = Set(guardStore.bad), channel = guardStore.channel, config = guardStore.config
+        guard config?.emergency != true else { return finishUpdate() } // urgence : on ne télécharge rien
+        URLSession.shared.dataTask(with: Self.fresh(Self.home)) { [weak self] data, response, _ in
+            if (response as? HTTPURLResponse)?.statusCode == 200, let data,
+               let html = String(data: data, encoding: .utf8), html.contains("</html>"),
+               let build = Self.build(of: html),
+               PageGuard.shouldKeep(downloaded: build, current: current, bad: bad, channel: channel, config: config) {
+                do { try data.write(to: Self.savedPage, options: .atomic) }
+                catch { NSLog("Zieuton : nouvelle page non enregistrée (%@)", error.localizedDescription) }
+            }
+            DispatchQueue.main.async { self?.finishUpdate() }
+        }.resume()
+    }
+
+    /// Nouvelle version, canal changé ou interrupteur d'urgence : on affiche ce que les règles demandent.
+    private func finishUpdate() {
+        checkingUpdate = false
+        guard let wanted = choosePage()?.0, wanted.build != loadedBuild else { return }
+        // On recharge seulement si rien n'est en cours (fichier reçu, Instagram ouvert…) ; sinon au prochain retour.
+        if !sending, pending.isEmpty, presentedViewController == nil { loadPage() }
     }
 
     /// Les images rangées dans l'app, prêtes à être affichées par la page (« guide/ig-01.jpg » → image).
@@ -396,6 +532,10 @@ extension WebViewController: WKScriptMessageHandler {
             flush()
         case "update":
             checkForUpdate()
+        case "started":
+            pageStarted(body["build"] as? String ?? "")
+        case "channel":
+            toggleChannel()
         case "haptic":
             switch body["kind"] as? String {
             case "success": UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -2206,3 +2346,127 @@ extension WebViewController: PHPickerViewControllerDelegate, UIImagePickerContro
         webView.evaluateJavaScript("window.zyeutoPhoto && window.zyeutoPhoto(\"data:image/jpeg;base64,\(data.base64EncodedString())\"); true")
     }
 }
+
+// MARK: Sécurité des mises à jour de la page (FOU-28)
+
+/// Ce que le téléphone retient entre deux lancements (UserDefaults).
+final class PageGuardStore {
+    private let d = UserDefaults.standard
+
+    /// Versions de la page qui n'ont pas démarré : jamais réaffichées, jamais retéléchargées.
+    var bad: [String] { d.stringArray(forKey: "pg.bad") ?? [] }
+    func markBad(_ build: String) {
+        d.set(PageGuard.addBad(build, to: bad), forKey: "pg.bad")
+        if trying == build { clearTries() }
+    }
+
+    /// « test » ou « stable » (le réglage caché).
+    var channel: String {
+        get { d.string(forKey: "pg.channel") == "test" ? "test" : "stable" }
+        set { d.set(newValue, forKey: "pg.channel") }
+    }
+
+    /// Dernier channel.json lu (nil tant qu'aucun n'a été lu : comportement d'avant, la dernière version en ligne).
+    var config: PageGuard.Channel? {
+        get {
+            guard d.bool(forKey: "pg.config") else { return nil }
+            return PageGuard.Channel(stable: d.string(forKey: "pg.stable"), emergency: d.bool(forKey: "pg.urgence"))
+        }
+        set {
+            d.set(newValue != nil, forKey: "pg.config")
+            d.set(newValue?.stable, forKey: "pg.stable")
+            d.set(newValue?.emergency ?? false, forKey: "pg.urgence")
+        }
+    }
+
+    /// Version en cours d'essai et nombre de démarrages commencés sans le signal « started ».
+    var trying: String? { d.string(forKey: "pg.trying") }
+    var tries: Int { d.integer(forKey: "pg.tries") }
+    func countTry(_ build: String) {
+        if trying != build { d.set(build, forKey: "pg.trying"); d.set(0, forKey: "pg.tries") }
+        d.set(tries + 1, forKey: "pg.tries")
+    }
+    func clearTries() {
+        d.removeObject(forKey: "pg.trying")
+        d.set(0, forKey: "pg.tries")
+    }
+}
+
+// PAGE-GUARD:BEGIN
+// Les règles, sans rien d'iPhone (Foundation seulement) : testées hors de l'app par
+// tests/ios/PageGuardTests.swift (scripts/test-page-guard.sh, lancé par les vérifications GitHub).
+enum PageGuard {
+    /// D'où vient une page.
+    enum Source: String { case bundled, lastGood, downloaded }
+
+    struct Page: Equatable {
+        let source: Source
+        let build: String
+    }
+
+    /// Le contenu de channel.json.
+    struct Channel: Equatable {
+        /// Version de la page validée pour tout le monde (nil : pas de limite).
+        var stable: String?
+        /// Interrupteur d'urgence : tout le monde revient à la page rangée dans l'app.
+        var emergency: Bool
+    }
+
+    /// Secondes laissées à une page téléchargée pour dire « je suis bien démarrée ».
+    static let startTimeout: TimeInterval = 10
+    /// Démarrages commencés sans signal, d'affilée, avant de déclarer une page mauvaise.
+    static let maxFailedStarts = 2
+
+    /// Format d'un numéro de version : AAAA-MM-JJ-HHMM.
+    static func isBuild(_ s: String) -> Bool {
+        s.range(of: #"^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"#, options: .regularExpression) != nil
+    }
+
+    /// Lit channel.json. Renvoie nil si le fichier est mal écrit (on garde alors les consignes d'avant).
+    /// Exemple : { "stable": "2026-11-06-1300", "urgence": false }
+    static func parseChannel(_ data: Data) -> Channel? {
+        guard let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return nil }
+        var stable: String?
+        if let value = obj["stable"], !(value is NSNull) {
+            guard let text = value as? String, isBuild(text) else { return nil }
+            stable = text
+        }
+        var emergency = false
+        if let value = obj["urgence"] {
+            guard let number = value as? NSNumber, CFGetTypeID(number) == CFBooleanGetTypeID() else { return nil }
+            emergency = number.boolValue
+        }
+        return Channel(stable: stable, emergency: emergency)
+    }
+
+    /// Une page a-t-elle le droit d'être affichée sur ce téléphone ?
+    static func allowed(_ page: Page, bad: Set<String>, channel: String, config: Channel?) -> Bool {
+        if page.source == .bundled { return true } // la page rangée dans l'app : toujours le dernier recours
+        if config?.emergency == true { return false }
+        if bad.contains(page.build) { return false }
+        if channel != "test", let stable = config?.stable, page.build > stable { return false }
+        return true
+    }
+
+    /// La page à afficher : la plus récente permise (à égalité, celle rangée dans l'app).
+    static func choose(_ pages: [Page], bad: Set<String>, channel: String, config: Channel?) -> Page? {
+        let rank: [Source: Int] = [.bundled: 2, .lastGood: 1, .downloaded: 0]
+        return pages
+            .filter { allowed($0, bad: bad, channel: channel, config: config) }
+            .max { a, b in a.build != b.build ? a.build < b.build : rank[a.source]! < rank[b.source]! }
+    }
+
+    /// Faut-il garder la page qu'on vient de télécharger ?
+    static func shouldKeep(downloaded build: String, current: String, bad: Set<String>,
+                           channel: String, config: Channel?) -> Bool {
+        build > current && allowed(Page(source: .downloaded, build: build), bad: bad, channel: channel, config: config)
+    }
+
+    static func tooManyFailedStarts(_ count: Int) -> Bool { count >= maxFailedStarts }
+
+    /// Ajoute une version mauvaise (on garde les 20 dernières).
+    static func addBad(_ build: String, to list: [String]) -> [String] {
+        Array((list.filter { $0 != build } + [build]).suffix(20))
+    }
+}
+// PAGE-GUARD:END
