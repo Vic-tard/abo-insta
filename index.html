@@ -346,6 +346,9 @@ if (!window.ZYEUTO_APP) {
   .st-note { margin: 0; padding: 4px 14px 14px 56px; font-size: 14px; color: var(--muted); }
   .st-ic > b { color: #fff; font: 700 14px var(--round); }
   .st-foot { margin: -14px 8px 22px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+  .st-report-intro { margin: 0 6px 14px; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .st-report-box { margin: 0 0 16px; padding: 14px; border-radius: 16px; background: var(--grp); color: var(--ink); font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow: auto; }
+  .st-report-send { display: block; padding: 14px 16px; border-radius: 14px; font-size: 16px; }
   .st-confirm { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .st-confirm p { margin: 0; font-size: 14px; color: var(--ink); }
   .acct-new-in { width: 100%; box-sizing: border-box; font: 500 16px var(--font); color: var(--ink); background: var(--bg, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
@@ -2356,10 +2359,20 @@ if (!window.ZYEUTO_APP) {
       <button class="st-row" id="help-btn" type="button"><span class="st-ic" style="background:#a993e6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/><path d="M5 16a4 4 0 0 1 4-4h10"/></svg></span><span class="st-t"><b>Comment ça marche</b><small>Les 3 écrans de présentation</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" type="button" data-open="st-privacy"><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="st-t"><b>Confidentialité</b><small>Tes données restent chez toi</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <a class="st-row" href="mailto:victorfourneret@icloud.com?subject=Zieuton"><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><span class="st-t"><b>Nous écrire</b><small>victorfourneret@icloud.com</small></span><span class="st-go" aria-hidden="true">›</span></a>
+      <button class="st-row" type="button" id="report-btn"><span class="st-ic" style="background:#ef7f6a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 10v4.5M12 17h.01"/></svg></span><span class="st-t"><b>Envoyer un rapport</b><small>Si quelque chose ne marche pas</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
     <div class="st-group">
       <div class="st-row st-static" ><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="st-t"><b>Version</b><small id="st-ver2"></small></span></div>
     </div>
+  </div>
+</div>
+<div class="st-page" id="st-report" role="dialog" aria-modal="true" aria-labelledby="st-report-t" hidden>
+  <div class="st-in">
+    <button class="st-back" type="button" data-close="st-report">‹ Aide</button>
+    <h1 id="st-report-t">Envoyer un rapport</h1>
+    <p class="st-report-intro">Voici tout ce que le rapport contient. Pas de pseudo, pas d'abonnés, rien de ton export. Tu pourras encore le relire dans l'e-mail avant d'appuyer sur Envoyer.</p>
+    <pre class="st-report-box" id="report-text"></pre>
+    <a class="btn primary st-report-send" id="report-send" href="mailto:victorfourneret@icloud.com">Préparer l'e-mail</a>
   </div>
 </div>
 <div class="st-page" id="st-privacy" role="dialog" aria-modal="true" aria-labelledby="st-privacy-t" hidden>
@@ -2672,6 +2685,45 @@ if (!window.ZYEUTO_APP) {
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
+
+// ---------- Journal d'erreurs (FOU-30) ----------
+// Les erreurs inattendues sont notées sur le téléphone (200 au plus), pour « Réglages → Aide → Envoyer un rapport ».
+// Jamais de pseudo ni de donnée de l'export : le texte entre guillemets, les @pseudos, les adresses et les nombres longs sont masqués.
+const ERR_KEY = "abo-errors", ERR_MAX = 200;
+function errLog() {
+  try { const a = JSON.parse(localStorage.getItem(ERR_KEY) || "[]"); return Array.isArray(a) ? a : []; }
+  catch (e) { console.warn("[Zieuton] journal d'erreurs illisible", e); return []; }
+}
+function errClean(t) {
+  return String(t)
+    .replace(/"[^"]*"|'[^']*'|`[^`]*`|«[^»]*»|“[^”]*”/g, "…")
+    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "(e-mail)")
+    .replace(/@[\w.]+/g, "@…")
+    .replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, "(adresse)")
+    .replace(/\d{6,}/g, "#")
+    .replace(/\s+/g, " ").trim().slice(0, 160);
+}
+function logError(where, err) {
+  try {
+    const msg = err && typeof err === "object" ? (err.name || "Erreur") + (err.message ? " : " + err.message : "") : String(err);
+    // Seul l'endroit dans le code est gardé (ex. index.html:1234), pas la pile complète.
+    const at = ((err && err.stack) || "").match(/([^/\s()@]*):(\d+):\d+/);
+    let build;
+    try { build = BUILD; } catch (x) { build = "démarrage"; } // BUILD n'existe pas encore tout au début du démarrage
+    const e = { t: new Date().toISOString(), w: errClean(where).slice(0, 40), m: errClean(msg), at: at ? (at[1] || "page") + ":" + at[2] : "", b: build };
+    const log = errLog(), last = log[log.length - 1];
+    // La même erreur plusieurs fois de suite : on compte au lieu de remplir le journal.
+    if (last && last.w === e.w && last.m === e.m && last.at === e.at && last.b === e.b) { last.n = (last.n || 1) + 1; last.t = e.t; }
+    else log.push(e);
+    if (log.length > ERR_MAX) log.splice(0, log.length - ERR_MAX);
+    localStorage.setItem(ERR_KEY, JSON.stringify(log));
+    console.warn("[Zieuton]", where, err);
+  } catch (x) { console.warn("[Zieuton] journal d'erreurs indisponible", x); }
+}
+// Les erreurs que personne n'a attrapées vont aussi dans le journal.
+window.addEventListener("error", (ev) => logError("page", ev.error || { name: "Erreur", message: ev.message, stack: (ev.filename || "").split("/").pop() + ":" + ev.lineno + ":" + ev.colno }));
+window.addEventListener("unhandledrejection", (ev) => logError("promesse", ev.reason));
+
 const PAGE = 3; // sur l'accueil, puis « Voir tout »
 let state = { snapshots: [], events: [], followers: {} };  // { snapshots: [...], events: [...], followers: {name: ts} }
 let loading = true;
@@ -2713,7 +2765,7 @@ const store = {
 // On écrit les deux ; au chargement, on garde celle qui a le plus d'imports.
 const LS_KEY = "abo-state";
 function lsGet() { try { const s = JSON.parse(localStorage.getItem(LS_KEY) || "null"); return isState(s) ? s : null; } catch { return null; } }
-function lsSet(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {} }
+function lsSet(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch { /* normal : stockage indisponible, le bandeau de save() prévient */ } }
 
 const ICONS = {
   ok: `<svg viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.1 4.75 4.75 0 0 0 7 18.5z"/><path d="m9.5 13.6 1.9 1.9 3.6-3.7"/></svg>`,
@@ -2731,9 +2783,9 @@ function showStorageBanner(html) { $("storage-banner").innerHTML = html; $("stor
 async function save() {
   if (DEMO) return;
   let ok = false;
-  try { await store.set("state", state); ok = true; } catch {}
+  try { await store.set("state", state); ok = true; } catch (e) { logError("save-idb", e); }
   lsSet(state);
-  try { localStorage.getItem(LS_KEY) && (ok = true); } catch {}
+  try { localStorage.getItem(LS_KEY) && (ok = true); } catch { /* normal : stockage du navigateur indisponible */ }
   showStorageBanner(ok ? "" : "<strong>Ce navigateur n'enregistre rien</strong> (navigation privée ?). Sauvegarde une copie après chaque import.");
   renderBackup();  icloudQueue();
 }
@@ -3005,14 +3057,14 @@ const acctLabel = (a) => { const n = acctMe(a).name, c = `Compte ${accts().index
 let demoParked = {};
 async function parkState(id, s) {
   if (DEMO) { demoParked[id] = s; return; }
-  try { await store.set("acct:" + id, s); } catch {}
-  try { localStorage.setItem("abo-state-" + id, JSON.stringify(s)); } catch {}
+  try { await store.set("acct:" + id, s); } catch (e) { logError("park-idb", e); }
+  try { localStorage.setItem("abo-state-" + id, JSON.stringify(s)); } catch { /* normal : copie de secours, IndexedDB reste la principale */ }
 }
 async function unparkState(id) {
   if (DEMO) return demoParked[id] || emptyState();
   let s = null;
-  try { s = await store.get("acct:" + id); } catch {}
-  if (!isState(s)) { try { s = JSON.parse(localStorage.getItem("abo-state-" + id) || "null"); } catch {} }
+  try { s = await store.get("acct:" + id); } catch (e) { logError("unpark-idb", e); }
+  if (!isState(s)) { try { s = JSON.parse(localStorage.getItem("abo-state-" + id) || "null"); } catch (e) { logError("unpark-ls", e); } }
   return isState(s) ? s : emptyState();
 }
 // Range les réglages personnels du compte affiché, et sort ceux du compte suivant.
@@ -3023,12 +3075,12 @@ function swapPersonal(from, to) {
   for (const k of PER_ACCT) { if (to.p && to.p[k] !== undefined) prefs[k] = to.p[k]; else delete prefs[k]; }
   const av = to.p && to.p.avatar || null;
   delete to.p;
-  if (DEMO) { avatar = av; try { renderAvatar(); } catch {} } else setAvatar(av);
+  if (DEMO) { avatar = av; try { renderAvatar(); } catch (e) { logError("render-avatar", e); } } else setAvatar(av);
 }
 function renderAll() {
   undoState = null; $("toast").hidden = true;
   render(); renderPlusBlock();
-  for (const f of [renderSettings, renderHomeZy, renderZy, renderAvatar, renderBackup]) { try { f(); } catch {} }
+  for (const f of [renderSettings, renderHomeZy, renderZy, renderAvatar, renderBackup]) { try { f(); } catch (e) { logError("render-all:" + f.name, e); } }
 }
 // Passer sur un autre compte suivi : rien n'est effacé.
 async function goAccount(id) {
@@ -3049,8 +3101,8 @@ async function deleteAccount() {
   prefs.accts = accts().filter((a) => a !== del); savePrefs();
   if (DEMO) delete demoParked[del.id];
   else {
-    try { await store.set("acct:" + del.id, null); } catch {}
-    try { localStorage.removeItem("abo-state-" + del.id); } catch {}
+    try { await store.set("acct:" + del.id, null); } catch (e) { logError("del-acct-idb", e); }
+    try { localStorage.removeItem("abo-state-" + del.id); } catch { /* normal : stockage du navigateur indisponible */ }
   }
   renderAll();
   return true;
@@ -3740,7 +3792,7 @@ $("undo").addEventListener("click", async () => {
   render();
   renderPlusBlock();
   toast("Import annulé.", false);
-  try { renderZy(); renderGames(); } catch {}
+  try { renderZy(); renderGames(); } catch (e) { logError("undo-render", e); }
   await save();
 });
 
@@ -3889,7 +3941,7 @@ async function icloudSend() {
     const body = { prefs, state, parked, avatar: avatar || null };
     const data = JSON.stringify({ app: "zieuton", kind: "icloud", version: 1, savedAt: new Date().toISOString(), imports: state.snapshots.length, seal: backupSeal(body), ...body });
     nativePost({ type: "icloud", action: "save", data, count: state.snapshots.length });
-  } catch {}
+  } catch (e) { logError("icloud-save", e); }
   icloudBusy = false;
   if (icloudAgain) { icloudAgain = false; icloudQueue(); }
 }
@@ -4025,8 +4077,8 @@ $("acct-new-yes").addEventListener("click", async () => {
 // ---------- Nouvel export ----------
 // Préférences (date de demande d'export, dernière copie) gardées dans localStorage.
 let prefs = {};
-try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } catch {}
-function savePrefs() { if (DEMO) return; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch {} }
+try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } catch (e) { logError("prefs-load", e); }
+function savePrefs() { if (DEMO) return; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch { /* normal : stockage du navigateur indisponible */ } }
 function markRequested() {
   prefs.requestedAt = new Date().toISOString();
   delete prefs.readyAt;
@@ -4067,7 +4119,7 @@ function renderWeekly() {
   // Dans l'app iPhone (version 3), Zieuton regarde lui-même la page d'Instagram et dit quand le fichier est là.
   const ready = pend && (!!prefs.readyAt || mins >= READY_AFTER_MIN);
   // L'app arrête de guetter (et retire ses rappels) dès qu'il n'y a plus d'export en attente.
-  if (nativeApp && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend }); } catch {} }
+  if (nativeApp && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend }); } catch (e) { logError("bridge-exportState", e); } }
   const at = !pend ? 0 : ready ? 2 : 1;
   $("wk-steps").querySelectorAll("li").forEach((li, i) => {
     li.className = i < at ? "done" : i === at ? "on" : "";
@@ -4217,7 +4269,7 @@ document.querySelectorAll("[data-theme-pick]").forEach((b) => b.addEventListener
 applyTheme();
 // Mon compte : prénom et pseudo Instagram (gardés sur le téléphone)
 function renderSettings() {
-  try { renderAcct(); } catch {}
+  try { renderAcct(); } catch (e) { logError("render-acct", e); }
   const me = prefs.me || {};
   $("st-me-name").textContent = me.name || "Ton prénom";
   $("st-me-name").classList.toggle("ph", !me.name);
@@ -4243,7 +4295,7 @@ for (const [id, k, clean] of [["st-name", "name", (v) => v.trim()], ["st-ig", "i
       toast("Avec plusieurs comptes, chacun garde un prénom.", false);
     }
     if (k === "name" && (prefs.me || {}).name) curAcct().lastName = prefs.me.name;
-    renderSettings(); try { renderAcct(); } catch {}
+    renderSettings(); try { renderAcct(); } catch (e) { logError("render-acct", e); }
   });
 }
 $("st-photo2").addEventListener("click", () => $("avatar-btn").click());
@@ -4272,7 +4324,7 @@ const DRIVE_TOKEN = "abo-drive-token-ro";
 function driveToken() {
   try { const t = JSON.parse(localStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
 }
-function driveForget() { try { localStorage.removeItem(DRIVE_TOKEN); } catch {} }
+function driveForget() { try { localStorage.removeItem(DRIVE_TOKEN); } catch { /* normal : stockage du navigateur indisponible */ } }
 function driveMsg(text, busy) {
   $("drive-msg").innerHTML = busy ? `<span class="drive-busy"><span class="radar small" aria-hidden="true"></span>${esc(text)}</span>` : esc(text || "");
   $("drive-msg").hidden = !text;
@@ -4296,7 +4348,7 @@ function driveCallback() {
   if (st !== "drive-import" && st !== "drive-flow") return false;
   history.replaceState(null, "", location.pathname + location.search);
   if (h.get("access_token") && (h.get("scope") || "").includes("drive")) {
-    try { localStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch {}
+    try { localStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch { /* normal : stockage du navigateur indisponible */ }
     prefs.useDrive = true;
     if (st === "drive-flow") prefs.driveLinked = true;
     savePrefs();
@@ -4430,7 +4482,7 @@ function wkGo(mode) {
 window.zyeutoMeta = (ev) => {
   // Pendant la démo : « prêt » est noté sur les vraies données (la barre du haut le dit), une notification touchée ramène aux vraies données.
   if (DEMO && ev === "ready") {
-    if (realPrefs && !realPrefs.readyAt) { realPrefs.readyAt = new Date().toISOString(); try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch {} }
+    if (realPrefs && !realPrefs.readyAt) { realPrefs.readyAt = new Date().toISOString(); try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch { /* normal : stockage du navigateur indisponible */ } }
     haptic("success"); renderDemoBar(); toast("Ta vraie liste est prête 🎉 Touche « Récupérer ma liste » en haut.", false);
     return;
   }
@@ -4616,7 +4668,7 @@ function wlPlay() {
     if (busy) return;
     busy = true; n++;
     stage.classList.remove("hinting");
-    if (navigator.vibrate) try { navigator.vibrate(15); } catch {}
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch { /* normal : vibration refusée par le navigateur */ }
     const head = stage.querySelector(".wl-head"), hands = stage.querySelector(".wl-hands");
     const easing = "cubic-bezier(.3,1.3,.5,1)";
     bubble.animate([{ opacity: 1 }, { opacity: 0, scale: .6 }], { duration: 150, fill: "forwards" });
@@ -4635,10 +4687,10 @@ let gfTaps = [], gfChecking = false, gfTimer = null, gfStatus = "", gfAuthFailed
 // gfRepeat : le même parcours, rouvert depuis « Nouvel export » pour les imports suivants.
 let gfRepeat = false, gfRepeatFrom = 0;
 // Gardé le temps de la session : la reconnexion Google recharge la page.
-try { const r = sessionStorage.getItem("abo-gf-repeat"); if (r !== null) { gfRepeat = true; gfRepeatFrom = +r; } } catch {}
+try { const r = sessionStorage.getItem("abo-gf-repeat"); if (r !== null) { gfRepeat = true; gfRepeatFrom = +r; } } catch { /* normal : stockage du navigateur indisponible */ }
 function setRepeat(on) {
   gfRepeat = on; if (on) gfRepeatFrom = state.snapshots.length;
-  try { on ? sessionStorage.setItem("abo-gf-repeat", String(gfRepeatFrom)) : sessionStorage.removeItem("abo-gf-repeat"); } catch {}
+  try { on ? sessionStorage.setItem("abo-gf-repeat", String(gfRepeatFrom)) : sessionStorage.removeItem("abo-gf-repeat"); } catch { /* normal : stockage du navigateur indisponible */ }
 }
 const gfOn = () => !loading && !DEMO && (gfRepeat || (!state.snapshots.length && !prefs.manualStart));
 // Une demande est « en cours » si elle est plus récente que le dernier import.
@@ -4904,7 +4956,7 @@ function renderGuided() {
         setTimeout(() => { markRequested(); gfCheck(); }, 120 + todo.length * 140 + 700);
       };
     };
-    body.querySelectorAll(".stk button").forEach((b) => b.onclick = () => { const i = +b.dataset.i; gfTaps[i] = !gfTaps[i]; if (navigator.vibrate) try { navigator.vibrate(10); } catch {} sync(gfTaps[i] ? i : null); });
+    body.querySelectorAll(".stk button").forEach((b) => b.onclick = () => { const i = +b.dataset.i; gfTaps[i] = !gfTaps[i]; if (navigator.vibrate) try { navigator.vibrate(10); } catch { /* normal : vibration refusée par le navigateur */ } sync(gfTaps[i] ? i : null); });
     $("gf-done").onclick = () => { markRequested(); gfCheck(); };
   } else if (step === "get") {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
@@ -4977,7 +5029,7 @@ function renderGuided() {
     ch.onclick = async () => {
       haptic("selection");
       await goAccount(next.id);
-      try { renderAcct(); } catch {}
+      try { renderAcct(); } catch (e) { logError("render-acct", e); }
       toast(`Compte de ${acctName(curAcct())} affiché.`, false);
     };
     const bk = $("gf-backbtn");
@@ -5017,7 +5069,7 @@ async function gfCheck() {
   if (!token) {
     // Jeton expiré : reconnexion silencieuse une fois par ouverture (Google revient tout seul si l'accès est déjà donné).
     if (gfAuthFailed || sessionStorage.getItem("abo-drive-silent")) { gfAuthFailed = true; return renderGuided(); }
-    try { sessionStorage.setItem("abo-drive-silent", "1"); } catch {}
+    try { sessionStorage.setItem("abo-drive-silent", "1"); } catch { /* normal : stockage du navigateur indisponible */ }
     return driveSignIn("drive-flow", true);
   }
   gfChecking = true; gfStatus = "Je regarde dans ton Drive…"; renderGuided();
@@ -5039,13 +5091,14 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1300";
+const BUILD = "2026-11-06-1400";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
 // L'app envoie le fichier par morceaux (base64), puis on l'importe comme un fichier choisi à la main.
 let sharedBusy = false;
-const nativePost = (msg) => { try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch {} };
+// Dans Safari, il n'y a pas d'app derrière : l'échec est normal. Dans l'app, c'est une erreur à noter.
+const nativePost = (msg) => { try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch (e) { if (nativeApp) logError("bridge-" + (msg && msg.type), e); } };
 // Petite vibration dans l'app iPhone : "success", "error", "light", "medium", "selection".
 const haptic = (kind) => { if (nativeApp) nativePost({ type: "haptic", kind }); };
 
@@ -5071,6 +5124,34 @@ for (const id of ["st-ver", "st-ver2"]) $(id).addEventListener("click", () => {
   verTaps = now - verTapAt < 800 ? verTaps + 1 : 1;
   verTapAt = now;
   if (verTaps >= 5) { verTaps = 0; nativePost({ type: "channel", action: "toggle" }); }
+});
+
+// ---------- Envoyer un rapport (Réglages → Aide, FOU-30) ----------
+// La personne voit tout le texte avant d'ouvrir son app Mail ; elle peut encore le relire et le modifier avant d'envoyer.
+const REPORT_TO = "victorfourneret@icloud.com", REPORT_SHOWN = 40; // au plus 40 erreurs dans l'e-mail (lien mailto trop long sinon)
+function reportText() {
+  const ios = (navigator.userAgent.match(/OS (\d+)[_.](\d+)(?:[_.](\d+))?/) || []).slice(1).filter(Boolean).join(".");
+  const shell = nativeApp ? `app iPhone (coque version ${window.ZYEUTO_APP.version || 1})` : "site (navigateur)";
+  const log = errLog(), shown = log.slice(-REPORT_SHOWN).reverse();
+  const lines = [
+    "Rapport Zieuton",
+    `App : ${shell}`,
+    `Page : version ${BUILD}` + (nativeApp ? ` (canal ${updChannel})` : ""),
+    `iOS : ${ios || "inconnu"}`,
+    `Écran : ${screen.width}×${screen.height}`,
+    `Date : ${new Date().toISOString().slice(0, 16).replace("T", " ")}`,
+    "",
+    log.length ? `Erreurs notées : ${log.length}` + (log.length > shown.length ? ` (les ${shown.length} plus récentes ci-dessous)` : "") : "Aucune erreur notée.",
+  ];
+  for (const e of shown) lines.push(`${String(e.t).slice(0, 16).replace("T", " ")} · ${e.w} · ${e.m}${e.at ? " · " + e.at : ""} · ${e.b}${e.n > 1 ? ` · ×${e.n}` : ""}`);
+  return lines.join("\n");
+}
+$("report-btn").addEventListener("click", () => {
+  const text = reportText();
+  $("report-text").textContent = text;
+  const body = "Dis-nous en deux mots ce qui s'est passé :\n\n\n" + text;
+  $("report-send").href = `mailto:${REPORT_TO}?subject=${encodeURIComponent("Rapport Zieuton")}&body=${encodeURIComponent(body)}`;
+  openStPage("st-report");
 });
 
 // ---------- Zieuton Plus ----------
@@ -5247,11 +5328,11 @@ window.zyeutoPlus = (d) => {
   if (Array.isArray(d.products) && d.products.length) {
     prefs.plusPrices = Object.fromEntries(d.products.map((p) => [p.id, p.price]));
   }
-  if (DEMO) { realPrefs.plus = prefs.plus; realPrefs.plusSlots = prefs.plusSlots; if (prefs.plusPrices) realPrefs.plusPrices = prefs.plusPrices; try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch {} }
+  if (DEMO) { realPrefs.plus = prefs.plus; realPrefs.plusSlots = prefs.plusSlots; if (prefs.plusPrices) realPrefs.plusPrices = prefs.plusPrices; try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch { /* normal : stockage du navigateur indisponible */ } }
   savePrefs();
-  renderPlusPrices(); renderPlusBlock(); try { renderAcct(); } catch {}
+  renderPlusPrices(); renderPlusBlock(); try { renderAcct(); } catch (e) { logError("render-acct", e); }
   // Plus vient de s'activer (ou de s'arrêter) : le bonhomme change de couleur partout.
-  if (was !== hasPlus()) { try { renderHomeZy(); renderZy(); render(); } catch {} }
+  if (was !== hasPlus()) { try { renderHomeZy(); renderZy(); render(); } catch (e) { logError("plus-render", e); } }
   const r = d.result;
   if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
   if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked(was && r === "ok");
@@ -5308,7 +5389,7 @@ async function checkUpdate() {
       location.replace(location.pathname + "?v=" + encodeURIComponent(m[1]));
       return true;
     }
-  } catch {}
+  } catch { /* normal : pas de réseau : on réessaiera au prochain retour sur l'app */ }
   return false;
 }
 document.addEventListener("visibilitychange", () => {
@@ -5995,7 +6076,7 @@ function avatarSVG(look = {}, gold = plusGold() && !Object.values(GAME_LOOKS).in
 
 // Le zieuteur change d'habits : on le redessine partout tout de suite (accueil, Mettre à jour, abonnés, Graphiques, Plus, roue…).
 function refreshLooks() {
-  try { render(); } catch {}
+  try { render(); } catch (e) { logError("looks-render", e); }
   const wk = $("wk-av")?.innerHTML;
   ["asked-av", "first-av"].forEach((id) => { if ($(id) && wk) $(id).innerHTML = wk; });
   if ($("plus-av")) $("plus-av").innerHTML = avatarSVG(zy().look, true);
@@ -6209,7 +6290,7 @@ $("zy-anni-card").addEventListener("click", async (e) => {
   confetti();
   gainXP(anniPts(n), "Anniversaire"); checkTrophies();
   const text = `Ça fait ${ansText(n)} aujourd'hui que @${u} me suit 🎂`;
-  try { if (navigator.share) await navigator.share({ text }); } catch {}
+  try { if (navigator.share) await navigator.share({ text }); } catch (e) { if (!e || e.name !== "AbortError") logError("share-anniv", e); } // AbortError = partage annulé, normal
 });
 
 // ---------- Pronostics : la boule de cristal ----------
@@ -6689,7 +6770,7 @@ function scrubGrow(clientX) {
   };
   const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; drawGrow(); }); };
   box.addEventListener("pointerdown", (e) => {
-    try { box.setPointerCapture(e.pointerId); } catch {}
+    try { box.setPointerCapture(e.pointerId); } catch { /* normal : doigt déjà levé */ }
     pts.set(e.pointerId, e.clientX);
     if (pts.size === 2) {
       const [x1, x2] = [...pts.values()];
@@ -6877,7 +6958,7 @@ render = function () { renderHome(); renderHomeZy(); renderGamesPage(); statsDir
 // ---------- Photo de profil : réduite à 320 px et gardée sur le téléphone ----------
 const AVATAR_KEY = "abo-avatar";
 let avatar = null;
-try { avatar = localStorage.getItem(AVATAR_KEY); } catch {}
+try { avatar = localStorage.getItem(AVATAR_KEY); } catch { /* normal : stockage indisponible, IndexedDB a aussi la photo */ }
 function renderAvatar() {
   const core = $("avatar-core"), btn = $("avatar-btn");
   btn.classList.toggle("has-photo", !!avatar);
@@ -6888,8 +6969,8 @@ function renderAvatar() {
 }
 function setAvatar(url) {
   avatar = url;
-  try { url ? localStorage.setItem(AVATAR_KEY, url) : localStorage.removeItem(AVATAR_KEY); } catch {}
-  try { store.db && store.set("avatar", url); } catch {}
+  try { url ? localStorage.setItem(AVATAR_KEY, url) : localStorage.removeItem(AVATAR_KEY); } catch { /* normal : photo trop lourde ou stockage indisponible, IndexedDB la garde */ }
+  if (store.db) store.set("avatar", url).catch((e) => logError("avatar-idb", e));
   renderAvatar();
 }
 async function shrinkImage(file) {
@@ -7022,7 +7103,7 @@ function leaveDemo(quiet) {
   if (!DEMO) return;
   // Ce que la personne a réglé pendant la démo (thème, achat Plus) est gardé.
   for (const k of ["theme", "plus", "plusSlots", "plusPrices"]) if (k in prefs) realPrefs[k] = prefs[k];
-  if (avatar !== demoAvatar) { avatar = demoAvatar; try { renderAvatar(); } catch {} }
+  if (avatar !== demoAvatar) { avatar = demoAvatar; try { renderAvatar(); } catch (e) { logError("render-avatar", e); } }
   demoParked = {};
   DEMO = false; state = realState; prefs = realPrefs; realState = realPrefs = null;
   savePrefs();
@@ -7080,13 +7161,13 @@ render();
     const a = await store.get("avatar");
     if (!avatar && typeof a === "string") setAvatar(a);
     else if (avatar && a !== avatar) store.set("avatar", avatar);
-  } catch {}
+  } catch (e) { logError("start-idb", e); }
   const ls = lsGet();
   const best = [idb, ls].filter(Boolean).sort((a, b) => b.snapshots.length - a.snapshots.length)[0];
   if (best) state = best;
-  if (best && (!idb || !ls || idb.snapshots.length !== ls.snapshots.length)) { try { await store.set("state", state); } catch {} lsSet(state); }
+  if (best && (!idb || !ls || idb.snapshots.length !== ls.snapshots.length)) { try { await store.set("state", state); } catch (e) { logError("start-idb-save", e); } lsSet(state); }
   // Demande à Safari de ne pas effacer les données du site.
-  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch {}
+  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch { /* normal : simple demande, le navigateur peut refuser */ }
 
   // Les historiques d'avant le verrou : le compte suivi est celui déjà importé.
   if (!curAcct().n && state.snapshots.length) rememberAccount(Object.keys(state.followers));

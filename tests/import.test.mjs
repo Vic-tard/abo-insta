@@ -232,3 +232,17 @@ test("nettoyage des pseudos", () => {
   assert.equal(core.listKind({ relationships_following: [] }), "following");
   assert.equal(core.listKind({}), null);
 });
+
+// ---------- Exports d'exemple pour le testeur Apple (FOU-32) ----------
+test("exports d'exemple du testeur Apple : 1er import, puis 4 départs et 3 arrivées", async () => {
+  const { GONE, NEW } = await import("../scripts/make-review-exports.mjs");
+  const zipFile = (n) => new File([readFileSync(new URL("../exemple/" + n, import.meta.url))], n);
+  const core = loadCore();
+  core.lock(true); // comme dans l'app
+  await importFiles(core, [zipFile("zieuton-exemple-1.zip")]);
+  await importFiles(core, [zipFile("zieuton-exemple-2.zip")]);
+  const kinds = (k) => plain(core.state.events).filter((e) => e.kind === k).map((e) => e.u).sort();
+  assert.deepEqual(kinds("unfollow"), [...GONE].sort());
+  assert.deepEqual(kinds("follow"), [...NEW].sort());
+  assert.equal(core.state.snapshots.length, 2);
+});
