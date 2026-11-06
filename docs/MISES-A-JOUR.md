@@ -77,56 +77,57 @@ dans les iPhones sans cette clé.
 
 **A. Créer la clé sur le Mac**
 
-1. Récupère le fichier `creer-cle.swift` : sur github.com, ouvre le dépôt **abo-insta**, le dossier `scripts`,
-   puis `creer-cle.swift`. En haut à droite du fichier, touche l'icône **flèche vers le bas** (« Download raw file »).
-   Il arrive dans **Téléchargements**.
-2. Ouvre le **Terminal** : `Cmd` + `Espace`, tape `Terminal`, `Entrée`.
-3. Dans la fenêtre, tape `swift` puis **un espace** (ne fais pas encore Entrée).
-4. Ouvre le Finder → **Téléchargements**, et **glisse** le fichier `creer-cle.swift` dans la fenêtre du Terminal.
-   Le chemin du fichier s'écrit tout seul après `swift `. Appuie sur `Entrée`.
-5. Attends quelques secondes. Deux longues lignes de lettres apparaissent :
+1. Ouvre le **Terminal** : `Cmd` + `Espace`, tape `Terminal`, `Entrée`.
+2. Copie toute la ligne ci-dessous, colle-la dans le Terminal (`Cmd` + `V`) et appuie sur `Entrée`.
+   Elle télécharge `scripts/creer-cle.swift` dans Téléchargements et le lance :
+
+   ```
+   curl -sL -o ~/Downloads/creer-cle.swift https://github.com/Vic-tard/abo-insta/raw/main/scripts/creer-cle.swift && swift ~/Downloads/creer-cle.swift
+   ```
+
+3. Attends 10 à 20 secondes. Deux longues lignes de lettres apparaissent :
    - **1) CLÉ SECRÈTE** (environ 44 caractères, finit souvent par `=`),
    - **2) CLÉ PUBLIQUE** (même longueur).
 
    Si un message parle de « license » ou de « xcrun » : ouvre Xcode une fois, accepte ce qu'il propose, puis
-   recommence à l'étape 3.
+   recolle la ligne de l'étape 2.
 
 **B. Ranger la clé secrète en lieu sûr**
 
-6. Sélectionne la ligne sous « CLÉ SECRÈTE » (double-clic dessus, ou glisse la souris), `Cmd` + `C`.
-7. Ouvre l'app **Mots de passe** du Mac → **+** (nouveau mot de passe). Titre : `Zieuton clé de signature`,
+4. Sélectionne la ligne sous « CLÉ SECRÈTE » (double-clic dessus, ou glisse la souris), `Cmd` + `C`.
+5. Ouvre l'app **Mots de passe** du Mac → **+** (nouveau mot de passe). Titre : `Zieuton clé de signature`,
    Nom d'utilisateur : `PAGE_SIGNING_KEY`, Mot de passe : `Cmd` + `V`. Enregistre.
    (C'est ta sauvegarde : si tu la perds, voir « Clé perdue » plus bas.)
 
 **C. La mettre dans les secrets GitHub**
 
-8. Ouvre https://github.com/Vic-tard/abo-insta/settings/secrets/actions
+6. Ouvre https://github.com/Vic-tard/abo-insta/settings/secrets/actions
    (ou : dépôt → **Settings** → menu de gauche **Secrets and variables** → **Actions**).
-9. Touche le bouton vert **New repository secret**.
-10. **Name** : `PAGE_SIGNING_KEY` (exactement, en majuscules). **Secret** : `Cmd` + `V` (la clé secrète).
-11. Touche **Add secret**. GitHub ne te la remontrera plus jamais : c'est normal.
+7. Touche le bouton vert **New repository secret**.
+8. **Name** : `PAGE_SIGNING_KEY` (exactement, en majuscules). **Secret** : `Cmd` + `V` (la clé secrète).
+9. Touche **Add secret**. GitHub ne te la remontrera plus jamais : c'est normal.
 
 **D. Donner la clé publique**
 
-12. Copie la ligne sous « CLÉ PUBLIQUE » et colle-la dans la discussion avec Claude. Elle n'est pas secrète :
+10. Copie la ligne sous « CLÉ PUBLIQUE » et colle-la dans la discussion avec Claude. Elle n'est pas secrète :
     elle sera écrite dans l'app. Tant qu'elle n'y est pas, une case reste rouge sur la PR (c'est voulu).
-13. Ferme la fenêtre du Terminal. Ne mets la clé secrète nulle part ailleurs (ni mail, ni message, ni note).
+11. Ferme la fenêtre du Terminal. Ne mets la clé secrète nulle part ailleurs (ni mail, ni message, ni note).
 
 **E. Activer la double authentification GitHub (indispensable)**
 
 La clé est aussi protégée que ton compte GitHub. Si ce n'est pas déjà fait :
 
-14. Ouvre https://github.com/settings/security (photo en haut à droite → **Settings** → **Password and authentication**).
-15. Dans **Two-factor authentication**, touche **Enable two-factor authentication** et suis les étapes
+12. Ouvre https://github.com/settings/security (photo en haut à droite → **Settings** → **Password and authentication**).
+13. Dans **Two-factor authentication**, touche **Enable two-factor authentication** et suis les étapes
     (le plus simple : l'app **Mots de passe** de l'iPhone ou du Mac sait lire le QR code et donner les codes).
-16. **Garde les codes de secours** (« recovery codes ») dans l'app Mots de passe, avec la clé.
+14. **Garde les codes de secours** (« recovery codes ») dans l'app Mots de passe, avec la clé.
 
 **F. Juste avant de dire « fusionne »**
 
-17. Ouvre https://github.com/Vic-tard/abo-insta/settings/pages
-18. Dans **Build and deployment**, à **Source**, choisis **GitHub Actions** (au lieu de « Deploy from a branch »).
+15. Ouvre https://github.com/Vic-tard/abo-insta/settings/pages
+16. Dans **Build and deployment**, à **Source**, choisis **GitHub Actions** (au lieu de « Deploy from a branch »).
     À partir de là, c'est le robot « Publier le site » qui met le site en ligne (avec la signature).
-19. Dis « fusionne ». Après la fusion, onglet **Actions** du dépôt : la ligne **Publier le site** doit devenir
+17. Dis « fusionne ». Après la fusion, onglet **Actions** du dépôt : la ligne **Publier le site** doit devenir
     verte en 1 à 2 minutes. Vérification : https://vic-tard.github.io/abo-insta/index.html.sig affiche une ligne
     de lettres.
 
