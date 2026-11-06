@@ -4230,7 +4230,7 @@ function renderSettings() {
   if (me.ig) $("st-ig-open").href = profileUrl(me.ig);
   $("st-plus-sub").textContent = hasPlus() ? "Activé, merci !" : $("plus-mini-t").textContent;
   $("st-drive").hidden = !(typeof driveToken === "function" && driveToken());
-  const ver = `Zieuton · version du ${BUILD.slice(8, 10)}/${BUILD.slice(5, 7)}/${BUILD.slice(0, 4)}`;
+  const ver = `Zieuton · version du ${BUILD.slice(8, 10)}/${BUILD.slice(5, 7)}/${BUILD.slice(0, 4)}` + (updChannel === "test" ? " · canal test" : "");
   $("st-ver").textContent = ver; $("st-ver2").textContent = ver;
 }
 for (const [id, k, clean] of [["st-name", "name", (v) => v.trim()], ["st-ig", "ig", (v) => v.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase()]]) {
@@ -5039,7 +5039,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-05-1400";
+const BUILD = "2026-11-06-1300";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -5048,6 +5048,30 @@ let sharedBusy = false;
 const nativePost = (msg) => { try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch {} };
 // Petite vibration dans l'app iPhone : "success", "error", "light", "medium", "selection".
 const haptic = (kind) => { if (nativeApp) nativePost({ type: "haptic", kind }); };
+
+// ---------- Canal des mises à jour (app iPhone, coque version 8 et plus) ----------
+// Réglage caché : 5 touches rapides sur le numéro de version (Réglages) passent ce téléphone sur le canal
+// « test » : il reçoit les nouvelles versions de la page avant tout le monde. 5 touches de plus : retour au normal.
+// C'est l'app qui garde le canal et qui répond par window.zyeutoChannel({ channel, toggled }).
+var updChannel = "stable"; // var : renderSettings() peut le lire avant cette ligne
+const channelApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 8;
+window.zyeutoChannel = (info) => {
+  if (!info || typeof info !== "object") return;
+  updChannel = info.channel === "test" ? "test" : "stable";
+  if (info.toggled) {
+    haptic("success");
+    toast(updChannel === "test" ? "Canal test activé : ce téléphone reçoit les nouvelles versions en premier." : "Canal normal : ce téléphone reçoit les versions validées.", false);
+  }
+  renderSettings();
+};
+let verTaps = 0, verTapAt = 0;
+for (const id of ["st-ver", "st-ver2"]) $(id).addEventListener("click", () => {
+  if (!channelApp()) return;
+  const now = Date.now();
+  verTaps = now - verTapAt < 800 ? verTaps + 1 : 1;
+  verTapAt = now;
+  if (verTaps >= 5) { verTaps = 0; nativePost({ type: "channel", action: "toggle" }); }
+});
 
 // ---------- Zieuton Plus ----------
 // Gratuit : les deux premiers imports (le point de départ et la première comparaison), puis une mise à jour par mois.
@@ -7106,6 +7130,9 @@ render();
   else if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
   renderPlusBlock();
+  // App iPhone : « je suis bien démarrée », une fois l'accueil affiché. Si ce signal n'arrive pas,
+  // l'app considère cette version de la page comme cassée et revient à celle d'avant.
+  if (nativeApp) requestAnimationFrame(() => nativePost({ type: "started", build: BUILD }));
 })();
 </script>
 </body>

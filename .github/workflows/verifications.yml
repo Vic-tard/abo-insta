@@ -52,6 +52,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Version de Xcode
         run: xcodebuild -version
+      - name: Règles de sécurité des mises à jour de la page (PageGuard)
+        run: sh scripts/test-page-guard.sh
       - name: Compiler l'app
         run: |
           xcodebuild build \

@@ -8,6 +8,9 @@ Mises à jour de la page : à chaque ouverture (et à chaque retour dans l'app),
 récente est en ligne sur https://vic-tard.github.io/abo-insta/ (ligne `const BUILD` de `index.html`).
 Si oui, elle la télécharge, la garde sur le téléphone et l'affiche aussitôt (sauf pendant un import ou quand
 Instagram est ouvert dans l'app). Pas besoin de réinstaller l'app pour une retouche de page.
+Sécurité : une page téléchargée qui ne démarre pas (plantage, écran bloqué) est abandonnée toute seule,
+l'app revient à la version d'avant. Le fichier `channel.json` à la racine du dépôt dit quelle version est
+validée pour tout le monde, et contient un interrupteur d'urgence. Tout est expliqué dans `docs/MISES-A-JOUR.md`.
 Xcode ne sert que pour la partie native (achats, notifications, partage, icône, écran de lancement)
 et pour envoyer une nouvelle version à Apple. Chaque nouvelle version envoyée embarque la page du moment.
 
