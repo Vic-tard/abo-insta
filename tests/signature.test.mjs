@@ -59,4 +59,6 @@ test("la clé publique de Victor est écrite dans l'app (PageSignature.publicKey
   const pub = shellPublicKey();
   assert.ok(pub, "PageSignature.publicKey est encore vide : Victor doit créer la clé (docs/MISES-A-JOUR.md, partie 4)");
   assert.doesNotThrow(() => isValid(Buffer.from("x"), "", pub), "clé publique mal recopiée");
+  // Première clé du 2026-11-06 : sa partie secrète a été montrée sur une capture, elle ne doit jamais servir.
+  assert.notEqual(pub, "HfbycYnMdY1Yd9Gq+NjlYCcB47wZsdRdUfcWVKzUXV8=", "clé compromise : en créer une nouvelle");
 });

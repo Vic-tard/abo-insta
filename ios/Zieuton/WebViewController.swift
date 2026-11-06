@@ -2514,8 +2514,8 @@ enum PageGuard {
 /// « index.html.sig » et « channel.json.sig » à côté des fichiers. Format Ed25519, en base64.
 enum PageSignature {
     /// Clé publique de Victor (32 octets en base64). Elle n'est pas secrète. Créée par scripts/creer-cle.swift.
-    /// Vide = aucune page téléchargée n'est acceptée (l'app garde celle rangée dedans).
-    static let publicKey = ""
+    /// Si elle était vide, aucune page téléchargée ne serait acceptée (l'app garderait celle rangée dedans).
+    static let publicKey = "bSfAcWK6+uFYIFytbn2FV5hM14A1w9pDYtx0PNlRgY4="
 
     /// Lit un fichier .sig : une signature de 64 octets en base64 (espaces et retour à la ligne tolérés).
     static func decode(_ file: Data?) -> Data? {
