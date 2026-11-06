@@ -207,7 +207,7 @@ if (!window.ZYEUTO_APP) {
 
   /* Carte « Nouvel export » : lien direct vers Instagram + rappel des réglages à cocher */
   .weekly { background: var(--surface-2); border-radius: 16px; padding: 10px 10px 10px 12px; display: flex; flex-direction: column; gap: 10px; }
-  /* Une seule ligne : « Nouvel export » ouvre le menu, le bouton Drive reste à portée de pouce */
+  /* Une seule ligne : « Nouvel export » ouvre le menu */
   .wk-bar { display: flex; align-items: center; gap: 10px; }
   .wk-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: none; color: var(--ink); padding: 4px 0; cursor: pointer; text-align: left; font: inherit; }
   .wk-toggle .t { display: block; font: 700 16px/1.2 var(--round); }
@@ -237,8 +237,6 @@ if (!window.ZYEUTO_APP) {
   .steps li { counter-increment: step; display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: baseline; font-size: 14px; line-height: 1.35; letter-spacing: -0.005em; }
   .steps li::before { content: counter(step); width: 22px; height: 22px; border-radius: 50%; background: var(--rose-soft); color: var(--rose-ink); font: 700 12px/22px var(--font); text-align: center; align-self: start; }
   .steps b { font-weight: 600; }
-  .steps-alt { margin: 0; padding: 0 14px 12px; font-size: 13px; color: var(--muted); }
-  .steps-alt b { color: var(--ink); font-weight: 600; }
   .weekly .note { font-size: 13px; }
 
   .toast { position: fixed; left: 50%; translate: -50% 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 50; width: min(568px, calc(100% - 32px));
@@ -462,7 +460,6 @@ if (!window.ZYEUTO_APP) {
     background: repeating-radial-gradient(circle, transparent 0 10px, var(--line) 10px 11px); border: 1.5px solid var(--rose); }
   .radar::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, var(--rose), transparent 80deg, transparent); animation: sweep 1.1s linear infinite; }
   .radar.small { width: 22px; height: 22px; background: none; border-width: 1.5px; }
-  .drive-busy { display: flex; align-items: center; gap: 10px; }
 
   /* Bilan après un import : ticket à gratter, puis mini-jeu */
   .bilan { position: fixed; inset: 0; z-index: 40; background: rgb(22 17 18 / .55); display: flex; align-items: center; justify-content: center;
@@ -747,7 +744,7 @@ if (!window.ZYEUTO_APP) {
   .weekly { position: relative; overflow: hidden; background: linear-gradient(160deg, #ffe0b8, #f7a96c) !important; border-radius: 24px !important; padding: 12px 12px 12px 14px !important; box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
   .weekly .wk-toggle .t { font: 800 17px/1.2 var(--round); }
   .weekly .wk-toggle .due { color: rgb(46 35 40 / .72); }
-  .weekly .howto, .weekly .steps-alt { color: #2e2328; }
+  .weekly .howto { color: #2e2328; }
   .weekly .btn.ghost { background: rgb(255 255 255 / .62) !important; }
   .weekly .wk-toggle .t { white-space: nowrap; }
   .weekly .wk-toggle .chev { display: none; }
@@ -1052,12 +1049,6 @@ if (!window.ZYEUTO_APP) {
   .gx-b.plum { background: linear-gradient(135deg, #8a4560, #4a2636); }
   @media (prefers-reduced-motion: no-preference) { .gx { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; } .gx-list { animation: rise .35s .08s both; } }
   @media (prefers-reduced-motion: reduce) { .gx-steps li.now::before { animation: none; } }
-  .gf-wait.ready .radar { display: none; }
-  .gf-wait .done-ic { font-size: 54px; line-height: 1; }
-  .gf-wait { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 18px 0 4px; }
-  .gf-wait .radar { width: 96px; height: 96px; }
-  .gf-wait b { font-size: 17px; }
-  .gf-wait small { color: var(--muted); font-size: 14px; }
   .gf-share { display: inline-flex; width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2); align-items: center; justify-content: center; vertical-align: middle; margin: 0 4px; }
   .gf-share svg { width: 20px; height: 20px; fill: none; stroke: #0a84ff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) { .gf-body { animation: rise .3s both; } .gf-share { animation: nudge 1.6s ease-in-out infinite; } }
@@ -1810,24 +1801,6 @@ if (!window.ZYEUTO_APP) {
   .guide-av svg { width: 100%; height: 100%; display: block; }
   .guide-say { position: relative; background: var(--surface); color: var(--ink); border-radius: 18px 18px 18px 4px; padding: 11px 14px; font: 600 15px/1.35 var(--round); box-shadow: 0 6px 18px rgb(46 35 40 / .08); }
   .fun h2 { margin: 2px 0 0; font-size: 26px; }
-  .stk { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-  .stk li > button { width: 100%; display: grid; grid-template-columns: 32px 1fr; gap: 3px 12px; align-items: center; text-align: left; cursor: pointer;
-    background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: 11px 12px; font: 15px/1.35 var(--font); transition: background .25s, opacity .25s; }
-  .stk li > a { width: 100%; box-sizing: border-box; display: grid; grid-template-columns: 32px 1fr 20px; gap: 3px 12px; align-items: center; text-decoration: none; border-radius: 16px; padding: 13px 12px; font: 600 16px/1.35 var(--font);
-    background: var(--btn); color: var(--btn-ink); transition: background .25s; }
-  .stk li > a .n { background: var(--btn-ink); color: var(--btn); }
-  .stk li > a small { color: inherit; opacity: .75; font-weight: 400; }
-  .stk li > a .go { grid-row: 1; grid-column: 3; }
-  .stk li > a .go svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
-  .stk li.open.ok > a { background: var(--up-soft); color: var(--ink); font-weight: 400; }
-  .stk li.open.ok > a .n { background: var(--up); color: #fff; }
-  .modes { display: flex; flex-direction: column; gap: 12px; }
-  .mode { position: relative; display: grid; grid-template-columns: 52px 1fr; gap: 4px 14px; align-items: center; text-align: left; width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 20px; padding: 16px; cursor: pointer; font: 15px/1.4 var(--font); }
-  .mode { border-width: 2px; }
-  .mode::after { content: ""; position: absolute; top: 50%; right: 16px; translate: 0 -50%; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); }
-  .mode { padding-right: 50px; }
-  .mode[aria-pressed="true"] { border-color: #ef7f6a; box-shadow: 0 10px 26px rgb(239 127 106 / .22); }
-  .mode[aria-pressed="true"]::after { border-color: #ef7f6a; background: radial-gradient(circle, #ef7f6a 0 6px, var(--surface) 7px); }
   .btn:disabled { opacity: .45; }
   .gf-backbtn { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); font: 600 14px var(--font); border-radius: 999px; padding: 7px 14px 7px 10px; cursor: pointer; margin-bottom: -4px; }
   .gf-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: -4px; }
@@ -1837,43 +1810,16 @@ if (!window.ZYEUTO_APP) {
   .gf-acct span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gf-acct svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; opacity: .7; }
   .gf-backbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-  .mode:active { transform: scale(.98); }
-  .mode-ic { grid-row: span 2; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; align-self: start; }
-  .mode-ic svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .mode-ic.g { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; }
-  .mode-ic.p { background: var(--rose-soft); color: var(--rose-ink); }
-  .mode-t { font: 800 19px var(--round); }
-  .mode-tag.soon { background: var(--surface-2); color: var(--muted); box-shadow: 0 0 0 1px var(--line); }
-  .mode-tag { position: absolute; top: -10px; right: 14px; background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; font: 800 11.5px var(--round); padding: 4px 10px; border-radius: 999px; }
-  .mode-d { grid-column: 2; color: var(--muted); font-size: 14px; }
-  .say-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .say-btns button { border: 0; border-radius: 999px; padding: 8px 14px; font: 700 14px var(--round); cursor: pointer; background: var(--surface-2); color: var(--ink); }
-  .say-btns button:first-child { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; }
-  .stk-sep { font: 700 12px var(--round); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 4px 0; display: flex; align-items: center; gap: 8px; }
-  .stk-sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-  .stk .n { grid-row: span 2; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--rose-soft); color: var(--rose-ink); font: 800 14px var(--round); align-self: start; transition: background .25s, color .25s; }
-  .stk .n svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
-  .stk small { grid-column: 2; font-size: 13px; color: var(--muted); line-height: 1.35; }
-  .stk .ig { display: inline-block; background: var(--surface-2); color: var(--ink); border-radius: 8px; padding: 2px 8px; font-weight: 600; font-size: 13.5px; margin: 1px 1px; }
-  .stk .ig.b { background: #0095f6; color: #fff; }
-  .stk li.cur .n { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; }
-  .stk li.cur > button { border-color: #ef7f6a; }
-  .stk li.ok .n { background: var(--up); color: #fff; }
-  .stk li.ok > button { background: var(--up-soft); border-color: transparent; }
-  .stk li.ok small { display: none; }
-  .stk.read li > button { cursor: default; }
   .btn.cheer { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; box-shadow: 0 8px 22px rgb(239 127 106 / .4); }
   .letter { align-self: center; width: 120px; height: 92px; position: relative; margin: 6px 0 2px; }
   .letter svg { width: 100%; height: 100%; overflow: visible; }
   @media (prefers-reduced-motion: no-preference) {
-    .stk li.pop .n { animation: stkpop .45s cubic-bezier(.3,1.7,.5,1); }
     .guide-say { animation: bubble .4s cubic-bezier(.3,1.6,.5,1) both; transform-origin: 0 100%; }
     .btn.cheer { animation: cheer 1.6s ease-in-out infinite; }
     .letter svg { animation: float 2.6s ease-in-out infinite; }
     .letter .dot { animation: twinkle 1.4s ease-in-out infinite both; }
     .letter .dot:nth-of-type(2) { animation-delay: .3s; } .letter .dot:nth-of-type(3) { animation-delay: .6s; }
   }
-  @keyframes stkpop { 40% { transform: scale(1.3); } }
   @keyframes cheer { 50% { transform: scale(1.03); } }
   @keyframes float { 50% { transform: translateY(-6px) rotate(-2deg); } }
   @keyframes nudge { 50% { transform: translateY(-4px); } }
@@ -2108,8 +2054,6 @@ if (!window.ZYEUTO_APP) {
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
     <div class="wk-bar">
       <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="t" id="weekly-title">Mettre à jour</span><small class="due" id="due"></small></span></button>
-      <button class="btn primary pill" id="drive-import" hidden>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>Drive</button>
       <button class="btn primary pill" id="bar-file" type="button" disabled hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer</button>
     </div>
@@ -2130,20 +2074,11 @@ if (!window.ZYEUTO_APP) {
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Demander l'export à Instagram</a>
     <div id="howto-slot-weekly"><details class="howto" id="howto">
       <summary>Consignes<span>6 étapes</span></summary>
-      <ol class="steps" aria-label="Les étapes dans Instagram">
-      <li><span><b>Créer une exportation</b>, puis ton compte</span></li>
-      <li><span><b>Exporter vers un service externe</b> → <b>Google Drive</b></span></li>
-      <li><span>Coche seulement <b>Followers et suivi(e)s</b></span></li>
-      <li><span><b>Depuis le début</b> · <b>JSON</b> · fréquence <b>Une fois</b></span></li>
-      <li><span><b>Commencer l'exportation</b> : l'export arrive dans ton Drive en quelques minutes</span></li>
-      <li><span id="step-import">Ensuite, ici : <b>Importer depuis Google Drive</b></span></li>
-    </ol>
-    <p class="steps-alt">Sans Google Drive : choisis <b>Exporter sur mon appareil</b>, puis importe le .zip reçu.</p>
+      <ol class="steps" aria-label="Les étapes dans Instagram"></ol>
     </details></div>
     <button class="btn ghost" id="quick-import" disabled>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer le .zip reçu</button>
     </div>
-    <p class="note" id="drive-msg" hidden></p>
   </section>
 
   <div class="banner install" id="install-banner" hidden><strong>Installe l'app :</strong> touche <b>Partager</b> puis « <b>Sur l'écran d'accueil</b> ». Elle s'ouvrira en plein écran, comme une vraie app.<button class="x" id="install-x" aria-label="Fermer">✕</button></div>
@@ -2306,7 +2241,6 @@ if (!window.ZYEUTO_APP) {
     <div class="st-label">Connexion</div>
     <div class="st-group">
       <div class="st-row st-static" ><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="st-t"><b>Aucun compte à créer</b><small>Pas d'e-mail, pas de mot de passe. Tout reste chez toi.</small></span></div>
-      <div id="st-drive" hidden><button class="st-row " id="st-drive-out" type="button"><span class="st-ic" style="background:#4a8bd6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/></svg></span><span class="st-t"><b>Google Drive connecté</b><small>Toucher pour le déconnecter</small></span></button></div>
     </div>
   </div>
 </div>
@@ -3786,7 +3720,7 @@ function lastYearOnly(followers) {
 $("pv-redo").addEventListener("click", () => {
   closeSheet();
   delete prefs.requestedAt; delete prefs.readyAt;
-  prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; gfTaps = [];
+  prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0;
   savePrefs(); haptic("light");
   if (!state.snapshots.length) return render();
   if (metaInApp()) { render(); return wkGo(); }
@@ -4130,7 +4064,7 @@ $("reset-yes").addEventListener("click", async () => {
   state = emptyState();
   // Une ancienne demande d'export ne doit pas survivre : sinon le guide dit « Ta liste est sûrement prête » tout de suite.
   delete prefs.requestedAt; delete prefs.readyAt; delete prefs.lastImportAt;
-  prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; gfTaps = [];
+  prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0;
   savePrefs();
   $("reset-row").hidden = false; $("reset-confirm").hidden = true;
   render();
@@ -4257,11 +4191,11 @@ function renderWeekly() {
   $("wk-redo").hidden = !pend || simple;
   $("wk-help").hidden = !simple;
   if (simple) { $("wk-more").hidden = true; $("wk-toggle").setAttribute("aria-expanded", "false"); $("sos-redo").hidden = !pend; }
-  $("wk-go-t").textContent = !pend ? "C'est parti" : useDrive() ? "Vérifier mon Drive" : "Télécharger mon export";
+  $("wk-go-t").textContent = !pend ? "C'est parti" : "Télécharger mon export";
   $("wk-go-i").innerHTML = pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
-  if (useDrive()) $("go-export").className = "btn ghost"; else $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
-  $("quick-import").className = "btn " + (waiting && !useDrive() ? "primary" : "ghost");
+  $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
+  $("quick-import").className = "btn " + (waiting ? "primary" : "ghost");
 }
 
 // ---------- Premier lancement : parcours « Pour commencer » ----------
@@ -4406,7 +4340,6 @@ function renderSettings() {
   $("st-ig-open").hidden = !me.ig;
   if (me.ig) $("st-ig-open").href = profileUrl(me.ig);
   $("st-plus-sub").textContent = hasPlus() ? "Activé, merci !" : $("plus-mini-t").textContent;
-  $("st-drive").hidden = !(typeof driveToken === "function" && driveToken());
   const ver = `Zieuton · version du ${BUILD.slice(8, 10)}/${BUILD.slice(5, 7)}/${BUILD.slice(0, 4)}` + (updChannel === "test" ? " · canal test" : "");
   $("st-ver").textContent = ver; $("st-ver2").textContent = ver;
 }
@@ -4425,7 +4358,6 @@ for (const [id, k, clean] of [["st-name", "name", (v) => v.trim()], ["st-ig", "i
 }
 $("st-photo2").addEventListener("click", () => $("avatar-btn").click());
 $("st-look-btn").addEventListener("click", () => openLook());
-$("st-drive-out").addEventListener("click", () => { driveForget(); renderSettings(); toast("Google Drive est déconnecté.", false); });
 $("imp-row").addEventListener("click", () => openStPage("imports-page"));
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeStPage(b.dataset.close)));
 $("st-photo").addEventListener("click", () => $("avatar-btn").click());
@@ -4433,107 +4365,11 @@ new MutationObserver(() => renderSettings()).observe($("avatar-core"), { childLi
 const ST_PAGES = ["settings", "imports-page", "list-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy"];
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const top = ST_PAGES.filter((id) => !$(id).hidden).pop(); if (top) closeStPage(top); } });
 
-// ---------- Import depuis Google Drive ----------
-// Instagram peut déposer l'export tout seul dans Google Drive (export programmé, fichiers JSON non zippés).
-// Un seul bouton : l'app cherche le followers_1.json le plus récent du Drive, et le following.json du même dossier.
-// Pas de sélecteur Google : il a besoin de cookies tiers, bloqués par Safari dans une app installée sur l'iPhone.
-// Connexion par redirection (pas de fenêtre popup) : les popups ne reviennent pas dans une app installée.
-const DRIVE = {
-  clientId: "246738820732-umpohueucl4pnuagf0pba2lc0ttk84fp.apps.googleusercontent.com",   // ID client OAuth « Application Web », origine https://vic-tard.github.io
-};
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
-// Google refuse la connexion dans une app (vue web intégrée) : le mode Drive reste réservé au site.
-// Drive abandonné (2026-11) : plus proposé nulle part, le parcours « Exporter sur mon appareil » sert à tout le monde.
-const driveReady = () => false;
-const DRIVE_TOKEN = "abo-drive-token-ro";
-function driveToken() {
-  try { const t = JSON.parse(localStorage.getItem(DRIVE_TOKEN) || "null"); return t && t.exp > Date.now() + 60000 ? t.value : null; } catch { return null; }
-}
-function driveForget() { try { localStorage.removeItem(DRIVE_TOKEN); } catch { /* normal : stockage du navigateur indisponible */ } }
-function driveMsg(text, busy) {
-  $("drive-msg").innerHTML = busy ? `<span class="drive-busy"><span class="radar small" aria-hidden="true"></span>${esc(text)}</span>` : esc(text || "");
-  $("drive-msg").hidden = !text;
-}
-function driveSignIn(state = "drive-import", silent = false) {
-  const q = new URLSearchParams({
-    client_id: DRIVE.clientId,
-    redirect_uri: location.origin + location.pathname,
-    response_type: "token",
-    scope: DRIVE_SCOPE,
-    include_granted_scopes: "true",
-    state,
-  });
-  if (silent) q.set("prompt", "none");
-  location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + q;
-}
-// Retour de la connexion Google : le jeton arrive dans l'adresse (#access_token=…), on le garde le temps de la session.
-function driveCallback() {
-  const h = new URLSearchParams(location.hash.slice(1));
-  const st = h.get("state");
-  if (st !== "drive-import" && st !== "drive-flow") return false;
-  history.replaceState(null, "", location.pathname + location.search);
-  if (h.get("access_token") && (h.get("scope") || "").includes("drive")) {
-    try { localStorage.setItem(DRIVE_TOKEN, JSON.stringify({ value: h.get("access_token"), exp: Date.now() + Number(h.get("expires_in") || 3600) * 1000 })); } catch { /* normal : stockage du navigateur indisponible */ }
-    prefs.useDrive = true;
-    if (st === "drive-flow") prefs.driveLinked = true;
-    savePrefs();
-    return st;
-  }
-  if (st === "drive-flow") { gfAuthFailed = true; return false; }
-  driveMsg(h.get("error") === "access_denied" ? "Connexion à Google annulée." : "Google n'a pas donné l'accès au Drive. Réessaie et coche l'accès à Google Drive.");
-  return false;
-}
-async function driveApi(token, path) {
-  const r = await fetch("https://www.googleapis.com/drive/v3/" + path, { headers: { Authorization: "Bearer " + token } });
-  if (!r.ok) throw r.status;
-  return r;
-}
-async function driveFind(token, q) {
-  const params = new URLSearchParams({ q: q + " and trashed = false", orderBy: "modifiedTime desc", pageSize: "1", fields: "files(id,name,modifiedTime,parents)" });
-  const { files } = await (await driveApi(token, "files?" + params)).json();
-  return files[0] || null;
-}
-async function driveFindAll(token, q) {
-  const params = new URLSearchParams({ q: q + " and trashed = false", orderBy: "modifiedTime desc", pageSize: "10", fields: "files(id,name,modifiedTime,parents,size)" });
-  return (await (await driveApi(token, "files?" + params)).json()).files || [];
-}
-async function driveDownload(token, f) {
-  const blob = await (await driveApi(token, `files/${f.id}?alt=media`)).blob();
-  // La date du fichier dans Drive = la date de l'export Instagram.
-  return new File([blob], f.name, { type: "application/json", lastModified: Date.parse(f.modifiedTime) || Date.now() });
-}
-async function driveImport() {
-  const token = driveToken();
-  if (!token) return driveSignIn();
-  $("drive-import").disabled = true;
-  driveMsg("Recherche du dernier export dans ton Drive…", true);
-  try {
-    // Les exports programmés ne contiennent que les nouveaux abonnés : on prend le plus récent des exports complets.
-    const cands = await driveFindAll(token, "name = 'followers_1.json'");
-    const biggest = Math.max(0, ...cands.map((f) => Number(f.size) || 0));
-    const followers = cands.find((f) => (Number(f.size) || 0) >= biggest * 0.5) || null;
-    if (!followers) return driveMsg("Aucun export Instagram dans ton Drive pour l'instant. Règle l'export automatique (Consignes), puis attends qu'il arrive.");
-    const last = state.snapshots[state.snapshots.length - 1];
-    if (last && Date.parse(followers.modifiedTime) <= Date.parse(last.takenAt) + 60000) {
-      return driveMsg(`Pas de nouvel export complet dans ton Drive : le dernier date du ${fmtDate(followers.modifiedTime)}, il est déjà importé. Demande un export « Une fois », période « Depuis le début ».`);
-    }
-    const parent = followers.parents && followers.parents[0];
-    const following = parent ? await driveFind(token, `name = 'following.json' and '${parent}' in parents`) : null;
-    driveMsg("Téléchargement…", true);
-    const files = await Promise.all([followers, following].filter(Boolean).map((f) => driveDownload(token, f)));
-    driveMsg("");
-    importFiles(files);
-  } catch (err) {
-    if (err === 401 || err === 403) { driveForget(); return driveSignIn(); }
-    driveMsg("Google Drive ne répond pas. Vérifie ta connexion et réessaie.");
-  } finally {
-    $("drive-import").disabled = false;
-  }
-}
-$("drive-import").addEventListener("click", driveImport);
+// Ancien import depuis Google Drive (abandonné en 2026-11) : on efface le vieux jeton s'il traîne encore sur le téléphone.
+try { localStorage.removeItem("abo-drive-token-ro"); } catch { /* normal : stockage du navigateur indisponible */ }
 // Dans l'app iPhone (version 2 et plus) : Instagram s'ouvre dans Zieuton, avec un bandeau qui guide,
 // et le fichier téléchargé est importé tout seul. Ailleurs : le parcours guidé habituel.
-const metaInApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 2 && !useDrive();
+const metaInApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 2;
 const plainTap = (h) => h.replace(/<span class="ig[^"]*">(.*?)<\/span>/g, "« $1 »").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
 // À quoi ressemble le bouton chez Instagram (le bandeau de l'app le redessine en grand).
 const META_LOOK = { "ig-01": "button", "ig-02": "row", "ig-03": "row", "ig-04": "row", "ig-05": "check", "ig-07": "button",
@@ -4671,10 +4507,10 @@ setInterval(() => { if (!document.hidden && reqPending()) { renderWeekly(); if (
 
 // ---------- Parcours guidé du premier export ----------
 // Tant qu'aucun import n'est fait, l'app n'affiche que ce parcours : une étape à la fois, un seul gros bouton.
-// 1. (iPhone, Safari) installer l'app  2. relier Google Drive  3. demander l'export à Instagram (touches à suivre)
-// 4. l'app guette le Drive toute seule et importe dès que l'export complet arrive.
+// 1. (iPhone, Safari) installer l'app  2. demander l'export à Instagram (touches à suivre)
+// 3. télécharger le fichier chez Instagram et l'importer.
 const IG_EXPORT_URL = "https://accountscenter.instagram.com/info_and_permissions/dyi/";
-// Sans Drive (par défaut, marche pour tout le monde) : Instagram envoie le fichier sur le téléphone.
+// Instagram envoie le fichier sur le téléphone (« Exporter sur mon appareil »).
 const IG_TAPS_DEVICE = [
   { t: `Touche <span class="ig">Créer une exportation</span>`, tip: "Sur la page « Exporter vos informations »." },
   { t: `Choisis ton compte Instagram`, tip: "Celui dont tu veux suivre les abonnés." },
@@ -4684,16 +4520,7 @@ const IG_TAPS_DEVICE = [
   { t: `Format : choisis <span class="ig">JSON</span>` },
   { t: `Touche <span class="ig b">Commencer l'exportation</span>`, tip: "Instagram peut te redemander ton mot de passe : tu le tapes chez lui, jamais ici." },
 ];
-const IG_TAPS_DRIVE = [
-  { t: `Touche <span class="ig">Créer une exportation</span>, puis choisis ton compte` },
-  { t: `Touche <span class="ig">Exporter vers un service externe</span>` },
-  { t: `Choisis <span class="ig">Google Drive</span>, puis autorise ton compte Google` },
-  { t: `Personnalise : garde seulement <span class="ig">Followers et suivi(e)s</span>` },
-  { t: `Période <span class="ig">Depuis le début</span>` },
-  { t: `Format <span class="ig">JSON</span> · Fréquence <span class="ig">Une fois</span>` },
-  { t: `Touche <span class="ig b">Commencer l'exportation</span>` },
-];
-// Guide en images (mode sans Drive) : une seule étape à l'écran, la capture de l'écran d'Instagram et le bouton à toucher entouré.
+// Guide en images : une seule étape à l'écran, la capture de l'écran d'Instagram et le bouton à toucher entouré.
 // SHOT[id] = [largeur/hauteur, zone entourée en % : x, y, largeur, hauteur]
 const SHOT = {"ig-01": [1.7647, 3.3, 62.4, 93.3, 12.9], "ig-02": [1.4052, 3.5, 55.3, 93.0, 15.2], "ig-03": [1.4184, 3.5, 47.5, 93.0, 12.3], "ig-04": [0.9693, 3.5, 70.1, 93.0, 10.3], "ig-05": [0.9693, 80.7, 25.7, 17.0, 4.2], "ig-06": [0.9693, 3.5, 27.8, 93.0, 8.4], "ig-07": [0.9693, 3.3, 89.7, 93.3, 7.1], "ig-08": [0.9693, 3.5, 80.6, 93.0, 10.3], "ig-09": [0.9693, 3.5, 76.1, 93.0, 9.7], "ig-10": [0.9693, 3.5, 91.1, 93.0, 8.9], "ig-11": [1.4184, 3.5, 54.6, 93.0, 18.9], "ig-12": [0.9693, 3.3, 89.7, 93.3, 7.1], "get-1": [0.8614, 9.6, 42.1, 82.1, 18.6], "get-2": [1.0471, 6.0, 92.5, 43.0, 6.3], "get-3": [1.3166, 4, 36.2, 29.6, 41.9]};
 const igc = (s) => `<span class="ig">${s}</span>`;
@@ -4768,7 +4595,6 @@ const SWAP = `<p class="sh-swap">${BACK_HOW}</p>`;
 const SWAP_BIG = `<div class="sh-back"><b>Pour revenir ici</b><span>${BACK_HOW}</span></div>`;
 const ICON = {
   out: `<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
-  drive: `<svg viewBox="0 0 24 24"><path d="M8.5 4h7l6 10.5-3.5 6h-12L2.5 14.5z"/><path d="M8.5 4l6 10.5M15.5 4l-6 10.5M2.5 14.5h12"/></svg>`,
   lock: `<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
   share: `<svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M6 11H5v10h14V11h-1"/></svg>`,
 };
@@ -4808,10 +4634,9 @@ function wlPlay() {
 }
 let gfLeftAt = 0, gfOnReturn = null;
 let gmTick = null;
-let gfTaps = [], gfChecking = false, gfTimer = null, gfStatus = "", gfAuthFailed = false;
 // gfRepeat : le même parcours, rouvert depuis « Nouvel export » pour les imports suivants.
 let gfRepeat = false, gfRepeatFrom = 0;
-// Gardé le temps de la session : la reconnexion Google recharge la page.
+// Gardé le temps de la session (rechargement de la page, mise à jour).
 try { const r = sessionStorage.getItem("abo-gf-repeat"); if (r !== null) { gfRepeat = true; gfRepeatFrom = +r; } } catch { /* normal : stockage du navigateur indisponible */ }
 function setRepeat(on) {
   gfRepeat = on; if (on) gfRepeatFrom = state.snapshots.length;
@@ -4826,34 +4651,29 @@ function reqPending() {
   if (!prefs.requestedAt || !last) return !!prefs.requestedAt;
   return Date.parse(prefs.requestedAt) > Date.parse(prefs.lastImportAt || last.takenAt);
 }
-function openRepeat() { setRepeat(true); gfTaps = []; prefs.igOpened = reqPending() ? prefs.igOpened : false; render(); }
-// Drive : seulement pour qui le choisit (projet Google encore en test = comptes testeurs uniquement).
-const useDrive = () => driveReady() && !!prefs.useDrive;
+function openRepeat() { setRepeat(true); prefs.igOpened = reqPending() ? prefs.igOpened : false; render(); }
 function gfStep() {
   if (!gfRepeat) {
+    // driveLinked : réglage laissé par l'ancien mode Google Drive chez les premiers testeurs (ils ont déjà vu la bienvenue).
     if (prefs.welcomed === false || (prefs.welcomed === undefined && !prefs.driveLinked && !prefs.requestedAt)) return "welcome";
     if (needsInstall && !prefs.stayInSafari) return "install";
   }
-  if (prefs.useDrive === undefined && driveReady()) return "how";
-  if (!useDrive()) return reqPending() ? "get" : "insta";
-  if (!driveToken() && !prefs.driveLinked) return "drive";
-  if (!reqPending()) return "insta";
-  return "wait";
+  return reqPending() ? "get" : "insta";
 }
 function renderGuided() {
   if (gfRepeat && state.snapshots.length > gfRepeatFrom) setRepeat(false);   // import fait : on referme
   const step = gfOn() ? gfStep() : null;
   $("gf").hidden = !step;
   document.documentElement.style.overflow = step ? "hidden" : "";
-  if (!step) { clearInterval(gfTimer); gfTimer = null; return; }
+  if (!step) return;
   $("gf").classList.toggle("welcome", step === "welcome");
   $("gf").classList.toggle("fun", step !== "welcome");
-  const order = (needsInstall && !gfRepeat ? ["install"] : []).concat(useDrive() ? (gfRepeat || prefs.driveLinked ? ["insta", "wait"] : ["drive", "insta", "wait"]) : ["insta", "get"]);
+  const order = (needsInstall && !gfRepeat ? ["install"] : []).concat(["insta", "get"]);
   const at = order.indexOf(step);
   $("gf-prog").innerHTML = order.map((_, i) => `<i class="${i <= at ? "on" : ""}"></i>`).join("");
   const n = `Étape ${at + 1} sur ${order.length}`;
   // Petit chemin ludique : où on en est, et la récompense au bout.
-  const LBL = { install: "L'app", drive: "Ton Drive", insta: "Ta liste", get: "Ton fichier", wait: "L'arrivée" };
+  const LBL = { install: "L'app", insta: "Ta liste", get: "Ton fichier" };
   const path = at < 0 ? "" : `<ol class="path" aria-label="${n}">${order.concat(["end"]).map((k, i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}"><b>${i < at ? "✓" : k === "end" ? "🎉" : i + 1}</b><span>${k === "end" ? "Tes stats" : LBL[k]}</span></li>`).join("")}</ol>`;
   const guide = (say) => `<div class="guide"><div class="guide-av" aria-hidden="true">${MASCOT}</div><p class="guide-say" id="guide-say">${say}</p></div>`;
   const body = $("gf-body");
@@ -4874,40 +4694,6 @@ function renderGuided() {
       </div>`;
     $("gf-go").onclick = () => { prefs.welcomed = true; savePrefs(); render(); };
     wlPlay();
-  } else if (step === "how") {
-    body.innerHTML = `
-      ${guide("Comment tu veux recevoir tes données&nbsp;? Choisis, je m'en occupe&nbsp;!")}
-      <h2 id="gf-title">Choisis ton mode</h2>
-      <div class="modes">
-        <button class="mode" id="gf-mode-phone" type="button" aria-pressed="false">
-          <span class="mode-ic p"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></span>
-          <span class="mode-t">Pas de Gmail</span>
-          <span class="mode-tag">Pour tout le monde</span>
-          <span class="mode-d">Instagram envoie ta liste sur ton téléphone, tu la donnes à l'app en deux touches.</span>
-        </button>
-        <button class="mode" id="gf-mode-drive" type="button" aria-pressed="false">
-          <span class="mode-ic g">${ICON.drive}</span>
-          <span class="mode-t">J'ai Gmail</span>
-          <span class="mode-tag soon">Sur invitation</span>
-          <span class="mode-d">Instagram dépose ta liste dans ton Google Drive, l'app va la chercher toute seule. En test : seulement pour les personnes invitées.</span>
-        </button>
-      </div>
-      <div class="gf-foot">
-        <button class="btn primary big" id="gf-mode-next" type="button" disabled>Suivant</button>
-        <button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>
-      </div>`;
-    // Choisir d'abord, puis « Suivant » : pas de mauvais choix sur un toucher raté.
-    let pick = null;
-    const choose = (v) => {
-      pick = v;
-      $("gf-mode-drive").setAttribute("aria-pressed", String(v === true));
-      $("gf-mode-phone").setAttribute("aria-pressed", String(v === false));
-      $("gf-mode-next").disabled = false;
-      $("gf-mode-next").className = "btn cheer big";
-    };
-    $("gf-mode-drive").onclick = () => choose(true);
-    $("gf-mode-phone").onclick = () => choose(false);
-    $("gf-mode-next").onclick = () => { if (pick === null) return; prefs.useDrive = pick; gfTaps = []; prefs.igOpened = false; savePrefs(); render(); };
   } else if (step === "install") {
     body.innerHTML = `
       ${path}${guide("D'abord, installe-moi sur ton téléphone. Comme ça, tu passes d'Instagram à moi d'un simple geste, et je garde ton historique&nbsp;!")}<h2 id="gf-title">Mets l'app sur ton écran d'accueil</h2>
@@ -4915,16 +4701,6 @@ function renderGuided() {
       <p class="lead">Ensuite, ouvre l'app depuis sa nouvelle icône : la suite t'attend là-bas.</p>
       <div class="gf-foot"><button class="alt" id="gf-stay" type="button">Je préfère rester dans Safari</button></div>`;
     $("gf-stay").onclick = () => { prefs.stayInSafari = true; savePrefs(); render(); };
-  } else if (step === "drive") {
-    body.innerHTML = `
-      ${path}${guide(gfAuthFailed ? "Oups, Google n'a pas donné l'accès. Ce mode est encore réservé aux personnes invitées : passe en mode « Pas de Gmail » juste en dessous, il marche pour tout le monde." : "Mode automatique&nbsp;: relie ton Drive, et j'irai chercher ta liste tout seul.")}<h2 id="gf-title">Relie ton Google Drive</h2>
-      <p class="lead">Instagram va déposer la liste de tes abonnés dans ton Drive. L'app ira la chercher toute seule : aucun fichier à télécharger.</p>
-      <p class="gf-why">${ICON.lock}<span>L'app ne fait que lire ton Drive, depuis ton téléphone. Rien n'est envoyé ailleurs.</span></p>
-      <div class="gf-foot">
-        <button class="btn primary big" id="gf-drive" type="button">${ICON.drive}Relier Google Drive</button>
-        <button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>
-      </div>`;
-    $("gf-drive").onclick = () => driveSignIn("drive-flow");
   } else if (step === "insta" && metaInApp()) {
     // App iPhone : Instagram s'ouvre DANS Zieuton, avec le bandeau qui montre où toucher (comme « Mettre à jour »).
     gfOnReturn = null;
@@ -5002,8 +4778,8 @@ function renderGuided() {
       </div>`;
     }
     $("gf-get").onclick = wkGo;
-    $("gf-back").onclick = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; gfTaps = []; savePrefs(); render(); };
-  } else if (step === "insta" && !useDrive()) {
+    $("gf-back").onclick = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; savePrefs(); render(); };
+  } else if (step === "insta") {
     const i = prefs.igOpened ? Math.min(prefs.igStep || 0, IG_SHOTS.length - 1) : 0, last = i === IG_SHOTS.length - 1;
     const foot = !prefs.igOpened
       ? `${SWAP_BIG}<a class="btn cheer big" id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Ouvrir Instagram</a>
@@ -5029,60 +4805,7 @@ function renderGuided() {
       if (el) { el.innerHTML = (prefs.igStep === IG_SHOTS.length - 1 ? "Dernière touche&nbsp;! " : "Te revoilà&nbsp;! Voici la suite. ") + "Pas encore fait&nbsp;? Touche Précédent."; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
     };
     const dn = $("gf-done");
-    if (dn) dn.onclick = () => { prefs.getStep = 0; markRequested(); gfCheck(); };
-  } else if (step === "insta") {
-    const TAPS = useDrive() ? IG_TAPS_DRIVE : IG_TAPS_DEVICE;
-    if (gfTaps.length !== TAPS.length) gfTaps = TAPS.map(() => false);
-    body.innerHTML = `${path}
-      ${guide("")}
-      <h2 id="gf-title">Demande ta liste à Instagram</h2>
-      <ol class="stk">
-        <li class="open" id="gf-open"><a id="gf-ig" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer"><span class="n">1</span><span>Touche ici pour ouvrir Instagram</span><small>S'il te demande de te connecter, vas-y : tu es bien chez Instagram.</small><i class="go">${ICON.out}</i></a></li>
-        <li class="stk-sep" aria-hidden="true">Puis, dans Instagram</li>
-        ${TAPS.map((x, i) => `<li data-k><button type="button" data-i="${i}" aria-pressed="false"><span class="n">${i + 2}</span><span>${x.t}</span>${x.tip ? `<small>${x.tip}</small>` : ""}</button></li>`).join("")}</ol>
-      <div class="gf-foot">
-        <button class="btn ghost big" id="gf-done" type="button">C'est fait, j'ai touché « Commencer »</button>
-        ${useDrive() ? `<button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>` : `<button class="alt" id="gf-restore" type="button">J'ai une copie de sauvegarde</button>`}
-      </div>`;
-    // Cocher une étape met à jour la carte sur place (sans tout redessiner, le bonhomme ne rejoue pas son entrée).
-    const sync = (popped) => {
-      const next = gfTaps.indexOf(false), all = next < 0;
-      $("gf-open").className = "open " + (prefs.igOpened ? "ok" : "cur");
-      $("gf-open").querySelector(".n").innerHTML = prefs.igOpened ? CHECK : "1";
-      body.querySelectorAll(".stk li[data-k]").forEach((li, i) => {
-        li.className = gfTaps[i] ? "ok" : i === next && prefs.igOpened ? "cur" : "";
-        li.querySelector(".n").innerHTML = gfTaps[i] ? CHECK : String(i + 2);
-        li.querySelector("button").setAttribute("aria-pressed", String(gfTaps[i]));
-      });
-      if (popped != null) { const li = body.querySelectorAll(".stk li[data-k]")[popped]; li.classList.add("pop"); }
-      const say = all ? "Bravo, t'es un·e chef&nbsp;! Touche le bouton en bas 🎉"
-        : !prefs.igOpened ? (gfRepeat ? "On remet ça&nbsp;? Même chemin que la dernière fois, commence par la case 1 😉" : "Première mission&nbsp;: on demande ta liste à Instagram. Commence par la case 1, je te guide&nbsp;!")
-        : next === 0 ? "Fais ces étapes dans Instagram. Quand tu reviens ici, je te demande où tu en es 👇"
-        : `Super, encore ${TAPS.length - next > 1 ? TAPS.length - next + " étapes" : "une étape"}&nbsp;!`;
-      const el = $("guide-say");
-      if (el.innerHTML !== say) { el.innerHTML = say; el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
-      $("gf-done").className = "btn " + (all ? "cheer" : prefs.igOpened ? "primary" : "ghost") + " big";
-    };
-    sync();
-    $("gf-ig").onclick = () => { prefs.igOpened = true; savePrefs(); gfLeftAt = Date.now(); setTimeout(() => sync(), 400); };
-    // Retour d'Instagram : l'app ne voit pas ce qui s'y passe, alors elle demande. « Oui » coche tout en cascade et passe à la suite.
-    gfOnReturn = () => {
-      if (!prefs.igOpened || !gfLeftAt || Date.now() - gfLeftAt < 4000 || !gfTaps.includes(false)) return;
-      gfLeftAt = 0;
-      const el = $("guide-say");
-      el.innerHTML = `Te revoilà&nbsp;! Tu as touché « Commencer l'exportation »&nbsp;?<span class="say-btns"><button type="button" id="say-yes">Oui, c'est fait</button><button type="button" id="say-no">Pas encore</button></span>`;
-      el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
-      window.scrollTo({ top: 0 }); $("gf").scrollTo({ top: 0, behavior: "smooth" });
-      $("say-no").onclick = () => { el.innerHTML = "Pas de souci, reprends là où tu en étais. Je t'attends 😉"; };
-      $("say-yes").onclick = () => {
-        el.innerHTML = "Bravo&nbsp;! 🎉";
-        const todo = gfTaps.map((v, i) => v ? -1 : i).filter((i) => i >= 0);
-        todo.forEach((i, k) => setTimeout(() => { gfTaps[i] = true; sync(i); }, 120 + k * 140));
-        setTimeout(() => { markRequested(); gfCheck(); }, 120 + todo.length * 140 + 700);
-      };
-    };
-    body.querySelectorAll(".stk button").forEach((b) => b.onclick = () => { const i = +b.dataset.i; gfTaps[i] = !gfTaps[i]; if (navigator.vibrate) try { navigator.vibrate(10); } catch { /* normal : vibration refusée par le navigateur */ } sync(gfTaps[i] ? i : null); });
-    $("gf-done").onclick = () => { markRequested(); gfCheck(); };
+    if (dn) dn.onclick = () => { prefs.getStep = 0; markRequested(); };
   } else if (step === "get") {
     const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
     const i = Math.min(prefs.getStep || 0, GET_SHOTS.length - 1);
@@ -5104,39 +4827,19 @@ function renderGuided() {
     const fl = $("gf-file");
     if (fl) fl.onclick = startImport;
     const gb = $("gf-back");
-    if (gb) gb.onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; gfTaps = []; savePrefs(); render(); };
-  } else {
-    const since = prefs.requestedAt ? Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000) : 0;
-    body.innerHTML = `
-      ${path}${guide("Je surveille ton Drive. Dès que ta liste arrive, je l'importe 👀")}<h2 id="gf-title">On guette ton Drive</h2>
-      <div class="gf-wait"><div class="radar" aria-hidden="true"></div>
-        <b>${esc(gfStatus || "En attente de l'export d'Instagram…")}</b>
-        <small>${since < 2 ? "Instagram met en général quelques minutes." : `Demandé il y a ${since < 60 ? since + " min" : Math.round(since / 60) + " h"}. Ça peut prendre jusqu'à quelques heures.`}<br>Tu peux fermer l'app : à ta prochaine ouverture, elle vérifie toute seule et importe dès que c'est là.</small></div>
-      <div class="gf-foot">
-        ${gfAuthFailed ? `<button class="btn primary big" id="gf-reauth" type="button">${ICON.drive}Reconnecter Google Drive</button>` : ""}
-        <a class="btn ghost big" href="${IG_EXPORT_URL}" target="_blank" rel="noopener noreferrer">${ICON.out}Revoir l'export dans Instagram</a>
-        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
-        <button class="alt" id="gf-nodrive" type="button">Finalement, sans Google Drive</button>
-      </div>`;
-    if (gfAuthFailed) $("gf-reauth").onclick = () => driveSignIn("drive-flow");
-    $("gf-back").onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
-    if (!gfTimer) gfTimer = setInterval(() => { if (!document.hidden) gfCheck(); }, 20000);
+    if (gb) gb.onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; savePrefs(); render(); };
   }
   // Bouton Retour sur chaque page (sauf la bienvenue) : on défait le dernier choix.
   if (step !== "welcome") {
     const bk = document.createElement("button");
     bk.className = "gf-backbtn"; bk.type = "button"; bk.id = "gf-backbtn";
-    const closes = gfRepeat && (step === "insta" || step === "how" || step === "drive");
+    const closes = gfRepeat && step === "insta";
     bk.innerHTML = closes ? `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Fermer` : `<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Retour`;
     bk.onclick = () => {
       if (closes) { setRepeat(false); return render(); }
       if (step === "install") prefs.welcomed = false;
-      else if (step === "how") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
-      else if (step === "get" || step === "wait") { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; gfTaps = []; }
-      else if (step === "drive" || step === "insta") {
-        if (driveReady()) { delete prefs.useDrive; prefs.igOpened = false; gfTaps = []; }
-        else if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false;
-      }
+      else if (step === "get") { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; }
+      else if (step === "insta") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
       savePrefs(); render();
     };
     body.prepend(bk);
@@ -5170,53 +4873,17 @@ function renderGuided() {
       const duo = foot.querySelector(".gf-duo");
       d.className = duo ? "gf-tile" : "alt gf-demo"; d.type = "button";
       d.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>`
-        + (step === "welcome" ? "Jeter un œil à la démo" : step === "get" || step === "wait" ? "En attendant, voir la démo" : "Voir la démo");
+        + (step === "welcome" ? "Jeter un œil à la démo" : step === "get" ? "En attendant, voir la démo" : "Voir la démo");
       d.onclick = () => { if (step === "welcome") { prefs.welcomed = true; savePrefs(); } enterDemo(); };
       if (duo) duo.prepend(d); else foot.append(d);
     }
   }
-  const nd = $("gf-nodrive");
-  if (nd) nd.onclick = () => { prefs.useDrive = false; delete prefs.requestedAt; prefs.igOpened = false; gfTaps = []; savePrefs(); render(); };
   const rs = $("gf-restore");
   if (rs) rs.onclick = () => $("restore").click();
-  // Changer de mode, en petit, sur l'écran Instagram sans Drive.
-  if (step === "insta" && !useDrive() && driveReady()) {
-    const d = document.createElement("button");
-    d.className = "alt"; d.type = "button"; d.textContent = "Changer de mode (Gmail / téléphone)";
-    d.onclick = () => { delete prefs.useDrive; gfTaps = []; prefs.igOpened = false; savePrefs(); render(); };
-    body.querySelector(".gf-foot").append(d);
-  }
-}
-// Cherche un export complet dans le Drive et l'importe sans rien demander.
-async function gfCheck() {
-  if (gfStep() !== "wait" || gfChecking || !gfOn()) return;
-  const token = driveToken();
-  if (!token) {
-    // Jeton expiré : reconnexion silencieuse une fois par ouverture (Google revient tout seul si l'accès est déjà donné).
-    if (gfAuthFailed || sessionStorage.getItem("abo-drive-silent")) { gfAuthFailed = true; return renderGuided(); }
-    try { sessionStorage.setItem("abo-drive-silent", "1"); } catch { /* normal : stockage du navigateur indisponible */ }
-    return driveSignIn("drive-flow", true);
-  }
-  gfChecking = true; gfStatus = "Je regarde dans ton Drive…"; renderGuided();
-  try {
-    const cands = await driveFindAll(token, "name = 'followers_1.json'");
-    const biggest = Math.max(0, ...cands.map((f) => Number(f.size) || 0));
-    const followers = cands.find((f) => (Number(f.size) || 0) >= biggest * 0.5);
-    const last = state.snapshots[state.snapshots.length - 1];
-    if (!followers || (last && Date.parse(followers.modifiedTime) <= Date.parse(last.takenAt) + 60000)) { gfStatus = "Pas encore arrivé. Je revérifie toutes les 20 secondes."; return; }
-    gfStatus = "Ton export est arrivé ! Import…"; renderGuided();
-    const parent = followers.parents && followers.parents[0];
-    const following = parent ? await driveFind(token, `name = 'following.json' and '${parent}' in parents`) : null;
-    const files = await Promise.all([followers, following].filter(Boolean).map((f) => driveDownload(token, f)));
-    await importFiles(files);
-  } catch (err) {
-    if (err === 401 || err === 403) { driveForget(); gfAuthFailed = true; gfStatus = "Google Drive s'est déconnecté."; }
-    else gfStatus = "Pas de réseau pour l'instant. Je réessaie bientôt.";
-  } finally { gfChecking = false; renderGuided(); }
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1430";
+const BUILD = "2026-11-06-1500";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -5518,11 +5185,11 @@ async function checkUpdate() {
   return false;
 }
 document.addEventListener("visibilitychange", () => {
-  // Mode sans Drive : chaque départ vers Instagram compte, pour avancer d'une étape au retour.
-  if (document.hidden) { if (gfOn() && gfStep() === "insta" && !useDrive() && prefs.igOpened && !gfLeftAt) gfLeftAt = Date.now(); return; }
+  // Chaque départ vers Instagram compte, pour avancer d'une étape au retour.
+  if (document.hidden) { if (gfOn() && gfStep() === "insta" && prefs.igOpened && !gfLeftAt) gfLeftAt = Date.now(); return; }
   checkUpdate();
   if (gfOn() && gfStep() === "insta" && gfOnReturn) return gfOnReturn();
-  if (gfOn()) { renderGuided(); gfCheck(); }
+  if (gfOn()) renderGuided();
 });
 $("gf-help").addEventListener("click", openOnboarding);
 
@@ -7190,7 +6857,7 @@ function demoData(o = {}) {
   state.following = following; state.followingAt = at[at.length - 1];
   const last = at[at.length - 1];
   const prefs = {
-    welcomed: true, onboarded: true, useDrive: false, stayInSafari: true, installDismissed: true,
+    welcomed: true, onboarded: true, stayInSafari: true, installDismissed: true,
     lastImportAt: last, backupAt: last, backupCount: at.length,
     zy: { xp: 640, look: { hat: "cap" }, anni: {} }, games: { gone: { best: 4, wins: 6 } },
     me: { name: "Victor", ig: "victor.demo" },
@@ -7301,24 +6968,10 @@ render();
   $("quick-import").disabled = false;
   $("bar-file").disabled = false;
   $("start-import").disabled = false;
-  // Avec Drive configuré, le bouton Drive passe devant et l'import de fichier devient secondaire.
-  if (!driveReady()) $("step-import").innerHTML = "Ensuite : <b>Importer le .zip reçu</b> → <b>Drive</b> → dernier dossier <b>meta-…</b> → … → <b>followers_and_following</b>, choisis <b>followers_1</b> et <b>following</b>";
-  // Retour de Google (connexion Drive) : à traiter avant de choisir l'affichage.
-  const driveBack = driveReady() ? driveCallback() : false;
-  if (prefs.useDrive === undefined && (prefs.driveLinked || driveToken())) { prefs.useDrive = true; savePrefs(); }
-  if (useDrive()) {
-    // Le bouton « C'est parti » (parcours guidé) remplace les anciens boutons Drive / Importer de la barre.
-    $("quick-import").lastChild.textContent = "Importer un fichier";
-    $("go-export").lastChild.textContent = "Demander un export vers Drive";
-    $("bar-file").hidden = true;
-    if (driveBack === "drive-import") driveImport();
-  } else {
-    // Sans Drive : consignes « Exporter sur mon appareil », puis import du fichier téléchargé.
-    $("howto").querySelector(".steps").innerHTML = IG_TAPS_DEVICE.map((x) => `<li><span>${x.t}</span></li>`).join("")
-      + `<li><span>Quand Instagram te prévient, <span class="ig">Télécharger</span>, puis ici <b>Importer</b> → <b>Récents</b></span></li>`;
-    const alt = $("howto").querySelector(".steps-alt"); if (alt) alt.hidden = true;
-    $("howto").querySelector("summary span").textContent = (IG_TAPS_DEVICE.length + 1) + " étapes";
-  }
+  // Consignes « Exporter sur mon appareil », puis import du fichier téléchargé.
+  $("howto").querySelector(".steps").innerHTML = IG_TAPS_DEVICE.map((x) => `<li><span>${x.t}</span></li>`).join("")
+    + `<li><span>Quand Instagram te prévient, <span class="ig">Télécharger</span>, puis ici <b>Importer</b> → <b>Récents</b></span></li>`;
+  $("howto").querySelector("summary span").textContent = (IG_TAPS_DEVICE.length + 1) + " étapes";
   render();
   // Dans l'app : d'abord la mise à jour éventuelle, puis on dit à l'app qu'elle peut envoyer le fichier partagé.
   if (nativeApp) checkUpdate().then((reloading) => {
@@ -7331,9 +6984,8 @@ render();
   else setTimeout(checkUpdate, 1500);
   if (state.snapshots.length) playIntro();
   checkTrophies();
-  // Premier lancement : le parcours guidé prend tout l'écran ; sinon (pas de Drive), la présentation en 3 écrans.
-  if (gfOn() && gfStep()) gfCheck();
-  else if (!state.snapshots.length && !prefs.onboarded) openOnboarding();
+  // Premier lancement : le parcours guidé prend tout l'écran ; sinon, la présentation en 3 écrans.
+  if (!gfOn() && !state.snapshots.length && !prefs.onboarded) openOnboarding();
   renderBackup();
   renderPlusBlock();
   // App iPhone : « je suis bien démarrée », une fois l'accueil affiché. Si ce signal n'arrive pas,
