@@ -19,7 +19,7 @@ Zieuton est une app iPhone qui compare les exports officiels Instagram d'un util
 1. **Une PR par tâche, jamais de push direct sur `main`.** Ne fusionne pas toi-même : Victor valide.
 2. Cite le ticket Linear dans le titre ou la description de la PR (ex. `ZIE-12`).
 3. Avant d'ouvrir la PR : `npm test`, `node scripts/check-syntax.mjs`, `node scripts/sync-core.mjs --check`. Tout doit passer.
-4. Toute PR qui change la page incrémente `const BUILD = "AAAA-MM-JJ-HHMM"` dans `index.html` (sinon les apps ne reçoivent pas la mise à jour). Une PR qui ne change que des tests ou de la doc n'y touche pas.
+4. **Numéros de version (FOU-44, vérifiés par la CI).** Toute PR qui change `index.html` lance `npm run version` (met `const BUILD` à l'heure de Paris ; sinon les apps ne reçoivent pas la mise à jour). Toute PR qui change la coque (`ios/Zieuton/`, `ios/Zieuton.xcodeproj/`) augmente `CURRENT_PROJECT_VERSION` de 1 (Debug et Release) ; en même temps, si la page doit savoir ce que la coque sait faire, augmente aussi `ZYEUTO_APP.version`. Une PR qui ne change que des tests, la doc ou `channel.json` n'y touche pas. La case « Numéros de version » de la CI échoue sinon (`node scripts/check-versions.mjs origin/main` pour la lancer chez toi).
 5. Précise toujours dans la PR si **Xcode est nécessaire** (changement de la coque Swift = nouveau build TestFlight) ou non (changement de la page = en ligne tout de suite).
 6. Écris la description de PR en français simple, pour quelqu'un qui n'est pas développeur : ce qui change pour l'utilisateur, comment le vérifier.
 7. Reste dans le périmètre du ticket. Pas de refonte « au passage ».
