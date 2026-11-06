@@ -27,7 +27,7 @@ await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const url = `http://127.0.0.1:${server.address().port}/`;
 
 const runs = [
-  { label: "dans l'app (ZYEUTO_APP version 8)", app: { version: 8, embedded: true, channels: true }, channels: true },
+  { label: "dans l'app (ZYEUTO_APP version 9)", app: { version: 9, embedded: true, channels: true, signed: true }, channels: true },
   { label: "dans l'app (ZYEUTO_APP version 7)", app: { version: 7 } },
   { label: "dans Safari (site)", app: null },
 ];

@@ -1,0 +1,52 @@
+# Mise en ligne du site sur GitHub Pages, avec la signature des mises à jour (FOU-29).
+# À chaque fusion sur main : copie le site, signe index.html et channel.json avec la clé secrète
+# de Victor (secret PAGE_SIGNING_KEY), publie index.html.sig et channel.json.sig à côté, puis met en ligne.
+# L'app iPhone (coque version 9 et plus) refuse une page dont la signature n'est pas bonne.
+# Réglage nécessaire une fois : Settings → Pages → Source : « GitHub Actions » (docs/MISES-A-JOUR.md, partie 4).
+name: Publier le site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    name: Signer et mettre en ligne
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Copier le site (comme avant, sans les fichiers techniques de git)
+        run: |
+          mkdir -p "$RUNNER_TEMP/site"
+          rsync -a --exclude .git --exclude .github --exclude node_modules ./ "$RUNNER_TEMP/site/"
+
+      - name: Signer index.html et channel.json
+        env:
+          PAGE_SIGNING_KEY: ${{ secrets.PAGE_SIGNING_KEY }}
+        run: node scripts/signature.mjs signer "$RUNNER_TEMP/site"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+      - name: Mettre en ligne
+        id: deploy
+        uses: actions/deploy-pages@v4

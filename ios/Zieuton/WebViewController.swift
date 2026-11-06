@@ -4,6 +4,7 @@ import UserNotifications
 import BackgroundTasks
 import StoreKit
 import PhotosUI
+import CryptoKit
 
 /// Affiche l'app web Zieuton et lui transmet les fichiers partagés.
 final class WebViewController: UIViewController {
@@ -44,6 +45,9 @@ final class WebViewController: UIViewController {
     }
     /// Petit fichier en ligne qui dit quelle version est « stable », et l'interrupteur d'urgence.
     private static let channelURL = URL(string: "channel.json", relativeTo: home)!.absoluteURL
+    /// Signatures publiées à côté de la page et de channel.json (FOU-29).
+    private static let pageSignatureURL = URL(string: "index.html.sig", relativeTo: home)!.absoluteURL
+    private static let channelSignatureURL = URL(string: "channel.json.sig", relativeTo: home)!.absoluteURL
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -59,7 +63,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 8, embedded: true, icloud: true, channels: true };",
+            source: "window.ZYEUTO_APP = { version: 9, embedded: true, icloud: true, channels: true, signed: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
         content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -247,6 +251,9 @@ final class WebViewController: UIViewController {
     /// dans les secondes qui suivent. Sinon, ou si elle plante deux fois de suite, sa version est notée
     /// mauvaise : l'app revient à la dernière page qui a démarré (ou à celle rangée dans l'app) et ne la
     /// retélécharge plus. Les règles elles-mêmes sont dans `PageGuard`, en bas de ce fichier.
+    ///
+    /// Signature (FOU-29) : une page téléchargée n'est enregistrée que si elle est signée par la clé de Victor
+    /// (`PageSignature`). Sinon l'app garde la page qu'elle a déjà.
     private func loadPage() {
         // Une page qui a raté ses derniers démarrages (l'app ou la page a planté avant le signal) est écartée.
         if let trying = guardStore.trying, PageGuard.tooManyFailedStarts(guardStore.tries) {
@@ -369,35 +376,60 @@ final class WebViewController: UIViewController {
         return request
     }
 
+    /// Télécharge un petit fichier en ligne (nil si absent, erreur ou pas d'internet).
+    private static func fetch(_ url: URL, _ done: @escaping (Data?) -> Void) {
+        URLSession.shared.dataTask(with: fresh(url)) { data, response, _ in
+            done((response as? HTTPURLResponse)?.statusCode == 200 ? data : nil)
+        }.resume()
+    }
+
+    /// Télécharge un fichier et sa signature : renvoie le fichier seulement s'il est bien signé par Victor (FOU-29).
+    private static func fetchSigned(_ url: URL, signature: URL, _ done: @escaping (Data?) -> Void) {
+        fetch(url) { data in
+            guard let data else { return done(nil) }
+            fetch(signature) { sig in
+                if PageSignature.isValid(data, signatureFile: sig) { return done(data) }
+                NSLog("Zieuton : %@ refusé, signature absente ou invalide", url.lastPathComponent)
+                done(nil)
+            }
+        }
+    }
+
     /// La page demande s'il y a du nouveau (à l'ouverture et à chaque retour dans l'app).
     /// 1. channel.json : version stable et interrupteur d'urgence. 2. la page en ligne, si elle est permise.
     private func checkForUpdate() {
         guard !checkingUpdate else { return }
         checkingUpdate = true
-        URLSession.shared.dataTask(with: Self.fresh(Self.channelURL)) { [weak self] data, response, _ in
-            // Fichier absent, illisible ou pas d'internet : on garde les dernières consignes connues.
-            let config = (response as? HTTPURLResponse)?.statusCode == 200 ? data.flatMap(PageGuard.parseChannel) : nil
+        Self.fetchSigned(Self.channelURL, signature: Self.channelSignatureURL) { [weak self] data in
+            // Fichier absent, illisible, mal signé ou pas d'internet : on garde les dernières consignes connues.
+            let config = data.flatMap(PageGuard.parseChannel)
             DispatchQueue.main.async {
                 guard let self else { return }
                 if let config { self.guardStore.config = config }
                 self.downloadPage()
             }
-        }.resume()
+        }
     }
 
     private func downloadPage() {
         let current = loadedBuild, bad = Set(guardStore.bad), channel = guardStore.channel, config = guardStore.config
         guard config?.emergency != true else { return finishUpdate() } // urgence : on ne télécharge rien
-        URLSession.shared.dataTask(with: Self.fresh(Self.home)) { [weak self] data, response, _ in
-            if (response as? HTTPURLResponse)?.statusCode == 200, let data,
-               let html = String(data: data, encoding: .utf8), html.contains("</html>"),
-               let build = Self.build(of: html),
-               PageGuard.shouldKeep(downloaded: build, current: current, bad: bad, channel: channel, config: config) {
-                do { try data.write(to: Self.savedPage, options: .atomic) }
-                catch { NSLog("Zieuton : nouvelle page non enregistrée (%@)", error.localizedDescription) }
+        Self.fetch(Self.home) { [weak self] data in
+            guard let data, let html = String(data: data, encoding: .utf8), html.contains("</html>"),
+                  let build = Self.build(of: html),
+                  PageGuard.shouldKeep(downloaded: build, current: current, bad: bad, channel: channel, config: config)
+            else { return DispatchQueue.main.async { self?.finishUpdate() } }
+            // Nouvelle version permise : on ne l'enregistre que si sa signature est bonne (sinon on garde la page actuelle).
+            Self.fetch(Self.pageSignatureURL) { sig in
+                if PageSignature.isValid(data, signatureFile: sig) {
+                    do { try data.write(to: Self.savedPage, options: .atomic) }
+                    catch { NSLog("Zieuton : nouvelle page non enregistrée (%@)", error.localizedDescription) }
+                } else {
+                    NSLog("Zieuton : page %@ refusée, signature absente ou invalide", build)
+                }
+                DispatchQueue.main.async { self?.finishUpdate() }
             }
-            DispatchQueue.main.async { self?.finishUpdate() }
-        }.resume()
+        }
     }
 
     /// Nouvelle version, canal changé ou interrupteur d'urgence : on affiche ce que les règles demandent.
@@ -2399,7 +2431,7 @@ final class PageGuardStore {
 }
 
 // PAGE-GUARD:BEGIN
-// Les règles, sans rien d'iPhone (Foundation seulement) : testées hors de l'app par
+// Les règles, sans rien d'iPhone (Foundation et CryptoKit seulement) : testées hors de l'app par
 // tests/ios/PageGuardTests.swift (scripts/test-page-guard.sh, lancé par les vérifications GitHub).
 enum PageGuard {
     /// D'où vient une page.
@@ -2473,6 +2505,32 @@ enum PageGuard {
     /// Ajoute une version mauvaise (on garde les 20 dernières).
     static func addBad(_ build: String, to list: [String]) -> [String] {
         Array((list.filter { $0 != build } + [build]).suffix(20))
+    }
+}
+
+/// Signature des mises à jour (FOU-29) : une page (ou un channel.json) téléchargée n'est acceptée que si
+/// elle est signée avec la clé secrète de Victor. Cette clé n'est jamais dans le dépôt : elle est dans le
+/// secret GitHub PAGE_SIGNING_KEY, et le robot de mise en ligne (.github/workflows/publier.yml) publie
+/// « index.html.sig » et « channel.json.sig » à côté des fichiers. Format Ed25519, en base64.
+enum PageSignature {
+    /// Clé publique de Victor (32 octets en base64). Elle n'est pas secrète. Créée par scripts/creer-cle.swift.
+    /// Vide = aucune page téléchargée n'est acceptée (l'app garde celle rangée dedans).
+    static let publicKey = ""
+
+    /// Lit un fichier .sig : une signature de 64 octets en base64 (espaces et retour à la ligne tolérés).
+    static func decode(_ file: Data?) -> Data? {
+        guard let file, let text = String(data: file, encoding: .utf8),
+              let sig = Data(base64Encoded: text.trimmingCharacters(in: .whitespacesAndNewlines)),
+              sig.count == 64 else { return nil }
+        return sig
+    }
+
+    /// Le fichier est-il bien signé par la clé dont `publicKey` est la partie publique ?
+    static func isValid(_ data: Data, signatureFile: Data?, publicKey: String = PageSignature.publicKey) -> Bool {
+        guard let sig = decode(signatureFile),
+              let raw = Data(base64Encoded: publicKey), raw.count == 32,
+              let key = try? Curve25519.Signing.PublicKey(rawRepresentation: raw) else { return false }
+        return key.isValidSignature(sig, for: data)
     }
 }
 // PAGE-GUARD:END
