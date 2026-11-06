@@ -16,6 +16,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  versions:
+    name: Numéros de version (BUILD, build Xcode)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Page changée → BUILD avancé ; coque changée → CURRENT_PROJECT_VERSION augmenté
+        run: node scripts/check-versions.mjs "origin/${{ github.base_ref }}"
+
   page:
     name: Page web (syntaxe, tests, console)
     runs-on: ubuntu-latest
