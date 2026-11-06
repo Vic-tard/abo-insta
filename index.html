@@ -502,6 +502,7 @@ if (!window.ZYEUTO_APP) {
   .g-opt:disabled { cursor: default; }
   .g-msg { margin: 0; font: 700 15px var(--round); text-align: center; min-height: 1.4em; }
   #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 45; }
+  #confetti.top { z-index: 66; } /* au-dessus de l'écran doré */
 
   /* Coin « Jeux » : tuiles qui défilent, sous le résumé */
   .games { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
@@ -858,6 +859,39 @@ if (!window.ZYEUTO_APP) {
   .plus-card .asked-stay { color: rgb(247 236 217 / .7); }
   .plus-legal { font-size: 11px !important; line-height: 1.35 !important; padding: 0 4px; color: rgb(247 236 217 / .5) !important; }
   .plus-legal a { color: inherit; }
+
+  /* Écran doré après un achat ou une restauration : toujours noir et or, en clair comme en sombre */
+  .goat { position: fixed; inset: 0; z-index: 65; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #f7ecd9;
+    background: radial-gradient(120% 70% at 50% 30%, #3a2a17 0%, #1a1214 55%, #0b0708 100%);
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .goat[hidden] { display: none; }
+  .goat-rays { position: absolute; left: 50%; top: 34%; width: 900px; height: 900px; translate: -50% -50%; pointer-events: none; opacity: .35;
+    background: repeating-conic-gradient(from 0deg, rgb(244 205 99 / .35) 0deg 7deg, transparent 7deg 22deg);
+    -webkit-mask-image: radial-gradient(closest-side, #000 20%, transparent 75%); mask-image: radial-gradient(closest-side, #000 20%, transparent 75%); }
+  .goat-in { position: relative; width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .goat-hero { position: relative; display: grid; place-items: center; margin: 44px 0 10px; }
+  .goat-hero::before { content: ""; position: absolute; width: 230px; height: 230px; border-radius: 50%; background: radial-gradient(closest-side, rgb(244 205 99 / .55), transparent); pointer-events: none; }
+  .goat-av { position: relative; width: 132px !important; border-radius: 38px; box-shadow: 0 0 0 4px #f4cd63, 0 0 0 9px rgb(244 205 99 / .22), 0 0 50px rgb(244 205 99 / .6); }
+  .goat-crown { position: absolute; top: -34px; left: 50%; translate: -50% 0; width: 54px; filter: drop-shadow(0 3px 6px rgb(0 0 0 / .4)); }
+  .goat-hero .plus-sparkle { font-size: 22px; }
+  .goat-hero .plus-sparkle.a { left: -34px; top: 18px; } .goat-hero .plus-sparkle.b { right: -32px; top: 50px; font-size: 16px; } .goat-hero .plus-sparkle.c { right: -12px; bottom: -14px; font-size: 13px; }
+  .goat-kick { margin: 0; font: 600 16px/1.3 var(--round); color: rgb(247 236 217 / .8); }
+  .goat-kick[hidden] { display: none; }
+  .goat-t { margin: 0; font: 800 36px/1.08 var(--round); background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; overflow-wrap: anywhere; }
+  .goat-plan { margin: 2px 0 0; padding: 8px 18px; border-radius: 999px; border: 1.5px solid rgb(244 205 99 / .6); background: rgb(244 205 99 / .1); font: 600 18px var(--round); color: #f8dc7d; }
+  .goat-s { margin: 4px 0 0; font: 400 15.5px/1.45 var(--font); color: rgb(247 236 217 / .75); max-width: 300px; }
+  .goat-go { position: relative; overflow: hidden; width: 100%; min-height: 56px; margin-top: 22px; border: 0; border-radius: 18px; cursor: pointer; background: var(--gold); color: var(--gold-ink);
+    font: 600 18px var(--round); box-shadow: 0 10px 26px rgb(244 205 99 / .35), inset 0 1px 0 rgb(255 255 255 / .6); }
+  .goat-go:active { transform: scale(.98); }
+  .goat-go::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / .55) 50%, transparent 65%); transform: translateX(-120%); pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .goat:not([hidden]) .goat-in { animation: goatIn .6s cubic-bezier(.3,1.4,.5,1); }
+    .goat:not([hidden]) .goat-rays { animation: goatSpin 40s linear infinite; }
+    .goat:not([hidden]) .goat-av { animation: qzFloat 2.6s ease-in-out infinite; }
+    .goat-go::after { animation: goldShine 3.6s ease-in-out infinite 1s; }
+  }
+  @keyframes goatIn { from { transform: scale(.85); opacity: 0; } }
+  @keyframes goatSpin { to { rotate: 360deg; } }
 
   /* Bloc des réglages */
   .hc-plus { background: var(--night) !important; color: #f7ecd9; box-shadow: 0 0 0 1.5px rgb(244 205 99 / .5), 0 8px 18px rgb(26 18 20 / .25) !important; }
@@ -2613,6 +2647,22 @@ if (!window.ZYEUTO_APP) {
       <button class="asked-stay" id="plus-restore2" type="button">Restaurer mes achats</button>
     </div>
     <p class="plus-legal">Les formules au mois et à l'année se renouvellent toutes seules. Tu peux arrêter quand tu veux dans Réglages, ton nom, Abonnements. <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Conditions d'utilisation (Apple)</a> · <a href="conditions.html" target="_blank" rel="noopener noreferrer">Conditions de vente</a> · <a href="confidentialite.html" target="_blank" rel="noopener noreferrer">Confidentialité</a></p>
+  </div>
+</div>
+<div class="goat" id="goat" hidden role="dialog" aria-modal="true" aria-labelledby="goat-t">
+  <div class="goat-rays" aria-hidden="true"></div>
+  <div class="goat-in">
+    <span class="plus-tag">Zieuton Plus</span>
+    <span class="goat-hero" aria-hidden="true">
+      <span class="zy-av goat-av" id="goat-av"></span>
+      <svg class="goat-crown" viewBox="0 0 64 40"><defs><linearGradient id="goat-cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2bf"/><stop offset=".35" stop-color="#f4cd63"/><stop offset=".7" stop-color="#c98a20"/><stop offset="1" stop-color="#f8dc7d"/></linearGradient></defs><path d="M6 34 2 8l16 12L32 2l14 18L62 8l-4 26z" fill="url(#goat-cg)" stroke="#8a5a12" stroke-width="1.5" stroke-linejoin="round"/><circle cx="32" cy="24" r="3.5" fill="#fff6d6"/></svg>
+      <span class="plus-sparkle a">✦</span><span class="plus-sparkle b">✦</span><span class="plus-sparkle c">✦</span>
+    </span>
+    <p class="goat-kick" id="goat-kick" hidden></p>
+    <h2 class="goat-t" id="goat-t">T'es le boss</h2>
+    <p class="goat-plan" id="goat-plan">Plus à vie</p>
+    <p class="goat-s" id="goat-s"></p>
+    <button class="goat-go" id="goat-ok" type="button">Trop bien</button>
   </div>
 </div>
 <nav class="pager" id="pager" aria-label="Pages">
@@ -4975,7 +5025,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1513";
+const BUILD = "2026-11-06-1613";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -5087,6 +5137,8 @@ function canUpdateFree() {
   return !next || Date.now() >= next.getTime();
 }
 let plusWaiting = null, plusPlan = "fr.zyeuto.plus.an", plusBusy = false;
+// Ce que l'utilisateur est en train de faire : acheter (et depuis quelle formule) ou restaurer, pour choisir le bon écran doré.
+let plusBuyFrom = "", plusRestoringNow = false;
 function plusPrice(id) { return (prefs.plusPrices || {})[id]; }
 function renderPlusPrices() {
   // Les comptes ajoutés (2 et 3) ont leur propre Plus, moins cher : on affiche les prix de leurs produits.
@@ -5193,13 +5245,42 @@ function renderPlusBlock() {
   $("plus-change-sub").textContent = curPlan() === "fr.zyeuto.plus.an" ? "Passer à vie" : "Passer à l'année ou à vie";
   $("plus-manage").hidden = !on || curPlan() === "fr.zyeuto.plus.avie";
 }
-async function plusUnlocked(changed) {
+// Écran doré « T'es le boss » : après un achat (kind "buy"), un changement de formule ("change") ou une restauration ("restored").
+function goatText(kind) {
+  const name = acctMe(curAcct()).name, plan = curPlan(), life = plan === "fr.zyeuto.plus.avie";
+  const who = name ? `, ${name}` : "";
+  if (kind === "restored") return { kick: "On a retrouvé ton Plus", t: `T'es toujours le boss${who}`, s: life ? "Rien n'est perdu : mises à jour illimitées pour toujours, et ton zieuteur reste en or." : "Rien n'est perdu : mises à jour illimitées, et ton zieuteur reste en or." };
+  if (kind === "change") return { kick: "Formule changée", t: `Encore plus fort${who}`, s: life ? "Plus jamais d'abonnement : c'est à toi pour toujours." : "Toujours illimité, et ton zieuteur toujours en or." };
+  return { kick: "", t: `T'es le boss${who}`, s: life ? "Mises à jour illimitées pour toujours. Ton zieuteur est en or, et il le restera." : "Mises à jour illimitées. Ton zieuteur est passé en or." };
+}
+function openGoat(kind) {
+  const x = goatText(kind);
+  $("goat-kick").textContent = x.kick; $("goat-kick").hidden = !x.kick;
+  $("goat-t").textContent = x.t;
+  $("goat-plan").textContent = `Plus ${PLUS_PLANS[curPlan()] || ""}`.trim();
+  $("goat-s").textContent = x.s;
+  $("goat-av").innerHTML = avatarSVG(prefs.zy?.look || {}, true);
+  $("goat").hidden = false;
+}
+let goatClosed = null;
+async function closeGoat() {
+  if ($("goat").hidden) return;
+  $("goat").hidden = true;
+  $("confetti").classList.remove("top");
+  const done = goatClosed; goatClosed = null;
+  if (done) await done();
+}
+$("goat-ok").addEventListener("click", () => { haptic("selection"); closeGoat(); });
+async function plusUnlocked(kind) {
   $("plus").hidden = true;
-  haptic("success"); confetti();
-  toast(changed ? `C'est fait : tu as maintenant Plus ${PLUS_PLANS[curPlan()] || ""}.` : "Bienvenue dans Zieuton Plus ! Ton zieuteur est passé en or.", false);
+  // Déjà affiché (l'app envoie l'état puis le résultat) : on met juste les textes à jour, sans refaire les confettis.
+  if (!$("goat").hidden) return openGoat(kind || "buy");
+  $("confetti").classList.add("top");
+  haptic("success"); confetti(["#fff2bf", "#f4cd63", "#e0a83a", "#c98a20", "#f8dc7d", "#ffffff"]);
   renderPlusBlock();
-  // Un fichier attendait : on l'importe maintenant.
-  if (plusWaiting) { const w = plusWaiting; plusWaiting = null; pending = w.pending; await commit(w.takenAt); }
+  // Un fichier attendait : il s'importe quand on ferme l'écran doré, pas avant.
+  if (plusWaiting) { const w = plusWaiting; plusWaiting = null; goatClosed = async () => { pending = w.pending; await commit(w.takenAt); }; }
+  openGoat(kind || "buy");
 }
 // Réponses de l'app iPhone : état de l'achat, prix du magasin, résultat d'un achat.
 window.zyeutoPlus = (d) => {
@@ -5218,22 +5299,36 @@ window.zyeutoPlus = (d) => {
   // Plus vient de s'activer (ou de s'arrêter) : le bonhomme change de couleur partout.
   if (was !== hasPlus()) { try { renderHomeZy(); renderZy(); render(); } catch (e) { logError("plus-render", e); } }
   const r = d.result;
-  if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; }
-  if ((r === "ok" || r === "restored") && hasPlus()) return plusUnlocked(was && r === "ok");
+  if (r) { plusBusy = false; $("plus-buy").disabled = false; $("plus-buy").textContent = "Continuer"; plusRestoring(false); }
+  // Restauration : l'écran doré s'affiche à chaque fois, même si ce compte avait déjà Plus.
+  if (r === "restored" && hasPlus()) return plusUnlocked("restored");
+  if (r === "ok" && hasPlus()) return plusUnlocked(plusBuyFrom ? "change" : "buy");
   if (r === "restored" && !hasPlus()) return plusMsg(`Aucun Zieuton Plus trouvé pour le compte de ${acctName(curAcct())}. Chaque compte a son propre Plus.`);
   if (r === "none") return plusMsg("Aucun achat Zieuton Plus trouvé sur ce compte Apple.");
   if (r === "pending") return plusMsg("Achat en attente : il doit encore être accepté (par exemple par un parent). Plus s'activera tout seul.");
   if (r === "error") return plusMsg("L'achat n'a pas pu se faire. Vérifie ta connexion et réessaie.");
-  if (!was && hasPlus() && !$("plus").hidden) plusUnlocked();
+  // L'app prévient d'abord que Plus est actif, puis envoie le résultat : l'écran doré s'ouvre dès le premier signe.
+  if (!was && hasPlus() && !$("plus").hidden) plusUnlocked(plusRestoringNow ? "restored" : "buy");
 };
 document.querySelectorAll(".plus-plan").forEach((b) => b.addEventListener("click", () => { haptic("selection"); selectPlan(b.dataset.plan); }));
 $("plus-buy").addEventListener("click", () => {
   if (plusBusy) return;
   plusBusy = true; plusMsg("");
   $("plus-buy").disabled = true; $("plus-buy").textContent = "Un instant…";
+  plusBuyFrom = hasPlus() ? curPlan() : "";
   nativePost({ type: "plus", action: "buy", id: slotId(plusPlan, curSlot()) });
 });
-const plusRestore = () => { plusMsg(""); nativePost({ type: "plus", action: "restore" }); };
+// Pendant la recherche (Apple peut demander le mot de passe), le bouton le dit : on voit que ça travaille.
+let plusRestoreTimer = 0;
+function plusRestoring(on) {
+  plusRestoringNow = on;
+  // Sans réponse de l'app (rare), les boutons reviennent d'eux-mêmes au bout d'une minute et demie.
+  clearTimeout(plusRestoreTimer);
+  if (on) plusRestoreTimer = setTimeout(() => plusRestoring(false), 90e3);
+  $("plus-restore2").disabled = on; $("plus-restore2").textContent = on ? "Recherche…" : "Restaurer mes achats";
+  $("plus-restore").disabled = on; $("plus-restore").querySelector("small").textContent = on ? "Recherche de ton achat…" : "Si tu as déjà payé sur un autre iPhone";
+}
+const plusRestore = () => { plusMsg(""); plusRestoring(true); nativePost({ type: "plus", action: "restore" }); };
 $("plus-restore2").addEventListener("click", plusRestore);
 $("plus-restore").addEventListener("click", plusRestore);
 $("plus-later").addEventListener("click", closePlus);
@@ -5329,13 +5424,13 @@ function animateList() {
 
 // Confettis aux couleurs vives de l'app, pour les bonnes nouvelles.
 let confettiRaf = 0;
-function confetti() {
+function confetti(palette) {
   haptic("success");
   if (calm()) return;
   const cv = $("confetti"), cx = cv.getContext("2d"), dpr = devicePixelRatio || 1;
   const w = innerWidth, h = innerHeight;
   cv.width = w * dpr; cv.height = h * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const colors = ["#ef7f6a", "#f4a96a", "#f2c45a", "#d4919b", "#f6c8cf", "#7cc4a8"];
+  const colors = palette || ["#ef7f6a", "#f4a96a", "#f2c45a", "#d4919b", "#f6c8cf", "#7cc4a8"];
   let parts = Array.from({ length: 130 }, () => ({
     x: w / 2 + (Math.random() - .5) * 60, y: h * .42, vx: (Math.random() - .5) * 13, vy: -Math.random() * 12 - 5,
     s: 5 + Math.random() * 6, c: colors[Math.random() * colors.length | 0], a: Math.random() * 6, va: (Math.random() - .5) * .4 }));
