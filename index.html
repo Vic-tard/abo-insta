@@ -1736,6 +1736,32 @@ if (!window.ZYEUTO_APP) {
     .wl-spark.b { animation-delay: .8s; } .wl-spark.c { animation-delay: 1.6s; }
     .wl > :nth-child(2) { animation-delay: .9s; } .wl > :nth-child(3) { animation-delay: 1s; } .wl > :nth-child(4) { animation-delay: 1.1s; } .wl > :nth-child(5) { animation-delay: 1.2s; }
   }
+  /* « Faisons connaissance » : prénom, Instagram et photo, juste après la bienvenue */
+  .hl { flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+  .hl-photo { position: relative; margin: auto auto 0; width: 108px; height: 108px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .hl-photo:focus-visible { outline: 3px solid var(--link); outline-offset: 4px; }
+  .hl-av { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #d4919b; color: #fff; box-shadow: 0 14px 34px rgb(212 145 155 / .45); }
+  .hl-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hl-av svg { width: 52%; height: 52%; fill: rgb(255 255 255 / .9); }
+  .hl-plus { position: absolute; right: 0; bottom: 2px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); border: 3px solid var(--bg); }
+  .hl-plus svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+  .hl-cap { margin: -4px 0 0; font-size: 14px; color: var(--muted); }
+  .hl h2 { margin: 6px 0 0; font-size: 28px; line-height: 1.15; }
+  .hl h2 em { font-style: normal; color: var(--rose-ink); }
+  .hl p.lead { max-width: 330px; margin: 0 auto; }
+  .hl-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; margin: 6px auto 0; text-align: left; }
+  .hl-field { display: flex; align-items: center; gap: 4px; background: var(--surface-2); border: 1.5px solid transparent; border-radius: 16px; padding: 0 16px; transition: border-color .2s; }
+  .hl-field:focus-within { border-color: var(--rose); }
+  .hl-field span { color: var(--muted); font: 400 17px var(--font); }
+  .hl-field input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: 400 17px var(--font); padding: 15px 0; outline: none; }
+  .hl-field input::placeholder { color: var(--muted); }
+  .hl-safe { margin: 4px auto 0; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+  .hl-safe svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-reduced-motion: no-preference) {
+    .hl > * { animation: rise .45s both; }
+    .hl-photo { animation: sticker .5s cubic-bezier(.3,1.6,.5,1) both; }
+    .hl > :nth-child(2) { animation-delay: .08s; } .hl > :nth-child(3) { animation-delay: .14s; } .hl > :nth-child(4) { animation-delay: .2s; } .hl > :nth-child(5) { animation-delay: .26s; } .hl > :nth-child(6) { animation-delay: .32s; }
+  }
   @keyframes ping { 0% { scale: .6; opacity: .9; } 100% { scale: 1.5; opacity: 0; } }
   @keyframes sticker { from { scale: .3; opacity: 0; } }
   @keyframes bubble { from { transform: scale(0); opacity: 0; } }
@@ -4635,6 +4661,16 @@ function wlPlay() {
   };
 }
 let gfLeftAt = 0, gfOnReturn = null;
+// Ce qui est tapé sur « Faisons connaissance », gardé si l'écran se redessine.
+let hlDraft = { name: "", ig: "" };
+// Photo de « Faisons connaissance » : la même que celle de Réglages (lue sur le bouton photo, toujours présent).
+function hlFace() {
+  const el = $("hl-av");
+  if (!el) return;
+  const img = $("avatar-core").querySelector("img");
+  el.innerHTML = img ? `<img alt="" src="${img.getAttribute("src")}">` : `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg>`;
+  $("hl-photo").setAttribute("aria-label", img ? "Changer ta photo de profil" : "Choisir ta photo de profil");
+}
 let gmTick = null;
 // gfRepeat : le même parcours, rouvert depuis « Nouvel export » pour les imports suivants.
 let gfRepeat = false, gfRepeatFrom = 0;
@@ -4658,6 +4694,8 @@ function gfStep() {
   if (!gfRepeat) {
     // driveLinked : réglage laissé par l'ancien mode Google Drive chez les premiers testeurs (ils ont déjà vu la bienvenue).
     if (prefs.welcomed === false || (prefs.welcomed === undefined && !prefs.driveLinked && !prefs.requestedAt)) return "welcome";
+    // Faisons connaissance : sauté si le prénom est déjà là (anciens utilisateurs, compte ajouté avec son prénom).
+    if (!((prefs.me || {}).name || "").trim()) return "hello";
     if (needsInstall && !prefs.stayInSafari) return "install";
   }
   return reqPending() ? "get" : "insta";
@@ -4668,8 +4706,8 @@ function renderGuided() {
   $("gf").hidden = !step;
   document.documentElement.style.overflow = step ? "hidden" : "";
   if (!step) return;
-  $("gf").classList.toggle("welcome", step === "welcome");
-  $("gf").classList.toggle("fun", step !== "welcome");
+  $("gf").classList.toggle("welcome", step === "welcome" || step === "hello");
+  $("gf").classList.toggle("fun", step !== "welcome" && step !== "hello");
   const order = (needsInstall && !gfRepeat ? ["install"] : []).concat(["insta", "get"]);
   const at = order.indexOf(step);
   $("gf-prog").innerHTML = order.map((_, i) => `<i class="${i <= at ? "on" : ""}"></i>`).join("");
@@ -4696,6 +4734,39 @@ function renderGuided() {
       </div>`;
     $("gf-go").onclick = () => { prefs.welcomed = true; savePrefs(); render(); };
     wlPlay();
+  } else if (step === "hello") {
+    // Prénom (obligatoire), pseudo Instagram et photo : l'accueil et Réglages sont déjà remplis ensuite.
+    body.innerHTML = `
+      <div class="hl">
+        <button class="hl-photo" id="hl-photo" type="button" aria-label="Choisir ta photo de profil"><span class="hl-av" id="hl-av"></span><span class="hl-plus" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></span></button>
+        <p class="hl-cap">Ta photo, si tu veux</p>
+        <h2 id="gf-title">Faisons <em>connaissance</em>&nbsp;!</h2>
+        <p class="lead">Dis-moi comment tu t'appelles, et ton compte est prêt. Tu pourras tout changer plus tard.</p>
+        <div class="hl-fields">
+          <label class="hl-field"><input id="hl-name" type="text" maxlength="24" placeholder="Ton prénom" autocomplete="given-name" enterkeyhint="next" aria-label="Ton prénom"></label>
+          <label class="hl-field"><span aria-hidden="true">@</span><input id="hl-ig" type="text" maxlength="31" placeholder="ton.pseudo.insta (facultatif)" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" aria-label="Ton pseudo Instagram, facultatif"></label>
+        </div>
+        <p class="hl-safe">${ICON.lock}Ça reste sur ton téléphone</p>
+        <div class="gf-foot"><button class="btn primary big" id="gf-hello" type="button" disabled>Continuer</button></div>
+      </div>`;
+    hlFace();
+    const nm = $("hl-name"), ig = $("hl-ig"), go = $("gf-hello");
+    nm.value = hlDraft.name; ig.value = hlDraft.ig;
+    const check = () => { if (ig.value.startsWith("@")) ig.value = ig.value.replace(/^@+/, ""); hlDraft.name = nm.value; hlDraft.ig = ig.value; go.disabled = !nm.value.trim(); };
+    nm.oninput = check; ig.oninput = check; check();
+    nm.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); ig.focus(); } };
+    ig.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); ig.blur(); if (!go.disabled) go.click(); } };
+    $("hl-photo").onclick = () => pickPhoto();
+    go.onclick = () => {
+      const name = nm.value.trim();
+      if (!name) return;
+      // Même nettoyage que Réglages → Mon compte.
+      const handle = ig.value.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase();
+      prefs.me = { ...(prefs.me || {}), name, ...(handle ? { ig: handle } : {}) };
+      curAcct().lastName = name;
+      hlDraft = { name: "", ig: "" };
+      savePrefs(); haptic("success"); render();
+    };
   } else if (step === "install") {
     body.innerHTML = `
       ${path}${guide("D'abord, installe-moi sur ton téléphone. Comme ça, tu passes d'Instagram à moi d'un simple geste, et je garde ton historique&nbsp;!")}<h2 id="gf-title">Mets l'app sur ton écran d'accueil</h2>
@@ -4839,7 +4910,7 @@ function renderGuided() {
     bk.innerHTML = closes ? `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Fermer` : `<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Retour`;
     bk.onclick = () => {
       if (closes) { setRepeat(false); return render(); }
-      if (step === "install") prefs.welcomed = false;
+      if (step === "install" || step === "hello") prefs.welcomed = false;
       else if (step === "get") { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; }
       else if (step === "insta") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
       savePrefs(); render();
@@ -4868,7 +4939,7 @@ function renderGuided() {
     body.prepend(top);
   }
   // « Voir la démo » : pour découvrir l'app tout de suite, sans attendre Instagram.
-  if (!gfRepeat && !state.snapshots.length && step !== "install" && step !== "welcome" && step !== "get") {
+  if (!gfRepeat && !state.snapshots.length && step !== "install" && step !== "welcome" && step !== "hello" && step !== "get") {
     const foot = body.querySelector(".gf-foot");
     if (foot) {
       const d = document.createElement("button");
@@ -4885,7 +4956,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1501";
+const BUILD = "2026-11-06-1506";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6760,6 +6831,7 @@ function renderAvatar() {
   const img = core.querySelector("img");
   if (avatar) { if (img) img.src = avatar; else core.innerHTML = `<img alt="" src="${avatar}">`; }
   else if (img) core.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg>`;
+  hlFace();
 }
 function setAvatar(url) {
   avatar = url;
