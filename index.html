@@ -641,12 +641,12 @@ if (!window.ZYEUTO_APP) {
   .tip { position: fixed; z-index: 17; pointer-events: none; background: var(--btn); color: var(--btn-ink); font: 600 12px/1.3 var(--font); padding: 6px 9px; border-radius: 8px;
     translate: -50% calc(-100% - 10px); white-space: nowrap; box-shadow: 0 4px 14px rgb(0 0 0 / .18); }
   @media (prefers-reduced-motion: no-preference) {
-    .st-card.seen .chart .bar { animation: grow .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 50% 100%; }
-    .st-card.seen .chart .bar.neg { transform-origin: 50% 0; }
-    .st-card.seen .chart .hbar { animation: growx .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 0 50%; }
-    .st-card.seen .chart .seg { animation: sweep .8s cubic-bezier(.2, .8, .2, 1) both; }
-    .st-card.seen .chart .curve { stroke-dasharray: 1; animation: draw 1.1s .1s ease-out both; }
-    .st-card.seen .chart .area { animation: fadein .8s .3s both; }
+    .st-card.seen.open .chart .bar { animation: grow .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 50% 100%; }
+    .st-card.seen.open .chart .bar.neg { transform-origin: 50% 0; }
+    .st-card.seen.open .chart .hbar { animation: growx .6s cubic-bezier(.2, .8, .2, 1) both; transform-box: fill-box; transform-origin: 0 50%; }
+    .st-card.seen.open .chart .seg { animation: sweep .8s cubic-bezier(.2, .8, .2, 1) both; }
+    .st-card.seen.open .chart .curve { stroke-dasharray: 1; animation: draw 1.1s .1s ease-out both; }
+    .st-card.seen.open .chart .area { animation: fadein .8s .3s both; }
     .pg.anim .kpi { animation: pop .4s .15s both; } .pg.anim .kpi + .kpi { animation-delay: .25s; }
     .pg.anim .tile { animation: pop .35s both; }
   }
@@ -1507,7 +1507,7 @@ if (!window.ZYEUTO_APP) {
   #quiz-acts .qz-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   #quiz-acts .qz-row .qz-ghost { padding: 13px 8px; font-size: 14px; }
   /* ---- Graphiques, version premium : écrins sombres, une couleur d'accent par carte, couleurs de données validées sur fond sombre ---- */
-  .st-evo { --ac: #f6c95a; } .st-moves { --ac: #4fd1a5; } .st-rel { --ac: #e07aa5; } .st-age { --ac: #f0c061; } .st-grow { --ac: #b79cff; }
+  .st-evo { --ac: #f4a3c4; } .st-moves { --ac: #4fd1a5; } .st-rel { --ac: #e07aa5; } .st-age { --ac: #ef9fbf; } .st-grow { --ac: #b79cff; }
   .st-month { --ac: #ff8a7a; } .st-day { --ac: #9fb4ff; } .st-hour { --ac: #4fd1a5; } .st-stay { --ac: #ff8a7a; }
   .pg-rec { background: linear-gradient(135deg, #c9adff, #8f78e6); box-shadow: 0 6px 16px rgb(143 120 230 / .38), inset 0 0 0 1.5px rgb(255 255 255 / .4); }
   .pg-rec svg { width: 30px; height: 30px; display: block; filter: drop-shadow(0 1px 1px rgb(60 40 120 / .35)); }
@@ -1540,13 +1540,16 @@ if (!window.ZYEUTO_APP) {
   .sc-ico { flex: none; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: color-mix(in srgb, var(--ac) 18%, transparent); color: var(--ac); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ac) 30%, transparent); }
   .sc-ico svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   #pg-stats .st-card h2 { color: #fff; font: 800 18.5px/1.2 var(--round); }
-  #pg-stats .st-card .chart text, #pg-stats #chart text { fill: rgb(255 255 255 / .5); font: 600 10.5px var(--round); }
+  #pg-stats .st-card .chart text, #pg-stats #chart text { fill: rgb(255 255 255 / .62); font: 600 11px var(--round); }
+  #pg-stats #chart line, #pg-stats #gz-svg > line { stroke-dasharray: 2 5; stroke-linecap: round; }
+  #pg-stats .chart .track { fill: rgb(255 255 255 / .045); }
+  #pg-stats .chart .ring { stroke: rgb(255 255 255 / .06); }
   #pg-stats .st-card .chart text.v { fill: #fff; font: 800 11.5px var(--round); }
   #pg-stats .st-card .key { color: rgb(255 255 255 / .75); font: 700 12.5px var(--round); }
   #pg-stats .st-card .key i { border-radius: 50%; }
   #pg-stats .st-card.st-moves { --up: #199e70 !important; --down: #d95926 !important; }
-  #pg-stats .st-card.st-rel { --c1: #c98500; --c2: #d55181; --c3: #9085e9; }
-  #pg-stats .st-card.st-age { --s1: #7d560c !important; --s2: #a8740c !important; --s3: #d69a1c !important; --s4: #efc061 !important; --s5: #fae3ad !important; }
+  #pg-stats .st-card.st-rel { --c1: #ff9a7a; --c2: #d55181; --c3: #9085e9; }
+  #pg-stats .st-card.st-age { --s1: #f9d3e2 !important; --s2: #ef9fbf !important; --s3: #d8679a !important; --s4: #a8457a !important; --s5: #6e2f5c !important; }
   #pg-stats .st-card .donut { width: 168px; }
   #pg-stats .st-card .donut .mid b { color: #fff; font: 800 28px/1 var(--round); }
   #pg-stats .st-card .donut .mid span { color: rgb(255 255 255 / .55); font: 700 11.5px var(--round); }
@@ -1583,6 +1586,26 @@ if (!window.ZYEUTO_APP) {
   @media (prefers-reduced-motion: no-preference) {
     .st-peeker svg { transition: transform .55s cubic-bezier(.3,1.5,.5,1) .15s; }
     .st-peeker:has(+ .st-card.wait) svg { transform: translateY(34px); }
+  }
+  /* Cartes à dérouler : on voit le titre (et son chiffre clé), on touche pour déplier le graphique */
+  #pg-stats .st-card { gap: 0; padding: 0; }
+  #pg-stats .st-card .sc-h { margin: 0; font: inherit; }
+  #pg-stats .sc-head { width: 100%; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 14px 14px 14px 16px; border-radius: 26px; -webkit-tap-highlight-color: transparent; }
+  #pg-stats .sc-head:focus-visible { outline: 2px solid var(--ac); outline-offset: -2px; }
+  #pg-stats .sc-head:active .sc-ico { transform: scale(.92); }
+  #pg-stats .sc-t { flex: 1; min-width: 0; color: #fff; font: 800 17px/1.25 var(--round); }
+  .sc-arr { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgb(255 255 255 / .07); color: rgb(255 255 255 / .7); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); }
+  .sc-arr svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .st-card.open .sc-arr { background: color-mix(in srgb, var(--ac) 22%, transparent); color: var(--ac); transform: rotate(180deg); }
+  .sc-body { display: grid; grid-template-rows: 0fr; opacity: 0; }
+  .st-card.open .sc-body { grid-template-rows: 1fr; opacity: 1; }
+  .sc-in { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 14px; margin: 0 -8px; padding: 0 24px 0; }
+  .st-card.open .sc-in { padding-bottom: 16px; padding-top: 4px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .sc-arr { transition: transform .3s cubic-bezier(.3, 1.3, .5, 1), background .2s, color .2s; }
+    .sc-ico { transition: transform .15s; }
+    .sc-body { transition: grid-template-rows .38s cubic-bezier(.3, .9, .3, 1), opacity .3s ease-out; }
+    .sc-in { transition: padding .38s cubic-bezier(.3, .9, .3, 1); }
   }
   /* Liste des comptes ouverte depuis un graphique : même écrin */
   .who-hero { background: radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, var(--ac, #f6c95a) 26%, transparent), transparent 62%), linear-gradient(180deg, #2c1a31, #1c1020) !important; color: #fff; box-shadow: 0 12px 26px rgb(30 15 25 / .25); }
@@ -2581,22 +2604,22 @@ if (!window.ZYEUTO_APP) {
   <div class="wrap">
     <div class="pg-head center has-trophy"><div><h1 class="pg-title-big">Graphiques</h1></div><button class="pg-trophy pg-rec" id="tile-records" type="button" aria-label="Mes records"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l2 4 4.4.6-3.2 3.1.8 4.4L24 14l-4 2.1.8-4.4-3.2-3.1L22 8z" fill="#fff6d8"/><rect x="18" y="19" width="12" height="22" rx="2.5" fill="#fff"/><rect x="6" y="26" width="12" height="15" rx="2.5" fill="#fff" fill-opacity=".8"/><rect x="30" y="31" width="12" height="10" rx="2.5" fill="#fff" fill-opacity=".65"/></svg></button></div>
     <div class="st-hero" id="st-hero"></div>
-    <section class="block st-card st-evo" id="g-evo-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></i><h2 id="g-evo-title">Ton évolution</h2></div><div id="chart"></div></section>
-    <section class="block st-card st-moves" id="g-moves-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 19V5M4 9l4-4 4 4M16 5v14M12 15l4 4 4-4"/></svg></i><h2 id="g-moves-title">Arrivées et départs</h2></div><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></section>
-    <section class="block st-card st-rel" id="g-rel-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.5"/><circle cx="16.5" cy="10" r="2.8"/><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5M15.6 14.5c2.4-.1 4.3 1.3 5 4"/></svg></i><h2 id="g-rel-title">Tes relations</h2></div><div id="g-rel"></div></section>
+    <section class="block st-card st-evo" id="g-evo-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-evo-tog" aria-expanded="false" aria-controls="g-evo-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></i><span class="sc-t" id="g-evo-title">Ton évolution</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-evo-body" inert><div class="sc-in"><div id="chart"></div></div></div></section>
+    <section class="block st-card st-moves" id="g-moves-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-moves-tog" aria-expanded="false" aria-controls="g-moves-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 19V5M4 9l4-4 4 4M16 5v14M12 15l4 4 4-4"/></svg></i><span class="sc-t" id="g-moves-title">Arrivées et départs</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-moves-body" inert><div class="sc-in"><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></div></div></section>
+    <section class="block st-card st-rel" id="g-rel-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-rel-tog" aria-expanded="false" aria-controls="g-rel-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.5"/><circle cx="16.5" cy="10" r="2.8"/><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5M15.6 14.5c2.4-.1 4.3 1.3 5 4"/></svg></i><span class="sc-t" id="g-rel-title">Tes relations</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-rel-body" inert><div class="sc-in"><div id="g-rel"></div></div></div></section>
     <div class="st-peeker r" id="peek-a" aria-hidden="true"></div>
-    <section class="block st-card st-age pk-r" id="g-age-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5c0 5 8 5 8 8.5s-8 3.5-8 8.5M16 3.5c0 5-8 5-8 8.5s8 3.5 8 8.5"/></svg></i><h2 id="g-age-title">Depuis quand ils te suivent</h2></div><div id="g-age"></div></section>
-    <section class="block st-card st-grow" id="g-grow-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h4v-4h4v-4h4V7h4"/></svg></i><h2 id="g-grow-title">Ta communauté</h2></div>
+    <section class="block st-card st-age pk-r" id="g-age-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-age-tog" aria-expanded="false" aria-controls="g-age-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5c0 5 8 5 8 8.5s-8 3.5-8 8.5M16 3.5c0 5-8 5-8 8.5s8 3.5 8 8.5"/></svg></i><span class="sc-t" id="g-age-title">Depuis quand ils te suivent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-age-body" inert><div class="sc-in"><div id="g-age"></div></div></div></section>
+    <section class="block st-card st-grow" id="g-grow-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-grow-tog" aria-expanded="false" aria-controls="g-grow-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h4v-4h4v-4h4V7h4"/></svg></i><span class="sc-t" id="g-grow-title">Ta communauté</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-grow-body" inert><div class="sc-in">
       <div class="gz-chips" id="gz-chips" role="group" aria-label="Période"><button type="button" data-span="0">Tout</button><button type="button" data-span="730">2 ans</button><button type="button" data-span="365">1 an</button><button type="button" data-span="182">6 mois</button><button type="button" data-span="30">1 mois</button><button type="button" data-span="7">7 jours</button></div>
       <div class="gz-box chart" id="gz-box"><svg id="gz-svg" viewBox="0 0 340 190" role="img" aria-label="Abonnés actuels cumulés selon leur date d'abonnement"></svg></div>
       <div class="gz-info" id="gz-info" aria-live="polite"></div>
-      <button type="button" class="gz-see" id="gz-see"></button></section>
-    <section class="block st-card st-month" id="g-month-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg></i><h2 id="g-month-title">Nouveaux abonnés par mois</h2></div>
-      <div class="st-nav"><button type="button" id="gm-prev" aria-label="Année précédente">‹</button><span id="gm-range"></span><button type="button" id="gm-next" aria-label="Année suivante">›</button></div><div class="chart" id="g-month"></div></section>
+      <button type="button" class="gz-see" id="gz-see"></button></div></div></section>
+    <section class="block st-card st-month" id="g-month-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-month-tog" aria-expanded="false" aria-controls="g-month-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg></i><span class="sc-t" id="g-month-title">Nouveaux abonnés par mois</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-month-body" inert><div class="sc-in">
+      <div class="st-nav"><button type="button" id="gm-prev" aria-label="Année précédente">‹</button><span id="gm-range"></span><button type="button" id="gm-next" aria-label="Année suivante">›</button></div><div class="chart" id="g-month"></div></div></div></section>
     <div class="st-peeker l" id="peek-b" aria-hidden="true"></div>
-    <section class="block st-card st-day pk-l" id="g-day-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></i><h2 id="g-day-title">Le jour où ils s'abonnent</h2></div><div class="chart" id="g-day"></div></section>
-    <section class="block st-card st-hour" id="g-hour-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg></i><h2 id="g-hour-title">L'heure où ils s'abonnent</h2></div><div class="chart" id="g-hour"></div></section>
-    <section class="block st-card st-stay" id="g-stay-block"><div class="sc-head"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 20V5a1 1 0 0 1 1-1h8v16M4 20h16M15 4l3 1.5V20"/><circle cx="12.5" cy="12.5" r=".9" fill="currentColor"/></svg></i><h2 id="g-stay-title">Combien de temps ils restent</h2></div><div class="chart" id="g-stay"></div></section>
+    <section class="block st-card st-day pk-l" id="g-day-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-day-tog" aria-expanded="false" aria-controls="g-day-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></i><span class="sc-t" id="g-day-title">Le jour où ils s'abonnent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-day-body" inert><div class="sc-in"><div class="chart" id="g-day"></div></div></div></section>
+    <section class="block st-card st-hour" id="g-hour-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-hour-tog" aria-expanded="false" aria-controls="g-hour-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg></i><span class="sc-t" id="g-hour-title">L'heure où ils s'abonnent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-hour-body" inert><div class="sc-in"><div class="chart" id="g-hour"></div></div></div></section>
+    <section class="block st-card st-stay" id="g-stay-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-stay-tog" aria-expanded="false" aria-controls="g-stay-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 20V5a1 1 0 0 1 1-1h8v16M4 20h16M15 4l3 1.5V20"/><circle cx="12.5" cy="12.5" r=".9" fill="currentColor"/></svg></i><span class="sc-t" id="g-stay-title">Combien de temps ils restent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-stay-body" inert><div class="sc-in"><div class="chart" id="g-stay"></div></div></div></section>
   </div>
 </div>
 <!-- Après la demande faite dans Instagram (app iPhone) : on propose de quoi patienter. -->
@@ -3627,6 +3650,8 @@ function renderChart() {
     if (i) svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="16" fill="transparent"${tapPick(importWho(snaps[i]), `${fmtShort(snaps[i].takenAt)} : ${nf(ys[i])} abonnés`)}/>`;
     svg += `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="${endpoint ? 5 : 3.5}" class="dot" pointer-events="none" fill="${endpoint ? "var(--ink)" : "var(--surface)"}" stroke="${endpoint ? "var(--surface)" : "var(--chart)"}" stroke-width="2"><title>${fmtDate(snaps[i].takenAt)} : ${nf(ys[i])} abonnés</title></circle>`;
   });
+  const iL = xs.length - 1;
+  svg += `<text class="v" x="${sx(xs[iL])}" y="${sy(ys[iL]) - 12}" text-anchor="end">${nf(ys[iL])}</text>`;
   $("chart").innerHTML = svg + "</svg>";
   drawChartWhenSeen();
 }
@@ -5025,7 +5050,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1613";
+const BUILD = "2026-11-06-1625";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6417,7 +6442,7 @@ function setPage(p) {
     if (open) el.classList.remove("off");
     el.style.transform = `translateX(${open ? 0 : REST[k]}%)`;
     el.inert = !open;
-    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); if (k === "stats") { if (statsDirty) { statsDirty = false; renderStatsPage(); } watchStatCards(); countUp(); } }
+    if (open && was !== p) { el.scrollTop = 0; replayAnim(el); haptic("selection"); if (k === "stats") { restoreStatCards(); if (statsDirty) { statsDirty = false; renderStatsPage(); } watchStatCards(); countUp(); } }
   }
   document.documentElement.style.overflow = p === "home" ? "" : "hidden";
   $("pager").querySelectorAll("button").forEach((b) => b.dataset.page === p ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
@@ -6510,7 +6535,7 @@ const plural = (n, one, many) => `${nf(n)} ${n > 1 ? many : one}`;
 const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
 // Barre aux coins du haut arrondis (ou du bas pour une valeur négative), posée sur la ligne de base.
 function barPath(x, y, w, h, down) {
-  const r = Math.min(4, w / 2, Math.abs(h));
+  const r = Math.min(6, w / 2, Math.abs(h));
   if (h <= 0) return "";
   return down
     ? `M${x},${y}h${w}v${h - r}q0,${r} ${-r},${r}h${-(w - 2 * r)}q${-r},0 ${-r},${-r}z`
@@ -6527,7 +6552,7 @@ function donut(parts, mid) {
     at += len;
   });
   const legend = parts.map((p) => `<li${p.who && p.n ? tapPick(p.who, p.label) : ""}><i style="background:${p.color}"></i><span>${p.label}${p.hint ? `<small>${p.hint}</small>` : ""}</span><b>${nf(p.n)}<em>${pct(p.n, total)} %</em></b></li>`).join("");
-  return `<div class="donut-row"><div class="donut chart"><svg viewBox="0 0 140 140" role="img" aria-label="${esc(parts.map((p) => `${p.label} ${p.n}`).join(", "))}">${segs}</svg><div class="mid">${mid}</div></div><ul class="legend">${legend}</ul></div>`;
+  return `<div class="donut-row"><div class="donut chart"><svg viewBox="0 0 140 140" role="img" aria-label="${esc(parts.map((p) => `${p.label} ${p.n}`).join(", "))}"><circle class="ring" cx="70" cy="70" r="${R}" fill="none" stroke="var(--line)" stroke-width="20"/>${segs}</svg><div class="mid">${mid}</div></div><ul class="legend">${legend}</ul></div>`;
 }
 // Barres verticales simples ; la plus haute porte sa valeur.
 function bars(items, { color = "var(--chart)", tip, highlightMax = true, labelEvery = 1 } = {}) {
@@ -6536,6 +6561,7 @@ function bars(items, { color = "var(--chart)", tip, highlightMax = true, labelEv
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(items.map((d) => `${d.label} ${d.n}`).join(", "))}"><line x1="0" x2="${W}" y1="${H - B}" y2="${H - B}" stroke="var(--line)"/>`;
   items.forEach((d, i) => {
     const h = (d.n / max) * (H - T - B), x = i * slot + (slot - bw) / 2, fill = highlightMax && i !== iMax ? "var(--s1)" : color;
+    svg += `<rect class="track" x="${x}" y="${T}" width="${bw}" height="${H - B - T}" rx="${Math.min(6, bw / 2)}"/>`;
     svg += `<path class="bar" style="animation-delay:${i * 0.03}s" d="${barPath(x, H - B - h, bw, h)}" fill="${fill}"/>`;
     svg += `<rect class="hit" x="${i * slot}" y="0" width="${slot}" height="${H - B}"${d.who && d.n ? tapPick(d.who, tip(d)) : ` data-tip="${esc(tip(d))}"`}/>`;
     if (i % labelEvery === 0 || i === n - 1) svg += `<text x="${i * slot + slot / 2}" y="${H - 6}" text-anchor="middle">${esc(d.short || d.label)}</text>`;
@@ -6549,6 +6575,7 @@ function hbars(items, tip) {
   items.forEach((d, i) => {
     const y = i * row + 6, w = (d.n / max) * (W - LW - 44), h = row - 12;
     svg += `<text x="0" y="${y + h / 2 + 4}">${esc(d.label)}</text>`;
+    svg += `<rect class="track" x="${LW}" y="${y}" width="${W - LW - 44}" height="${h}" rx="4"/>`;
     if (w > 0) svg += `<path class="hbar" style="animation-delay:${i * 0.05}s" d="M${LW},${y}h${w - Math.min(4, w)}q${Math.min(4, w)},0 ${Math.min(4, w)},${Math.min(4, w)}v${h - 2 * Math.min(4, w)}q0,${Math.min(4, w)} ${-Math.min(4, w)},${Math.min(4, w)}h${-(w - Math.min(4, w))}z" fill="${d.n === max ? "var(--chart)" : "var(--s1)"}"/>`;
     svg += `<text class="v" x="${LW + w + 6}" y="${y + h / 2 + 4}">${nf(d.n)}</text>`;
     svg += `<rect class="hit" x="0" y="${i * row}" width="${W}" height="${row}"${d.who && d.n ? tapPick(d.who, tip(d)) : ` data-tip="${esc(tip(d))}"`}/>`;
@@ -6912,6 +6939,30 @@ function watchStatCards() {
   }), { threshold: 0.18 });
   cards.forEach((c) => statSeen.observe(c));
 }
+// Chaque carte de la page Graphiques est repliée : on touche son titre pour dérouler le graphique.
+// Les cartes ouvertes sont retenues sur cet appareil (prefs.stOpen) ; sinon tout est replié.
+function setStatCard(card, open, remember) {
+  const k = card.id.replace(/-block$/, ""), tog = $(k + "-tog"), body = $(k + "-body");
+  card.classList.toggle("open", open);
+  tog.setAttribute("aria-expanded", String(open));
+  body.inert = !open;
+  if (!remember) return;
+  const keep = new Set(Array.isArray(prefs.stOpen) ? prefs.stOpen : []);
+  if (open) keep.add(k); else keep.delete(k);
+  prefs.stOpen = [...keep]; savePrefs();
+}
+function restoreStatCards() {
+  const keep = new Set(Array.isArray(prefs.stOpen) ? prefs.stOpen : []);
+  document.querySelectorAll("#pg-stats .st-card").forEach((c) => setStatCard(c, keep.has(c.id.replace(/-block$/, "")), false));
+}
+document.querySelectorAll("#pg-stats .st-card .sc-head").forEach((b) => b.addEventListener("click", () => {
+  const card = b.closest(".st-card"), open = !card.classList.contains("open");
+  hideTip(); haptic("selection");
+  setStatCard(card, open, true);
+  // Le graphique se dessine (ses barres poussent, sa courbe se trace) au moment où on le déroule.
+  if (open) { card.classList.remove("wait"); card.classList.add("seen"); }
+}));
+restoreStatCards();
 function countUp() {
   const el = $("sh-count"); if (!el) return;
   const n = +el.dataset.n, t0 = performance.now(), dur = 900;
