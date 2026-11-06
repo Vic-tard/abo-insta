@@ -2762,10 +2762,38 @@ const store = {
 };
 
 // ---------- Double copie locale : IndexedDB + localStorage ----------
-// On écrit les deux ; au chargement, on garde celle qui a le plus d'imports.
+// On écrit les deux ; au chargement, on garde celle qui a le plus d'imports (pickState).
+// localStorage n'a qu'une copie légère, ou rien, pour les gros comptes (lsCopyText, FOU-40).
 const LS_KEY = "abo-state";
-function lsGet() { try { const s = JSON.parse(localStorage.getItem(LS_KEY) || "null"); return isState(s) ? s : null; } catch { return null; } }
-function lsSet(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch { /* normal : stockage indisponible, le bandeau de save() prévient */ } }
+// Lit un état enregistré et le passe à la version actuelle (FOU-39). Des données incomprises ou plus récentes
+// sont d'abord copiées à part dans IndexedDB (« kept:… »), pour ne jamais être écrasées par l'enregistrement suivant.
+function readState(raw, key) {
+  const m = migrateState(raw);
+  if (m.keep) keepAside(key, raw);
+  return m.ok ? m.data : null;
+}
+function keepAside(key, raw) {
+  let k;
+  try { k = "kept:" + key + ":" + (raw && raw.v !== undefined ? raw.v : "x") + ":" + JSON.stringify(raw).length; }
+  catch (e) { logError("keep-aside", e); k = "kept:" + key + ":" + Date.now(); }
+  if (!store.db) return logError("keep-aside", new Error("IndexedDB indisponible, copie à part impossible"));
+  store.get(k).then((old) => old === undefined ? store.set(k, raw) : null).catch((e) => logError("keep-aside", e));
+}
+function lsRead(key) {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { logError("ls-read", e); return null; }
+  return readState(raw, key);
+}
+const lsGet = () => lsRead(LS_KEY);
+// Écrit la copie de secours. Trop gros même en copie légère : on retire l'ancienne copie (elle prendrait la place
+// des réglages). Un échec d'écriture est noté dans le journal (avant : il passait inaperçu).
+function lsWrite(key, s) {
+  let txt;
+  try { txt = lsCopyText(s); } catch (e) { logError("ls-copy", e); return; }
+  try { if (txt === null) localStorage.removeItem(key); else localStorage.setItem(key, txt); }
+  catch (e) { logError("ls-write", e); }
+}
+const lsSet = (s) => lsWrite(LS_KEY, s);
 
 const ICONS = {
   ok: `<svg viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.1 4.75 4.75 0 0 0 7 18.5z"/><path d="m9.5 13.6 1.9 1.9 3.6-3.7"/></svg>`,
@@ -2783,6 +2811,7 @@ function showStorageBanner(html) { $("storage-banner").innerHTML = html; $("stor
 async function save() {
   if (DEMO) return;
   let ok = false;
+  state.v = STATE_V;
   try { await store.set("state", state); ok = true; } catch (e) { logError("save-idb", e); }
   lsSet(state);
   try { localStorage.getItem(LS_KEY) && (ok = true); } catch { /* normal : stockage du navigateur indisponible */ }
@@ -2797,7 +2826,7 @@ async function save() {
 // qui marche sans étape de construction, sur GitHub Pages comme dans l'app.
 // Après une modification ici : « node scripts/sync-core.mjs » (recopie dans index.html), puis « npm test ».
 //
-// Fourni par le reste de la page (et simulé par les tests) : state, nf, fmtDate, accts, curAcct, acctLockOn, otherAccountError.
+// Fourni par le reste de la page (et simulé par les tests) : state, nf, fmtDate, accts, curAcct, acctLockOn, otherAccountError, logError.
 
 // ---------- Lecture de l'export Instagram ----------
 function cleanName(s) {
@@ -3010,6 +3039,85 @@ async function recordSnapshot(followers, following, takenAt, source) {
   state.followers = followers;
   return { status: last ? "ok" : "first", unfollows, follows, count: names.length };
 }
+
+// ---------- Version des données enregistrées (FOU-39) ----------
+// L'historique (état par compte) et les réglages portent un numéro de version « v ». Sans numéro = version 1
+// (tout ce qui a été enregistré avant ce numéro). Au chargement, migrateState / migratePrefs font passer
+// les données à la version actuelle, une étape à la fois. Elles ne suppriment jamais rien :
+// des données incomprises ou d'une version plus récente (ex. après un retour arrière de la page) sont
+// signalées « keep » pour que la page en garde une copie à part avant toute écriture.
+const STATE_V = 2, PREFS_V = 2;
+const isPlainObj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
+const looksLikeState = (s) => isPlainObj(s) && Array.isArray(s.snapshots) && Array.isArray(s.events) && isPlainObj(s.followers);
+// Étapes : STATE_STEPS[n] fait passer de la version n à n + 1. Une future étape s'ajoute ici, sans toucher aux autres.
+const STATE_STEPS = {
+  1: (s) => ({ ...s, v: 2 }), // version 2 : seulement le numéro (la forme des données ne change pas)
+};
+const PREFS_STEPS = {
+  1: (p) => ({ ...p, v: 2 }),
+};
+function dataVersion(d) {
+  if (!isPlainObj(d)) return null;
+  if (d.v === undefined) return 1;
+  return Number.isInteger(d.v) && d.v >= 1 ? d.v : null;
+}
+// Résultat : { data, ok, keep }. ok : data est utilisable telle quelle. keep : garder une copie de l'original à part.
+function migrate(raw, { current, steps, valid, what }) {
+  if (raw === null || raw === undefined) return { data: null, ok: false, keep: false };
+  const v = dataVersion(raw);
+  if (v === null) {
+    logError("migrate-" + what, new Error(`données illisibles (${Array.isArray(raw) ? "liste" : typeof raw})`));
+    return { data: raw, ok: false, keep: true };
+  }
+  if (v > current) {
+    // Données d'une version plus récente de la page : on les lit si leur forme est connue, et on en garde une copie.
+    logError("migrate-" + what, new Error(`version ${v} plus récente que ${current}`));
+    return { data: raw, ok: valid(raw), keep: true };
+  }
+  let d = raw;
+  for (let n = v; n < current; n++) {
+    try { d = steps[n](d); }
+    catch (e) { logError("migrate-" + what, e); return { data: raw, ok: false, keep: true }; }
+  }
+  if (!valid(d)) {
+    logError("migrate-" + what, new Error(`forme inconnue (version ${v})`));
+    return { data: raw, ok: false, keep: true };
+  }
+  return { data: d, ok: true, keep: false };
+}
+const migrateState = (raw) => migrate(raw, { current: STATE_V, steps: STATE_STEPS, valid: looksLikeState, what: "state" });
+const migratePrefs = (raw) => migrate(raw, { current: PREFS_V, steps: PREFS_STEPS, valid: isPlainObj, what: "prefs" });
+
+// ---------- Copie de secours dans localStorage (FOU-40) ----------
+// IndexedDB est la copie principale. localStorage n'a qu'environ 5 Mo pour tout le site (réglages, photo, journal) :
+// au-delà de LS_MAX caractères, on n'y met plus l'historique complet mais une copie légère (dernier import +
+// listes actuelles), et si même celle-ci est trop grosse (très gros compte), rien du tout.
+const LS_MAX = 1500000;
+// Texte à écrire dans localStorage pour cet état, ou null s'il est trop gros même en copie légère.
+function lsCopyText(s, max = LS_MAX) {
+  const full = JSON.stringify(s);
+  if (full.length <= max) return full;
+  const last = s.snapshots[s.snapshots.length - 1];
+  const lite = { v: s.v, lite: true, snapshots: last ? [last] : [], events: [], followers: s.followers };
+  if (s.following) { lite.following = s.following; lite.followingAt = s.followingAt; }
+  let t = JSON.stringify(lite);
+  if (t.length <= max) return t;
+  delete lite.following; delete lite.followingAt;
+  t = JSON.stringify(lite);
+  return t.length <= max ? t : null;
+}
+// Au chargement : la copie IndexedDB et celle de localStorage (déjà migrées). On garde celle qui a le plus d'imports ;
+// à égalité, la complète. Une copie légère ne sert que si IndexedDB n'a rien (vidée par iOS, par exemple).
+function pickState(idb, ls) {
+  const all = [idb, ls].filter(Boolean);
+  if (!all.length) return null;
+  const best = all.sort((a, b) => (b.snapshots.length - a.snapshots.length) || ((a.lite ? 1 : 0) - (b.lite ? 1 : 0)))[0];
+  if (!best.lite) return best;
+  logError("start-lite", new Error(`seule la copie légère est disponible (${best.snapshots.length} import)`));
+  const s = { ...best };
+  delete s.lite;
+  return s;
+}
 // ===== ZIEUTON-CORE : fin =====
 
 // ---------- Un seul compte Instagram par téléphone (suite) ----------
@@ -3057,15 +3165,16 @@ const acctLabel = (a) => { const n = acctMe(a).name, c = `Compte ${accts().index
 let demoParked = {};
 async function parkState(id, s) {
   if (DEMO) { demoParked[id] = s; return; }
+  s.v = STATE_V;
   try { await store.set("acct:" + id, s); } catch (e) { logError("park-idb", e); }
-  try { localStorage.setItem("abo-state-" + id, JSON.stringify(s)); } catch { /* normal : copie de secours, IndexedDB reste la principale */ }
+  lsWrite("abo-state-" + id, s);
 }
 async function unparkState(id) {
   if (DEMO) return demoParked[id] || emptyState();
-  let s = null;
-  try { s = await store.get("acct:" + id); } catch (e) { logError("unpark-idb", e); }
-  if (!isState(s)) { try { s = JSON.parse(localStorage.getItem("abo-state-" + id) || "null"); } catch (e) { logError("unpark-ls", e); } }
-  return isState(s) ? s : emptyState();
+  let idb = null;
+  try { idb = readState(await store.get("acct:" + id), "acct:" + id); } catch (e) { logError("unpark-idb", e); }
+  const s = pickState(idb, lsRead("abo-state-" + id));
+  return s && isState(s) ? s : emptyState();
 }
 // Range les réglages personnels du compte affiché, et sort ceux du compte suivant.
 function swapPersonal(from, to) {
@@ -3905,6 +4014,9 @@ async function restoreBackup(f) {
       const body = { state: data.state, avatar: data.avatar, zy: data.zy, games: data.games };
       if (backupSeal(body) !== data.seal) return flash("Cette sauvegarde a été modifiée ou abîmée : Zieuton ne peut pas la reprendre.", "err");
     }
+    const m = migrateState(s); // FOU-39 : sauvegarde d'une ancienne (ou plus récente) version de l'app
+    if (!m.ok) throw new Error();
+    s = m.data;
   } catch {
     return flash(nope, "err");
   }
@@ -3989,9 +4101,14 @@ async function restoreICloud(data) {
   }
   leaveDemo(true);
   const keep = { plus: prefs.plus, plusSlots: prefs.plusSlots, plusPrices: prefs.plusPrices };
-  prefs = Object.assign({}, data.prefs, keep, { icloudArmed: true });
-  for (const [id, st] of Object.entries(data.parked || {})) if (isState(st)) await parkState(id, st);
-  state = data.state;
+  const mp = migratePrefs(data.prefs), ms = migrateState(data.state); // FOU-39
+  if (!mp.ok || !ms.ok) {
+    if (offer) offer.remove();
+    return flash("Zieuton ne sait pas encore lire cette sauvegarde iCloud : mets l'app à jour, puis réessaie.", "err");
+  }
+  prefs = Object.assign({}, mp.data, keep, { icloudArmed: true });
+  for (const [id, st] of Object.entries(data.parked || {})) { const m = migrateState(st); if (m.ok) await parkState(id, m.data); }
+  state = ms.data;
   savePrefs();
   setAvatar(typeof data.avatar === "string" && data.avatar.startsWith("data:image/") ? data.avatar : null);
   await save();
@@ -4076,9 +4193,17 @@ $("acct-new-yes").addEventListener("click", async () => {
 
 // ---------- Nouvel export ----------
 // Préférences (date de demande d'export, dernière copie) gardées dans localStorage.
+// Versionnées (FOU-39) : des réglages illisibles ou plus récents sont copiés à part (« abo-prefs-kept-… ») avant d'être remplacés.
 let prefs = {};
-try { prefs = JSON.parse(localStorage.getItem("abo-prefs") || "{}") || {}; } catch (e) { logError("prefs-load", e); }
-function savePrefs() { if (DEMO) return; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch { /* normal : stockage du navigateur indisponible */ } }
+{
+  let txt = null, raw = null;
+  try { txt = localStorage.getItem("abo-prefs"); } catch (e) { logError("prefs-load", e); }
+  if (txt) { try { raw = JSON.parse(txt); } catch (e) { logError("prefs-load", e); raw = undefined; } }
+  const m = raw === undefined ? { ok: false, keep: true } : migratePrefs(raw);
+  if (m.keep) { try { const k = "abo-prefs-kept-" + (raw && raw.v !== undefined ? raw.v : "x"); if (localStorage.getItem(k) === null) localStorage.setItem(k, txt); } catch (e) { logError("prefs-keep", e); } }
+  prefs = m.ok ? m.data : {};
+}
+function savePrefs() { if (DEMO) return; prefs.v = PREFS_V; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch (e) { logError("prefs-save", e); } }
 function markRequested() {
   prefs.requestedAt = new Date().toISOString();
   delete prefs.readyAt;
@@ -5091,7 +5216,7 @@ async function gfCheck() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1400";
+const BUILD = "2026-11-06-1430";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -7156,16 +7281,16 @@ render();
   let idb = null;
   try {
     await store.open();
-    const s = await store.get("state");
-    if (isState(s)) idb = s;
+    idb = readState(await store.get("state"), "state");
     const a = await store.get("avatar");
     if (!avatar && typeof a === "string") setAvatar(a);
     else if (avatar && a !== avatar) store.set("avatar", avatar);
   } catch (e) { logError("start-idb", e); }
   const ls = lsGet();
-  const best = [idb, ls].filter(Boolean).sort((a, b) => b.snapshots.length - a.snapshots.length)[0];
+  const best = pickState(idb, ls);
   if (best) state = best;
-  if (best && (!idb || !ls || idb.snapshots.length !== ls.snapshots.length)) { try { await store.set("state", state); } catch (e) { logError("start-idb-save", e); } lsSet(state); }
+  if (best && best !== idb) { try { state.v = STATE_V; await store.set("state", state); } catch (e) { logError("start-idb-save", e); } }
+  if (best && (!ls || ls.snapshots.length !== best.snapshots.length)) lsSet(state);
   // Demande à Safari de ne pas effacer les données du site.
   try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch { /* normal : simple demande, le navigateur peut refuser */ }
 

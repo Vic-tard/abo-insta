@@ -17,6 +17,9 @@ const DF_LONG = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short
 const fmtDate = (iso) => DF_LONG.format(new Date(iso));
 const nf = (n) => n.toLocaleString("fr-FR");
 let __accts = [{ id: "a1", slot: 1, h: [], n: 0 }], __cur = "a1", __lock = false;
+// Le journal d'erreurs de la page (FOU-30) : ici, les erreurs sont gardées pour que les tests les vérifient.
+const __errors = [];
+function logError(where, err) { __errors.push({ where, message: String(err && err.message || err) }); }
 const accts = () => __accts;
 const curAcct = () => __accts.find((a) => a.id === __cur) || __accts[0];
 const acctLockOn = () => __lock;
@@ -38,6 +41,8 @@ export function loadCore() {
   return vm.runInContext(`({
     cleanName, nameFromHref, listKind, parseAccounts, parseJsonText, listZip, readZipEntry, readExport,
     hashNames, nameHash, acctPrint, acctLikeness, isOtherAccount, knownAcct, recordSnapshot,
+    STATE_V, PREFS_V, migrateState, migratePrefs, LS_MAX, lsCopyText, pickState,
+    get errors() { return __errors; },
     get state() { return state; },
     set state(v) { state = v; },
     // Verrou « un seul compte Instagram par Plus » : actif seulement dans l'app.
