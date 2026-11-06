@@ -2,18 +2,27 @@
 
 Vois qui se désabonne de ton compte Instagram, à partir de l'**export officiel** d'Instagram. Aucune connexion à ton compte, aucun bot : aucun risque de restriction.
 
+Zieuton est une **app iPhone** (iOS 17 ou plus). Elle est en test sur TestFlight ; sortie sur l'App Store visée le 3 décembre 2026. Le site https://vic-tard.github.io/abo-insta/ affiche seulement « Bientôt sur l'App Store » quand on l'ouvre dans un navigateur.
+
+**Ce que fait l'app, et ce qu'elle ne fera pas : voir [`docs/SPEC.md`](docs/SPEC.md).** C'est la référence en cas de doute.
+
 ## Utilisation
 
-1. Ouvre l'app sur ton iPhone dans Safari, puis Partager → « Sur l'écran d'accueil ».
-2. Suis le parcours guidé : choisis ton mode (Gmail ou téléphone), puis fais les étapes dans Instagram (Followers et suivi(e)s, Depuis le début, JSON).
-3. Quand Instagram te prévient, l'app récupère ta liste (mode Gmail) ou tu touches « Importer mon fichier » (mode téléphone).
+1. Ouvre Zieuton sur ton iPhone et touche « Demande ta liste à Instagram ».
+2. Dans Instagram (ouvert dans l'app), le bandeau guide te dit quoi toucher : garder seulement « Followers et suivi(e)s », période « Depuis le début », format JSON, « Une fois ».
+3. Quand ta liste est prête, c'est toi qui touches « Télécharger » : Zieuton récupère le fichier et l'importe tout seul.
 4. Refais un export quand tu veux : l'app te montre les départs et les arrivées.
 
 ## Données
 
-Tout reste sur ton téléphone (IndexedDB + localStorage). Rien n'est envoyé sur internet. Garde une copie après chaque import avec « Sauvegarder une copie ».
+Tout reste sur ton téléphone. Rien n'est envoyé sur un serveur : la seule copie hors du téléphone est la sauvegarde automatique dans ton iCloud. Tu peux aussi garder un fichier `.zieuton` de sauvegarde.
 
-## Vérifications automatiques (pour les développeurs)
+## Pour les développeurs
+
+- [`docs/SPEC.md`](docs/SPEC.md) : ce que fait l'app, ce qu'elle ne fera pas.
+- [`CLAUDE.md`](CLAUDE.md) : architecture et règles de travail (une PR par tâche, tests avant la PR, numéro `BUILD`, Xcode nécessaire ou non).
+
+## Vérifications automatiques
 
 À chaque pull request, GitHub lance tout seul une série de vérifications (onglet **Checks** de la PR). Si une case est rouge, on ne fusionne pas.
 
@@ -22,7 +31,7 @@ Tout reste sur ton téléphone (IndexedDB + localStorage). Rien n'est envoyé su
 | Syntaxe JavaScript des pages | Une faute de frappe dans `index.html` laisserait l'app toute blanche. |
 | Copie de `js/zieuton-core.js` | La lecture de l'export et la comparaison sont écrites dans `js/zieuton-core.js` et recopiées dans `index.html`. Les deux doivent rester identiques. |
 | Tests d'import | Petit compte, 50 000 abonnés, export partiel refusé, export d'un autre compte, exports dans le désordre, même export importé deux fois, fichier qui n'est pas du JSON, .zip abîmé. |
-| Console de la page | La page est ouverte dans un vrai navigateur, comme dans l'app puis comme dans Safari : aucune erreur ne doit apparaître. |
+| Console de la page | La page est ouverte dans un vrai navigateur, comme dans l'app puis comme sur le site : aucune erreur ne doit apparaître. |
 | Coque iPhone | Le projet Xcode doit compiler (sans signature, sur un Mac de GitHub). |
 
 ### Lancer les tests sur ton ordinateur
