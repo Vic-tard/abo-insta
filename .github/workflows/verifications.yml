@@ -55,6 +55,8 @@ jobs:
       - name: Règles de sécurité des mises à jour de la page (PageGuard)
         run: sh scripts/test-page-guard.sh
       - name: Compiler l'app
+        # Compile même si les tests au-dessus échouent : on voit les deux résultats d'un coup.
+        if: ${{ !cancelled() }}
         run: |
           xcodebuild build \
             -project ios/Zieuton.xcodeproj \
