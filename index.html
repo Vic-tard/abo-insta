@@ -1607,6 +1607,15 @@ if (!window.ZYEUTO_APP) {
     .sc-body { transition: grid-template-rows .38s cubic-bezier(.3, .9, .3, 1), opacity .3s ease-out; }
     .sc-in { transition: padding .38s cubic-bezier(.3, .9, .3, 1); }
   }
+  /* Nouvelles cartes (FOU-75) */
+  .st-proj { --ac: #ff9a7a; } .st-net { --ac: #4fd1a5; } .st-first { --ac: #f4a3c4; } .st-back { --ac: #b79cff; }
+  .st-cal { --ac: #e07aa5; } .st-mine { --ac: #ff8a7a; } .st-heat { --ac: #9fb4ff; } .st-keep { --ac: #b79cff; }
+  #pg-stats .st-card.st-first { --c1: #f4a3c4; --c2: #9085e9; --c3: #ff9a7a; }
+  #pg-stats .st-card.st-net { --up: #199e70; --down: #d95926; }
+  #pg-stats .sc-note { margin: -4px 0 0; color: rgb(255 255 255 / .55); font: 600 12.5px/1.4 var(--round); }
+  #pg-stats .cal-key { justify-content: flex-end; align-items: center; gap: 5px; font: 600 11.5px var(--round); color: rgb(255 255 255 / .55); }
+  #pg-stats .cal-key i { width: 11px; height: 11px; border-radius: 3px; background: var(--ac); }
+  #pg-stats .chart .cell0 { fill: rgb(255 255 255 / .06); }
   /* Liste des comptes ouverte depuis un graphique : même écrin */
   .who-hero { background: radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, var(--ac, #f6c95a) 26%, transparent), transparent 62%), linear-gradient(180deg, #2c1a31, #1c1020) !important; color: #fff; box-shadow: 0 12px 26px rgb(30 15 25 / .25); }
   .who-hero::before { display: none; }
@@ -2605,8 +2614,12 @@ if (!window.ZYEUTO_APP) {
     <div class="pg-head center has-trophy"><div><h1 class="pg-title-big">Graphiques</h1></div><button class="pg-trophy pg-rec" id="tile-records" type="button" aria-label="Mes records"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l2 4 4.4.6-3.2 3.1.8 4.4L24 14l-4 2.1.8-4.4-3.2-3.1L22 8z" fill="#fff6d8"/><rect x="18" y="19" width="12" height="22" rx="2.5" fill="#fff"/><rect x="6" y="26" width="12" height="15" rx="2.5" fill="#fff" fill-opacity=".8"/><rect x="30" y="31" width="12" height="10" rx="2.5" fill="#fff" fill-opacity=".65"/></svg></button></div>
     <div class="st-hero" id="st-hero"></div>
     <section class="block st-card st-evo" id="g-evo-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-evo-tog" aria-expanded="false" aria-controls="g-evo-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></i><span class="sc-t" id="g-evo-title">Ton évolution</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-evo-body" inert><div class="sc-in"><div id="chart"></div></div></div></section>
+    <section class="block st-card st-proj" id="g-proj-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-proj-tog" aria-expanded="false" aria-controls="g-proj-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18l5-5 3 2 4-5"/><path d="M16 10l4-4" stroke-dasharray="2 2.5"/><circle cx="20" cy="6" r="1.4"/></svg></i><span class="sc-t" id="g-proj-title">Ton prochain cap</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-proj-body" inert><div class="sc-in"><div class="chart" id="g-proj"></div><p class="sc-note" id="g-proj-note"></p></div></div></section>
     <section class="block st-card st-moves" id="g-moves-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-moves-tog" aria-expanded="false" aria-controls="g-moves-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 19V5M4 9l4-4 4 4M16 5v14M12 15l4 4 4-4"/></svg></i><span class="sc-t" id="g-moves-title">Arrivées et départs</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-moves-body" inert><div class="sc-in"><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></div></div></section>
+    <section class="block st-card st-net" id="g-net-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-net-tog" aria-expanded="false" aria-controls="g-net-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12h16M8 12V6M12 12v6M16 12V8"/></svg></i><span class="sc-t" id="g-net-title">Solde par import</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-net-body" inert><div class="sc-in"><div class="chart" id="g-net"></div></div></div></section>
     <section class="block st-card st-rel" id="g-rel-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-rel-tog" aria-expanded="false" aria-controls="g-rel-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.5"/><circle cx="16.5" cy="10" r="2.8"/><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5M15.6 14.5c2.4-.1 4.3 1.3 5 4"/></svg></i><span class="sc-t" id="g-rel-title">Tes relations</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-rel-body" inert><div class="sc-in"><div id="g-rel"></div></div></div></section>
+    <section class="block st-card st-first" id="g-first-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-first-tog" aria-expanded="false" aria-controls="g-first-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c.6-2.6 2.6-4 5-4M21 19c-.6-2.6-2.6-4-5-4M10.5 17h3M12.5 15.5 14 17l-1.5 1.5"/></svg></i><span class="sc-t" id="g-first-title">Qui a suivi le premier</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-first-body" inert><div class="sc-in"><div id="g-first"></div></div></div></section>
+    <section class="block st-card st-back" id="g-back-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-back-tog" aria-expanded="false" aria-controls="g-back-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9h11a4 4 0 0 1 0 8H9"/><path d="M8 5 4 9l4 4"/></svg></i><span class="sc-t" id="g-back-title">Délai de retour</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-back-body" inert><div class="sc-in"><div class="chart" id="g-back"></div><p class="sc-note">Le temps entre le premier qui suit et l'autre qui suit en retour, pour tes mutuels.</p></div></div></section>
     <div class="st-peeker r" id="peek-a" aria-hidden="true"></div>
     <section class="block st-card st-age pk-r" id="g-age-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-age-tog" aria-expanded="false" aria-controls="g-age-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5c0 5 8 5 8 8.5s-8 3.5-8 8.5M16 3.5c0 5-8 5-8 8.5s8 3.5 8 8.5"/></svg></i><span class="sc-t" id="g-age-title">Depuis quand ils te suivent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-age-body" inert><div class="sc-in"><div id="g-age"></div></div></div></section>
     <section class="block st-card st-grow" id="g-grow-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-grow-tog" aria-expanded="false" aria-controls="g-grow-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h4v-4h4v-4h4V7h4"/></svg></i><span class="sc-t" id="g-grow-title">Ta communauté</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-grow-body" inert><div class="sc-in">
@@ -2614,12 +2627,16 @@ if (!window.ZYEUTO_APP) {
       <div class="gz-box chart" id="gz-box"><svg id="gz-svg" viewBox="0 0 340 190" role="img" aria-label="Abonnés actuels cumulés selon leur date d'abonnement"></svg></div>
       <div class="gz-info" id="gz-info" aria-live="polite"></div>
       <button type="button" class="gz-see" id="gz-see"></button></div></div></section>
+    <section class="block st-card st-cal" id="g-cal-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-cal-tog" aria-expanded="false" aria-controls="g-cal-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/><rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="16" y="10" width="4" height="4" rx="1"/><rect x="4" y="16" width="4" height="4" rx="1"/><rect x="10" y="16" width="4" height="4" rx="1"/></svg></i><span class="sc-t" id="g-cal-title">Ton année, jour par jour</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-cal-body" inert><div class="sc-in"><div class="chart" id="g-cal"></div><div class="key cal-key"><span>Moins</span><i style="opacity:.25"></i><i style="opacity:.5"></i><i style="opacity:.75"></i><i></i><span>Plus</span></div></div></div></section>
     <section class="block st-card st-month" id="g-month-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-month-tog" aria-expanded="false" aria-controls="g-month-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg></i><span class="sc-t" id="g-month-title">Nouveaux abonnés par mois</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-month-body" inert><div class="sc-in">
       <div class="st-nav"><button type="button" id="gm-prev" aria-label="Année précédente">‹</button><span id="gm-range"></span><button type="button" id="gm-next" aria-label="Année suivante">›</button></div><div class="chart" id="g-month"></div></div></div></section>
+    <section class="block st-card st-mine" id="g-mine-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-mine-tog" aria-expanded="false" aria-controls="g-mine-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 19c.8-3.2 3.3-5 6.5-5 1.5 0 2.8.4 3.9 1.1M18 13v6M15 16h6"/></svg></i><span class="sc-t" id="g-mine-title">Tes abonnements par mois</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-mine-body" inert><div class="sc-in"><div class="chart" id="g-mine"></div></div></div></section>
     <div class="st-peeker l" id="peek-b" aria-hidden="true"></div>
     <section class="block st-card st-day pk-l" id="g-day-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-day-tog" aria-expanded="false" aria-controls="g-day-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></i><span class="sc-t" id="g-day-title">Le jour où ils s'abonnent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-day-body" inert><div class="sc-in"><div class="chart" id="g-day"></div></div></div></section>
     <section class="block st-card st-hour" id="g-hour-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-hour-tog" aria-expanded="false" aria-controls="g-hour-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg></i><span class="sc-t" id="g-hour-title">L'heure où ils s'abonnent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-hour-body" inert><div class="sc-in"><div class="chart" id="g-hour"></div></div></div></section>
+    <section class="block st-card st-heat" id="g-heat-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-heat-tog" aria-expanded="false" aria-controls="g-heat-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/></svg></i><span class="sc-t" id="g-heat-title">Ton meilleur créneau</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-heat-body" inert><div class="sc-in"><div class="chart" id="g-heat"></div></div></div></section>
     <section class="block st-card st-stay" id="g-stay-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-stay-tog" aria-expanded="false" aria-controls="g-stay-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 20V5a1 1 0 0 1 1-1h8v16M4 20h16M15 4l3 1.5V20"/><circle cx="12.5" cy="12.5" r=".9" fill="currentColor"/></svg></i><span class="sc-t" id="g-stay-title">Combien de temps ils restent</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-stay-body" inert><div class="sc-in"><div class="chart" id="g-stay"></div></div></div></section>
+    <section class="block st-card st-keep" id="g-keep-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-keep-tog" aria-expanded="false" aria-controls="g-keep-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.2a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></svg></i><span class="sc-t" id="g-keep-title">Leur fidélité</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-keep-body" inert><div class="sc-in"><div class="chart" id="g-keep"></div><p class="sc-note">Selon depuis combien de temps ils te suivent. Plus la barre est courte, plus ils sont fidèles. Calculé depuis ton premier import.</p></div></div></section>
   </div>
 </div>
 <!-- Après la demande faite dans Instagram (app iPhone) : on propose de quoi patienter. -->
@@ -5050,7 +5067,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1625";
+const BUILD = "2026-11-06-1633";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6569,15 +6586,15 @@ function bars(items, { color = "var(--chart)", tip, highlightMax = true, labelEv
   });
   return svg + "</svg>";
 }
-function hbars(items, tip) {
-  const W = 340, row = 30, LW = 92, max = Math.max(1, ...items.map((d) => d.n)), H = items.length * row;
+function hbars(items, tip, { fmt = nf, max: top } = {}) {
+  const W = 340, row = 30, LW = 92, big = Math.max(1, ...items.map((d) => d.n)), max = top || big, H = items.length * row;
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(items.map((d) => `${d.label} ${d.n}`).join(", "))}">`;
   items.forEach((d, i) => {
     const y = i * row + 6, w = (d.n / max) * (W - LW - 44), h = row - 12;
     svg += `<text x="0" y="${y + h / 2 + 4}">${esc(d.label)}</text>`;
     svg += `<rect class="track" x="${LW}" y="${y}" width="${W - LW - 44}" height="${h}" rx="4"/>`;
-    if (w > 0) svg += `<path class="hbar" style="animation-delay:${i * 0.05}s" d="M${LW},${y}h${w - Math.min(4, w)}q${Math.min(4, w)},0 ${Math.min(4, w)},${Math.min(4, w)}v${h - 2 * Math.min(4, w)}q0,${Math.min(4, w)} ${-Math.min(4, w)},${Math.min(4, w)}h${-(w - Math.min(4, w))}z" fill="${d.n === max ? "var(--chart)" : "var(--s1)"}"/>`;
-    svg += `<text class="v" x="${LW + w + 6}" y="${y + h / 2 + 4}">${nf(d.n)}</text>`;
+    if (w > 0) svg += `<path class="hbar" style="animation-delay:${i * 0.05}s" d="M${LW},${y}h${w - Math.min(4, w)}q${Math.min(4, w)},0 ${Math.min(4, w)},${Math.min(4, w)}v${h - 2 * Math.min(4, w)}q0,${Math.min(4, w)} ${-Math.min(4, w)},${Math.min(4, w)}h${-(w - Math.min(4, w))}z" fill="${d.n === big ? "var(--chart)" : "var(--s1)"}"/>`;
+    svg += `<text class="v" x="${LW + w + 6}" y="${y + h / 2 + 4}">${fmt(d.n)}</text>`;
     svg += `<rect class="hit" x="0" y="${i * row}" width="${W}" height="${row}"${d.who && d.n ? tapPick(d.who, tip(d)) : ` data-tip="${esc(tip(d))}"`}/>`;
   });
   return svg + "</svg>";
@@ -6699,6 +6716,156 @@ function renderStatsPage() {
       return { label, n: L.length, who: () => ({ title: `Restés ${label.charAt(0).toLowerCase() + label.slice(1)}`, sub: "Partis après être restés", cls: "st-stay",
         rows: L.slice().sort((x, y) => y.e.at.localeCompare(x.e.at)).map((x) => ({ u: x.e.u, cls: "down", sub: `resté ${fmtLen(x.d)}, parti vers le ${fmtDate(x.e.at)}` })) }) };
     }), (d) => `${d.label} : ${plural(d.n, "départ", "départs")}`);
+  }
+  extraStats(snaps, last, now, stamps, rel, gone);
+}
+
+// ---------- Cartes en plus (FOU-75) : chacune se cache s'il n'y a pas assez de données ----------
+function extraStats(snaps, last, now, stamps, rel, gone) {
+  const fw = state.followers, fg = state.following || {};
+  const okT = (t) => Number.isInteger(t) && t > 0;
+
+  // Projection : le rythme depuis le premier import, prolongé jusqu'au prochain cap
+  const first = snaps[0], days = (now - new Date(first.takenAt).getTime()) / DAY, rate = days >= 7 ? (last.count - first.count) / days : 0;
+  if (show("g-proj-block", snaps.length > 1 && days >= 7)) {
+    const c = last.count, digits = String(Math.max(1, c)).length, step = Math.max(10, 10 ** (digits - 1) / 2);
+    let cap = Math.ceil((c + 1) / step) * step; if (cap - c < step / 4) cap += step;
+    const W = 340, H = 170, L = 40, R = 14, T = 16, B = 24;
+    const xs = snaps.map((x) => new Date(x.takenAt).getTime()), ys = snaps.map((x) => x.count);
+    const reach = rate > 0 ? now + ((cap - c) / rate) * DAY : null, far = reach && reach - now > 5 * 365 * DAY;
+    const xEnd = reach && !far ? reach : now + Math.max(30 * DAY, (now - xs[0]) * 0.6);
+    const yEnd = reach && !far ? cap : c + rate * ((xEnd - now) / DAY);
+    let lo = Math.min(...ys, yEnd), hi = Math.max(...ys, yEnd, reach && !far ? cap : 0);
+    const stp = niceStep((hi - lo) || 4); lo = Math.max(0, Math.floor(lo / stp) * stp); hi = Math.ceil(hi / stp) * stp + (hi % stp ? 0 : stp);
+    const sx = (x) => L + ((x - xs[0]) / (xEnd - xs[0] || 1)) * (W - L - R), sy = (y) => T + (1 - (y - lo) / (hi - lo || 1)) * (H - T - B);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Abonnés et projection">`;
+    for (let v = lo; v <= hi + 1e-9; v += stp) svg += `<line x1="${L}" x2="${W - R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-dasharray="2 5"/><text x="${L - 6}" y="${sy(v) + 4}" text-anchor="end">${nf(v)}</text>`;
+    if (reach && !far) svg += `<line x1="${L}" x2="${W - R}" y1="${sy(cap)}" y2="${sy(cap)}" stroke="var(--ac)" stroke-opacity=".5" stroke-dasharray="4 4"/>`;
+    svg += `<polyline class="curve" pathLength="1" points="${xs.map((x, i) => `${sx(x)},${sy(ys[i])}`).join(" ")}" fill="none" stroke="rgb(255 255 255 / .75)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx(now)}" y1="${sy(c)}" x2="${sx(xEnd)}" y2="${sy(yEnd)}" stroke="var(--ac)" stroke-width="2.5" stroke-dasharray="1 6" stroke-linecap="round"/>`;
+    svg += `<circle cx="${sx(now)}" cy="${sy(c)}" r="4.5" fill="#fff"/>`;
+    if (reach && !far) svg += `<circle cx="${sx(reach)}" cy="${sy(cap)}" r="6" fill="var(--ac)" stroke="#fff" stroke-width="2"/><text class="v" x="${sx(reach)}" y="${sy(cap) - 11}" text-anchor="end">${nf(cap)}</text>`;
+    svg += `${sx(now) - L > 90 ? `<text x="${L}" y="${H - 6}">${fmtShort(xs[0])}</text>` : ""}<text x="${sx(now)}" y="${H - 6}" text-anchor="middle">Aujourd'hui</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${fmtShort(xEnd)}</text>`;
+    $("g-proj").innerHTML = svg + "</svg>";
+    const per = Math.abs(rate) * 7;
+    $("g-proj-title").textContent = reach && !far ? `${nf(cap)} abonnés vers le ${fmtDate(reach)}` : rate < 0 ? "Pas de cap en vue : ça baisse" : `${nf(cap)} abonnés : pas avant longtemps`;
+    $("g-proj-note").textContent = rate ? `À ton rythme actuel : ${rate > 0 ? "+" : "−"}${per >= 1 ? nf(Math.round(per)) + " par semaine" : nf(Math.round(per * 4.35)) + " par mois"}. Ce n'est qu'une estimation.` : "Ton nombre d'abonnés ne bouge pas pour l'instant.";
+  }
+
+  // Solde par import : arrivées moins départs
+  if (show("g-net-block", snaps.length > 1)) {
+    const S = snaps.slice(1).slice(-12), W = 340, H = 150, T = 18, B = 22, n = S.length;
+    const vals = S.map((x) => (x.follows || 0) - (x.unfollows || 0)), m = Math.max(1, ...vals.map(Math.abs));
+    const mid = T + (H - T - B) / 2, half = (H - T - B) / 2 - 6, slot = W / n, bw = Math.min(26, slot * 0.6);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Solde à chaque import"><line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="var(--line)"/>`;
+    S.forEach((x, i) => {
+      const v = vals[i], h = (Math.abs(v) / m) * half, bx = i * slot + (slot - bw) / 2;
+      if (v > 0) svg += `<path class="bar" style="animation-delay:${i * 0.04}s" d="${barPath(bx, mid - h - 1, bw, h)}" fill="var(--up)"/>`;
+      else if (v < 0) svg += `<path class="bar neg" style="animation-delay:${i * 0.04}s" d="${barPath(bx, mid + 1, bw, h, true)}" fill="var(--down)"/>`;
+      else svg += `<rect x="${bx}" y="${mid - 1.5}" width="${bw}" height="3" rx="1.5" fill="rgb(255 255 255 / .35)"/>`;
+      svg += `<text class="v" x="${i * slot + slot / 2}" y="${v >= 0 ? mid - h - 6 : mid + h + 14}" text-anchor="middle">${v > 0 ? "+" : v < 0 ? "−" : "±"}${nf(Math.abs(v))}</text>`;
+      svg += `<rect class="hit" x="${i * slot}" y="0" width="${slot}" height="${H - B}"${tapPick(importWho(x), `${fmtShort(x.takenAt)} : ${v > 0 ? "+" : v < 0 ? "−" : "±"}${nf(Math.abs(v))}`)}/>`;
+    });
+    (n <= 4 ? S.map((_, i) => i) : [0, n - 1]).forEach((i) => svg += `<text x="${i * slot + slot / 2}" y="${H - 5}" text-anchor="middle">${fmtShort(S[i].takenAt)}</text>`);
+    $("g-net").innerHTML = svg + "</svg>";
+    const tot = snaps.slice(1).reduce((a, x) => a + (x.follows || 0) - (x.unfollows || 0), 0), pos = vals.filter((v) => v > 0).length;
+    $("g-net-title").textContent = `${pos} import${pos > 1 ? "s" : ""} sur ${n} dans le vert`;
+    void tot;
+  }
+
+  // Mutuels : qui a suivi le premier, et en combien de temps l'autre a suivi en retour
+  const pairs = rel ? Object.keys(fg).filter((u) => u in fw && okT(fw[u]) && okT(fg[u])).map((u) => ({ u, me: fg[u] * 1000, them: fw[u] * 1000 })) : [];
+  if (show("g-first-block", pairs.length >= 3)) {
+    const same = (p) => Math.abs(p.me - p.them) < DAY;
+    const A = pairs.filter((p) => !same(p) && p.me < p.them), Bp = pairs.filter((p) => !same(p) && p.them < p.me), C = pairs.filter(same);
+    const rowsP = (L) => L.slice().sort((x, y) => Math.max(y.me, y.them) - Math.max(x.me, x.them)).map((p) => ({ u: p.u, sub: () => `toi le ${fmtDate(p.me)}, lui le ${fmtDate(p.them)}` }));
+    $("g-first").innerHTML = donut([
+      { label: "Toi d'abord", hint: "Ils t'ont suivi en retour", n: A.length, color: "var(--c1)", who: () => ({ title: "Toi d'abord", sub: "Tu les as suivis, ils t'ont suivi ensuite", rows: rowsP(A), cls: "st-first" }) },
+      { label: "Eux d'abord", hint: "Tu les as suivis en retour", n: Bp.length, color: "var(--c2)", who: () => ({ title: "Eux d'abord", sub: "Ils t'ont suivi, tu les as suivis ensuite", rows: rowsP(Bp), cls: "st-first" }) },
+      { label: "Le même jour", hint: "Coup de foudre", n: C.length, color: "var(--c3)", who: () => ({ title: "Le même jour", sub: "Vous vous êtes suivis le même jour", rows: rowsP(C), cls: "st-first" }) },
+    ], `<b>${pct(Bp.length, pairs.length)} %</b><span>eux d'abord</span>`);
+    $("g-first-title").textContent = A.length >= Bp.length ? `Tu as suivi le premier ${pct(A.length, pairs.length)} % du temps` : `Ils t'ont suivi les premiers ${pct(Bp.length, pairs.length)} % du temps`;
+  }
+  if (show("g-back-block", pairs.length >= 3)) {
+    const d = pairs.map((p) => ({ p, d: Math.abs(p.me - p.them) / DAY })).sort((a, b) => a.d - b.d);
+    const med = d[Math.floor(d.length / 2)].d;
+    const BK = [["Le même jour", 0, 1], ["Moins d'une semaine", 1, 7], ["1 à 4 semaines", 7, 30], ["1 à 12 mois", 30, 365], ["Plus d'un an", 365, Infinity]];
+    $("g-back").innerHTML = hbars(BK.map(([label, a, b]) => {
+      const L = d.filter((x) => x.d >= a && x.d < b);
+      return { label: label.replace("Moins d'une semaine", "Moins d'1 sem.").replace("1 à 4 semaines", "1 à 4 sem."), n: L.length, who: () => ({ title: label, sub: "Délai avant le retour", cls: "st-back", rows: L.map((x) => ({ u: x.p.u, sub: `retour en ${fmtLen(x.d)}` })) }) };
+    }), (x) => `${x.label} : ${plural(x.n, "mutuel", "mutuels")}`);
+    $("g-back-title").textContent = med < 1 ? "La plupart suivent en retour le jour même" : `Retour en ${fmtLen(med)} en général`;
+  }
+
+  // Calendrier : les 53 dernières semaines, une case par jour
+  if (show("g-cal-block", stamps.length >= 7)) {
+    const end = new Date(now); end.setHours(0, 0, 0, 0);
+    const startD = new Date(end); startD.setDate(startD.getDate() - 52 * 7 - ((end.getDay() + 6) % 7));
+    const byDay = new Map();
+    for (const t of stamps) { if (t < startD.getTime()) continue; const k = new Date(t).toDateString(); byDay.set(k, (byDay.get(k) || 0) + 1); }
+    const mx = Math.max(1, ...byDay.values()), cs = 5.2, g = 1.2, L = 14, T = 14, W = 340;
+    let svg = `<svg viewBox="0 0 ${W} ${T + 7 * (cs + g) + 2}" role="img" aria-label="Nouveaux abonnés par jour sur un an">`;
+    ["L", "", "M", "", "V", "", "D"].forEach((x, r) => x && (svg += `<text x="0" y="${T + r * (cs + g) + cs}" style="font-size:7px">${x}</text>`));
+    let best = null, lastMonth = -1;
+    for (let d = new Date(startD), i = 0; d <= end; d.setDate(d.getDate() + 1), i++) {
+      const col = Math.floor(i / 7), row = (d.getDay() + 6) % 7, k = d.toDateString(), n = byDay.get(k) || 0, x = L + col * (cs + g), y = T + row * (cs + g);
+      if (row === 0 && d.getMonth() !== lastMonth && d.getDate() <= 7) { lastMonth = d.getMonth(); if (col < 51) svg += `<text x="${x}" y="${T - 4}" style="font-size:7.5px">${MONTHS_S[d.getMonth()]}</text>`; }
+      const ms = d.getTime(), lab = d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+      if (n && (!best || n > best.n)) best = { n, ms };
+      svg += `<rect class="${n ? "" : "cell0"}" x="${x}" y="${y}" width="${cs}" height="${cs}" rx="1.3"${n ? ` fill="var(--ac)" fill-opacity="${(0.25 + 0.75 * Math.min(1, n / mx)).toFixed(2)}"` : ""}${n ? tapPick(() => ({ title: `Le ${fmtDate(ms)}`, sub: "Ils t'ont suivi ce jour-là, toujours là", cls: "st-cal", rows: followersWhere((t) => new Date(t).toDateString() === k) }), `Le ${lab} : +${nf(n)}`) : ` data-tip="Le ${lab} : personne"`}/>`;
+    }
+    $("g-cal").innerHTML = svg + "</svg>";
+    const daysOn = byDay.size;
+    $("g-cal-title").textContent = best ? `${nf(daysOn)} jour${daysOn > 1 ? "s" : ""} avec du nouveau cette année` : "Ton année, jour par jour";
+  }
+
+  // Tes abonnements à toi, par mois (12 derniers mois)
+  const mine = Object.values(fg).filter(okT).map((t) => t * 1000);
+  if (show("g-mine-block", rel && mine.length >= 3)) {
+    const e = new Date(now), months = [];
+    for (let k = 11; k >= 0; k--) { const d = new Date(e.getFullYear(), e.getMonth() - k, 1); months.push({ y: d.getFullYear(), m: d.getMonth(), n: 0 }); }
+    const by = new Map(months.map((x) => [x.y * 12 + x.m, x]));
+    for (const t of mine) { const d = new Date(t), mo = by.get(d.getFullYear() * 12 + d.getMonth()); if (mo) mo.n++; }
+    const tot = months.reduce((a, x) => a + x.n, 0);
+    $("g-mine").innerHTML = bars(months.map((x) => ({ n: x.n, label: `${MONTHS[x.m]} ${x.y}`, short: MONTHS_S[x.m],
+      who: () => ({ title: new Date(x.y, x.m, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase()), sub: "Les comptes que tu as suivis ce mois-là", cls: "st-mine",
+        rows: rowsOf(Object.keys(fg).filter((u) => { if (!okT(fg[u])) return false; const d = new Date(fg[u] * 1000); return d.getFullYear() === x.y && d.getMonth() === x.m; }), fg, "suivi") }) })),
+      { tip: (d) => `${d.label} : ${plural(d.n, "compte suivi", "comptes suivis")}`, labelEvery: 2 });
+    $("g-mine-title").textContent = `Tu as suivi ${plural(tot, "compte", "comptes")} en 12 mois`;
+  }
+
+  // Jour × heure : par tranches de 3 heures
+  if (show("g-heat-block", stamps.length >= 20)) {
+    const grid = Array.from({ length: 7 }, () => Array(8).fill(0));
+    for (const t of stamps) { const d = new Date(t); grid[(d.getDay() + 6) % 7][Math.floor(d.getHours() / 3)]++; }
+    const mx = Math.max(1, ...grid.flat()), L = 34, T = 4, cw = (340 - L) / 8, ch = 20, gp = 3;
+    const DN = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+    let svg = `<svg viewBox="0 0 340 ${T + 7 * ch + 18}" role="img" aria-label="Nouveaux abonnés selon le jour et l'heure">`, best = { n: -1 };
+    grid.forEach((row, r) => {
+      svg += `<text x="0" y="${T + r * ch + ch / 2 + 3}">${DN[r].slice(0, 3)}</text>`;
+      row.forEach((n, c) => {
+        if (n > best.n) best = { n, r, c };
+        const h0 = c * 3;
+        svg += `<rect class="${n ? "" : "cell0"}" x="${L + c * cw + gp / 2}" y="${T + r * ch + gp / 2}" width="${cw - gp}" height="${ch - gp}" rx="4"${n ? ` fill="var(--ac)" fill-opacity="${(0.15 + 0.85 * n / mx).toFixed(2)}"` : ""}${n ? tapPick(() => ({ title: `Le ${DN[r]}, ${h0} h – ${h0 + 3} h`, sub: "Ils t'ont suivi à ce moment-là", cls: "st-heat", rows: followersWhere((t) => { const d = new Date(t); return (d.getDay() + 6) % 7 === r && Math.floor(d.getHours() / 3) === c; }) }), `Le ${DN[r]} de ${h0} h à ${h0 + 3} h : +${nf(n)}`) : ""}/>`;
+      });
+    });
+    for (let c = 0; c <= 8; c += 2) svg += `<text x="${L + c * cw}" y="${T + 7 * ch + 13}" text-anchor="${c === 0 ? "start" : c === 8 ? "end" : "middle"}">${c * 3}h</text>`;
+    $("g-heat").innerHTML = svg + "</svg>";
+    $("g-heat-title").textContent = `Le ${DN[best.r]} entre ${best.c * 3} h et ${best.c * 3 + 3} h`;
+  }
+
+  // Fidélité : sur 100 abonnés, combien partent chaque mois, selon depuis combien de temps ils te suivent
+  // (mesuré entre ton premier et ton dernier import, seule période où Zieuton voit les départs)
+  const months = days / 30.4;
+  if (show("g-keep-block", gone.length >= 3 && stamps.length >= 10 && days >= 14)) {
+    const KB = [["Moins d'1 mois", 0, 30], ["1 à 6 mois", 30, 182], ["6 à 12 mois", 182, 365], ["1 à 2 ans", 365, 730], ["Plus de 2 ans", 730, Infinity]];
+    const here = stamps.map((t) => (now - t) / DAY);
+    const rate = (a, b) => { const out = gone.filter((g) => g.d >= a && g.d < b).length, base = here.filter((x) => x >= a && x < b).length + out; return base ? (out / base / months) * 100 : 0; };
+    const r1 = (v) => Math.round(v * 10) / 10, f1 = (v) => `${String(r1(v)).replace(".", ",")} %`;
+    const items = KB.map(([label, a, b]) => ({ label, n: r1(rate(a, b)) }));
+    $("g-keep").innerHTML = hbars(items, (x) => `${x.label} : ${f1(x.n)} partent par mois`, { fmt: f1 });
+    const avg = (first.count + last.count) / 2, all = avg ? (gone.length / avg / months) * 100 : 0;
+    $("g-keep-title").textContent = `${f1(all).replace(" %", "")} sur 100 partent chaque mois`;
   }
 }
 
