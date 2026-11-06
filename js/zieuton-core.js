@@ -3,7 +3,7 @@
 // qui marche sans étape de construction, sur GitHub Pages comme dans l'app.
 // Après une modification ici : « node scripts/sync-core.mjs » (recopie dans index.html), puis « npm test ».
 //
-// Fourni par le reste de la page (et simulé par les tests) : state, nf, fmtDate, accts, curAcct, acctLockOn, otherAccountError.
+// Fourni par le reste de la page (et simulé par les tests) : state, nf, fmtDate, accts, curAcct, acctLockOn, otherAccountError, logError.
 
 // ---------- Lecture de l'export Instagram ----------
 function cleanName(s) {
@@ -215,4 +215,83 @@ async function recordSnapshot(followers, following, takenAt, source) {
   for (const u of follows) state.events.push({ u, kind: "follow", at: takenAt, since: last.takenAt });
   state.followers = followers;
   return { status: last ? "ok" : "first", unfollows, follows, count: names.length };
+}
+
+// ---------- Version des données enregistrées (FOU-39) ----------
+// L'historique (état par compte) et les réglages portent un numéro de version « v ». Sans numéro = version 1
+// (tout ce qui a été enregistré avant ce numéro). Au chargement, migrateState / migratePrefs font passer
+// les données à la version actuelle, une étape à la fois. Elles ne suppriment jamais rien :
+// des données incomprises ou d'une version plus récente (ex. après un retour arrière de la page) sont
+// signalées « keep » pour que la page en garde une copie à part avant toute écriture.
+const STATE_V = 2, PREFS_V = 2;
+const isPlainObj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
+const looksLikeState = (s) => isPlainObj(s) && Array.isArray(s.snapshots) && Array.isArray(s.events) && isPlainObj(s.followers);
+// Étapes : STATE_STEPS[n] fait passer de la version n à n + 1. Une future étape s'ajoute ici, sans toucher aux autres.
+const STATE_STEPS = {
+  1: (s) => ({ ...s, v: 2 }), // version 2 : seulement le numéro (la forme des données ne change pas)
+};
+const PREFS_STEPS = {
+  1: (p) => ({ ...p, v: 2 }),
+};
+function dataVersion(d) {
+  if (!isPlainObj(d)) return null;
+  if (d.v === undefined) return 1;
+  return Number.isInteger(d.v) && d.v >= 1 ? d.v : null;
+}
+// Résultat : { data, ok, keep }. ok : data est utilisable telle quelle. keep : garder une copie de l'original à part.
+function migrate(raw, { current, steps, valid, what }) {
+  if (raw === null || raw === undefined) return { data: null, ok: false, keep: false };
+  const v = dataVersion(raw);
+  if (v === null) {
+    logError("migrate-" + what, new Error(`données illisibles (${Array.isArray(raw) ? "liste" : typeof raw})`));
+    return { data: raw, ok: false, keep: true };
+  }
+  if (v > current) {
+    // Données d'une version plus récente de la page : on les lit si leur forme est connue, et on en garde une copie.
+    logError("migrate-" + what, new Error(`version ${v} plus récente que ${current}`));
+    return { data: raw, ok: valid(raw), keep: true };
+  }
+  let d = raw;
+  for (let n = v; n < current; n++) {
+    try { d = steps[n](d); }
+    catch (e) { logError("migrate-" + what, e); return { data: raw, ok: false, keep: true }; }
+  }
+  if (!valid(d)) {
+    logError("migrate-" + what, new Error(`forme inconnue (version ${v})`));
+    return { data: raw, ok: false, keep: true };
+  }
+  return { data: d, ok: true, keep: false };
+}
+const migrateState = (raw) => migrate(raw, { current: STATE_V, steps: STATE_STEPS, valid: looksLikeState, what: "state" });
+const migratePrefs = (raw) => migrate(raw, { current: PREFS_V, steps: PREFS_STEPS, valid: isPlainObj, what: "prefs" });
+
+// ---------- Copie de secours dans localStorage (FOU-40) ----------
+// IndexedDB est la copie principale. localStorage n'a qu'environ 5 Mo pour tout le site (réglages, photo, journal) :
+// au-delà de LS_MAX caractères, on n'y met plus l'historique complet mais une copie légère (dernier import +
+// listes actuelles), et si même celle-ci est trop grosse (très gros compte), rien du tout.
+const LS_MAX = 1500000;
+// Texte à écrire dans localStorage pour cet état, ou null s'il est trop gros même en copie légère.
+function lsCopyText(s, max = LS_MAX) {
+  const full = JSON.stringify(s);
+  if (full.length <= max) return full;
+  const last = s.snapshots[s.snapshots.length - 1];
+  const lite = { v: s.v, lite: true, snapshots: last ? [last] : [], events: [], followers: s.followers };
+  if (s.following) { lite.following = s.following; lite.followingAt = s.followingAt; }
+  let t = JSON.stringify(lite);
+  if (t.length <= max) return t;
+  delete lite.following; delete lite.followingAt;
+  t = JSON.stringify(lite);
+  return t.length <= max ? t : null;
+}
+// Au chargement : la copie IndexedDB et celle de localStorage (déjà migrées). On garde celle qui a le plus d'imports ;
+// à égalité, la complète. Une copie légère ne sert que si IndexedDB n'a rien (vidée par iOS, par exemple).
+function pickState(idb, ls) {
+  const all = [idb, ls].filter(Boolean);
+  if (!all.length) return null;
+  const best = all.sort((a, b) => (b.snapshots.length - a.snapshots.length) || ((a.lite ? 1 : 0) - (b.lite ? 1 : 0)))[0];
+  if (!best.lite) return best;
+  logError("start-lite", new Error(`seule la copie légère est disponible (${best.snapshots.length} import)`));
+  const s = { ...best };
+  delete s.lite;
+  return s;
 }
