@@ -289,15 +289,15 @@ if (!window.ZYEUTO_APP) {
   .st-page.dragging { transition: none; }
   .st-back { border: 0; background: none; padding: 10px 0; font: 700 17px var(--round); color: var(--coral); cursor: pointer; }
   .st-in h1 { text-align: left; }
-  .st-brief { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 20px 18px; margin-bottom: 22px; border-radius: 22px; color: #2e2328;
-    background: linear-gradient(160deg, #ffd9c9, #f4a07f); box-shadow: 0 8px 18px rgb(46 35 40 / .12); }
-  .st-brief-ic { width: 46px; height: 46px; border-radius: 14px; background: rgb(255 255 255 / .6); display: grid; place-items: center; margin-bottom: 2px; }
-  .st-brief-ic svg { width: 24px; height: 24px; fill: none; stroke: #b5442f; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .st-brief { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 20px 18px; margin-bottom: 22px; border-radius: 18px; color: var(--ink);
+    background: var(--grp); box-shadow: 0 4px 14px rgb(46 35 40 / .07); }
+  .st-brief-ic { width: 46px; height: 46px; border-radius: 14px; background: var(--st-ic-bg); display: grid; place-items: center; margin-bottom: 2px; }
+  .st-brief-ic svg { width: 24px; height: 24px; fill: none; stroke: var(--st-ic-ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .st-brief b { font: 800 19px var(--round); }
-  .st-brief p { margin: 0; font-size: 15px; line-height: 1.4; color: rgb(46 35 40 / .78); max-width: 300px; }
+  .st-brief p { margin: 0; font: 500 15px/1.4 var(--round); color: var(--muted); max-width: 300px; }
   .st-row.st-para { align-items: flex-start; padding-top: 13px; padding-bottom: 13px; }
   .st-para .st-ic { margin-top: 2px; }
-  .st-para .st-t small { font-size: 14px; line-height: 1.4; margin-top: 2px; }
+  .st-para .st-t small { font-size: 15px; line-height: 1.45; margin-top: 3px; }
   .st-center { text-align: center; margin-top: -8px; }
   .st-foot a { color: var(--coral); }
   .st-in h1 { margin: 2px 0 18px; font: 800 32px/1.1 var(--round); color: var(--ink); }
@@ -307,12 +307,18 @@ if (!window.ZYEUTO_APP) {
   .st-group > .st-row:first-child, .st-group > div:first-child > .st-row, .st-group > [hidden] + .st-row { border-top: 0; }
   .st-row:active:not(.st-static) { background: var(--surface-2); }
   .st-static { cursor: default; }
-  .st-ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none; }
-  .st-ic svg { width: 17px; height: 17px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .st-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--st-ic-bg); }
+  .st-ic svg { width: 18px; height: 18px; fill: none; stroke: var(--st-ic-ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .st-ic.gold { background: linear-gradient(135deg, #f8dc7d, #c98a20); } .st-ic.gold svg { stroke: #fff; }
+  .st-ic.warn { background: var(--down-soft); } .st-ic.warn svg { stroke: var(--down); }
+  .st-page { --st-ic-bg: #eee8fa; --st-ic-ink: #7a63b8; --ring: #c9b8f0; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .st-page { --st-ic-bg: #33293f; --st-ic-ink: #c9b8f0; --ring: #6f5d96; } }
+  :root[data-theme="dark"] .st-page { --st-ic-bg: #33293f; --st-ic-ink: #c9b8f0; --ring: #6f5d96; }
+  body.demo .st-page .no-demo { display: none !important; } .demo-only { display: none; } body.demo .st-page .demo-only { display: block; }
   .st-ic-none { background: none; }
   .st-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-  .st-t b { font: 600 16px var(--round); }
-  .st-t small { font-size: 13px; line-height: 1.3; color: var(--muted); }
+  .st-t b { font: 600 17px var(--round); }
+  .st-t small { font: 500 14px/1.3 var(--round); color: var(--muted); }
   .st-t small:empty { display: none; }
   .st-go { color: var(--muted); font: 600 20px var(--round); opacity: .6; }
   .st-row.danger b { color: var(--down); }
@@ -321,12 +327,14 @@ if (!window.ZYEUTO_APP) {
   .st-me { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; border: 0; color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
   .st-me:active { background: var(--surface-2); }
   .st-me .st-t b { font: 800 20px var(--round); } .st-me .st-t b.ph { color: var(--muted); }
-  .st-me-av, .st-big-av > span { flex: none; width: 60px; height: 60px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); box-shadow: 0 0 0 2.5px #f6c95a; }
+  .st-me-av, .st-big-av > span { flex: none; width: 60px; height: 60px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); box-shadow: 0 0 0 2.5px var(--ring); }
+  .st-me-av.is-plus, .st-big-av > span.is-plus { box-shadow: 0 0 0 2.5px #f6c95a; }
   .st-me-av svg, .st-big-av svg { width: 55%; height: 55%; fill: var(--muted); }
   .st-me-av img, .st-big-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .acc-hero { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: -4px 0 22px; }
   .st-big-av { position: relative; border: 0; background: none; padding: 0; cursor: pointer; }
-  .st-big-av > span { width: 104px; height: 104px; box-shadow: 0 0 0 3px #f6c95a, 0 8px 20px rgb(46 35 40 / .15); }
+  .st-big-av > span { width: 104px; height: 104px; box-shadow: 0 0 0 3px var(--ring), 0 8px 20px rgb(46 35 40 / .15); }
+  .st-big-av > span.is-plus { box-shadow: 0 0 0 3px #f6c95a, 0 8px 20px rgb(46 35 40 / .15); }
   .st-big-av i { position: absolute; right: -2px; bottom: -2px; width: 34px; height: 34px; border-radius: 50%; background: var(--btn); display: grid; place-items: center; box-shadow: 0 0 0 3px var(--bg); }
   .st-big-av i svg { width: 17px; height: 17px; fill: none; stroke: var(--btn-ink); stroke-width: 2; stroke-linejoin: round; }
   .st-link { border: 0; background: none; font: 700 15px var(--round); color: var(--coral); cursor: pointer; padding: 4px 8px; }
@@ -338,12 +346,16 @@ if (!window.ZYEUTO_APP) {
   [aria-checked="true"] > .st-check { visibility: visible; }
   .st-plus-hero { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 18px 16px; margin-bottom: 22px; border-radius: 18px; background: var(--night); color: #f7ecd9; box-shadow: 0 0 0 1.5px rgb(244 205 99 / .5), 0 8px 18px rgb(26 18 20 / .2); }
   .st-plus-hero p { margin: 0; font-size: 15px; line-height: 1.4; color: rgb(247 236 217 / .8); }
-  .st-ver { margin: 4px 0 0; text-align: center; font-size: 12px; color: var(--muted); }
+  .st-ver { margin: 4px 0 0; text-align: center; font: 500 13px var(--round); color: var(--muted); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .st-gold #plus-open b { color: #f4cd63; } }
   :root[data-theme="dark"] .st-gold #plus-open b { color: #f4cd63; }
   .st-note { margin: 0; padding: 4px 14px 14px 56px; font-size: 14px; color: var(--muted); }
-  .st-ic > b { color: #fff; font: 700 14px var(--round); }
-  .st-foot { margin: -14px 8px 22px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+  .st-ic > b { color: var(--st-ic-ink); font: 700 15px var(--round); }
+  .acct-item:not(.on) .st-ic { background: var(--surface-2); } .acct-item:not(.on) .st-ic > b { color: var(--muted); }
+  .st-foot { margin: -14px 8px 22px; font: 500 13.5px/1.45 var(--round); color: var(--muted); }
+  .st-foot.st-solo { margin-top: 0; }
+  .st-ver2 { display: inline-block; margin-top: 6px; }
+  .acct-item .st-check { visibility: visible; }
   .st-report-intro { margin: 0 6px 14px; font-size: 14px; line-height: 1.45; color: var(--muted); }
   .st-report-box { margin: 0 0 16px; padding: 14px; border-radius: 16px; background: var(--grp); color: var(--ink); font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow: auto; }
   .st-report-send { display: block; padding: 14px 16px; border-radius: 14px; font-size: 16px; }
@@ -2201,27 +2213,27 @@ if (!window.ZYEUTO_APP) {
 
     <button class="st-group st-me needs-data" id="st-me" type="button" data-open="st-account">
       <span class="st-me-av" id="st-me-av" aria-hidden="true"></span>
-      <span class="st-t"><b id="st-me-name">Ton prénom</b><small id="st-me-sub">Mon compte, ma photo, mon zieuteur</small></span><span class="st-go" aria-hidden="true">›</span>
+      <span class="st-t"><b id="st-me-name">Ton prénom</b><small id="st-me-sub">Prénom, photo, zieuteur</small></span><span class="st-go" aria-hidden="true">›</span>
     </button>
 
-    <div class="st-group">
-      <div id="plus-block" hidden><button class="st-row" type="button" data-open="st-plus"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Zieuton Plus</b><small id="st-plus-sub"></small></span><span class="st-go" aria-hidden="true">›</span></button></div>
-      <button class="st-row" type="button" data-open="st-look"><span class="st-ic" style="background:#6b5a8e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Apparence</b><small id="st-look-sub">Automatique</small></span><span class="st-go" aria-hidden="true">›</span></button>
+    <div class="st-group" id="plus-block" hidden>
+      <button class="st-row" type="button" data-open="st-plus"><span class="st-ic gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Zieuton Plus</b><small id="st-plus-sub"></small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
 
     <div class="st-group">
-      <button class="st-row" type="button" data-open="st-backup" id="st-backup-row"><span class="st-ic" style="background:#3f7f68"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5z"/></svg></span><span class="st-t"><b>Sauvegarde</b><small id="st-backup-sub"></small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" type="button" data-open="st-look"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Apparence</b><small id="st-look-sub">Automatique</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" type="button" data-open="st-backup" id="st-backup-row"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5z"/></svg></span><span class="st-t"><b>Sauvegarde</b><small id="st-backup-sub"></small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
 
     <div class="st-group">
-      <button class="st-row" type="button" id="st-demo-row"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="st-t"><b id="st-demo-t">Voir la démo</b><small id="st-demo-s">L'app avec des abonnés inventés. Tes données ne bougent pas.</small></span><span class="st-go" aria-hidden="true">›</span></button>
-      <button class="st-row" type="button" data-open="st-help"><span class="st-ic" style="background:#a993e6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/></svg></span><span class="st-t"><b>Aide et confidentialité</b></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" type="button" data-open="st-help"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/></svg></span><span class="st-t"><b>Aide et confidentialité</b><small>Comment ça marche, nous écrire</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" type="button" id="st-demo-row"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="st-t"><b id="st-demo-t">Voir la démo</b><small id="st-demo-s">Des abonnés inventés, tes données ne bougent pas</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
 
-    <div class="st-group needs-data">
-      <div id="reset-row"><button class="st-row danger" id="reset" type="button"><span class="st-ic" style="background:#b8502e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b>Tout effacer</b></span></button></div>
+    <div class="st-group needs-data no-demo">
+      <div id="reset-row"><button class="st-row danger" id="reset" type="button"><span class="st-ic warn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b id="reset-t">Effacer l'historique</b><small id="reset-s">Imports, départs et arrivées</small></span></button></div>
       <div class="st-confirm" id="reset-confirm" hidden>
-        <p>Tout l'historique de ce téléphone sera effacé. Pense à sauvegarder une copie avant.</p>
+        <p id="reset-p">Tes imports, départs et arrivées seront effacés de ce téléphone. Ton zieuteur et tes jeux restent. Pense à garder une copie avant.</p>
         <div class="row"><button class="btn danger" id="reset-yes">Oui, tout effacer</button><button class="btn ghost" id="reset-no">Annuler</button></div>
       </div>
     </div>
@@ -2239,36 +2251,33 @@ if (!window.ZYEUTO_APP) {
     </div>
     <div class="st-label">Profil</div>
     <div class="st-group">
-      <label class="st-row st-field"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.5 10.5h.01M14.5 10.5h.01M9 14.5c1.6 1.4 4.4 1.4 6 0"/></svg></span><span class="st-t"><b>Prénom</b></span><input id="st-name" type="text" maxlength="24" placeholder="Ton prénom" autocomplete="given-name" enterkeyhint="done"></label>
-      <label class="st-row st-field"><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg></span><span class="st-t"><b>Instagram</b></span><input id="st-ig" type="text" maxlength="31" placeholder="@ton.pseudo" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done"></label>
+      <label class="st-row st-field"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.5 10.5h.01M14.5 10.5h.01M9 14.5c1.6 1.4 4.4 1.4 6 0"/></svg></span><span class="st-t"><b>Prénom</b></span><input id="st-name" type="text" maxlength="24" placeholder="Ton prénom" autocomplete="given-name" enterkeyhint="done"></label>
+      <label class="st-row st-field"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg></span><span class="st-t"><b>Instagram</b></span><input id="st-ig" type="text" maxlength="31" placeholder="@ton.pseudo" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done"></label>
     </div>
     <div class="st-group">
-      <button class="st-row" id="st-look-btn" type="button"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1-3.5 3.8-5.5 7-5.5s6 2 7 5.5"/></svg></span><span class="st-t"><b>Mon zieuteur</b><small id="st-zy-sub">Ses accessoires et ton niveau</small></span><span class="st-go" aria-hidden="true">›</span></button>
-      <a class="st-row" id="st-ig-open" href="#" target="_blank" rel="noopener noreferrer" hidden><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg></span><span class="st-t"><b>Voir mon profil Instagram</b></span><span class="st-go" aria-hidden="true">›</span></a>
+      <button class="st-row" id="st-look-btn" type="button"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1-3.5 3.8-5.5 7-5.5s6 2 7 5.5"/></svg></span><span class="st-t"><b>Mon zieuteur</b><small id="st-zy-sub">Ses accessoires et ton niveau</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <a class="st-row" id="st-ig-open" href="#" target="_blank" rel="noopener noreferrer" hidden><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.8 7.2h.01"/></svg></span><span class="st-t"><b>Voir mon profil Instagram</b></span><span class="st-go" aria-hidden="true">›</span></a>
     </div>
     <div id="acct-group" hidden>
-      <div class="st-label">Comptes Instagram suivis</div>
+      <div class="st-label">Mes comptes Instagram</div>
       <div class="st-group" id="acct-list" hidden></div>
       <div class="st-group">
-        <button class="st-row" id="acct-add" type="button"><span class="st-ic" style="background:#c9a24a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b>Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
+        <button class="st-row" id="acct-add" type="button"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="st-t"><b>Ajouter un compte</b><small id="acct-add-s"></small></span><span class="st-go" aria-hidden="true">›</span></button>
         <div class="st-confirm" id="acct-new" hidden>
           <p id="acct-new-p">Chaque compte a son prénom, pour savoir chez qui on est.</p>
           <input class="acct-new-in" id="acct-new-me" type="text" maxlength="24" placeholder="Ton prénom (compte 1)" autocomplete="given-name" enterkeyhint="next">
           <input class="acct-new-in" id="acct-new-name" type="text" maxlength="24" placeholder="Son prénom" autocomplete="off" enterkeyhint="done">
           <div class="row"><button class="btn primary" id="acct-new-yes" type="button" disabled>Ajouter</button><button class="btn ghost" id="acct-new-no" type="button">Annuler</button></div>
         </div>
-        <div id="acct-del-row" hidden><button class="st-row danger" id="acct-del" type="button"><span class="st-ic" style="background:#b8502e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b id="acct-del-t">Supprimer ce compte</b><small>Ses données sont effacées de ce téléphone</small></span></button></div>
+        <div id="acct-del-row" class="no-demo" hidden><button class="st-row danger" id="acct-del" type="button"><span class="st-ic warn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></span><span class="st-t"><b id="acct-del-t">Supprimer ce compte</b><small>Son historique est effacé de ce téléphone</small></span></button></div>
         <div class="st-confirm" id="acct-del-confirm" hidden>
           <p id="acct-del-p"></p>
           <div class="row"><button class="btn danger" id="acct-del-yes" type="button">Oui, supprimer</button><button class="btn ghost" id="acct-del-no" type="button">Annuler</button></div>
         </div>
       </div>
-      <p class="st-foot">Chaque compte a ses propres données et son propre Zieuton Plus. La version gratuite va au premier compte qui importe : les autres prennent Plus dès leur 1er import. 3 comptes au maximum par téléphone.</p>
+      <p class="st-foot">Chaque compte garde ses données et a son propre Zieuton Plus. La version gratuite va au premier compte qui importe. 3 comptes au maximum.</p>
     </div>
-    <div class="st-label">Connexion</div>
-    <div class="st-group">
-      <div class="st-row st-static" ><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="st-t"><b>Aucun compte à créer</b><small>Pas d'e-mail, pas de mot de passe. Tout reste chez toi.</small></span></div>
-    </div>
+    <p class="st-foot st-solo">Pas de compte à créer : ni e-mail, ni mot de passe. Tout reste sur ton téléphone.</p>
   </div>
 </div>
 <div class="st-page" id="st-plus" role="dialog" aria-modal="true" aria-labelledby="st-plus-t" hidden>
@@ -2278,12 +2287,12 @@ if (!window.ZYEUTO_APP) {
 
     <div class="st-plus-hero"><span class="plus-tag">Zieuton Plus</span><p id="plus-status"></p></div>
     <div class="st-group st-gold">
-      <button class="st-row" id="plus-open" type="button"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Découvrir Plus</b><small>Mises à jour illimitées, zieuteur en or</small></span><span class="st-go" aria-hidden="true">›</span></button>
-      <button class="st-row" id="plus-change" type="button" hidden><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Voir les offres</b><small id="plus-change-sub">Passer à l'année ou à vie</small></span><span class="st-go" aria-hidden="true">›</span></button>
-      <button class="st-row" id="plus-manage" type="button" hidden><span class="st-ic st-ic-none"></span><span class="st-t"><b>Gérer mon abonnement</b></span><span class="st-go" aria-hidden="true">›</span></button>
-      <button class="st-row" id="plus-restore" type="button"><span class="st-ic st-ic-none"></span><span class="st-t"><b>Restaurer mes achats</b><small>Si tu as déjà payé sur un autre iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" id="plus-open" type="button"><span class="st-ic gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Découvrir Plus</b><small>Mises à jour illimitées, zieuteur en or</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row no-demo" id="plus-change" type="button" hidden><span class="st-ic gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Voir les offres</b><small id="plus-change-sub">Passer à l'année ou à vie</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row no-demo" id="plus-manage" type="button" hidden><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M3.5 10h17"/></svg></span><span class="st-t"><b>Gérer mon abonnement</b></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" id="plus-restore" type="button"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg></span><span class="st-t"><b>Restaurer mes achats</b><small>Si tu as déjà payé sur un autre iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
-    <p class="st-foot">Le paiement passe par l'App Store. Tu peux arrêter un abonnement quand tu veux dans Réglages, ton nom, Abonnements.</p>
+    <p class="st-foot">Le paiement passe par l'App Store. Pour arrêter un abonnement : Réglages de l'iPhone › ton nom › Abonnements.</p>
   </div>
 </div>
 <div class="st-page" id="st-look" role="dialog" aria-modal="true" aria-labelledby="st-look-t" hidden>
@@ -2292,9 +2301,9 @@ if (!window.ZYEUTO_APP) {
     <h1 id="st-look-t">Apparence</h1>
 
     <div class="st-group" role="radiogroup" aria-label="Apparence">
-      <button class="st-row" type="button" role="radio" data-theme-pick="auto"><span class="st-ic" style="background:#6b5a8e"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Automatique</b><small>Comme ton iPhone</small></span><span class="st-check" aria-hidden="true">✓</span></button>
-      <button class="st-row" type="button" role="radio" data-theme-pick="light"><span class="st-ic" style="background:#f4a96a"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg></span><span class="st-t"><b>Clair</b></span><span class="st-check" aria-hidden="true">✓</span></button>
-      <button class="st-row" type="button" role="radio" data-theme-pick="dark"><span class="st-ic" style="background:#2e2328"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Sombre</b></span><span class="st-check" aria-hidden="true">✓</span></button>
+      <button class="st-row" type="button" role="radio" data-theme-pick="auto"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Automatique</b><small>Comme ton iPhone</small></span><span class="st-check" aria-hidden="true">✓</span></button>
+      <button class="st-row" type="button" role="radio" data-theme-pick="light"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg></span><span class="st-t"><b>Clair</b></span><span class="st-check" aria-hidden="true">✓</span></button>
+      <button class="st-row" type="button" role="radio" data-theme-pick="dark"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="st-t"><b>Sombre</b></span><span class="st-check" aria-hidden="true">✓</span></button>
     </div>
   </div>
 </div>
@@ -2304,10 +2313,11 @@ if (!window.ZYEUTO_APP) {
     <h1 id="st-backup-t">Sauvegarde</h1>
 
     <div class="st-group">
-      <button class="st-row needs-data" id="backup" type="button"><span class="st-ic" style="background:#3f7f68"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></span><span class="st-t"><b>Sauvegarder une copie</b><small id="backup-status"></small></span></button>
-      <button class="st-row" id="restore" type="button"><span class="st-ic" style="background:#6aa58d"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7.5 13.5 12 9l4.5 4.5M5 5h14"/></svg></span><span class="st-t"><b>Restaurer une copie</b><small>Depuis Fichiers ou iCloud Drive</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row needs-data no-demo" id="backup" type="button"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></span><span class="st-t"><b>Sauvegarder une copie</b><small id="backup-status"></small></span></button>
+      <button class="st-row" id="restore" type="button"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7.5 13.5 12 9l4.5 4.5M5 5h14"/></svg></span><span class="st-t"><b>Restaurer une copie</b><small>Depuis Fichiers ou iCloud Drive</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
-    <p class="st-foot">Après chaque import, Zieuton range tout seul une copie de ton historique dans ton iCloud (le tien, pas chez nous). Sur un nouvel iPhone, l'app te propose de la reprendre. Tu peux aussi garder une copie toi-même, où tu veux.</p>
+    <p class="st-foot">Après chaque import, une copie part toute seule dans ton iCloud (le tien, pas chez nous). Sur un nouvel iPhone, l'app te propose de la reprendre.</p>
+    <p class="st-foot st-solo demo-only">C'est la démo : rien à sauvegarder ici.</p>
     <div class="msg" id="backup-msg" hidden></div>
   </div>
 </div>
@@ -2317,15 +2327,12 @@ if (!window.ZYEUTO_APP) {
     <h1 id="st-help-t">Aide et confidentialité</h1>
 
     <div class="st-group">
-      <button class="st-row" id="help-btn" type="button"><span class="st-ic" style="background:#a993e6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/><path d="M5 16a4 4 0 0 1 4-4h10"/></svg></span><span class="st-t"><b>Comment ça marche</b><small>Les 3 écrans de présentation</small></span><span class="st-go" aria-hidden="true">›</span></button>
-      <button class="st-row" type="button" data-open="st-privacy"><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="st-t"><b>Confidentialité</b><small>Tes données restent chez toi</small></span><span class="st-go" aria-hidden="true">›</span></button>
-      <a class="st-row" href="mailto:victorfourneret@icloud.com?subject=Zieuton"><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><span class="st-t"><b>Nous écrire</b><small>victorfourneret@icloud.com</small></span><span class="st-go" aria-hidden="true">›</span></a>
-      <button class="st-row" type="button" id="report-btn"><span class="st-ic" style="background:#ef7f6a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 10v4.5M12 17h.01"/></svg></span><span class="st-t"><b>Envoyer un rapport</b><small>Si quelque chose ne marche pas</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" id="help-btn" type="button"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/><path d="M5 16a4 4 0 0 1 4-4h10"/></svg></span><span class="st-t"><b>Comment ça marche</b><small>Revoir la présentation</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <button class="st-row" type="button" data-open="st-privacy"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="st-t"><b>Confidentialité</b><small>Tes données restent chez toi</small></span><span class="st-go" aria-hidden="true">›</span></button>
+      <a class="st-row" href="mailto:victorfourneret@icloud.com?subject=Zieuton"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><span class="st-t"><b>Nous écrire</b><small>victorfourneret@icloud.com</small></span><span class="st-go" aria-hidden="true">›</span></a>
+      <button class="st-row" type="button" id="report-btn"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 10v4.5M12 17h.01"/></svg></span><span class="st-t"><b>Envoyer un rapport</b><small>Si quelque chose ne marche pas</small></span><span class="st-go" aria-hidden="true">›</span></button>
     </div>
-    <div class="st-group">
-      <div class="st-row st-static" ><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="st-t"><b>Version</b><small id="st-ver2"></small></span></div>
-    </div>
-    <p class="st-foot st-center"><a href="conditions.html" target="_blank" rel="noopener noreferrer">Conditions d'utilisation et de vente</a> · <a href="mentions-legales.html" target="_blank" rel="noopener noreferrer">Mentions légales</a><br>Zieuton n'est pas affilié à Instagram ni à Meta.</p>
+    <p class="st-foot st-center"><a href="conditions.html" target="_blank" rel="noopener noreferrer">Conditions d'utilisation et de vente</a> · <a href="mentions-legales.html" target="_blank" rel="noopener noreferrer">Mentions légales</a><br>Zieuton n'est pas affilié à Instagram ni à Meta.<br><span class="st-ver2" id="st-ver2"></span></p>
   </div>
 </div>
 <div class="st-page" id="st-report" role="dialog" aria-modal="true" aria-labelledby="st-report-t" hidden>
@@ -2347,14 +2354,14 @@ if (!window.ZYEUTO_APP) {
       <p>Tes données restent chez toi : sur ton téléphone et dans ton iCloud. Pas de compte, pas de publicité, pas de pistage.</p>
     </div>
     <div class="st-group">
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:#a993e6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/></svg></span><span class="st-t"><b>Ce que Zieuton lit</b><small>Seulement le fichier que tu télécharges toi-même depuis Instagram, pour comparer tes abonnés. Il est lu sur ton téléphone et n'est envoyé nulle part.</small></span></div>
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:#3f7f68"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></span><span class="st-t"><b>Où sont tes données</b><small>Sur ton téléphone, avec une copie automatique dans ton propre iCloud pour la retrouver sur un nouvel iPhone. Rien n'est envoyé chez nous ni ailleurs.</small></span></div>
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:#c27583"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/></svg></span><span class="st-t"><b>Connexion à Instagram</b><small>Tu te connectes directement sur la page officielle de Meta. Zieuton ne voit jamais ton mot de passe et ne touche jamais à ton compte.</small></span></div>
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:#6f8fd8"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="st-t"><b>Pendant l'export</b><small>Pour te guider, le bandeau regarde seulement les titres et les noms des boutons d'Instagram, et celui que tu touches. Jamais ton mot de passe ni ton code, ni tes messages ou tes photos. Rien n'est gardé ni envoyé, et c'est toujours toi qui touches.</small></span></div>
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:#ef7f6a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9M10 20a2 2 0 0 0 4 0"/></svg></span><span class="st-t"><b>Notifications</b><small>Elles sont créées sur ton téléphone. Aucun serveur ne t'envoie de message.</small></span></div>
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:#d4919b"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span class="st-t"><b>Photo de profil</b><small>Seulement si tu en choisis une. Elle reste sur ton téléphone.</small></span></div>
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:linear-gradient(135deg,#f8dc7d,#c98a20)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Achats</b><small>Ils passent par Apple. Zieuton ne voit jamais tes informations de paiement, seulement si Plus est actif.</small></span></div>
-      <div class="st-row st-static st-para"><span class="st-ic" style="background:#8a7f84"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 10v4.5M12 17h.01"/></svg></span><span class="st-t"><b>Envoyer un rapport</b><small>Les erreurs techniques sont notées sur ton téléphone, sans pseudo ni donnée de ton export. Rien ne part tout seul : si tu le décides, tu vois tout le rapport, puis un e-mail est préparé dans Mail. Il ne part que si tu appuies sur Envoyer.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Ce que Zieuton lit</b><small>Seulement le fichier que tu télécharges toi-même depuis Instagram, pour comparer tes abonnés. Il est lu sur ton téléphone et n'est envoyé nulle part.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Où sont tes données</b><small>Sur ton téléphone, avec une copie automatique dans ton propre iCloud pour la retrouver sur un nouvel iPhone. Rien n'est envoyé chez nous ni ailleurs.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Connexion à Instagram</b><small>Tu te connectes directement sur la page officielle de Meta. Zieuton ne voit jamais ton mot de passe et ne touche jamais à ton compte.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Pendant l'export</b><small>Pour te guider, le bandeau regarde seulement les titres et les noms des boutons d'Instagram, et celui que tu touches. Jamais ton mot de passe ni ton code, ni tes messages ou tes photos. Rien n'est gardé ni envoyé, et c'est toujours toi qui touches.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Notifications</b><small>Elles sont créées sur ton téléphone. Aucun serveur ne t'envoie de message.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Photo de profil</b><small>Seulement si tu en choisis une. Elle reste sur ton téléphone.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Achats</b><small>Ils passent par Apple. Zieuton ne voit jamais tes informations de paiement, seulement si Plus est actif.</small></span></div>
+      <div class="st-row st-static st-para"><span class="st-t"><b>Envoyer un rapport</b><small>Les erreurs techniques sont notées sur ton téléphone, sans pseudo ni donnée de ton export. Rien ne part tout seul : si tu le décides, tu vois tout le rapport, puis un e-mail est préparé dans Mail. Il ne part que si tu appuies sur Envoyer.</small></span></div>
     </div>
     <p class="st-foot st-center">Mise à jour le 6 novembre 2026 · <a href="confidentialite.html" target="_blank" rel="noopener noreferrer">Version complète</a></p>
   </div>
@@ -3223,7 +3230,7 @@ function renderAcct() {
     const on = a.id === curAcct().id, me = acctMe(a), name = acctName(a);
     const plus = planOfSlot(a.slot) ? " · Plus" : "";
     const sub = [me.ig ? "@" + me.ig : "", a.n ? nf(a.n) + " abonnés" : "Pas encore importé"].filter(Boolean).join(" · ") + plus;
-    return `<button class="st-row acct-item${on ? " on" : ""}" type="button" data-acct="${a.id}"><span class="st-ic" style="background:${on ? "#c27583" : "#b9aeb2"}"><b>${esc(name.slice(0, 1).toUpperCase())}</b></span><span class="st-t"><b>${esc(acctLabel(a))}${on ? " · affiché" : ""}</b><small>${esc(sub)}</small></span>${on ? "" : '<span class="st-go" aria-hidden="true">›</span>'}</button>`;
+    return `<button class="st-row acct-item${on ? " on" : ""}" type="button" data-acct="${a.id}"${on ? ' aria-current="true"' : ""}><span class="st-ic"><b>${esc(name.slice(0, 1).toUpperCase())}</b></span><span class="st-t"><b>${esc(acctLabel(a))}</b><small>${esc(sub)}</small></span>${on ? '<span class="st-check" aria-label="Compte affiché">✓</span>' : '<span class="st-go" aria-hidden="true">›</span>'}</button>`;
   }).join("") : "";
   $("acct-add").hidden = list.length >= MAX_ACCTS;
   // Seul un compte ajouté (pas le compte principal du téléphone) peut être supprimé, depuis ce compte.
@@ -3231,7 +3238,7 @@ function renderAcct() {
   $("acct-del-row").hidden = !delOk || !$("acct-del-confirm").hidden;
   if (!delOk) $("acct-del-confirm").hidden = true;
   $("acct-del-t").textContent = `Supprimer le compte de ${acctName(curAcct())}`;
-  $("acct-add-s").textContent = "Pour un ami : son prénom, puis son Plus dès 1,99 €";
+  $("acct-add-s").textContent = "Pour un ami, avec son propre Plus dès 1,99 €";
 }
 
 // ---------- Affichage ----------
@@ -3936,7 +3943,11 @@ function renderBackup() {
     ? `Dernière copie : ${fmtDate(prefs.backupAt)}${upToDate ? "." : ", avant ton dernier import."}`
     : "Aucune copie pour l'instant.";
   // Ligne courte dans Réglages ; la phrase complète reste sur la page Sauvegarde.
-  $("st-backup-sub").textContent = inCloud ? `Sur iCloud · ${fmtDate(prefs.icloudAt)}` : ($("backup-status").textContent || "Garde une copie de ton historique");
+  $("st-backup-sub").textContent = DEMO ? "Rien à sauvegarder dans la démo" : !last ? "Reprendre une ancienne copie"
+    : inCloud ? `Sur iCloud · ${fmtDate(prefs.icloudAt)}`
+    : icloudApp() && prefs.icloudOff ? "iCloud coupé : garde une copie"
+    : upToDate && prefs.backupAt ? `Copie du ${fmtDate(prefs.backupAt)}`
+    : prefs.backupAt ? "Copie à refaire" : "Aucune copie pour l'instant";
 }
 $("sync").addEventListener("click", () => openStPage("settings"));
 $("restore").addEventListener("click", () => $("restore-file").click());
@@ -4361,16 +4372,23 @@ function renderSettings() {
   const me = prefs.me || {};
   $("st-me-name").textContent = me.name || "Ton prénom";
   $("st-me-name").classList.toggle("ph", !me.name);
-  $("st-me-sub").textContent = me.ig ? `@${me.ig} · Mon compte` : "Mon compte, ma photo, mon zieuteur";
+  $("st-me-sub").textContent = me.ig ? `@${me.ig} · Mon compte` : "Prénom, photo, zieuteur";
   const face = $("avatar-core").innerHTML;
   $("st-me-av").innerHTML = face; $("st-acc-av").innerHTML = face;
+  // Le rond doré autour de la photo est réservé à Zieuton Plus (lilas sinon).
+  const gold = storeApp() && hasPlus();
+  $("st-me-av").classList.toggle("is-plus", gold); $("st-acc-av").classList.toggle("is-plus", gold);
+  // « Effacer l'historique » n'efface que le compte affiché : avec plusieurs comptes, on dit lequel.
+  const who = accts().length > 1 ? acctName(curAcct()) : "";
+  $("reset-t").textContent = who ? `Effacer l'historique de ${who}` : "Effacer l'historique";
+  $("reset-p").textContent = `${who ? `Les imports, départs et arrivées de ${who}` : "Tes imports, départs et arrivées"} seront effacés de ce téléphone. Le zieuteur et les jeux restent. Pense à garder une copie avant.`;
   if (document.activeElement !== $("st-name")) $("st-name").value = me.name || "";
   if (document.activeElement !== $("st-ig")) $("st-ig").value = me.ig ? "@" + me.ig : "";
   $("st-ig-open").hidden = !me.ig;
   if (me.ig) $("st-ig-open").href = profileUrl(me.ig);
-  $("st-plus-sub").textContent = hasPlus() ? "Activé, merci !" : $("plus-mini-t").textContent;
+  $("st-plus-sub").textContent = hasPlus() ? "Activé" : $("plus-mini-t").textContent;
   const ver = `Zieuton · version du ${BUILD.slice(8, 10)}/${BUILD.slice(5, 7)}/${BUILD.slice(0, 4)}` + (updChannel === "test" ? " · canal test" : "");
-  $("st-ver").textContent = ver; $("st-ver2").textContent = ver;
+  $("st-ver").textContent = ver; $("st-ver2").textContent = ver.replace(/^Zieuton · v/, "V");
 }
 for (const [id, k, clean] of [["st-name", "name", (v) => v.trim()], ["st-ig", "ig", (v) => v.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase()]]) {
   $(id).addEventListener("input", () => { prefs.me = { ...(prefs.me || {}), [k]: clean($(id).value) }; savePrefs(); renderSettings(); });
@@ -4957,7 +4975,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1508";
+const BUILD = "2026-11-06-1513";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -5163,9 +5181,9 @@ function renderPlusBlock() {
   const on = hasPlus();
   const next = nextFreeAt();
   $("plus-status").textContent = on
-    ? `${accts().length > 1 ? acctName(curAcct()) + " a" : "Tu as"} Zieuton Plus ${PLUS_PLANS[curPlan()] || ""} : mises à jour illimitées. Merci !`
+    ? `${accts().length > 1 ? acctName(curAcct()) + " a" : "Tu as"} Zieuton Plus ${PLUS_PLANS[curPlan()] || ""} : mises à jour illimitées. Merci !${DEMO ? " (Dans la démo, ton vrai abonnement n'est pas touché.)" : ""}`
     : guestAcct()
-      ? "La version gratuite est déjà prise par un autre compte de ce téléphone : Zieuton Plus est nécessaire dès le 1er import."
+      ? "La version gratuite est déjà utilisée par un autre compte de ce téléphone. Ce compte a besoin de Zieuton Plus pour importer."
     : canUpdateFree()
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
       : `Version gratuite : une mise à jour par mois. La prochaine gratuite dans ${freeLeft(next)}`;
@@ -7005,7 +7023,7 @@ setInterval(() => { if (DEMO) renderDemoBar(); }, 30000);
 function renderDemoRow() {
   if (DEMO) renderDemoBar();
   $("st-demo-t").textContent = DEMO ? "Quitter la démo" : "Voir la démo";
-  $("st-demo-s").textContent = DEMO ? "Revenir à tes vraies données." : "L'app avec des abonnés inventés. Tes données ne bougent pas.";
+  $("st-demo-s").textContent = DEMO ? "Revenir à tes vraies données" : "Des abonnés inventés, tes données ne bougent pas";
 }
 // Les pseudos de la démo sont inventés : on n'ouvre pas Instagram dessus.
 document.addEventListener("click", (e) => {
