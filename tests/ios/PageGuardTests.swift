@@ -1,6 +1,7 @@
-// Tests des règles de sécurité des mises à jour de la page (FOU-28).
+// Tests des règles de sécurité des mises à jour de la page (FOU-28) et de leur signature (FOU-29).
 // Compilé avec le bloc PAGE-GUARD de WebViewController.swift par scripts/test-page-guard.sh.
 import Foundation
+import CryptoKit
 
 var failures = 0
 func check(_ ok: Bool, _ name: String, line: Int = #line) {
@@ -95,6 +96,43 @@ let many = (0..<30).map { String(format: "2026-11-01-%04d", $0) }
 check(PageGuard.addBad("x", to: many).count == 20, "on garde les 20 dernières mauvaises versions")
 check(PageGuard.addBad("a", to: ["a", "b"]) == ["b", "a"], "pas de doublon")
 check(PageGuard.isBuild("2026-11-06-1300") && !PageGuard.isBuild("2026-11-06"), "format AAAA-MM-JJ-HHMM")
+
+// 9. Signature des pages téléchargées (FOU-29).
+let victor = Curve25519.Signing.PrivateKey()
+let victorPublic = victor.publicKey.rawRepresentation.base64EncodedString()
+let page = Data("<html>const BUILD = \"2026-11-07-1000\"</html>".utf8)
+func sigFile(_ data: Data, _ key: Curve25519.Signing.PrivateKey) -> Data {
+    Data((((try? key.signature(for: data)) ?? Data()).base64EncodedString() + "\n").utf8)
+}
+check(PageSignature.isValid(page, signatureFile: sigFile(page, victor), publicKey: victorPublic),
+      "signature bonne : page acceptée")
+var changed = page
+changed[changed.count - 8] ^= 1
+check(!PageSignature.isValid(changed, signatureFile: sigFile(page, victor), publicKey: victorPublic),
+      "page modifiée après la signature : refusée")
+check(!PageSignature.isValid(page, signatureFile: sigFile(page, Curve25519.Signing.PrivateKey()), publicKey: victorPublic),
+      "signée avec une autre clé : refusée")
+check(!PageSignature.isValid(page, signatureFile: nil, publicKey: victorPublic), "signature absente : refusée")
+check(!PageSignature.isValid(page, signatureFile: Data(), publicKey: victorPublic), "fichier de signature vide : refusée")
+check(!PageSignature.isValid(page, signatureFile: Data("<html>404</html>".utf8), publicKey: victorPublic),
+      "page d'erreur à la place de la signature : refusée")
+check(!PageSignature.isValid(page, signatureFile: Data(Data(count: 64).base64EncodedString().utf8), publicKey: victorPublic),
+      "signature de zéros : refusée")
+check(!PageSignature.isValid(page, signatureFile: sigFile(page, victor), publicKey: ""),
+      "sans clé publique dans l'app : rien n'est accepté")
+// Signature faite par le robot de mise en ligne (Node, scripts/signature.mjs) : CryptoKit doit l'accepter.
+let fixtures = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("tests/fixtures/signature")
+if let html = try? Data(contentsOf: fixtures.appendingPathComponent("page.html")),
+   let sig = try? Data(contentsOf: fixtures.appendingPathComponent("page.html.sig")),
+   let pub = try? String(contentsOf: fixtures.appendingPathComponent("cle-publique-de-test.txt"), encoding: .utf8) {
+    let key = pub.trimmingCharacters(in: .whitespacesAndNewlines)
+    check(PageSignature.isValid(html, signatureFile: sig, publicKey: key), "signature du robot (Node) acceptée par l'iPhone")
+    check(!PageSignature.isValid(html + Data(" ".utf8), signatureFile: sig, publicKey: key), "un seul espace ajouté : refusée")
+} else {
+    check(false, "exemples de signature introuvables dans tests/fixtures/signature")
+}
+check(Data(base64Encoded: PageSignature.publicKey)?.count == 32,
+      "la clé publique de Victor est écrite dans l'app (PageSignature.publicKey)")
 
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
