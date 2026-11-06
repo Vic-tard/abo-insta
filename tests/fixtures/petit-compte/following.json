@@ -1,0 +1,58 @@
+{
+  "relationships_following": [
+    {
+      "title": "lea.martin_test",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/lea.martin_test",
+          "timestamp": 1704067200
+        }
+      ]
+    },
+    {
+      "title": "sacha.essai",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/sacha.essai",
+          "timestamp": 1704070800
+        }
+      ]
+    },
+    {
+      "title": "lou.test",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/lou.test",
+          "timestamp": 1704074400
+        }
+      ]
+    },
+    {
+      "title": "marque.exemple",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/marque.exemple",
+          "timestamp": 1704078000
+        }
+      ]
+    },
+    {
+      "title": "artiste.fictif",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/artiste.fictif",
+          "timestamp": 1704081600
+        }
+      ]
+    },
+    {
+      "title": "media.demo",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/media.demo",
+          "timestamp": 1704085200
+        }
+      ]
+    }
+  ]
+}

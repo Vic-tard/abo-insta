@@ -1,0 +1,66 @@
+# Filet de sécurité : tourne à chaque pull request (et sur main).
+# Si une case devient rouge sur la PR, on ne fusionne pas : quelque chose est cassé.
+name: Vérifications
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verifications-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  page:
+    name: Page web (syntaxe, tests, console)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Syntaxe JavaScript des pages
+        run: node scripts/check-syntax.mjs
+
+      - name: index.html contient bien la même copie que js/zieuton-core.js
+        run: node scripts/sync-core.mjs --check
+
+      - name: Tests de lecture d'export et de comparaison
+        run: npm test
+
+      - name: Installer Playwright et Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Ouvrir la page et vérifier la console
+        run: npm run check:page
+
+  ios:
+    name: Coque iPhone (compilation Xcode, sans signature)
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version de Xcode
+        run: xcodebuild -version
+      - name: Règles de sécurité des mises à jour de la page (PageGuard)
+        run: sh scripts/test-page-guard.sh
+      - name: Compiler l'app
+        run: |
+          xcodebuild build \
+            -project ios/Zieuton.xcodeproj \
+            -scheme Zieuton \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tee build.log | grep -E "error:|warning: .*deprecated|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log

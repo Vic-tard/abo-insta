@@ -1,0 +1,16 @@
+{
+  "name": "zieuton",
+  "private": true,
+  "description": "Vérifications automatiques de Zieuton (la page n'a besoin d'aucune construction).",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check:syntax": "node scripts/check-syntax.mjs && node scripts/sync-core.mjs --check",
+    "check:page": "node scripts/check-console.mjs",
+    "sync": "node scripts/sync-core.mjs",
+    "test:ios": "sh scripts/test-page-guard.sh",
+    "canal": "node scripts/channel.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
