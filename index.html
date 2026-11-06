@@ -1737,7 +1737,8 @@ if (!window.ZYEUTO_APP) {
     .wl > :nth-child(2) { animation-delay: .9s; } .wl > :nth-child(3) { animation-delay: 1s; } .wl > :nth-child(4) { animation-delay: 1.1s; } .wl > :nth-child(5) { animation-delay: 1.2s; }
   }
   /* « Faisons connaissance » : prénom, Instagram et photo, juste après la bienvenue */
-  .hl { flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+  .hl { flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; font-family: var(--round); }
+  .hl .btn { font-family: var(--round); }
   .hl-photo { position: relative; margin: auto auto 0; width: 108px; height: 108px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .hl-photo:focus-visible { outline: 3px solid var(--link); outline-offset: 4px; }
   .hl-av { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #d4919b; color: #fff; box-shadow: 0 14px 34px rgb(212 145 155 / .45); }
@@ -1746,14 +1747,14 @@ if (!window.ZYEUTO_APP) {
   .hl-plus { position: absolute; right: 0; bottom: 2px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); border: 3px solid var(--bg); }
   .hl-plus svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
   .hl-cap { margin: -4px 0 0; font-size: 14px; color: var(--muted); }
-  .hl h2 { margin: 6px 0 0; font-size: 28px; line-height: 1.15; }
+  .hl h2 { margin: 6px 0 0; font: 800 29px/1.15 var(--round); }
   .hl h2 em { font-style: normal; color: var(--rose-ink); }
   .hl p.lead { max-width: 330px; margin: 0 auto; }
   .hl-fields { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; margin: 6px auto 0; text-align: left; }
   .hl-field { display: flex; align-items: center; gap: 4px; background: var(--surface-2); border: 1.5px solid transparent; border-radius: 16px; padding: 0 16px; transition: border-color .2s; }
   .hl-field:focus-within { border-color: var(--rose); }
-  .hl-field span { color: var(--muted); font: 400 17px var(--font); }
-  .hl-field input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: 400 17px var(--font); padding: 15px 0; outline: none; }
+  .hl-field span { color: var(--muted); font: 600 17px var(--round); }
+  .hl-field input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: 500 17px var(--round); padding: 15px 0; outline: none; }
   .hl-field input::placeholder { color: var(--muted); }
   .hl-safe { margin: 4px auto 0; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
   .hl-safe svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -4956,7 +4957,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-06-1506";
+const BUILD = "2026-11-06-1508";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
