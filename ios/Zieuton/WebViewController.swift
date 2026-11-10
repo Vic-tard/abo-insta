@@ -1962,7 +1962,8 @@ final class ExportWatcher: NSObject {
     // MARK: Étapes
 
     /// Délai du filet de sécurité : le même que celui où la carte de l'accueil passe à « prêt ».
-    static let likelyAfter: TimeInterval = 10 * 60
+    /// Instagram envoie son mail en 1 à 2 minutes en général : on prévient au bout de 3 (FOU-100).
+    static let likelyAfter: TimeInterval = 3 * 60
 
     /// La demande vient de partir dans Instagram.
     func requested(downloadsBefore: Int) {
@@ -1976,11 +1977,11 @@ final class ExportWatcher: NSObject {
         center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             guard granted, let self else { return }
             let now = Date()
-            self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive d'ici 10 minutes maximum. Je te préviens dès qu'il est là.",
+            self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive en général en 1 à 3 minutes. Je te préviens dès qu'il est là.",
                         subtitle: "Demande envoyée à Instagram à \(Self.hour(now))", after: 1)
             // Zieuton fermé, iOS décide seul quand le réveiller (parfois jamais) : sans ce filet, aucune notif ne partirait.
             // Si Zieuton voit le fichier avant, cette notification est remplacée par « Ton fichier Instagram est prêt ».
-            self.notify(Id.likely, "Ton fichier Instagram est sûrement prêt 🎉", "Instagram met en général moins de 10 minutes. Touche pour le récupérer : Zieuton se met à jour tout seul.",
+            self.notify(Id.likely, "Ton fichier Instagram est sûrement prêt 🎉", "Instagram met en général 1 à 3 minutes. Touche pour le récupérer : Zieuton se met à jour tout seul.",
                         subtitle: "Demandé à \(Self.hour(now))", after: Self.likelyAfter, badge: true, category: Id.readyCategory)
             self.notify(Id.reminder, "Ton fichier t'attend 📥", "Demandé à \(Self.hour(now)). Touche pour le récupérer et voir enfin qui est parti et qui est arrivé.",
                         after: 40 * 60, category: Id.readyCategory)
@@ -2094,7 +2095,7 @@ final class ExportWatcher: NSObject {
             self.checker = nil
             self.finishCheck = nil
             if outcome == .ready { self.markReady() }
-            if outcome == .pending, let r = self.requestedAt, Date().timeIntervalSince(r) > Self.likelyAfter - 2 * 60 {
+            if outcome == .pending, let r = self.requestedAt, Date().timeIntervalSince(r) > Self.likelyAfter - 60 {
                 // Instagram prend son temps : on repousse le rappel au lieu d'annoncer un fichier pas encore là.
                 UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Id.likely])
                 self.notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
