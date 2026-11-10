@@ -61,10 +61,20 @@ jobs:
           fi
           npx --yes wrangler@3.114.17 pages deploy "$RUNNER_TEMP/site" --project-name=zieuton --branch=main --commit-dirty=true
 
+      # GitHub Pages = secours : s'il tombe (compte suspendu, panne GitHub), le workflow reste vert
+      # et affiche un avertissement, puisque zieuton.com (Cloudflare) est déjà à jour. FOU-97.
       - uses: actions/configure-pages@v5
+        id: pages-config
+        continue-on-error: true
       - uses: actions/upload-pages-artifact@v3
+        id: pages-upload
+        continue-on-error: true
         with:
           path: ${{ runner.temp }}/site
       - name: Mettre en ligne
         id: deploy
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+      - name: Avertir si le secours GitHub Pages a échoué
+        if: steps.pages-config.outcome == 'failure' || steps.pages-upload.outcome == 'failure' || steps.deploy.outcome == 'failure'
+        run: echo "::warning::GitHub Pages (secours) n'a pas été mis à jour. zieuton.com (Cloudflare) l'est bien."
