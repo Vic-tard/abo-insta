@@ -915,6 +915,15 @@ final class MetaViewController: UIViewController {
     /// Bon réglage : une seule case cochée, et c'est « Followers et suivi(e)s ».
     private var pickGood: Bool { pickFollowers && pickChecked == 1 }
     private var downloading = false
+    /// Après la demande, la page d'Instagram reste ouverte : Zieuton la recharge toutes les 10 s
+    /// et prévient dès qu'un nouveau « Télécharger » apparaît (FOU-100). L'utilisateur le touche lui-même.
+    private var guarding = false
+    private var guardReady = false
+    private var guardBefore = 0
+    private var guardSince = Date.distantPast
+    private var guardTimer: Timer?
+    /// On arrête de recharger au bout de 20 min : la notification prend le relais.
+    private static let guardFor: TimeInterval = 20 * 60
     /// « Commencer l'exportation » touché : on attend qu'Instagram ait bien pris la demande.
     private var sentAt: Date?
     private var finished = false
@@ -1201,6 +1210,7 @@ final class MetaViewController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         watchTimer?.invalidate()
+        guardTimer?.invalidate()
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoTap")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoState")
     }
@@ -1386,6 +1396,18 @@ final class MetaViewController: UIViewController {
         }
         if downloading {
             return Step(verb: "Presque fini :", target: "Zieuton récupère ton fichier…", tip: "Ne ferme pas cet écran.")
+        }
+        if guarding {
+            if guardReady {
+                return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
+                            tip: "Juste en dessous, sur la page d'Instagram. Zieuton se met à jour tout seul.", look: "button")
+            }
+            if Date().timeIntervalSince(guardSince) > Self.guardFor {
+                return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
+                            tip: "Je t'envoie une notification dès que ton fichier est prêt.")
+            }
+            return Step(verb: "Garde cet écran ouvert :", target: "je guette ton fichier",
+                        tip: "Je regarde la page d'Instagram toutes les 10 secondes et je vibre dès que c'est prêt. Tu peux aussi fermer : je t'enverrai une notification.")
         }
         if !codeShown.isEmpty {
             let place: (String, String) = {
@@ -1657,6 +1679,8 @@ final class MetaViewController: UIViewController {
         if state["start"] as? Bool == true { seenStart = now; sawStart = true }
         if state["create"] as? Bool == true { seenCreate = now }
         if !finished, let dl = state["dl"] as? Int { downloadsSeen = max(downloadsSeen, dl) }
+        // Un nouveau « Télécharger » est apparu pendant le guet : le fichier est prêt.
+        if guarding, !guardReady, let dl = state["dl"] as? Int, dl > guardBefore { guardIsReady() }
         if mainFrame && !pageKnown {
             pageKnown = true
             loginShown = state["login"] as? Bool == true || (webView.url?.absoluteString.lowercased() ?? "").contains("login")
@@ -1757,9 +1781,40 @@ final class MetaViewController: UIViewController {
         tipLabel.text = "Zieuton te prévient dès que ton fichier est prêt."
         // La page passe tout de suite sur « Instagram prépare ta liste », derrière : pas d'ancien écran au retour.
         done?(before)
+        // Au lieu de fermer, on reste sur la page d'Instagram et on guette le fichier (FOU-100).
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
-            self?.dismiss(animated: true)
+            self?.startGuarding(before: before)
         }
+    }
+
+    private func startGuarding(before: Int) {
+        guard !guarding, !downloading else { return }
+        guarding = true
+        guardBefore = before
+        guardSince = Date()
+        showStep()
+        webView.load(URLRequest(url: ExportWatcher.exportURL))
+        guardTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in self?.guardTick() }
+    }
+
+    private func guardTick() {
+        guard guarding, !guardReady, !downloading else { return }
+        if Date().timeIntervalSince(guardSince) > Self.guardFor {
+            guardTimer?.invalidate(); guardTimer = nil
+            showStep()
+            return
+        }
+        // Zieuton en arrière-plan : rien à recharger, la notification de secours s'en occupe.
+        guard UIApplication.shared.applicationState == .active, !webView.isLoading else { return }
+        webView.load(URLRequest(url: ExportWatcher.exportURL))
+    }
+
+    private func guardIsReady() {
+        guardReady = true
+        guardTimer?.invalidate(); guardTimer = nil
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        ExportWatcher.shared.seenReady()
+        showStep()
     }
 
     private func failed(_ message: String) {
@@ -1997,6 +2052,9 @@ final class ExportWatcher: NSObject {
     /// Le fichier a été téléchargé dans Zieuton : plus rien à guetter.
     func downloaded() { clear() }
 
+    /// La page d'Instagram ouverte dans Zieuton vient de montrer le fichier prêt (FOU-100).
+    func seenReady() { markReady() }
+
     func clear() {
         guard requestedAt != nil else { return }
         for k in [Key.requested, Key.ready, Key.before, Key.baselineChecked] { store.removeObject(forKey: k) }
@@ -2057,6 +2115,8 @@ final class ExportWatcher: NSObject {
     private func tick() {
         guard isWaiting else { timer?.invalidate(); timer = nil; return }
         guard UIApplication.shared.applicationState == .active, let r = requestedAt else { return }
+        // La page d'Instagram est déjà ouverte dans Zieuton et la guette elle-même : pas de seconde vérification cachée.
+        guard WebViewController.current?.presentedViewController == nil else { return }
         // Pas avant 30 s : la page d'Instagram doit avoir enregistré la demande.
         guard Date().timeIntervalSince(r) > 30 else { return }
         check { _ in }
