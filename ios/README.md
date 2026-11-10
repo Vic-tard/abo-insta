@@ -5,7 +5,7 @@ elle s'ouvre tout de suite, même sans internet. Elle ajoute « Partager → Zie
 touche ton fichier Instagram (.zip) dans Safari ou dans Fichiers, puis Partager, puis Zieuton. L'import se fait tout seul.
 
 Mises à jour de la page : à chaque ouverture (et à chaque retour dans l'app), l'app regarde si une version plus
-récente est en ligne sur https://vic-tard.github.io/abo-insta/ (ligne `const BUILD` de `index.html`).
+récente est en ligne sur https://zieuton.com/ (ligne `const BUILD` de `index.html`).
 Si oui, elle la télécharge, la garde sur le téléphone et l'affiche aussitôt (sauf pendant un import ou quand
 Instagram est ouvert dans l'app). Pas besoin de réinstaller l'app pour une retouche de page.
 Sécurité : une page téléchargée qui ne démarre pas (plantage, écran bloqué) est abandonnée toute seule,
@@ -45,7 +45,7 @@ Le compte développeur payant (99 €/an) sert pour TestFlight (faire tester par
 5. Dix à trente minutes plus tard, la version apparaît dans App Store Connect → Zieuton → TestFlight.
 
 À chaque nouvelle version : refaire 2 à 4. Xcode augmente le numéro de build tout seul.
-La page de confidentialité demandée par Apple : https://vic-tard.github.io/abo-insta/confidentialite.html
+La page de confidentialité demandée par Apple : https://zieuton.com/confidentialite.html
 
 ## Bon à savoir
 
