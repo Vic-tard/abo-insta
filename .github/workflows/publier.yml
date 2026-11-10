@@ -1,4 +1,7 @@
-# Mise en ligne du site sur GitHub Pages, avec la signature des mises à jour (FOU-29).
+# Mise en ligne du site sur Cloudflare Pages (zieuton.com, FOU-90) ET sur GitHub Pages, avec la signature des mises à jour (FOU-29).
+# Cloudflare passe en premier : si GitHub Pages tombe (compte suspendu, panne), zieuton.com reste à jour.
+# Réglage nécessaire une fois : secret CLOUDFLARE_API_TOKEN (jeton Cloudflare « Cloudflare Pages : Edit »).
+# Sans ce secret, l'étape Cloudflare est sautée et un avertissement s'affiche.
 # À chaque fusion sur main : copie le site, signe index.html et channel.json avec la clé secrète
 # de Victor (secret PAGE_SIGNING_KEY), publie index.html.sig et channel.json.sig à côté, puis met en ligne.
 # L'app iPhone (coque version 9 et plus) refuse une page dont la signature n'est pas bonne.
@@ -42,6 +45,21 @@ jobs:
         env:
           PAGE_SIGNING_KEY: ${{ secrets.PAGE_SIGNING_KEY }}
         run: node scripts/signature.mjs signer "$RUNNER_TEMP/site"
+
+      - name: Mettre en ligne sur Cloudflare Pages (zieuton.com)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 4ce3616759c339c0947d70c9fb43b2f6
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::Secret CLOUDFLARE_API_TOKEN absent : zieuton.com n'est PAS mis à jour."
+            exit 0
+          fi
+          # Le projet « zieuton » est créé la première fois (production = branche main).
+          if ! npx --yes wrangler@3.114.17 pages project list | grep -qw zieuton; then
+            npx --yes wrangler@3.114.17 pages project create zieuton --production-branch=main
+          fi
+          npx --yes wrangler@3.114.17 pages deploy "$RUNNER_TEMP/site" --project-name=zieuton --branch=main --commit-dirty=true
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
