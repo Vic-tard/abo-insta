@@ -2119,7 +2119,7 @@ if (!window.ZYEUTO_APP) {
   .vil-card .g-go { position: absolute; right: 14px; bottom: 16px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--btn-ink); }
   .vil-card .g-go svg { width: 16px; height: 16px; fill: currentColor; }
   .vil { position: fixed; inset: 0; z-index: 18; background: linear-gradient(180deg, var(--vil-sky1), var(--vil-sky2)); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
-  .vil canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .vil #vil-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   html.vil-on, html.vil-on body { overflow: hidden; }
   .vil-bar { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 10px; pointer-events: none;
     padding: calc(env(safe-area-inset-top, 0px) + 10px) max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
@@ -2154,6 +2154,17 @@ if (!window.ZYEUTO_APP) {
   .vs-prog .lbl { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 6px; }
   .vs-prog .trk { height: 10px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
   .vs-prog .trk i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #ef7f6a, #f2a04a); }
+  .vs-lv { display: flex; gap: 8px; overflow-x: auto; margin: 14px -20px 0; padding: 2px 20px 4px; scroll-snap-type: x proximity; scrollbar-width: none; }
+  .vs-lv:empty { display: none; }
+  .vs-lv > div { flex: none; width: 108px; border-radius: 16px; background: var(--surface-2); padding: 6px 6px 9px; text-align: center; position: relative; scroll-snap-align: start; }
+  .vs-lv canvas { width: 96px; height: 78px; display: block; margin: 0 auto 4px; }
+  .vs-lv b { display: block; font: 800 12.5px/1.2 var(--round); }
+  .vs-lv small { display: block; margin-top: 2px; font-size: 11px; line-height: 1.25; color: var(--muted); font-weight: 700; }
+  .vs-lv i { position: absolute; top: 6px; left: 6px; font: 800 10.5px var(--round); font-style: normal; padding: 2px 7px; border-radius: 999px; background: var(--surface); color: var(--muted); }
+  .vs-lv .cur { box-shadow: inset 0 0 0 2.5px #9d86e4; }
+  .vs-lv .cur i { background: #9d86e4; color: #fff; }
+  .vs-lv .cur small { color: #7b63cf; }
+  .vs-lv .lock canvas { opacity: .5; filter: saturate(.35); }
   .vs-act { margin-top: 16px; width: 100%; border: 0; cursor: pointer; font: 800 16px var(--round); padding: 14px; border-radius: 16px; background: var(--btn); color: var(--btn-ink); }
   .vs-act.gold { background: var(--gold); color: var(--gold-ink); }
   .vil-x:focus-visible, .vs-act:focus-visible, .vil-card:focus-visible { outline: 3px solid #9d86e4; outline-offset: 2px; }
@@ -2670,6 +2681,7 @@ if (!window.ZYEUTO_APP) {
   <div class="vil-sheet" id="vil-sheet" aria-hidden="true">
     <div class="grab"></div>
     <div class="vs-head"><span class="vs-ic" id="vs-ic" aria-hidden="true"></span><div><h3 id="vs-title"></h3><small id="vs-sub"></small></div><button class="vil-x" id="vs-close" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="vs-lv" id="vs-lv"></div>
     <div id="vs-body"></div>
     <button class="vs-act" id="vs-act" type="button"></button>
   </div>
@@ -5133,7 +5145,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-10-1545";
+const BUILD = "2026-11-10-1618";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6633,7 +6645,8 @@ var VIL = (() => {
   class Rec {
     constructor() { this.ops = []; this.b = [Infinity, Infinity, -Infinity, -Infinity]; this.hit = []; }
     pt(x, y) { const b = this.b; if (x < b[0]) b[0] = x; if (y < b[1]) b[1] = y; if (x > b[2]) b[2] = x; if (y > b[3]) b[3] = y; }
-    poly(p, c, a = 1, hit = true) { this.ops.push({ k: 0, p, c: css(c), a }); p.forEach(([x, y]) => this.pt(x, y)); if (hit) this.hit.push(p); }
+    // Contour plus sombre sur les volumes (pas sur le sol ni les reflets) : le rendu « dessin animé ».
+    poly(p, c, a = 1, hit = true) { this.ops.push({ k: 0, p, c: css(c), a, o: hit && a === 1 ? css(mix(c, 0x2e1a24, .42)) : null }); p.forEach(([x, y]) => this.pt(x, y)); if (hit) this.hit.push(p); }
     ell(x, y, rx, ry, c, a = 1, hit = true) { this.ops.push({ k: 1, x, y, rx, ry, c: css(c), a }); this.pt(x - rx, y - ry); this.pt(x + rx, y + ry); if (hit) this.hit.push([[x - rx, y - ry], [x + rx, y - ry], [x + rx, y + ry], [x - rx, y + ry]]); }
     rrect(x, y, w, h, r, c, a = 1, stroke) { this.ops.push({ k: 2, x, y, w, h, r, c: css(c), a, s: stroke ? css(stroke) : null }); this.pt(x - 1, y - 1); this.pt(x + w + 1, y + h + 1); }
     lines(segs, w, c, a = 1) { this.ops.push({ k: 3, segs, w, c: css(c), a }); segs.forEach((s) => { this.pt(s[0], s[1]); this.pt(s[2], s[3]); }); }
@@ -6643,7 +6656,7 @@ var VIL = (() => {
   function replay(ctx, ops) {
     for (const o of ops) {
       ctx.globalAlpha = o.a == null ? 1 : o.a;
-      if (o.k === 0) { ctx.fillStyle = o.c; ctx.beginPath(); ctx.moveTo(o.p[0][0], o.p[0][1]); for (let i = 1; i < o.p.length; i++) ctx.lineTo(o.p[i][0], o.p[i][1]); ctx.closePath(); ctx.fill(); }
+      if (o.k === 0) { ctx.fillStyle = o.c; ctx.beginPath(); ctx.moveTo(o.p[0][0], o.p[0][1]); for (let i = 1; i < o.p.length; i++) ctx.lineTo(o.p[i][0], o.p[i][1]); ctx.closePath(); ctx.fill(); if (o.o) { ctx.lineWidth = .8; ctx.lineJoin = "round"; ctx.strokeStyle = o.o; ctx.stroke(); } }
       else if (o.k === 1) { ctx.fillStyle = o.c; ctx.beginPath(); ctx.ellipse(o.x, o.y, o.rx, o.ry, 0, 0, Math.PI * 2); ctx.fill(); }
       else if (o.k === 2) { rpath(ctx, o.x, o.y, o.w, o.h, o.r); ctx.fillStyle = o.c; ctx.fill(); if (o.s) { ctx.globalAlpha = 1; ctx.lineWidth = 1.5; ctx.strokeStyle = o.s; ctx.stroke(); } }
       else if (o.k === 3) { ctx.strokeStyle = o.c; ctx.lineWidth = o.w; ctx.lineCap = "round"; ctx.beginPath(); for (const s of o.segs) { ctx.moveTo(s[0], s[1]); ctx.lineTo(s[2], s[3]); } ctx.stroke(); }
@@ -6654,21 +6667,40 @@ var VIL = (() => {
 
   // ---- Formes de base en vue en biais ----
   function box(g, x, y, w, d, h, col, z0 = 0, top) {
+    if (z0 === 0 && h > 8) { const k = Math.min(1.2, h / 45); g.poly([P(x + w, y), P(x + w + k, y + k * .25), P(x + w + k, y + d + k * .25), P(x + w, y + d)], 0x2e1a24, NIGHT ? .16 : .1, false); }
     g.poly([P(x, y + d, z0), P(x + w, y + d, z0), P(x + w, y + d, z0 + h), P(x, y + d, z0 + h)], C(col));
     g.poly([P(x + w, y + d, z0), P(x + w, y, z0), P(x + w, y, z0 + h), P(x + w, y + d, z0 + h)], C(shade(col, .16)));
     g.poly([P(x, y, z0 + h), P(x + w, y, z0 + h), P(x + w, y + d, z0 + h), P(x, y + d, z0 + h)], C(top || mix(col, 0xffffff, .18)));
+    if (z0 === 0 && h > 8) { // ombre douce au pied des murs
+      g.poly([P(x, y + d, 0), P(x + w, y + d, 0), P(x + w, y + d, 4), P(x, y + d, 4)], 0x2e1a24, .12, false);
+      g.poly([P(x + w, y + d, 0), P(x + w, y, 0), P(x + w, y, 4), P(x + w, y + d, 4)], 0x2e1a24, .14, false);
+    }
+  }
+  // Rangées de tuiles sur un pan de toit : f(t) donne les deux bouts de la rangée, t de 0 (bas) à 1 (faîte).
+  function tiles(g, f, col, rows = 5) {
+    const segs = [], ticks = [];
+    for (let i = 1; i < rows; i++) {
+      const t = i / rows, [a, b] = f(t), [a2, b2] = f(t + 1 / rows); segs.push([...a, ...b]);
+      const n = Math.max(3, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 9));
+      for (let j = (i % 2) * .5; j < n; j++) { const u = (j + .5) / n; ticks.push([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a2[0] + (b2[0] - a2[0]) * u, a2[1] + (b2[1] - a2[1]) * u]); }
+    }
+    g.lines(segs, 1.1, C(shade(col, .4)), .55); g.lines(ticks, .8, C(shade(col, .4)), .35);
   }
   function roofX(g, x, y, w, d, h, rh, col, wall, ov = .14) {
     const m = y + d / 2;
     g.poly([P(x - ov, y - ov, h), P(x + w + ov, y - ov, h), P(x + w + ov, m, h + rh), P(x - ov, m, h + rh)], C(shade(col, .28)));
     g.poly([P(x + w, y, h), P(x + w, y + d, h), P(x + w, m, h + rh)], C(shade(wall, .16)));
     g.poly([P(x - ov, y + d + ov, h), P(x + w + ov, y + d + ov, h), P(x + w + ov, m, h + rh), P(x - ov, m, h + rh)], C(col));
+    tiles(g, (t) => { const yy = y + d + ov + (m - y - d - ov) * t, z = h + rh * t; return [P(x - ov, yy, z), P(x + w + ov, yy, z)]; }, col, Math.max(3, Math.round(rh / 7)));
     g.poly([P(x - ov, y + d + ov, h), P(x + w + ov, y + d + ov, h), P(x + w + ov, y + d + ov, h - 3), P(x - ov, y + d + ov, h - 3)], C(shade(col, .35)));
+    g.lines([[...P(x - ov, m, h + rh), ...P(x + w + ov, m, h + rh)]], 2.2, C(shade(col, .45)));
   }
   function roofY(g, x, y, w, d, h, rh, col, wall, ov = .14) {
     const m = x + w / 2;
     g.poly([P(x - ov, y - ov, h), P(x - ov, y + d + ov, h), P(m, y + d + ov, h + rh), P(m, y - ov, h + rh)], C(mix(col, 0xffffff, .08)));
+    tiles(g, (t) => { const xx = x - ov + (m - x + ov) * t, z = h + rh * t; return [P(xx, y - ov, z), P(xx, y + d + ov, z)]; }, mix(col, 0xffffff, .08), Math.max(3, Math.round(rh / 7)));
     g.poly([P(x + w + ov, y - ov, h), P(x + w + ov, y + d + ov, h), P(m, y + d + ov, h + rh), P(m, y - ov, h + rh)], C(shade(col, .2)));
+    tiles(g, (t) => { const xx = x + w + ov + (m - x - w - ov) * t, z = h + rh * t; return [P(xx, y - ov, z), P(xx, y + d + ov, z)]; }, shade(col, .2), Math.max(3, Math.round(rh / 7)));
     g.poly([P(x, y + d, h), P(x + w, y + d, h), P(m, y + d, h + rh)], C(wall));
     g.poly([P(x + w + ov, y + d + ov, h), P(m, y + d + ov, h + rh), P(m, y + d + ov, h + rh - 3), P(x + w + ov, y + d + ov, h - 3)], C(shade(col, .38)));
   }
@@ -6727,7 +6759,30 @@ var VIL = (() => {
       lvl: L.lvl, into: L.into, need: L.need, max: L.max, rank: rankOf(L.lvl), anni,
       plus: (() => { try { return hasPlus(); } catch (e) { logError("village-plus", e); return false; } })(),
       look: z.look || {},
+      age: n ? Math.max(0, Math.floor((Date.now() - new Date(s[0].takenAt).getTime()) / 864e5)) : 0,
+      fetes: Object.keys(z.anni || {}).length,
     };
+  }
+  // Les niveaux de chaque élément du village : nom, seuil, et ce qui fait monter.
+  const LV = {
+    maison: { v: (D) => D.gained, need: (t) => `+${nf(t)} abonnés gagnés`, levels: HOUSE },
+    jardin: { v: (D) => D.n, need: (t) => `${t} exports`, levels: [["Potager", 0], ["Jardin", 4], ["Jardin à arche", 8], ["Grande serre", 16]] },
+    mairie: { v: (D) => D.lvl, need: (t) => `niveau ${t}`, levels: [["Petite mairie", 1], ["Mairie", 5], ["Hôtel de ville", 10], ["Palais du Zyeutage", 20]] },
+    gare: { v: (D) => D.n, need: (t) => `${t} exports`, levels: [["Halte", 0], ["Petite gare", 3], ["Gare", 6], ["Grande gare", 12]] },
+    marche: { v: (D) => D.age, need: (t) => `${t} jours au village`, levels: [["Un étal", 0], ["Petit marché", 30], ["Marché", 90], ["Marché en fête", 365]] },
+    boulangerie: { v: (D) => D.fetes, need: (t) => `${t} anniversaires fêtés`, levels: [["Fournil", 0], ["Boulangerie", 5], ["Pâtisserie", 20], ["Salon de thé", 50]] },
+    fontaine: { v: (D) => D.lvl, need: (t) => `niveau ${t}`, levels: [["Chantier", 0], ["Fontaine", FOUNTAIN_LVL], ["Grande fontaine", 20], ["Fontaine monumentale", 30]] },
+  };
+  const lvOf = (id, D) => LV[id].levels.reduce((st, [, t], i) => LV[id].v(D) >= t ? i : st, 0);
+  // Le dessin d'un élément à un niveau donné (aussi pour les aperçus de la fiche).
+  function drawLevel(g, id, l, D) {
+    if (id === "maison") drawHouse(g, l);
+    else if (id === "mairie") drawMairie(g, l);
+    else if (id === "boulangerie") drawBakery(g, D.anni.today.length > 0, l);
+    else if (id === "gare") drawGare(g, l);
+    else if (id === "jardin") drawGarden(g, { ...D, n: Math.max(D.n, LV.jardin.levels[l][1]) }, l);
+    else if (id === "fontaine") drawFountain(g, l);
+    else if (id === "marche") drawMarket(g, l);
   }
 
   // ---- Les bâtiments ----
@@ -6911,6 +6966,7 @@ var VIL = (() => {
       c.fillStyle = "#ffffff"; for (let i = 0; i < 5; i++) { const a = Math.PI * (.15 + i * .175); c.beginPath(); c.arc(s.x + Math.cos(a) * s.t * 14, s.y - Math.sin(a) * s.t * 20 + s.t * s.t * 14, 1.6, 0, 7); c.fill(); }
     });
     c.globalAlpha = 1;
+    drawBoat(c, t);
     sea.ducks.forEach((d) => drawDuck(c, d, t));
   }
   function creatureAt(sx, sy) {
@@ -6993,33 +7049,88 @@ var VIL = (() => {
       g.poly([[f[0], f[1] - 18], [f[0] + 14, f[1] - 14], [f[0], f[1] - 10]], C(0xef7f6a));
     }
   }
-  function drawMairie(g) {
+  // Chaque bâtiment a ses niveaux (l = 0, 1, 2, 3) : la forme change et s'enrichit.
+  function drawMairie(g, l = 1) {
     const stone = 0xf3e6e0, lil = 0x9d86e4;
+    if (l === 0) {
+      box(g, 9.4, 2.7, 2.2, 1.85, 6, 0xe6d3cf);
+      box(g, 9.55, 2.85, 1.9, 1.6, 34, stone, 6);
+      roofX(g, 9.45, 2.75, 2.1, 1.8, 40, 22, lil, stone);
+      doorL(g, 10.25, 10.75, 4.45, 24, 0x6a5aa8);
+      winR(g, 3.1, 3.8, 11.45, 18, 30);
+      const f = P(10.5, 3.6, 60);
+      g.lines([[f[0], f[1], f[0], f[1] - 18]], 1.4, C(0x6b5a60));
+      g.poly([[f[0], f[1] - 18], [f[0] + 12, f[1] - 15], [f[0], f[1] - 12]], C(0xc9b8f7));
+      return;
+    }
+    if (l === 3) { // ailes du palais
+      box(g, 8.0, 2.5, .95, 2.1, 4, 0xe6d3cf);
+      box(g, 8.08, 2.6, .8, 1.9, 34, stone, 4);
+      roofY(g, 8.03, 2.55, .9, 2.0, 38, 16, lil, stone);
+      winL(g, 8.25, 8.65, 4.5, 14, 28);
+    }
     box(g, 9, 2, 3, 3, 6, 0xe6d3cf);
+    if (l === 3) for (let i = 0; i < 3; i++) box(g, 9.9 + i * .1, 4.95 + i * .18, 1.2 - i * .2, .2, 6 - i * 2, 0xfaf0ec, 0); // marches
     box(g, 9.25, 2.25, 2.5, 2.3, 48, stone, 6);
+    // pierres de taille sur la façade
+    const joints = [];
+    for (let z = 14; z < 52; z += 8) joints.push([...P(9.25, 4.55, z), ...P(11.75, 4.55, z)], [...P(11.75, 4.55, z), ...P(11.75, 2.25, z)]);
+    g.lines(joints, .8, C(0xd9c6c0), .8);
+    if (l >= 2) { // tour de l'horloge, derrière le faîte
+      box(g, 10.15, 3.0, .7, .7, 46, stone, 50);
+      pyramid(g, 10.15, 3.0, .7, .7, 96, 30, lil);
+      const c = P(10.5, 3.7, 82); g.ell(c[0], c[1], 8, 8, C(0xffffff)); g.ell(c[0], c[1], 8, 8, C(0x6a5aa8), .15, false);
+      g.lines([[c[0], c[1], c[0], c[1] - 5.5], [c[0], c[1], c[0] + 4, c[1] + 1]], 1.4, C(0x2e2328));
+      if (l === 3) { const d = P(10.5, 3.35, 126); g.ell(d[0], d[1], 4, 4, C(0xc9b8f7)); }
+    }
     roofX(g, 9.1, 2.1, 2.8, 2.6, 54, 26, lil, stone);
     for (let i = 0; i < 4; i++) box(g, 9.4 + i * .65, 4.6, .16, .16, 40, 0xffffff, 6);
     box(g, 9.2, 4.55, 2.6, .3, 6, 0xfaf0ec, 46);
     doorL(g, 10.25, 10.75, 4.55, 30, 0x6a5aa8);
     winR(g, 2.6, 3.2, 11.75, 22, 40); winR(g, 3.6, 4.2, 11.75, 22, 40);
-    const c = P(11.0, 3.4, 62); g.ell(c[0] + 10, c[1] - 4, 6, 7, C(0xffffff));
-    g.lines([[c[0] + 10, c[1] - 4, c[0] + 10, c[1] - 9], [c[0] + 10, c[1] - 4, c[0] + 13, c[1] - 3]], 1.3, C(0x2e2328));
-    const f = P(10.5, 3.4, 80);
+    if (l < 2) {
+      const c = P(11.0, 3.4, 62); g.ell(c[0] + 10, c[1] - 4, 6, 7, C(0xffffff));
+      g.lines([[c[0] + 10, c[1] - 4, c[0] + 10, c[1] - 9], [c[0] + 10, c[1] - 4, c[0] + 13, c[1] - 3]], 1.3, C(0x2e2328));
+    }
+    const f = P(l >= 2 ? 10.5 : 10.5, l >= 2 ? 3.35 : 3.4, l >= 2 ? 128 : 80);
     g.lines([[f[0], f[1], f[0], f[1] - 24]], 1.6, C(0x6b5a60));
     g.poly([[f[0], f[1] - 24], [f[0] + 18, f[1] - 20], [f[0], f[1] - 15]], C(0xc9b8f7));
+    if (l === 3) [[9.45, 4.9], [11.55, 4.9]].forEach(([x, y]) => { const p = P(x, y); g.ell(p[0], p[1] - 4, 7, 5, C(0x8cc49d)); g.ell(p[0] - 2, p[1] - 7, 3, 3, C(0xf4a3c4), 1, false); });
   }
-  function drawBakery(g, party) {
+  function drawBakery(g, party, l = 1) {
     const wall = 0xffe7d4;
-    box(g, 11.1, 7.1, 1.8, 1.75, 38, wall);
-    roofY(g, 11.1, 7.1, 1.8, 1.75, 38, 24, 0xef7f6a, wall);
-    box(g, 12.4, 7.3, .3, .3, 14, 0xd99a7e, 54);
+    if (l === 0) {
+      box(g, 11.4, 7.4, 1.5, 1.45, 28, 0xf2d7c2);
+      const planks = []; for (let z = 6; z < 28; z += 6) planks.push([...P(11.4, 8.85, z), ...P(12.9, 8.85, z)]); g.lines(planks, .8, C(0xd9b8a0), .7);
+      roofY(g, 11.4, 7.4, 1.5, 1.45, 28, 20, 0xd97a63, 0xf2d7c2);
+      box(g, 12.4, 7.6, .3, .3, 12, 0xb9a49a, 40);
+      doorL(g, 12.2, 12.65, 8.85, 20, 0xa0505f);
+      winR(g, 7.7, 8.3, 12.9, 10, 20);
+      const b = P(11.8, 8.85, 14); g.ell(b[0], b[1], 6, 3, C(0xf4a96a));
+      chimneys.push(P(12.55, 7.75, 54));
+      return;
+    }
+    const H = l >= 2 ? 54 : 38;
+    box(g, 11.1, 7.1, 1.8, 1.75, H, wall);
+    if (l >= 2) { winL(g, 11.3, 11.7, 8.85, 36, 48); winL(g, 12.1, 12.5, 8.85, 36, 48); winR(g, 7.4, 8.0, 12.9, 36, 48); g.poly([P(11.1, 8.85, 32), P(12.9, 8.85, 32), P(12.9, 8.85, 34), P(11.1, 8.85, 34)], C(0xf1c9b0)); }
+    roofY(g, 11.1, 7.1, 1.8, 1.75, H, 24, 0xef7f6a, wall);
+    box(g, 12.4, 7.3, .3, .3, 14, 0xd99a7e, H + 16);
     for (let i = 0; i < 6; i++) { const a = 11.1 + i * .3; g.poly([P(a, 8.85, 30), P(a + .3, 8.85, 30), P(a + .3, 9.2, 22), P(a, 9.2, 22)], C(i % 2 ? 0xffffff : 0xef7f6a)); }
     winL(g, 11.3, 11.95, 8.85, 6, 20, { glass: 0xf6d9b8 });
     doorL(g, 12.2, 12.65, 8.85, 20, 0xa0505f);
     winR(g, 7.4, 8.0, 12.9, 12, 26);
-    const s = P(12.9, 8.3, 46); g.ell(s[0] + 9, s[1], 9, 5, C(0xf4a96a)); g.ell(s[0] + 12, s[1] - 2, 5, 3, C(0xffe7d4));
+    const s = P(12.9, 8.3, H + 8);
+    if (l >= 2) { // enseigne gâteau à étages
+      g.ell(s[0] + 10, s[1] + 2, 11, 5, C(0xf7c6cf)); g.rrect(s[0] - 1, s[1] - 8, 22, 10, 3, C(0xf7c6cf)); g.rrect(s[0] + 3, s[1] - 16, 14, 9, 3, C(0xfffaf2)); g.ell(s[0] + 10, s[1] - 19, 3, 3, C(0xef7f6a));
+    } else { g.ell(s[0] + 9, s[1], 9, 5, C(0xf4a96a)); g.ell(s[0] + 12, s[1] - 2, 5, 3, C(0xffe7d4)); }
     for (let i = 0; i < 3; i++) { const p = P(11.45 + i * .18, 8.85, 9); g.ell(p[0], p[1], 3.5, 2, C(0xf4a96a)); }
-    chimneys.push(P(12.55, 7.45, 72));
+    chimneys.push(P(12.55, 7.45, H + 34));
+    if (l === 3) [[11.3, 10.4, 0xef7f6a], [12.4, 10.5, 0x9d86e4]].forEach(([x, y, c]) => { // terrasse du salon de thé
+      const p = P(x, y); g.rrect(p[0] - 1, p[1] - 30, 2, 30, 1, C(0x8b6a5a));
+      g.ell(p[0], p[1] - 9, 9, 4.5, C(0xffffff)); g.rrect(p[0] - 1.5, p[1] - 9, 3, 9, 1, C(0xb9a49a));
+      g.poly([[p[0] - 18, p[1] - 26], [p[0], p[1] - 38], [p[0] + 18, p[1] - 26], [p[0], p[1] - 22]], C(c));
+      g.poly([[p[0], p[1] - 38], [p[0] + 18, p[1] - 26], [p[0], p[1] - 22]], C(shade(c, .15)));
+    });
     if (party) { // fanions de fête les jours d'anniversaire
       const a = P(11.1, 8.85, 37), b = P(12.9, 8.85, 37), cols = [0xf2c45a, 0xef7f6a, 0x9b86d6, 0x5fb592, 0xe8909c];
       g.lines([[a[0], a[1], b[0], b[1]]], 1, C(0x6b5a60));
@@ -7032,19 +7143,57 @@ var VIL = (() => {
     for (let i = 0; i < 6; i++) box(g, x + .08 + i * .14, y + .2, .14, .65, 3, i % 2 ? 0xffffff : colA, 34, i % 2 ? 0xffffff : colA);
     fruits.forEach((f, i) => { const p = P(x + .3 + i * .17, y + .52, 16); g.ell(p[0], p[1], 3.2, 3.2, C(f)); });
   }
-  function drawGare(g) {
+  const STALLS = [[8, 8, 0xef7f6a, [0xef7f6a, 0xf4a96a, 0x7cc4a8]], [10, 8, 0x9d86e4, [0xc9b8f7, 0xf4a3c4, 0xf2c45a]], [7, 8, 0x5fb592, [0x7cc4a8, 0xf2c45a, 0xef7f6a]], [9, 8, 0xf4a3c4, [0xf4a3c4, 0xc9b8f7, 0xf4a96a]]];
+  const stallsFor = (l) => [1, 2, 3, 4][l];
+  function drawMarket(g, l) { // pour l'aperçu des niveaux
+    STALLS.slice(0, stallsFor(l)).forEach(([x, y, c, f]) => stall(g, x, y, c, f));
+    if (l === 3) garland(g);
+  }
+  function garland(g) {
+    const cols = [0xf2c45a, 0xef7f6a, 0x9b86d6, 0x5fb592, 0xf4a3c4], segs = [], a = P(7.1, 7.15, 44), b = P(10.9, 7.15, 44);
+    for (let i = 0; i <= 12; i++) { const t = i / 12; segs.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + Math.sin(Math.PI * t) * 10]); }
+    g.lines(segs.slice(1).map((p, i) => [...segs[i], ...p]), 1, C(0x6b5a60));
+    segs.slice(0, -1).forEach(([x, y], i) => g.poly([[x - 3, y], [x + 3, y + 1.5], [x, y + 8]], C(cols[i % 5]), 1, false));
+  }
+  function drawGare(g, l = 2) {
     const wall = 0xfffaf8;
+    if (l === 0) { // simple abri sur le quai
+      [[8.7, 12.4], [10.3, 12.4], [8.7, 12.9], [10.3, 12.9]].forEach(([x, y]) => box(g, x, y, .08, .08, 30, 0x8b6a5a));
+      box(g, 8.55, 12.25, 1.95, .85, 3, 0xd9604a, 30);
+      box(g, 9.0, 12.55, 1.0, .25, 8, 0xc79b7c);
+      const p = P(9.5, 12.25, 40); g.rrect(p[0] - 14, p[1] - 8, 28, 9, 3, C(0xffffff), 1, C(0xd9604a));
+      g.hit.push([P(8.5, 12.2), P(10.6, 12.2), P(10.6, 13.2), P(8.5, 13.2)].map(([x, y]) => [x, y - 20]));
+      return;
+    }
+    if (l === 1) {
+      box(g, 8.6, 11.6, 1.8, 1.05, 30, wall);
+      roofX(g, 8.45, 11.45, 2.1, 1.35, 30, 16, 0xd9604a, wall, .05);
+      doorL(g, 9.25, 9.75, 12.65, 22, 0xa0505f);
+      winL(g, 8.75, 9.1, 12.65, 10, 22); winR(g, 11.8, 12.4, 10.4, 10, 22);
+      g.poly([P(8.6, 13.3, 30), P(10.4, 13.3, 30), P(10.4, 12.65, 34), P(8.6, 12.65, 34)], C(0xef9a85));
+      [8.7, 10.3].forEach((x) => box(g, x, 13.15, .08, .08, 30, 0x8b6a5a));
+      return;
+    }
+    if (l === 3) { // tour de l'horloge
+      box(g, 11.05, 11.3, .75, .75, 62, wall);
+      pyramid(g, 11.05, 11.3, .75, .75, 62, 26, 0xd9604a);
+      const c = P(11.42, 12.05, 50); g.rrect(c[0] - 6, c[1] - 6, 12, 12, 6, C(0xffffff), 1, C(0x2e2328));
+      g.lines([[c[0], c[1], c[0], c[1] - 4], [c[0], c[1], c[0] + 3, c[1]]], 1.1, C(0x2e2328));
+    }
     box(g, 8.1, 11.15, 2.8, 1.5, 36, wall);
+    const planks = []; for (let z = 4; z < 12; z += 4) planks.push([...P(8.1, 12.65, z), ...P(10.9, 12.65, z)]); g.lines(planks, .8, C(0xe8d4cf), .9);
     roofX(g, 7.8, 11.0, 3.4, 1.9, 36, 18, 0xd9604a, wall, .05);
-    for (let i = 0; i < 3; i++) box(g, 8.1 + i * 1.3, 13.0, .1, .1, 36, 0x8b6a5a);
-    g.poly([P(7.8, 13.4, 36), P(11.2, 13.4, 36), P(11.2, 12.6, 42), P(7.8, 12.6, 42)], C(0xef9a85));
+    const x0 = l === 3 ? 7.4 : 7.8, x1 = l === 3 ? 11.0 : 11.2;
+    for (let x = x0 + .3; x < x1; x += 1.3) box(g, x, 13.0, .1, .1, 36, 0x8b6a5a);
+    g.poly([P(x0, 13.4, 36), P(x1, 13.4, 36), P(x1, 12.6, 42), P(x0, 12.6, 42)], C(0xef9a85));
+    const stripes = []; for (let x = x0 + .25; x < x1; x += .5) stripes.push([...P(x, 13.4, 36), ...P(x, 12.6, 42)]); g.lines(stripes, 2, C(0xffffff), .55);
     doorL(g, 9.25, 9.75, 12.65, 24, 0xa0505f);
     winL(g, 8.4, 8.95, 12.65, 10, 26); winL(g, 10.05, 10.6, 12.65, 10, 26);
     winR(g, 11.4, 12.2, 10.9, 10, 26);
-    const c = P(9.5, 12.65, 31); g.rrect(c[0] - 5, c[1] - 5, 10, 10, 5, C(0xffffff), 1, C(0x2e2328));
-    g.lines([[c[0], c[1], c[0], c[1] - 3.5], [c[0], c[1], c[0] + 2.5, c[1]]], 1.1, C(0x2e2328));
+    if (l < 3) { const c = P(9.5, 12.65, 31); g.rrect(c[0] - 5, c[1] - 5, 10, 10, 5, C(0xffffff), 1, C(0x2e2328)); g.lines([[c[0], c[1], c[0], c[1] - 3.5], [c[0], c[1], c[0] + 2.5, c[1]]], 1.1, C(0x2e2328)); }
+    if (l === 3) [[7.6, 13.1], [7.9, 13.2]].forEach(([x, y], i) => box(g, x, y, .25, .25, 8, i ? 0xc79b7c : 0xb08a74)); // caisses
   }
-  function drawGarden(g, D) {
+  function drawGarden(g, D, l = 1) {
     const flowers = Math.min(16, D.n), wilt = D.days != null && D.days > 35 ? 1 : D.days != null && D.days > 21 ? .5 : 0;
     const stems = [];
     for (let i = 0; i < 16; i++) {
@@ -7062,18 +7211,37 @@ var VIL = (() => {
       }
     }
     g.lines(stems, 1.8, C(mix(0x5f9b7d, 0x9a8a5a, wilt)));
-    const post = (x, y) => box(g, x - .04, y - .04, .08, .08, 14, 0xffffff);
-    for (let x = 1; x <= 5; x++) post(x, 12);
-    for (let y = 8; y <= 12; y++) if (y !== 9 && y !== 10) post(5, y);
-    const rails = [];
-    [6, 11].forEach((z) => { rails.push([...P(1, 12, z), ...P(5, 12, z)], [...P(5, 12, z), ...P(5, 10.9, z)], [...P(5, 9, z), ...P(5, 8, z)]); });
-    g.lines(rails, 2, C(0xffffff));
+    if (l >= 1) {
+      const post = (x, y) => box(g, x - .04, y - .04, .08, .08, 14, 0xffffff);
+      for (let x = 1; x <= 5; x++) post(x, 12);
+      for (let y = 8; y <= 12; y++) if (y !== 9 && y !== 10) post(5, y);
+      const rails = [];
+      [6, 11].forEach((z) => { rails.push([...P(1, 12, z), ...P(5, 12, z)], [...P(5, 12, z), ...P(5, 10.9, z)], [...P(5, 9, z), ...P(5, 8, z)]); });
+      g.lines(rails, 2, C(0xffffff));
+    }
     const w = P(4.6, 11.5); g.rrect(w[0] - 5, w[1] - 9, 10, 9, 2, C(0x9fb4ff));
+    if (l >= 2) { // arche de roses à l'entrée
+      [[5, 8.95], [5, 10.05]].forEach(([x, y]) => box(g, x - .05, y - .05, .1, .1, 40, 0xffffff));
+      const a = P(5, 9, 40), b = P(5, 10, 40), segs = [];
+      for (let i = 0; i <= 10; i++) { const t = i / 10; segs.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - Math.sin(Math.PI * t) * 12]); }
+      g.lines(segs.slice(1).map((p, i) => [...segs[i], ...p]), 3, C(0xffffff));
+      segs.forEach(([x, y], i) => { if (i % 2 === 0) { g.ell(x, y - 1, 3.2, 3.2, C(0x7cc4a8), 1, false); g.ell(x + 1, y - 2, 2.2, 2.2, C(i % 4 ? 0xef8fa0 : 0xf4a3c4), 1, false); } });
+    }
+    if (l >= 3) { // grande serre
+      const gx = 1.15, gy = 12.35, gw = 1.7, gd = 1.15, gh = 26;
+      box(g, gx, gy, gw, gd, 5, 0xe8d4cf);
+      g.poly([P(gx, gy + gd, 5), P(gx + gw, gy + gd, 5), P(gx + gw, gy + gd, gh), P(gx, gy + gd, gh)], C(0xcfeef5), .75);
+      g.poly([P(gx + gw, gy + gd, 5), P(gx + gw, gy, 5), P(gx + gw, gy, gh), P(gx + gw, gy + gd, gh)], C(0xb7e0ea), .75);
+      roofX(g, gx, gy, gw, gd, gh, 14, 0xbfe6f6, 0xcfeef5, .04);
+      const fr = []; for (let x = gx; x <= gx + gw + .01; x += gw / 4) fr.push([...P(x, gy + gd, 5), ...P(x, gy + gd, gh)]);
+      fr.push([...P(gx, gy + gd, 15), ...P(gx + gw, gy + gd, 15)]); g.lines(fr, 1.2, C(0xffffff));
+      [[gx + .4, 0xef8fa0], [gx + .9, 0x9d86e4], [gx + 1.35, 0xf4a96a]].forEach(([x, c]) => { const p = P(x, gy + gd - .2, 10); g.ell(p[0], p[1], 4, 4, C(0x7cc4a8), 1, false); g.ell(p[0], p[1] - 4, 2.4, 2.4, C(c), 1, false); });
+    }
     // zone touchable : tout le carré du jardin
     g.hit.push([P(1, 8), P(5, 8), P(5, 12), P(1, 12)].map(([x, y]) => [x, y - 10]));
   }
-  function drawFountain(g, on) {
-    if (!on) {
+  function drawFountain(g, l = 1) {
+    if (l === 0) {
       const pts = [P(12, 2), P(14, 2), P(14, 4), P(12, 4)], dash = [];
       for (let i = 0; i < 4; i++) { const a = pts[i], b = pts[(i + 1) % 4]; for (let t = 0; t < 1; t += .2) dash.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[0] + (b[0] - a[0]) * (t + .1), a[1] + (b[1] - a[1]) * (t + .1)]); }
       g.lines(dash, 2, C(0x9d86e4), .9);
@@ -7081,13 +7249,20 @@ var VIL = (() => {
       box(g, 12.9, 2.9, .1, .1, 26, 0x8b6a5a);
       g.poly([P(12.7, 3.0, 26), P(13.3, 3.0, 26), P(13.3, 3.0, 40), P(12.7, 3.0, 40)], C(0xfff7ea));
       const q = P(13, 3.0, 33); g.ell(q[0], q[1], 4, 4, C(0x9d86e4));
+      [[12.3, 3.4], [12.5, 3.6]].forEach(([x, y]) => box(g, x, y, .3, .2, 6, 0xd8cfd2));
       return;
     }
-    const c = P(13, 3);
-    g.ell(c[0], c[1] + 2, 46, 21, C(0xe6d3cf)); g.ell(c[0], c[1] - 4, 46, 21, C(0xf3e6e0)); g.ell(c[0], c[1] - 5, 38, 16, C(0x9fd3ee));
+    const c = P(13, 3), k = l === 1 ? 1 : 1.18;
+    if (l >= 2) { for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; g.ell(c[0] + Math.cos(a) * 56, c[1] + Math.sin(a) * 25, 6, 4, C(i % 2 ? 0xf4a3c4 : 0x8cc49d)); } }
+    g.ell(c[0], c[1] + 2, 46 * k, 21 * k, C(0xe6d3cf)); g.ell(c[0], c[1] - 4, 46 * k, 21 * k, C(0xf3e6e0)); g.ell(c[0], c[1] - 5, 38 * k, 16 * k, C(0x9fd3ee));
     g.ell(c[0] - 10, c[1] - 8, 10, 3, 0xffffff, .5, false);
     g.rrect(c[0] - 6, c[1] - 34, 12, 30, 4, C(0xf3e6e0)); g.ell(c[0], c[1] - 34, 16, 6, C(0xe6d3cf)); g.ell(c[0], c[1] - 35, 12, 4, C(0x9fd3ee));
-    g.lines([[c[0], c[1] - 36, c[0] - 10, c[1] - 52], [c[0], c[1] - 36, c[0] + 10, c[1] - 52], [c[0], c[1] - 36, c[0], c[1] - 56]], 2.2, C(0xbfe6f6), .9);
+    let top = 36;
+    if (l >= 2) { g.rrect(c[0] - 4, c[1] - 52, 8, 18, 3, C(0xf3e6e0)); g.ell(c[0], c[1] - 52, 11, 4.5, C(0xe6d3cf)); g.ell(c[0], c[1] - 53, 8, 3, C(0x9fd3ee)); top = 54; }
+    if (l >= 3) { g.rrect(c[0] - 3, c[1] - 66, 6, 14, 3, C(0xf3e6e0)); g.ell(c[0], c[1] - 70, 6, 6, C(0xc9b8f7)); top = 74; g.ell(c[0] - 2, c[1] - 72, 2, 2, 0xffffff, .7, false); }
+    const jets = [[c[0], c[1] - top, c[0] - 10, c[1] - top - 16], [c[0], c[1] - top, c[0] + 10, c[1] - top - 16], [c[0], c[1] - top, c[0], c[1] - top - 20]];
+    if (l >= 3) [-1, 1].forEach((s) => jets.push([c[0] + s * 40, c[1] - 6, c[0] + s * 26, c[1] - 30], [c[0] + s * 18, c[1] + 12, c[0] + s * 10, c[1] - 12]));
+    g.lines(jets, 2.2, C(0xbfe6f6), .9);
   }
   function tree(g, x, y, kind, s = 1) {
     const [cx, cy] = P(x + .5, y + .5);
@@ -7106,6 +7281,60 @@ var VIL = (() => {
       if (kind === "blossom") [[-12, -26], [6, -34], [2, -20], [-2, -40]].forEach(([a, b]) => g.ell(cx + a * s, cy + b * s, 1.8, 1.8, C(0xffffff), 1, false));
     }
   }
+  function palm(g, x, y, s = 1) {
+    const [cx, cy] = P(x, y);
+    g.ell(cx + 6, cy, 16 * s, 6 * s, 0x000000, NIGHT ? .18 : .1, false);
+    for (let i = 0; i < 7; i++) { const t = i / 7, bx = cx + Math.sin(t * 1.6) * 8 * s; g.ell(bx, cy - 6 * s - i * 7 * s, 4 * s, 4.2 * s, C(i % 2 ? 0xb08a74 : 0x9b7560)); }
+    const top = [cx + Math.sin(1.6) * 8 * s, cy - 54 * s];
+    [[-34, 6], [-22, -10], [0, -18], [24, -8], [34, 8], [12, 14], [-14, 14]].forEach(([dx, dy], i) => {
+      const tip = [top[0] + dx * s, top[1] + dy * s + 10 * s], mid = [top[0] + dx * .5 * s, top[1] + dy * .5 * s - 6 * s], nx = -(dy) * .12, ny = dx * .12;
+      g.poly([top, [mid[0] + nx * s, mid[1] + ny * s - 2], tip, [mid[0] - nx * s, mid[1] - ny * s + 2]], C(i % 2 ? 0x6aa088 : 0x7fb59a));
+    });
+    [[-3, 4], [3, 5], [0, 7]].forEach(([dx, dy]) => g.ell(top[0] + dx * s, top[1] + dy * s, 2.6 * s, 2.6 * s, C(0x8b6a5a), 1, false));
+  }
+  function rocks(g, x, y, s = 1, z = SEA_Z) {
+    const [cx, cy] = P(x, y, z);
+    g.ell(cx, cy + 2, 22 * s, 7 * s, 0xffffff, .5, false);
+    [[-8, -2, 11, 8, 0xb9adb5], [6, -1, 9, 7, 0xa89ca6], [0, -7, 9, 8, 0xcfc5cb], [12, 2, 6, 4, 0xb9adb5]].forEach(([dx, dy, rx, ry, c]) => g.ell(cx + dx * s, cy + dy * s, rx * s, ry * s, C(c)));
+    g.ell(cx - 2 * s, cy - 11 * s, 4 * s, 2 * s, C(0xe2dade), 1, false);
+  }
+  function lighthouse(g, x, y) {
+    rocks(g, x + .3, y + .5, 1.6); rocks(g, x - .4, y - .2, 1.2);
+    const [cx, cy] = P(x, y, SEA_Z + 10), h = 92;
+    g.ell(cx, cy, 15, 6, C(0xd8cfd2));
+    for (let i = 0; i < 6; i++) { // fût en bandes blanches et corail, qui s'affine
+      const z0 = i * h / 6, z1 = (i + 1) * h / 6, w0 = 12 - z0 * .045, w1 = 12 - z1 * .045, col = i % 2 ? 0xef7f6a : 0xfffaf8;
+      g.poly([[cx - w0, cy - z0], [cx + w0, cy - z0], [cx + w1, cy - z1], [cx - w1, cy - z1]], C(col));
+      g.poly([[cx + w0 * .35, cy - z0], [cx + w0, cy - z0], [cx + w1, cy - z1], [cx + w1 * .35, cy - z1]], C(shade(col, .14)), 1, false);
+    }
+    g.ell(cx, cy - h, 12, 4, C(0x4a3a41));
+    g.rrect(cx - 7, cy - h - 16, 14, 16, 3, NIGHT ? 0xffd27a : C(0xcfeef5), 1, C(0x4a3a41));
+    g.poly([[cx - 10, cy - h - 16], [cx + 10, cy - h - 16], [cx, cy - h - 32]], C(0x9d86e4));
+    g.ell(cx, cy - h - 33, 2.5, 2.5, C(0x9d86e4));
+    if (NIGHT) glow.push([cx, cy - h - 8, 2.6]);
+  }
+  function dock(g) {
+    const y0 = 4.95, y1 = 5.55, x0 = -3.3, x1 = 0.2, wood = 0xc79b7c;
+    for (let x = x0 + .2; x < x1 - .4; x += .9) { box(g, x, y0 - .02, .12, .12, 10, 0x8b6a5a, SEA_Z - 2); box(g, x, y1 - .1, .12, .12, 10, 0x8b6a5a, SEA_Z - 2); }
+    box(g, x0, y0, x1 - x0, y1 - y0, 3, wood, -3, mix(wood, 0xffffff, .12));
+    const planks = []; for (let x = x0 + .2; x < x1; x += .2) planks.push([...P(x, y0), ...P(x, y1)]);
+    g.lines(planks, .8, C(shade(wood, .25)), .6);
+    box(g, x0 + .05, y0 + .05, .1, .1, 14, 0x8b6a5a, 0); box(g, x0 + .05, y1 - .15, .1, .1, 14, 0x8b6a5a, 0);
+  }
+  function drawBoat(c, t) {
+    const [px, py] = P(-3.3, 4.2, SEA_Z), r = Math.sin(t * 1.3) * .05, bob = Math.sin(t * 1.7) * 1.5;
+    c.globalAlpha = .5; c.strokeStyle = "#ffffff"; c.lineWidth = 1.3; c.beginPath(); c.ellipse(px, py + 2, 30, 8, 0, 0, 7); c.stroke(); c.globalAlpha = 1;
+    c.save(); c.translate(px, py + bob); c.rotate(r);
+    c.fillStyle = css(C(0xfffaf8)); c.beginPath(); c.moveTo(-26, -10); c.lineTo(26, -14); c.quadraticCurveTo(20, 4, 4, 4); c.lineTo(-18, 4); c.quadraticCurveTo(-26, -2, -26, -10); c.fill();
+    c.fillStyle = css(C(0xef7f6a)); c.beginPath(); c.moveTo(-25, -6); c.lineTo(24, -10); c.lineTo(22, -6); c.lineTo(-23, -2); c.closePath(); c.fill();
+    c.fillStyle = css(C(0xc79b7c)); c.beginPath(); c.moveTo(-22, -10); c.lineTo(23, -13.5); c.lineTo(20, -10); c.lineTo(-20, -7); c.closePath(); c.fill();
+    c.fillStyle = css(C(0x8b6a5a)); c.fillRect(-1, -52, 2.2, 42);
+    c.fillStyle = css(C(0xfffaf8)); c.beginPath(); c.moveTo(1.5, -50); c.lineTo(20, -16); c.lineTo(1.5, -14); c.closePath(); c.fill();
+    c.fillStyle = css(C(0xc9b8f7)); c.beginPath(); c.moveTo(-1, -46); c.lineTo(-16, -16); c.lineTo(-1, -14); c.closePath(); c.fill();
+    c.fillStyle = css(C(0xef7f6a)); c.beginPath(); c.moveTo(1, -52); c.lineTo(10, -49); c.lineTo(1, -46); c.closePath(); c.fill();
+    c.restore();
+  }
+  const PALMS = [[0, 1], [1.8, 1], [4.4, .95], [6.2, .9], [5.2, .85]];
   function lamp(g, x, y) {
     const [cx, cy] = P(x + .5, y + .5);
     g.rrect(cx - 1.5, cy - 34, 3, 34, 1, C(0x4a3a41)); g.ell(cx, cy, 4, 2, C(0x4a3a41));
@@ -7138,30 +7367,37 @@ var VIL = (() => {
     add(null, -1, -1, (g) => drawGround(g, D), -100);
     add(null, -1, -1, (g) => drawBridge(g, -16, 0), -99);
     add(null, -1, -1, (g) => drawBridge(g, N, 31), -99);
+    const L = {}; Object.keys(LV).forEach((id) => { L[id] = lvOf(id, D); }); D.L = L;
+    add(null, -1, -1, dock, -98);
+    add(null, -3, -3, (g) => lighthouse(g, -2.7, -2.5), -60);
+    [[17, -1.2, 1], [-2.2, 10.5, .8], [17.3, 9, .7], [6, 17.4, .9]].forEach(([x, y, k]) => add(null, -1, -1, (g) => rocks(g, x, y, k), -97));
+    PALMS.forEach(([a, k]) => { const [x, y] = shore(a, -.6); add(null, x, y, (g) => palm(g, x, y, k)); });
     add("maison", 4, 4, (g) => drawHouse(g, D.stage));
-    add("mairie", 11, 4, drawMairie);
-    add("boulangerie", 12, 8, (g) => drawBakery(g, D.anni.today.length > 0));
-    add(null, 8, 8, (g) => stall(g, 8, 8, 0xef7f6a, [0xef7f6a, 0xf4a96a, 0x7cc4a8]));
-    add(null, 10, 8, (g) => stall(g, 10, 8, 0x9d86e4, [0xc9b8f7, 0xf4a3c4, 0xf2c45a]));
+    add("mairie", 11, 4, (g) => drawMairie(g, L.mairie));
+    add("boulangerie", 12, 8, (g) => drawBakery(g, D.anni.today.length > 0, L.boulangerie));
+    STALLS.forEach(([x, y, c, f], i) => { if (i < stallsFor(L.marche)) { walk.delete(key(x, y)); add(null, x, y, (g) => stall(g, x, y, c, f)); } else if (i >= 2) walk.add(key(x, y)); });
+    if (L.marche === 3) add(null, 7, 7, garland, 4);
     add("marche", 9, 9, (g) => { g.hit.push([P(7, 7), P(13, 7), P(13, 11), P(7, 11)]); g.pt(...P(7, 7)); g.pt(...P(13, 11)); }, -88);
-    add("gare", 10, 12, drawGare);
-    add("jardin", 4, 11, (g) => drawGarden(g, D));
-    add("fontaine", 13, 3, (g) => drawFountain(g, D.lvl >= FOUNTAIN_LVL));
+    add("gare", 10, 12, (g) => drawGare(g, L.gare));
+    add("jardin", 4, 11, (g) => drawGarden(g, D, L.jardin));
+    add("fontaine", 13, 3, (g) => drawFountain(g, L.fontaine));
     add("statue", 4, 7, (g) => { box(g, 4.2, 7.2, .6, .6, 14, 0xe6d3cf); box(g, 4.28, 7.28, .44, .44, 4, 0xf3e6e0, 14); });
     [[0, 0, "round"], [1, 4.4, "pine"], [0, 2, "blossom"], [5, 1, "round"], [5, 3.2, "pine"], [0, 4, "round"], [3, 0, "pine"],
       [8, 0, "blossom"], [13, 0, "round"], [14, 4, "pine"], [8, 4, "round"], [11, 0, "pine"], [14, 1, "blossom"],
       [0, 12, "round"], [2, 13, "pine"], [4, 13, "blossom"], [0, 8, "pine"], [1, 7, "round"], [5, 12, "round"],
       [13.6, 10.6, "blossom"], [14, 8, "round"], [13, 12, "pine"], [14, 12, "round"], [0, 14, "pine"], [3, 14, "round"], [14, 5, "round"], [7.6, 4.6, "blossom"]]
+      .filter(([x, y]) => !(L.jardin === 3 && x === 2 && y === 13) && !(L.mairie === 3 && x === 8 && y === 4))
       .forEach(([x, y, k]) => add(null, x, y, (g) => tree(g, x, y, k, k === "pine" ? 1 : .95)));
     [[5, 5], [7, 5], [5, 7], [7, 12], [12, 5], [2, 5], [12, 11]].forEach(([x, y]) => add(null, x, y, (g) => lamp(g, x, y)));
     const hz = [70, 92, 102, 120, 140][D.stage];
     list.push(label(`${HOUSE[D.stage][0]} · +${nf(D.gained)}`, 3.5, 3.5, hz));
-    list.push(label("Mairie · Niv. " + D.lvl, 10.5, 3.5, 112, 0x9d86e4));
-    list.push(label(D.anni.today.length ? `Boulangerie · ${D.anni.today.length} anniv.` : "Boulangerie", 12, 8, 92, 0xef7f6a));
-    list.push(label(`Marché · +${nf(D.arrivals.length)}`, 10.6, 10.4, 30, 0x3f7f68));
-    list.push(label(`Gare · ${D.departures.length} départ${D.departures.length > 1 ? "s" : ""}`, 9.5, 11.9, 76, 0xd9604a));
-    list.push(label(`Jardin · ${nf(D.n)} export${D.n > 1 ? "s" : ""}`, 2.5, 9.5, 46, 0xc25a6f));
-    if (D.lvl < FOUNTAIN_LVL) list.push(label("Fontaine · Niv. " + FOUNTAIN_LVL, 13, 3, 52, 0x9d86e4));
+    const nm = (id) => LV[id].levels[L[id]][0];
+    list.push(label(nm("mairie"), 10.5, 3.5, [80, 112, 140, 150][L.mairie], 0x9d86e4));
+    list.push(label(D.anni.today.length ? `${nm("boulangerie")} · ${D.anni.today.length} anniv.` : nm("boulangerie"), 12, 8, [70, 92, 108, 108][L.boulangerie], 0xef7f6a));
+    list.push(label(`${nm("marche")} · +${nf(D.arrivals.length)}`, 10.6, 10.4, 30, 0x3f7f68));
+    list.push(label(`${nm("gare")} · ${D.departures.length} départ${D.departures.length > 1 ? "s" : ""}`, 9.5, 11.9, [50, 66, 76, 76][L.gare], 0xd9604a));
+    list.push(label(`${nm("jardin")} · ${nf(D.n)} export${D.n > 1 ? "s" : ""}`, 2.5, 9.5, 46, 0xc25a6f));
+    list.push(label(L.fontaine ? nm("fontaine") : "Fontaine · Niv. " + FOUNTAIN_LVL, 13, 3, [52, 70, 86, 100][L.fontaine], 0x9d86e4));
     if (NIGHT && glow.length) {
       const g = new Rec();
       glow.forEach(([x, y, s = 1]) => { g.ell(x, y, 18 * s, 18 * s, 0xffb04a, .1, false); g.ell(x, y, 8 * s, 8 * s, 0xffd27a, .12, false); });
@@ -7217,7 +7453,7 @@ var VIL = (() => {
   let statueImg = null;
 
   // ---- Caméra, rendu ----
-  const cam = { x: 0, y: 0, s: 1, min: .3, max: 2.4 };
+  const cam = { x: 0, y: 0, s: 1, min: .3, max: 1.5 };
   let cv, ctx, dpr = 1, W = 0, H = 0, running = false, raf = 0, last = 0, cacheS = 0, smoke = [];
   const CAP = 4e6;
   function cacheObj(o, S) {
@@ -7298,15 +7534,16 @@ var VIL = (() => {
   function fit() {
     W = cv.clientWidth; H = cv.clientHeight; dpr = Math.min(window.devicePixelRatio || 1, 3);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    cam.min = Math.min(W / ((N + 1) * TW), (H - 200) / ((N + 1) * TH + 160));
+    // Dézoom maximum : l'île entière (plage comprise) tient dans la largeur, avec un peu de mer.
+    cam.min = W / 900;
     cam.s = Math.max(cam.min, Math.min(1.1, W / 430));
     const c = P(8, 8); cam.x = W / 2 - c[0] * cam.s; cam.y = H / 2 + 10 - c[1] * cam.s; clampCam();
   }
   function clampCam() {
     cam.s = Math.max(cam.min * .9, Math.min(cam.max, cam.s));
-    const half = (N * TW / 2 + 300) * cam.s, top = -400 * cam.s, bottom = (N * TH + 300) * cam.s;
-    cam.x = Math.min(W / 2 + half, Math.max(W / 2 - half, cam.x));
-    cam.y = Math.min(H / 2 - top, Math.max(H / 2 - bottom, cam.y));
+    // Le centre de l'écran reste toujours au-dessus de l'île : on ne part jamais au large.
+    const s = cam.s, vx = Math.max(-400, Math.min(400, (W / 2 - cam.x) / s)), vy = Math.max(30, Math.min(450, (H / 2 - cam.y) / s));
+    cam.x = W / 2 - vx * s; cam.y = H / 2 - vy * s;
   }
 
   // ---- Toucher ----
@@ -7411,9 +7648,29 @@ var VIL = (() => {
     $("vs-ic").textContent = S.ic; $("vs-ic").style.background = S.g;
     $("vs-title").textContent = S.t; $("vs-sub").textContent = S.s;
     $("vs-body").innerHTML = S.b;
+    levelStrip(id);
     const btn = $("vs-act"); btn.hidden = !S.a; btn.classList.toggle("gold", !!S.gold);
     if (S.a) { btn.textContent = S.a[0]; btn.onclick = () => { haptic("light"); S.a[1](); }; }
     $("vil-sheet").classList.add("open"); $("vil-sheet").setAttribute("aria-hidden", "false");
+  }
+  // Toutes les formes d'un élément, de la première à la dernière : la forme actuelle entourée, les suivantes à débloquer.
+  function levelStrip(id) {
+    const box = $("vs-lv"), def = LV[id];
+    if (!def) { box.innerHTML = ""; return; }
+    const cur = D.L[id];
+    box.innerHTML = def.levels.map(([name, t], i) => `<div class="${i === cur ? "cur" : i > cur ? "lock" : ""}"><i>Niv. ${i + 1}</i><canvas data-l="${i}"></canvas><b>${esc(name)}</b><small>${i === cur ? "Ton niveau" : i < cur ? "Débloqué" : esc("À " + def.need(t))}</small></div>`).join("");
+    box.querySelectorAll("canvas").forEach((c) => { try { preview(c, id, +c.dataset.l); } catch (e) { logError("village-preview", e); } });
+    const curEl = box.children[cur]; if (curEl) box.scrollLeft = Math.max(0, curEl.offsetLeft - 20);
+  }
+  function preview(c, id, l) {
+    const g = new Rec(), sg = glow, sc = chimneys.slice();
+    drawLevel(g, id, l, D);
+    glow = sg; chimneys.length = 0; chimneys.push(...sc);
+    const b = g.b, r = Math.min(window.devicePixelRatio || 1, 2), w = 96, h = 78;
+    c.width = w * r; c.height = h * r;
+    const k = Math.min(w / (b[2] - b[0]), h / (b[3] - b[1])) * .92, x = c.getContext("2d");
+    x.setTransform(r * k, 0, 0, r * k, r * (w / 2 - (b[0] + b[2]) / 2 * k), r * (h / 2 - (b[1] + b[3]) / 2 * k));
+    replay(x, g.ops);
   }
   function closeSheet() { $("vil-sheet").classList.remove("open"); $("vil-sheet").setAttribute("aria-hidden", "true"); }
 
