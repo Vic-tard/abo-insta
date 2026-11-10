@@ -173,3 +173,15 @@ Ensuite seulement, fais le build Xcode (build 3) : il contient la clé publique.
    a branch » (le site repart sans signature), fusionner une petite PR avec un nouveau `BUILD`, rouvrir l'app :
    Xcode affiche « Zieuton : page … refusée, signature absente ou invalide » et l'app garde sa page.
    Remettre Source sur « GitHub Actions » et relancer **Publier le site** (onglet Actions → Run workflow).
+
+## 6. Cloudflare Pages (zieuton.com, FOU-90)
+
+Depuis novembre 2026, chaque fusion sur `main` met aussi la page en ligne sur Cloudflare Pages (projet `zieuton`, domaine `zieuton.com`), avant GitHub Pages. Si GitHub tombe, zieuton.com reste à jour et les apps (build 4 et plus) y prennent leurs mises à jour.
+
+Réglage une seule fois :
+1. Cloudflare → icône profil → **Profile → API Tokens → Create Token → Custom token**. Permission : **Account → Cloudflare Pages → Edit**. Créer, copier le jeton.
+2. GitHub → dépôt → **Settings → Secrets and variables → Actions → New repository secret**. Nom : `CLOUDFLARE_API_TOKEN`, valeur : le jeton.
+3. Relancer « Publier le site » (onglet Actions → Run workflow).
+4. Cloudflare → Workers & Pages → zieuton → **Custom domains → Set up a custom domain → zieuton.com**.
+
+Secours sans GitHub : Cloudflare → Workers & Pages → zieuton → **Create deployment** et glisser le dossier du site (avec ses fichiers `.sig`).
