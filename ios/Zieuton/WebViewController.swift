@@ -12,7 +12,12 @@ final class WebViewController: UIViewController {
     static weak var current: WebViewController?
     /// Une notification a été touchée avant que la page soit prête : on ouvre Instagram dès qu'elle l'est.
     private var openWhenReady = false
+    /// Adresse de base de la page affichée. Les données (IndexedDB, localStorage) sont rangées sous cette adresse :
+    /// NE PAS LA CHANGER, sinon les utilisateurs ne retrouvent plus leurs données.
     static let home = URL(string: "https://vic-tard.github.io/abo-insta/")!
+    /// Où l'app télécharge ses mises à jour (page, channel.json, signatures), FOU-92 : zieuton.com (Cloudflare),
+    /// puis GitHub Pages en secours si zieuton.com ne répond pas.
+    static let updateBase = URL(string: "https://zieuton.com/")!
     private static let chunkSize = 512 * 1024
 
     private var webView: WKWebView!
@@ -44,10 +49,10 @@ final class WebViewController: UIViewController {
         return dir.appendingPathComponent(name)
     }
     /// Petit fichier en ligne qui dit quelle version est « stable », et l'interrupteur d'urgence.
-    private static let channelURL = URL(string: "channel.json", relativeTo: home)!.absoluteURL
+    private static let channelURL = URL(string: "channel.json", relativeTo: updateBase)!.absoluteURL
     /// Signatures publiées à côté de la page et de channel.json (FOU-29).
-    private static let pageSignatureURL = URL(string: "index.html.sig", relativeTo: home)!.absoluteURL
-    private static let channelSignatureURL = URL(string: "channel.json.sig", relativeTo: home)!.absoluteURL
+    private static let pageSignatureURL = URL(string: "index.html.sig", relativeTo: updateBase)!.absoluteURL
+    private static let channelSignatureURL = URL(string: "channel.json.sig", relativeTo: updateBase)!.absoluteURL
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -377,10 +382,23 @@ final class WebViewController: UIViewController {
     }
 
     /// Télécharge un petit fichier en ligne (nil si absent, erreur ou pas d'internet).
+    /// Un fichier de zieuton.com qui ne répond pas est redemandé à GitHub Pages (même fichier, même signature).
     private static func fetch(_ url: URL, _ done: @escaping (Data?) -> Void) {
         URLSession.shared.dataTask(with: fresh(url)) { data, response, _ in
-            done((response as? HTTPURLResponse)?.statusCode == 200 ? data : nil)
+            if (response as? HTTPURLResponse)?.statusCode == 200, let data { return done(data) }
+            guard let mirror = mirrorURL(url) else { return done(nil) }
+            NSLog("Zieuton : %@ injoignable, essai sur GitHub Pages", url.absoluteString)
+            URLSession.shared.dataTask(with: fresh(mirror)) { data, response, _ in
+                done((response as? HTTPURLResponse)?.statusCode == 200 ? data : nil)
+            }.resume()
         }.resume()
+    }
+
+    /// Le même fichier sur GitHub Pages, pour une adresse de zieuton.com (nil sinon).
+    static func mirrorURL(_ url: URL) -> URL? {
+        let base = updateBase.absoluteString, text = url.absoluteString
+        guard text.hasPrefix(base) else { return nil }
+        return URL(string: home.absoluteString + String(text.dropFirst(base.count)))
     }
 
     /// Télécharge un fichier et sa signature : renvoie le fichier seulement s'il est bien signé par Victor (FOU-29).
@@ -414,7 +432,7 @@ final class WebViewController: UIViewController {
     private func downloadPage() {
         let current = loadedBuild, bad = Set(guardStore.bad), channel = guardStore.channel, config = guardStore.config
         guard config?.emergency != true else { return finishUpdate() } // urgence : on ne télécharge rien
-        Self.fetch(Self.home) { [weak self] data in
+        Self.fetch(Self.updateBase) { [weak self] data in
             guard let data, let html = String(data: data, encoding: .utf8), html.contains("</html>"),
                   let build = Self.build(of: html),
                   PageGuard.shouldKeep(downloaded: build, current: current, bad: bad, channel: channel, config: config)
