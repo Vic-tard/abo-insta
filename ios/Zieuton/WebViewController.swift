@@ -554,8 +554,29 @@ final class WebViewController: UIViewController {
 
     private func isHome(_ url: URL?) -> Bool {
         guard let url else { return false }
+        if url.host == Self.updateBase.host { return true } // pages du site sur zieuton.com (FOU-93)
         return url.host == Self.home.host && url.path.hasPrefix(Self.home.path)
     }
+
+    enum SitePage: Equatable { case app, moved(URL), other }
+
+    /// Où ouvrir un lien vers le site (FOU-93) :
+    /// - `.app` : la page d'accueil de zieuton.com → on réaffiche la page de l'app ;
+    /// - `.moved` : une page .html de l'ancienne adresse GitHub → la même sur zieuton.com ;
+    /// - `.other` : rien à changer (la page de l'app elle-même, un autre site…).
+    static func sitePage(_ url: URL) -> SitePage {
+        if url.host == updateBase.host {
+            return (url.path.isEmpty || url.path == "/" || url.path == "/index.html") ? .app : .other
+        }
+        guard url.host == home.host, url.path.hasPrefix(home.path), url.pathExtension == "html",
+              url.lastPathComponent != "index.html" else { return .other }
+        let rest = String(url.path.dropFirst(home.path.count))
+        guard var comps = URLComponents(url: updateBase.appendingPathComponent(rest), resolvingAgainstBaseURL: false)
+        else { return .other }
+        comps.fragment = url.fragment
+        return comps.url.map { SitePage.moved($0) } ?? .other
+    }
+    private func sitePage(_ url: URL) -> SitePage { Self.sitePage(url) }
 }
 
 // MARK: Messages de la page
@@ -711,6 +732,23 @@ extension WebViewController: WKNavigationDelegate, WKUIDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if action.shouldPerformDownload { decisionHandler(.download); return }
+        // Pages Aide, Confidentialité, Conditions, Mentions légales (FOU-93) : servies par zieuton.com.
+        if let url = action.request.url, action.targetFrame?.isMainFrame == true {
+            switch sitePage(url) {
+            case .app:
+                // Retour à Zieuton depuis une de ces pages : on réaffiche la page de l'app (même adresse de base,
+                // donc mêmes données), jamais la version en ligne sous zieuton.com.
+                decisionHandler(.cancel)
+                loadPage()
+                return
+            case .moved(let target):
+                decisionHandler(.cancel)
+                webView.load(URLRequest(url: target))
+                return
+            case .other:
+                break
+            }
+        }
         guard let url = action.request.url, action.targetFrame?.isMainFrame == true,
               !isHome(url), !["blob", "data", "about"].contains(url.scheme ?? "") else {
             decisionHandler(.allow)

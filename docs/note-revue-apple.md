@@ -39,7 +39,7 @@ When the user taps "Download", the file is saved on the device and handed to Zie
 
 The app is a native Swift shell (UIKit + `WKWebView`) and its interface is an HTML/JavaScript page **bundled in the app binary**. The app works fully with this bundled page, offline included.
 
-To fix bugs and adjust texts quickly, the app can download a newer copy of **the same page** from our own site (`https://vic-tard.github.io/abo-insta/`). These updates:
+To fix bugs and adjust texts quickly, the app can download a newer copy of **the same page** from our own site (`https://zieuton.com/`). These updates:
 
 - do not change the purpose or the features of the app that you review;
 - cannot reach any native capability other than the small fixed message bridge compiled into the binary (file import, notifications, iCloud backup, StoreKit purchases, haptics, photo picker). Any new native capability requires a new binary submitted to App Review;
@@ -52,8 +52,8 @@ To fix bugs and adjust texts quickly, the app can download a newer copy of **the
 
 **Option B: real import with our sample exports.** Two sample Instagram exports (invented accounts, all ending in ".sample") are attached to this submission and also available here:
 
-- https://vic-tard.github.io/abo-insta/exemple/zieuton-exemple-1.zip (40 followers, dated October 1)
-- https://vic-tard.github.io/abo-insta/exemple/zieuton-exemple-2.zip (39 followers, dated November 1)
+- https://zieuton.com/exemple/zieuton-exemple-1.zip (40 followers, dated October 1)
+- https://zieuton.com/exemple/zieuton-exemple-2.zip (39 followers, dated November 1)
 
 Steps:
 1. On the test device, open the first link in Safari and tap "Download".
