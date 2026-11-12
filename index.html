@@ -4372,7 +4372,8 @@ $("install-banner").hidden = !needsInstall || prefs.installDismissed;
 $("install-x").addEventListener("click", () => { prefs.installDismissed = true; savePrefs(); $("install-banner").hidden = true; });
 
 
-const READY_AFTER_MIN = 10;
+// Instagram envoie en général le fichier en 1 à 2 minutes : la carte passe à « prête » au bout de 3 (FOU-100).
+const READY_AFTER_MIN = 3;
 var lastPendingSent = null;
 function daysSince(iso) { return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000); }
 function renderWeekly() {
@@ -5005,12 +5006,12 @@ function renderGuided() {
     const track = (pct, st) => `<div class="gx-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
         <ol class="gx-steps">${["Demandé", "Instagram prépare", "Prête"].map((t, k) => `<li class="${k < st ? "done" : k === st ? "now" : ""}">${t}</li>`).join("")}</ol>`;
     if (!ready) {
-      // Attente : on rassure (2 à 10 min, notification, pas besoin du mail) et on emmène vers la démo.
+      // Attente : on rassure (1 à 3 min, notification, pas besoin du mail) et on emmène vers la démo.
       const pct = Math.min(94, 6 + Math.round(since / READY_AFTER_MIN * 88));
       body.innerHTML = `${guide(say)}
       <h2 id="gf-title">Ta liste est en route</h2>
       <div class="gx">
-        <div class="gx-top"><span class="gx-ic">${I_MAIL}</span><div><small>Temps d'attente</small><b>2 à 10 min</b></div></div>
+        <div class="gx-top"><span class="gx-ic">${I_MAIL}</span><div><small>Temps d'attente</small><b>1 à 3 min</b></div></div>
         ${track(pct, 1)}
       </div>
       <ul class="gx-list">
@@ -5149,7 +5150,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-12-1345";
+const BUILD = "2026-11-12-1435";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
