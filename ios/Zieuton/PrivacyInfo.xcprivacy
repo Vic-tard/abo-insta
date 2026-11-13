@@ -20,6 +20,15 @@
 				<string>CA92.1</string>
 			</array>
 		</dict>
+		<!-- Date du fichier de sauvegarde iCloud de l'app (« sauvegarde du … »), lue dans son propre conteneur iCloud. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
