@@ -4757,7 +4757,7 @@ const igc = (s) => `<span class="ig">${s}</span>`;
 const IG_SHOTS = [
   { img: "ig-01", why: "C'est la page officielle d'Instagram pour récupérer tes données : zéro risque pour ton compte.", t: `Touche ${igc("Créer une exportation")}`,
     // Juste après la connexion : c'est là qu'arrive l'alerte « nouvel appareil » d'Instagram.
-    appTip: "Alerte d'Instagram « nouvel appareil » ? C'est toi, ici : réponds « C'était moi »." },
+    appTip: "Alerte d'Instagram ? C'est normal, tu viens de te connecter : réponds « C'était moi »." },
   { img: "ig-02", why: "Instagram regroupe tes comptes Meta : on veut seulement celui d'Instagram.", t: `Touche ton compte marqué Instagram`, tip: "Pas Facebook ni Threads." },
   { img: "ig-03", why: "Ta liste arrivera sur ton téléphone, sans passer par personne d'autre.", t: `Touche ${igc("Exporter sur mon appareil")}`, tip: "Le fichier arrivera directement sur ton téléphone." },
   { img: "ig-04", why: "Par défaut, Instagram exporte tout (photos, messages…). On garde seulement l'utile.", t: `Touche ${igc("Personnaliser les informations")}`,
@@ -4991,7 +4991,7 @@ function renderGuided() {
     // Le plan, dès l'arrivée : les 4 étapes jusqu'aux stats, avec ce qui peut surprendre (alerte « nouvel appareil » d'Instagram).
     const PLAN = [
       ["Connecte-toi à Instagram", "Ici, dans Zieuton. Ton mot de passe reste chez lui."],
-      ["Alerte « nouvel appareil » : c'est toi", "Réponds « C'était moi ». La ville est souvent fausse."],
+      ["Alerte d'Instagram ? C'est normal", "Tu viens de te connecter : réponds « C'était moi »."],
       ["Demande ta liste", "3 réglages, je te montre chaque touche."],
       ["Touche « Télécharger »", "1 à 3 min plus tard : je te préviens."],
     ];
@@ -5171,7 +5171,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-15-2053";
+const BUILD = "2026-11-15-2111";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

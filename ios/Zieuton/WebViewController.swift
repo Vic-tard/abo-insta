@@ -955,7 +955,7 @@ final class MetaViewController: UIViewController {
     private let spot = UIView()
     private let dimLayer = CAShapeLayer()
     private let ringView = UIView()
-    private let handLabel = UILabel()
+    private let pointer = PointingZieuteur()
     private let moreLabel = UILabel()
     private var ringSentJSON = ""
     private var ringRect: CGRect?
@@ -1116,10 +1116,12 @@ final class MetaViewController: UIViewController {
           // FOU-118 : où est le bouton à toucher ? On renvoie seulement sa position ; Zieuton dessine le cercle
           // sur son propre calque, au-dessus de la page (rien n'est ajouté ni changé dans la page d'Instagram).
           var RING = [];
+          // Lecture stricte : on n'entoure que s'il y a UN SEUL bouton visible avec exactement ce nom.
+          // Deux boutons possibles, ou un bouton à moitié caché : rien n'est entouré (mieux vaut rien qu'un mauvais endroit).
           var ringRect = function () {
             if (!RING.length || window.top !== window) return null;
             var els = document.querySelectorAll('button,a,label,span,div,[role=button],[role=radio],[role=checkbox],[role=link]');
-            var far = null;
+            var hits = [], far = [];
             for (var i = 0; i < els.length; i++) {
               var el = els[i];
               if (el.childElementCount > 3) continue;
@@ -1127,12 +1129,22 @@ final class MetaViewController: UIViewController {
               if (t.length > 60 || RING.indexOf(t) < 0) continue;
               var box = el.closest('button,a,label,[role=button],[role=radio],[role=checkbox],[role=link]') || el;
               var r = box.getBoundingClientRect();
-              if (r.height > 140 || r.width > innerWidth * 1.2) r = el.getBoundingClientRect();
               if (r.width <= 0 || r.height <= 0) continue;
-              if (vis(el)) return { x: r.left, y: r.top, w: r.width, h: r.height, at: 0 };
-              if (!far && (r.top >= innerHeight || r.bottom <= 0)) far = { x: r.left, y: r.top, w: r.width, h: r.height, at: r.top >= innerHeight ? 1 : -1 };
+              if (vis(el)) { if (hits.indexOf(box) < 0) hits.push(box); }
+              else if ((r.top >= innerHeight || r.bottom <= 0) && far.indexOf(box) < 0) far.push(box);
             }
-            return far;
+            // Un libellé et son bloc parent qui portent le même nom : c'est le même bouton, on garde le plus petit.
+            var inner = function (list) { return list.filter(function (b) { return !list.some(function (o) { return o !== b && b.contains(o); }); }); };
+            hits = inner(hits); far = inner(far);
+            var pack = function (b, at) {
+              var r = b.getBoundingClientRect();
+              if (r.height < 14 || r.height > 140 || r.width > innerWidth + 4) return null;
+              return { x: r.left, y: r.top, w: r.width, h: r.height, at: at };
+            };
+            if (hits.length === 1) return pack(hits[0], 0);
+            if (hits.length > 1) return null;
+            if (far.length === 1) return pack(far[0], far[0].getBoundingClientRect().top >= innerHeight ? 1 : -1);
+            return null;
           };
           var ringSent = '';
           var sendRing = function () {
@@ -1296,30 +1308,28 @@ final class MetaViewController: UIViewController {
         glow.autoreverses = true
         glow.repeatCount = .infinity
         ringView.layer.add(glow, forKey: "zyGlow")
-        handLabel.text = "👆"
-        handLabel.font = .systemFont(ofSize: 32)
-        handLabel.sizeToFit()
+        pointer.frame = CGRect(x: 0, y: 0, width: 84, height: 78)
         let bob = CABasicAnimation(keyPath: "transform.translation.y")
         bob.fromValue = 0
         bob.toValue = -7
         bob.duration = 0.5
         bob.autoreverses = true
         bob.repeatCount = .infinity
-        handLabel.layer.add(bob, forKey: "zyBob")
+        pointer.layer.add(bob, forKey: "zyBob")
         moreLabel.font = Self.rounded(15, .bold)
         moreLabel.textColor = .white
         moreLabel.backgroundColor = Self.coral
         moreLabel.textAlignment = .center
         moreLabel.layer.cornerRadius = 17
         moreLabel.clipsToBounds = true
-        for v in [ringView, handLabel, moreLabel] { spot.addSubview(v) }
+        for v in [ringView, pointer, moreLabel] { spot.addSubview(v) }
         hideRing()
     }
 
     private func hideRing() {
         dimLayer.isHidden = true
         ringView.isHidden = true
-        handLabel.isHidden = true
+        pointer.isHidden = true
         moreLabel.isHidden = true
     }
 
@@ -1327,8 +1337,14 @@ final class MetaViewController: UIViewController {
     private func ringNames() -> [String] {
         guard pageKnown, !downloading, codeShown.isEmpty, !loginShown, sentAt == nil, !lostShown, !finished || guarding else { return [] }
         if guarding { return guardReady ? ["Télécharger", "Download"] : [] }
-        if upShown { return ["Exporter vos informations", "Export your information"] }
+        // Lecture sûre seulement : l'écran d'Instagram reconnu est bien celui de l'étape, depuis un moment, sans touche récente
+        // ni page qui charge. Au moindre doute, pas de cercle : le bandeau suffit.
+        let now = Date()
+        guard now.timeIntervalSince(seenScreen) < 1.6, now.timeIntervalSince(screenSince) > 0.8,
+              now.timeIntervalSince(lastTapAt) > 0.8 else { return [] }
+        if upShown { return screenKey == "up" ? ["Exporter vos informations", "Export your information"] : [] }
         let base = steps[index]
+        guard !base.screen.isEmpty, screenKey == base.screen else { return [] }
         // Page des cases : le bandeau dit quoi toucher (« Followers et suivi(e)s », « Tout effacer », « Enregistrer »…).
         if base.screen == "pick", pickFresh, warning == nil { return [currentStep.target] }
         // Choix à faire (« Depuis le début », « JSON ») : on entoure l'option, puis « Enregistrer » une fois choisie.
@@ -1369,7 +1385,7 @@ final class MetaViewController: UIViewController {
             // Bouton hors de l'écran : une pastille dit dans quel sens faire défiler.
             dimLayer.isHidden = true
             ringView.isHidden = true
-            handLabel.isHidden = true
+            pointer.isHidden = true
             moreLabel.text = ringAt > 0 ? "↓  Plus bas : fais défiler" : "↑  Plus haut : remonte"
             let w = moreLabel.intrinsicContentSize.width + 32
             let y = ringAt > 0 ? bounds.height - view.safeAreaInsets.bottom - 50 : 12
@@ -1388,16 +1404,17 @@ final class MetaViewController: UIViewController {
         CATransaction.commit()
         ringView.frame = box
         ringView.layer.borderColor = (warning != nil ? Self.alarm : Self.coral).cgColor
-        let hand = handLabel.bounds.size
-        let hx = min(box.maxX - hand.width * 0.7, box.minX + box.width * 0.85)
-        // La main pointe sous le bouton ; s'il est tout en bas de l'écran, elle passe au-dessus.
-        let below = box.maxY + hand.height + 8 < bounds.height
-        handLabel.center = CGPoint(x: max(hand.width / 2, min(bounds.width - hand.width / 2, hx)),
-                                   y: below ? box.maxY + hand.height / 2 - 2 : box.minY - hand.height / 2 + 2)
-        handLabel.transform = below ? .identity : CGAffineTransform(rotationAngle: .pi)
+        // Le zieuteur sort de derrière son mur, juste sous le bouton, et le montre du doigt.
+        // Bouton tout en bas de l'écran : il se met au-dessus et montre vers le bas.
+        let hand = pointer.bounds.size
+        let below = box.maxY + hand.height + 4 < bounds.height
+        if pointer.pointsUp != below { pointer.pointsUp = below; pointer.setNeedsDisplay() }
+        let hx = min(box.maxX - hand.width * 0.55, box.minX + box.width * 0.8)
+        pointer.frame.origin = CGPoint(x: max(0, min(bounds.width - hand.width, hx - hand.width / 2)),
+                                         y: below ? box.maxY - 4 : box.minY - hand.height + 4)
         dimLayer.isHidden = false
         ringView.isHidden = false
-        handLabel.isHidden = false
+        pointer.isHidden = false
     }
 
     // MARK: Alerte « nouvelle connexion » d'Instagram (FOU-118)
@@ -1423,7 +1440,7 @@ final class MetaViewController: UIViewController {
         face.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([face.widthAnchor.constraint(equalToConstant: 50), face.heightAnchor.constraint(equalToConstant: 50)])
         let title = UILabel()
-        title.text = "Instagram va peut-être t'alerter"
+        title.text = "Une alerte d'Instagram ? C'est normal"
         title.font = Self.rounded(21, .heavy)
         title.textColor = Self.ink
         title.numberOfLines = 0
@@ -1443,7 +1460,7 @@ final class MetaViewController: UIViewController {
         from.font = .systemFont(ofSize: 11, weight: .semibold)
         from.textColor = .systemGray
         let what = UILabel()
-        what.text = "Nouvelle connexion près de [une ville]…"
+        what.text = "Nouvelle connexion à ton compte…"
         what.font = .systemFont(ofSize: 15, weight: .medium)
         what.textColor = .black
         what.numberOfLines = 0
@@ -1492,7 +1509,7 @@ final class MetaViewController: UIViewController {
         ])
 
         let why = UILabel()
-        why.text = "C'est toi, ici dans Zieuton. La ville est souvent fausse : c'est ton réseau mobile."
+        why.text = "Tu viens de te connecter : Instagram vérifie juste que c'est toi, même si la ville n'est pas la bonne."
         why.font = Self.rounded(15, .regular)
         why.textColor = Self.ink.withAlphaComponent(0.75)
         why.numberOfLines = 0
@@ -2188,6 +2205,64 @@ final class MetaViewController: UIViewController {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+}
+
+/// FOU-118 : le petit zieuteur qui montre le bouton à toucher. Comme partout dans Zieuton, il est derrière un mur.
+final class PointingZieuteur: UIView {
+    /// Vrai : le bouton est au-dessus, il lève le bras. Faux : le bouton est en dessous, il montre vers le bas.
+    var pointsUp = true
+    private static let ink = UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1)
+    private static let cheek = UIColor(red: 0xf2 / 255, green: 0xb3 / 255, blue: 0xbc / 255, alpha: 1)
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isOpaque = false
+        backgroundColor = .clear
+        isUserInteractionEnabled = false
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOpacity = 0.25
+        layer.shadowRadius = 3
+        layer.shadowOffset = CGSize(width: 0, height: 1)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) non utilisé") }
+
+    override func draw(_ rect: CGRect) {
+        let w = bounds.width, h = bounds.height
+        let wallTop = h * 0.6
+        let cx = w * 0.42, r = w * 0.27
+        // Tête : seulement ce qui dépasse du mur.
+        UIColor.white.setFill()
+        UIBezierPath(arcCenter: CGPoint(x: cx, y: wallTop + 2), radius: r, startAngle: .pi, endAngle: 0, clockwise: true).fill()
+        Self.ink.setFill()
+        for dx in [-0.36, 0.36] {
+            UIBezierPath(ovalIn: CGRect(x: cx + r * dx - r * 0.13, y: wallTop - r * 0.62, width: r * 0.27, height: r * 0.33)).fill()
+        }
+        UIColor.white.setFill()
+        for dx in [-0.36, 0.36] {
+            UIBezierPath(ovalIn: CGRect(x: cx + r * dx, y: wallTop - r * 0.58, width: r * 0.1, height: r * 0.1)).fill()
+        }
+        Self.cheek.setFill()
+        for dx in [-0.68, 0.68] {
+            UIBezierPath(ovalIn: CGRect(x: cx + r * dx - r * 0.21, y: wallTop - r * 0.22, width: r * 0.42, height: r * 0.23)).fill()
+        }
+        // Le bras qui montre : vers le haut (bouton au-dessus) ou vers le bas, devant le mur.
+        let arm = UIBezierPath()
+        let from = CGPoint(x: cx + r * 0.75, y: wallTop + 1)
+        let tip = pointsUp ? CGPoint(x: w * 0.86, y: h * 0.1) : CGPoint(x: w * 0.86, y: h - 5)
+        arm.move(to: from)
+        arm.addLine(to: tip)
+        arm.lineWidth = w * 0.09
+        arm.lineCapStyle = .round
+        UIColor.white.setStroke()
+        // Le mur, devant la tête (le bras passe par-dessus quand il montre vers le haut).
+        Self.ink.setFill()
+        UIBezierPath(roundedRect: CGRect(x: 2, y: wallTop, width: w - 4, height: h - wallTop - 1), cornerRadius: 4).fill()
+        arm.stroke()
+        UIColor.white.setFill()
+        UIBezierPath(ovalIn: CGRect(x: tip.x - w * 0.075, y: tip.y - w * 0.075, width: w * 0.15, height: w * 0.15)).fill()
+        // Les mains posées sur le mur.
+        UIBezierPath(roundedRect: CGRect(x: cx - r * 1.1, y: wallTop - r * 0.23, width: r * 0.58, height: r * 0.46), cornerRadius: r * 0.23).fill()
     }
 }
 
