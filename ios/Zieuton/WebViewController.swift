@@ -1112,7 +1112,9 @@ final class MetaViewController: UIViewController {
                 : (txt.indexOf('sms') >= 0 || txt.indexOf('texto') >= 0 || txt.indexOf('text message') >= 0) ? 'sms'
                 : (txt.indexOf('e-mail') >= 0 || txt.indexOf('email') >= 0) ? 'email' : 'app';
             }
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, badpw: badpw, code: code, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            // Export encore « En attente » chez Instagram (FOU-115) : vu sur la page d'accueil de l'export.
+            var pending = !login && !code && /en attente|en préparation|pending|in progress|preparing/.test((document.body.innerText || '').toLowerCase());
+            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, badpw: badpw, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -1679,6 +1681,14 @@ final class MetaViewController: UIViewController {
         if state["start"] as? Bool == true { seenStart = now; sawStart = true }
         if state["create"] as? Bool == true { seenCreate = now }
         if !finished, let dl = state["dl"] as? Int { downloadsSeen = max(downloadsSeen, dl) }
+        // Ouvert pour récupérer le fichier (notification « sûrement prêt »), mais Instagram le prépare encore :
+        // au lieu de montrer un « Télécharger » absent, on guette ici et on repousse le rappel (FOU-115).
+        let watcher = ExportWatcher.shared
+        if !requesting, !guarding, !downloading, mainFrame, state["pending"] as? Bool == true, watcher.isWaiting,
+           (state["dl"] as? Int ?? 0) <= watcher.downloadsBefore {
+            watcher.stillPending()
+            startGuarding(before: watcher.downloadsBefore)
+        }
         // Un nouveau « Télécharger » est apparu pendant le guet : le fichier est prêt.
         if guarding, !guardReady, let dl = state["dl"] as? Int, dl > guardBefore { guardIsReady() }
         if mainFrame && !pageKnown {
@@ -2053,6 +2063,17 @@ final class ExportWatcher: NSObject {
         }
     }
 
+    /// Nombre de « Télécharger » vus dans Instagram au moment de la demande.
+    var downloadsBefore: Int { store.integer(forKey: Key.before) }
+
+    /// Instagram prend son temps (« En attente ») : on repousse le rappel au lieu d'annoncer un fichier pas encore là.
+    func stillPending() {
+        guard let r = requestedAt, store.object(forKey: Key.ready) == nil else { return }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Id.likely])
+        notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
+               subtitle: "Demandé à \(Self.hour(r))", after: 10 * 60)
+    }
+
     /// Le fichier a été téléchargé dans Zieuton : plus rien à guetter.
     func downloaded() { clear() }
 
@@ -2160,10 +2181,7 @@ final class ExportWatcher: NSObject {
             self.finishCheck = nil
             if outcome == .ready { self.markReady() }
             if outcome == .pending, let r = self.requestedAt, Date().timeIntervalSince(r) > Self.likelyAfter - 60 {
-                // Instagram prend son temps : on repousse le rappel au lieu d'annoncer un fichier pas encore là.
-                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Id.likely])
-                self.notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
-                            subtitle: "Demandé à \(Self.hour(r))", after: 10 * 60)
+                self.stillPending()
             }
             done(outcome == .ready)
         }
