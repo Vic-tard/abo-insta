@@ -1719,7 +1719,8 @@ final class MetaViewController: UIViewController {
         if up != upShown { upShown = up; showStep() }
         // L'alerte s'efface toute seule au bout de 10 s : le bandeau remontre l'étape à faire.
         if warning != nil, now.timeIntervalSince(warningAt) > 10 { warning = nil; showStep() }
-        guard requesting, !login else { return }
+        // Écran « code de sécurité » d'Instagram (après « Commencer l'exportation ») : rien n'est parti tant qu'il est là (FOU-115).
+        guard requesting, !login, code.isEmpty else { return }
         // Revenu sur la page d'accueil de l'export (« Créer une exportation » bien visible depuis un moment) :
         // le bandeau reprend à la première étape.
         if createVisible { if createSince == nil { createSince = now } } else { createSince = nil }
@@ -1741,8 +1742,11 @@ final class MetaViewController: UIViewController {
             // Retour sur « Créer une exportation » : c'est parti. Bouton disparu (Instagram tourne encore) : on attend un peu plus.
             let gone = now.timeIntervalSince(sent)
             // Jamais juste après un écran de mot de passe (l'œil peut cacher le champ à la détection).
-            let calm = now.timeIntervalSince(seenLogin) > 4
-            if (gone > 1.5 && createVisible) || (gone > 5 && calm && !startVisible && !webView.isLoading) { finishRequest() }
+            let calm = now.timeIntervalSince(seenLogin) > 4 && now.timeIntervalSince(seenCode) > 4
+            // Code de sécurité demandé après la touche : seul le retour sur « Créer une exportation » prouve qu'il était bon
+            // (code raté ou abandonné = le bouton a disparu aussi, mais rien n'est parti ; vu par Victor le 15 novembre).
+            let codeAsked = seenCode > sent
+            if (gone > 1.5 && createVisible) || (gone > 5 && calm && !codeAsked && !startVisible && !webView.isLoading) { finishRequest() }
             else if now.timeIntervalSince(sent) > 15 { showStep(animated: false) }
         } else if sawStart, index >= steps.count - 1, createVisible, !startVisible {
             finishRequest()
