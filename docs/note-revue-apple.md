@@ -1,7 +1,40 @@
 # Notes for the App Review team (Zieuton)
 
-> Pour Victor : ce texte est à coller dans App Store Connect → ta version → « Informations pour la vérification de l'app » → « Remarques ». Il est en anglais, pour le testeur d'Apple. Ajoute aussi les deux fichiers `exemple/zieuton-exemple-1.zip` et `-2.zip` en pièces jointes au même endroit (tickets FOU-32 et FOU-30).
+> Pour Victor : le champ « Remarques » d'App Store Connect (ta version → « Informations pour la vérification de l'app ») accepte 4 000 caractères au plus. Colle la **version courte** ci-dessous (environ 3 100 caractères). La version complète, plus bas, sert de référence ; tu peux aussi l'envoyer en pièce jointe avec les deux fichiers `exemple/zieuton-exemple-1.zip` et `-2.zip` (tickets FOU-32, FOU-30, FOU-111).
 
+## Version courte (à coller dans « Remarques »)
+
+```
+Zieuton shows a person who unfollowed their Instagram account and who started following it, only by comparing the official data export they request from Instagram themselves (JSON, "Followers and following"). No Zieuton server, no account, no sign-in, no analytics, no ads, no third-party SDK. Data stays on the device, plus an automatic backup in the user's own iCloud.
+
+HOW TO TEST WITHOUT INSTAGRAM
+A) Demo: tap "C'est parti", type any first name, tap "Continuer", then "Voir la démo". Every screen is filled with invented data. Leave with "Quitter la démo" at the top. Also in Settings (gear) > "Voir la démo".
+B) Real import with our sample exports (invented accounts, attached and online):
+https://zieuton.com/exemple/zieuton-exemple-1.zip then https://zieuton.com/exemple/zieuton-exemple-2.zip
+Download each in Safari, then in Files long-press it > Share > Zieuton. After the 2nd file: 4 unfollowers, 3 new followers.
+
+1. IN-APP WEB VIEW (5.2.2)
+To request the export, the app opens Meta's official page accountscenter.instagram.com in a WKWebView, address visible, with a guide banner telling which button to tap next. No Instagram API, no scraping, no automation: the user taps every button, including "Download". The app never asks for, reads or stores the password; the user logs in on Meta's own form. The banner only reads, on the device, visible titles and button labels and whether a login field is shown, never typed values. Nothing is sent anywhere.
+
+2. BACKGROUND CHECK
+While an export is pending, the app may load the same page in an invisible web view only to detect that the file is ready and send a local notification. It never taps anything there.
+
+3. BUNDLED HTML INTERFACE (2.5.2)
+Native Swift shell + an HTML page bundled in the binary; the app works fully offline with it. To fix bugs and texts, it can download a newer signed copy of the same page from https://zieuton.com/. Same features, no native code downloaded, and it can only use the fixed native bridge compiled in the binary (file import, notifications, iCloud backup, StoreKit, haptics, photo picker). Falls back to the bundled page on failure.
+
+4. DEVELOPER SETTING (2.3.1)
+In Settings, tapping the version number 5 times quickly switches this iPhone to a "test" update channel: it receives new versions of the same page a few days early so the developer can check them first. 5 more taps switch back. It unlocks nothing and changes no feature. You can ignore it.
+
+5. IN-APP PURCHASES (3.1.1)
+Zieuton Plus, StoreKit 2 only, no external link. Free: 2 first imports, then 1 update per month; Plus = unlimited updates. Products: fr.zyeuto.plus.mois / .an (auto-renewable) and .avie (non-consumable). Up to 3 Instagram accounts per device; accounts 2 and 3 have their own Plus (fr.zyeuto.plus2.*, fr.zyeuto.plus3.*). Settings > Zieuton Plus shows offers, terms and "Restaurer mes achats". For account 2: Settings > Mon compte > "Ajouter un compte".
+
+PRIVACY
+Data Not Collected. The optional "Envoyer un rapport" button only prepares an e-mail in Mail that the user reads first and chooses to send.
+
+Contact: victorfourneret@icloud.com
+```
+
+## Version complète
 ---
 
 Thank you for reviewing Zieuton. The app is in French; this note explains what it does and how to test it without an Instagram account.
