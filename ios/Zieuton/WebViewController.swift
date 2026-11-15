@@ -955,7 +955,7 @@ final class MetaViewController: UIViewController {
     private let spot = UIView()
     private let dimLayer = CAShapeLayer()
     private let ringView = UIView()
-    private let pointer = PointingZieuteur()
+    private let pointer = PointingArrow()
     private let moreLabel = UILabel()
     private var ringSentJSON = ""
     private var ringRect: CGRect?
@@ -1308,7 +1308,7 @@ final class MetaViewController: UIViewController {
         glow.autoreverses = true
         glow.repeatCount = .infinity
         ringView.layer.add(glow, forKey: "zyGlow")
-        pointer.frame = CGRect(x: 0, y: 0, width: 84, height: 78)
+        pointer.frame = CGRect(x: 0, y: 0, width: 40, height: 46)
         let bob = CABasicAnimation(keyPath: "transform.translation.y")
         bob.fromValue = 0
         bob.toValue = -7
@@ -1404,14 +1404,14 @@ final class MetaViewController: UIViewController {
         CATransaction.commit()
         ringView.frame = box
         ringView.layer.borderColor = (warning != nil ? Self.alarm : Self.coral).cgColor
-        // Le zieuteur sort de derrière son mur, juste sous le bouton, et le montre du doigt.
-        // Bouton tout en bas de l'écran : il se met au-dessus et montre vers le bas.
+        // La flèche est juste sous le bouton et pointe vers lui.
+        // Bouton tout en bas de l'écran : elle se met au-dessus et pointe vers le bas.
         let hand = pointer.bounds.size
         let below = box.maxY + hand.height + 4 < bounds.height
         if pointer.pointsUp != below { pointer.pointsUp = below; pointer.setNeedsDisplay() }
-        let hx = min(box.maxX - hand.width * 0.55, box.minX + box.width * 0.8)
+        let hx = box.midX
         pointer.frame.origin = CGPoint(x: max(0, min(bounds.width - hand.width, hx - hand.width / 2)),
-                                         y: below ? box.maxY - 4 : box.minY - hand.height + 4)
+                                         y: below ? box.maxY + 4 : box.minY - hand.height - 4)
         dimLayer.isHidden = false
         ringView.isHidden = false
         pointer.isHidden = false
@@ -2208,12 +2208,10 @@ final class MetaViewController: UIViewController {
     }
 }
 
-/// FOU-118 : le petit zieuteur qui montre le bouton à toucher. Comme partout dans Zieuton, il est derrière un mur.
-final class PointingZieuteur: UIView {
-    /// Vrai : le bouton est au-dessus, il lève le bras. Faux : le bouton est en dessous, il montre vers le bas.
+/// FOU-118 : la flèche corail qui montre le bouton à toucher (vers le haut si le bouton est au-dessus, vers le bas sinon).
+final class PointingArrow: UIView {
     var pointsUp = true
-    private static let ink = UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1)
-    private static let cheek = UIColor(red: 0xf2 / 255, green: 0xb3 / 255, blue: 0xbc / 255, alpha: 1)
+    private static let coral = UIColor(red: 0xef / 255, green: 0x7f / 255, blue: 0x6a / 255, alpha: 1)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -2229,40 +2227,24 @@ final class PointingZieuteur: UIView {
 
     override func draw(_ rect: CGRect) {
         let w = bounds.width, h = bounds.height
-        let wallTop = h * 0.6
-        let cx = w * 0.42, r = w * 0.27
-        // Tête : seulement ce qui dépasse du mur.
-        UIColor.white.setFill()
-        UIBezierPath(arcCenter: CGPoint(x: cx, y: wallTop + 2), radius: r, startAngle: .pi, endAngle: 0, clockwise: true).fill()
-        Self.ink.setFill()
-        for dx in [-0.36, 0.36] {
-            UIBezierPath(ovalIn: CGRect(x: cx + r * dx - r * 0.13, y: wallTop - r * 0.62, width: r * 0.27, height: r * 0.33)).fill()
-        }
-        UIColor.white.setFill()
-        for dx in [-0.36, 0.36] {
-            UIBezierPath(ovalIn: CGRect(x: cx + r * dx, y: wallTop - r * 0.58, width: r * 0.1, height: r * 0.1)).fill()
-        }
-        Self.cheek.setFill()
-        for dx in [-0.68, 0.68] {
-            UIBezierPath(ovalIn: CGRect(x: cx + r * dx - r * 0.21, y: wallTop - r * 0.22, width: r * 0.42, height: r * 0.23)).fill()
-        }
-        // Le bras qui montre : vers le haut (bouton au-dessus) ou vers le bas, devant le mur.
-        let arm = UIBezierPath()
-        let from = CGPoint(x: cx + r * 0.75, y: wallTop + 1)
-        let tip = pointsUp ? CGPoint(x: w * 0.86, y: h * 0.1) : CGPoint(x: w * 0.86, y: h - 5)
-        arm.move(to: from)
-        arm.addLine(to: tip)
-        arm.lineWidth = w * 0.09
-        arm.lineCapStyle = .round
+        // Flèche pleine, bord blanc : lisible sur une page claire ou assombrie.
+        let head = h * 0.48, shaft = w * 0.36
+        let p = UIBezierPath()
+        p.move(to: CGPoint(x: w / 2, y: 3))
+        p.addLine(to: CGPoint(x: w - 3, y: head))
+        p.addLine(to: CGPoint(x: (w + shaft) / 2, y: head))
+        p.addLine(to: CGPoint(x: (w + shaft) / 2, y: h - 3))
+        p.addLine(to: CGPoint(x: (w - shaft) / 2, y: h - 3))
+        p.addLine(to: CGPoint(x: (w - shaft) / 2, y: head))
+        p.addLine(to: CGPoint(x: 3, y: head))
+        p.close()
+        p.lineJoinStyle = .round
+        if !pointsUp { p.apply(CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: h)) }
+        Self.coral.setFill()
+        p.fill()
         UIColor.white.setStroke()
-        // Le mur, devant la tête (le bras passe par-dessus quand il montre vers le haut).
-        Self.ink.setFill()
-        UIBezierPath(roundedRect: CGRect(x: 2, y: wallTop, width: w - 4, height: h - wallTop - 1), cornerRadius: 4).fill()
-        arm.stroke()
-        UIColor.white.setFill()
-        UIBezierPath(ovalIn: CGRect(x: tip.x - w * 0.075, y: tip.y - w * 0.075, width: w * 0.15, height: w * 0.15)).fill()
-        // Les mains posées sur le mur.
-        UIBezierPath(roundedRect: CGRect(x: cx - r * 1.1, y: wallTop - r * 0.23, width: r * 0.58, height: r * 0.46), cornerRadius: r * 0.23).fill()
+        p.lineWidth = 2.5
+        p.stroke()
     }
 }
 
