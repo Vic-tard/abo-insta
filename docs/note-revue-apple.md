@@ -48,7 +48,7 @@ To fix bugs and adjust texts quickly, the app can download a newer copy of **the
 
 ## 3. How to test without an Instagram account
 
-**Option A: demo mode (fastest).** On the first screen tap **"C'est parti"**, then **"Voir la démo"**. The whole app is filled with invented followers (all names end with "demo"): home, lists, charts, games. Leave it with **"Quitter la démo"** in the top banner. Demo mode is also in Settings (gear icon, top right) → **"Voir la démo"**. Nothing is saved during the demo.
+**Option A: demo mode (fastest).** On the first screen tap **"C'est parti"**, type any first name, tap **"Continuer"**, then tap **"Voir la démo"** at the bottom. The whole app is filled with invented followers (all names end with "demo"): home, lists, charts, games. Leave it with **"Quitter la démo"** in the top banner. Demo mode is also in Settings (gear icon, top right) → **"Voir la démo"**. Nothing is saved during the demo.
 
 **Option B: real import with our sample exports.** Two sample Instagram exports (invented accounts, all ending in ".sample") are attached to this submission and also available here:
 
@@ -75,7 +75,13 @@ Zieuton Plus is sold only through Apple in-app purchases (StoreKit 2). There is 
 
 Where to find them: Settings (gear icon) → **Zieuton Plus** shows the offers, prices from the App Store, the renewal terms, and **"Restaurer mes achats"** (Restore Purchases). To see the offers for accounts 2 and 3: Settings → Mon compte → **"Ajouter un compte"**, type two first names, then try to import for that new account: the app asks for its own Plus first.
 
-## 5. Privacy
+## 5. Developer setting: update channel (Guideline 2.3.1)
+
+To be transparent about everything in the app: in Settings, **tapping the version number 5 times quickly** switches this iPhone to a "test" update channel. On that channel the device receives new versions of the same bundled page (see section 2) a few days before other users, so the developer can check them on his own iPhone first. Tapping 5 more times switches back. The version line then shows "canal test".
+
+It changes no feature, unlocks nothing (no free purchase, no hidden content) and does not change which native capabilities the page can reach. It is only meant for the developer; you can ignore it.
+
+## 6. Privacy
 
 The app collects no data (App Privacy: "Data Not Collected"). In Settings → Aide et confidentialité, an optional **"Envoyer un rapport"** button prepares an e-mail in the user's Mail app with the app version, iOS version and a list of technical errors (no Instagram usernames, no export content). The user sees the full text first and decides whether to send it.
 
