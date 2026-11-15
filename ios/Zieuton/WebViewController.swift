@@ -950,14 +950,31 @@ final class MetaViewController: UIViewController {
     private var downloads: [ObjectIdentifier: URL] = [:]
     private var loadingObservation: NSKeyValueObservation?
     private var watchTimer: Timer?
+    /// FOU-118 : le bouton à toucher est entouré en corail sur un calque de Zieuton posé AU-DESSUS de la page.
+    /// La page d'Instagram n'est jamais modifiée : elle dit seulement où est le bouton (comme elle dit déjà quel écran est affiché).
+    private let spot = UIView()
+    private let dimLayer = CAShapeLayer()
+    private let ringView = UIView()
+    private let pointer = PointingArrow()
+    private let moreLabel = UILabel()
+    private var ringSentJSON = ""
+    private var ringRect: CGRect?
+    /// 0 : bouton à l'écran ; 1 : plus bas ; -1 : plus haut.
+    private var ringAt = 0
+    /// FOU-118 : après la connexion, Zieuton prévient lui-même de l'alerte « nouvelle connexion » d'Instagram.
+    private var sawLogin = false
+    private var loginAlertShown = false
+    private var loginAlert: [UIView] = []
 
     // Couleurs Zieuton, les mêmes en clair et en sombre (le bandeau reprend la carte « Mettre à jour »).
     private static let ink = UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1)
     private static let coral = UIColor(red: 0xef / 255, green: 0x7f / 255, blue: 0x6a / 255, alpha: 1)
-    private static let peachTop = UIColor(red: 0xff / 255, green: 0xe9 / 255, blue: 0xcf / 255, alpha: 1)
-    private static let peachBottom = UIColor(red: 0xfb / 255, green: 0xc4 / 255, blue: 0x93 / 255, alpha: 1)
-    private static let warnTop = UIColor(red: 0xff / 255, green: 0xdd / 255, blue: 0xd6 / 255, alpha: 1)
-    private static let warnBottom = UIColor(red: 0xf7 / 255, green: 0xa4 / 255, blue: 0x94 / 255, alpha: 1)
+    // FOU-118 : bandeau rose poudré, bien distinct de la page blanche d'Instagram ; alerte en corail vif, texte blanc.
+    private static let peachTop = UIColor(red: 0xf9 / 255, green: 0xdf / 255, blue: 0xe3 / 255, alpha: 1)
+    private static let peachBottom = UIColor(red: 0xee / 255, green: 0xb0 / 255, blue: 0xb9 / 255, alpha: 1)
+    private static let warnTop = UIColor(red: 0xf7 / 255, green: 0x95 / 255, blue: 0x83 / 255, alpha: 1)
+    private static let warnBottom = UIColor(red: 0xe6 / 255, green: 0x5c / 255, blue: 0x4b / 255, alpha: 1)
+    private static let sheetBg = UIColor(red: 0xff / 255, green: 0xf7 / 255, blue: 0xf8 / 255, alpha: 1)
     private static let alarm = UIColor(red: 0xd9 / 255, green: 0x3f / 255, blue: 0x2e / 255, alpha: 1)
     private static let metaBlue = UIColor(red: 0x00 / 255, green: 0x64 / 255, blue: 0xe0 / 255, alpha: 1)
 
@@ -1096,6 +1113,58 @@ final class MetaViewController: UIViewController {
             if (seeAny(['vos informations et autorisations', 'your information and permissions']) && seeAny(['exporter vos informations', 'export your information'])) return 'up';
             return '';
           };
+          // FOU-118 : où est le bouton à toucher ? On renvoie seulement sa position ; Zieuton dessine le cercle
+          // sur son propre calque, au-dessus de la page (rien n'est ajouté ni changé dans la page d'Instagram).
+          var RING = [];
+          // Lecture stricte : on n'entoure que s'il y a UN SEUL bouton visible avec exactement ce nom.
+          // Deux boutons possibles, ou un bouton à moitié caché : rien n'est entouré (mieux vaut rien qu'un mauvais endroit).
+          var ringRect = function () {
+            if (!RING.length || window.top !== window) return null;
+            var els = document.querySelectorAll('button,a,label,span,div,[role=button],[role=radio],[role=checkbox],[role=link]');
+            var hits = [], far = [];
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (el.childElementCount > 3) continue;
+              var t = low(el);
+              if (t.length > 60 || RING.indexOf(t) < 0) continue;
+              var box = el.closest('button,a,label,[role=button],[role=radio],[role=checkbox],[role=link]') || el;
+              var r = box.getBoundingClientRect();
+              if (r.width <= 0 || r.height <= 0) continue;
+              if (vis(el)) { if (hits.indexOf(box) < 0) hits.push(box); }
+              else if ((r.top >= innerHeight || r.bottom <= 0) && far.indexOf(box) < 0) far.push(box);
+            }
+            // Un libellé et son bloc parent qui portent le même nom : c'est le même bouton, on garde le plus petit.
+            var inner = function (list) { return list.filter(function (b) { return !list.some(function (o) { return o !== b && b.contains(o); }); }); };
+            hits = inner(hits); far = inner(far);
+            var pack = function (b, at) {
+              var r = b.getBoundingClientRect();
+              if (r.height < 14 || r.height > 140 || r.width > innerWidth + 4) return null;
+              return { x: r.left, y: r.top, w: r.width, h: r.height, at: at };
+            };
+            if (hits.length === 1) return pack(hits[0], 0);
+            if (hits.length > 1) return null;
+            if (far.length === 1) return pack(far[0], far[0].getBoundingClientRect().top >= innerHeight ? 1 : -1);
+            return null;
+          };
+          var ringSent = '';
+          var sendRing = function () {
+            if (window.top !== window) return;
+            var r = ringRect();
+            var s = r ? [Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h), r.at].join(',') : '';
+            if (s === ringSent) return;
+            ringSent = s;
+            window.webkit.messageHandlers.zyeutoRing.postMessage(s);
+          };
+          window.__zyRing = function (names) { RING = names || []; ringSent = '?'; sendRing(); };
+          var ringQueued = false;
+          var ringSoon = function () {
+            if (ringQueued) return;
+            ringQueued = true;
+            requestAnimationFrame(function () { ringQueued = false; sendRing(); });
+          };
+          addEventListener('scroll', ringSoon, true);
+          addEventListener('resize', ringSoon);
+          setInterval(sendRing, 300);
           setInterval(function () {
             // Champ du mot de passe, même quand l'œil l'affiche en clair (il n'est plus de type « password »).
             var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username],input[autocomplete=current-password],input[name*=pass i],input[aria-label*="mot de passe" i],input[aria-label*=password i]'), vis);
@@ -1165,6 +1234,7 @@ final class MetaViewController: UIViewController {
         // Ouvert pour récupérer le fichier : c'est toi qui touches « Télécharger » (Zieuton ne touche jamais rien sur Instagram).
         content.add(WeakHandler(self), name: "zyeutoTap")
         content.add(WeakHandler(self), name: "zyeutoState")
+        content.add(WeakHandler(self), name: "zyeutoRing")
         config.userContentController = content
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
@@ -1174,10 +1244,12 @@ final class MetaViewController: UIViewController {
             let busy = web.isLoading
             DispatchQueue.main.async {
                 if busy { self?.loading.startAnimating() } else { self?.loading.stopAnimating() }
+                self?.drawRing()
             }
         }
 
-        for v in [top, webView as UIView, banner] { v.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(v) }
+        for v in [top, webView as UIView, spot, banner] { v.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(v) }
+        buildSpot()
         let g = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate([
             top.topAnchor.constraint(equalTo: g.topAnchor),
@@ -1197,6 +1269,10 @@ final class MetaViewController: UIViewController {
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            spot.topAnchor.constraint(equalTo: webView.topAnchor),
+            spot.leadingAnchor.constraint(equalTo: webView.leadingAnchor),
+            spot.trailingAnchor.constraint(equalTo: webView.trailingAnchor),
+            spot.bottomAnchor.constraint(equalTo: webView.bottomAnchor),
         ])
         showStep(animated: false)
         webView.load(URLRequest(url: url))
@@ -1207,6 +1283,301 @@ final class MetaViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         gradient.frame = banner.bounds
+        drawRing()
+    }
+
+    // MARK: Cercle autour du bouton (FOU-118)
+
+    /// Le calque ne capte aucune touche : on touche toujours le vrai bouton d'Instagram, à travers.
+    private func buildSpot() {
+        spot.isUserInteractionEnabled = false
+        spot.clipsToBounds = true
+        dimLayer.fillRule = .evenOdd
+        dimLayer.fillColor = UIColor.black.withAlphaComponent(0.2).cgColor
+        spot.layer.addSublayer(dimLayer)
+        ringView.layer.borderWidth = 3.5
+        ringView.layer.borderColor = Self.coral.cgColor
+        ringView.layer.cornerRadius = 12
+        ringView.layer.cornerCurve = .continuous
+        ringView.layer.shadowColor = Self.coral.cgColor
+        ringView.layer.shadowOffset = .zero
+        ringView.layer.shadowRadius = 10
+        ringView.layer.shadowOpacity = 0.5
+        let glow = CABasicAnimation(keyPath: "shadowOpacity")
+        glow.fromValue = 0.25
+        glow.toValue = 1
+        glow.duration = 0.7
+        glow.autoreverses = true
+        glow.repeatCount = .infinity
+        ringView.layer.add(glow, forKey: "zyGlow")
+        pointer.frame = CGRect(x: 0, y: 0, width: 40, height: 46)
+        let bob = CABasicAnimation(keyPath: "transform.translation.y")
+        bob.fromValue = 0
+        bob.toValue = -7
+        bob.duration = 0.5
+        bob.autoreverses = true
+        bob.repeatCount = .infinity
+        pointer.layer.add(bob, forKey: "zyBob")
+        moreLabel.font = Self.rounded(15, .bold)
+        moreLabel.textColor = .white
+        moreLabel.backgroundColor = Self.coral
+        moreLabel.textAlignment = .center
+        moreLabel.layer.cornerRadius = 17
+        moreLabel.clipsToBounds = true
+        for v in [ringView, pointer, moreLabel] { spot.addSubview(v) }
+        hideRing()
+    }
+
+    private func hideRing() {
+        dimLayer.isHidden = true
+        ringView.isHidden = true
+        pointer.isHidden = true
+        moreLabel.isHidden = true
+    }
+
+    /// Les noms possibles du bouton à toucher maintenant (vide : rien à entourer).
+    private func ringNames() -> [String] {
+        guard pageKnown, !downloading, codeShown.isEmpty, !loginShown, sentAt == nil, !lostShown, !finished || guarding else { return [] }
+        if guarding { return guardReady ? ["Télécharger", "Download"] : [] }
+        // Lecture sûre seulement : l'écran d'Instagram reconnu est bien celui de l'étape, depuis un moment, sans touche récente
+        // ni page qui charge. Au moindre doute, pas de cercle : le bandeau suffit.
+        let now = Date()
+        guard now.timeIntervalSince(seenScreen) < 1.6, now.timeIntervalSince(screenSince) > 0.8,
+              now.timeIntervalSince(lastTapAt) > 0.8 else { return [] }
+        if upShown { return screenKey == "up" ? ["Exporter vos informations", "Export your information"] : [] }
+        let base = steps[index]
+        guard !base.screen.isEmpty, screenKey == base.screen else { return [] }
+        // Page des cases : le bandeau dit quoi toucher (« Followers et suivi(e)s », « Tout effacer », « Enregistrer »…).
+        if base.screen == "pick", pickFresh, warning == nil { return [currentStep.target] }
+        // Choix à faire (« Depuis le début », « JSON ») : on entoure l'option, puis « Enregistrer » une fois choisie.
+        if base.pick { return pickedAt == index ? base.wait : (base.ok ?? []) }
+        return [base.target] + base.wait
+    }
+
+    /// Dit à la page quels noms de bouton chercher (seulement quand ça change).
+    private func sendRingNames() {
+        guard webView != nil else { return }
+        let list = ringNames().map { $0.replacingOccurrences(of: "’", with: "'").lowercased() }
+        let json = (try? JSONSerialization.data(withJSONObject: list)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
+        if json != ringSentJSON {
+            ringSentJSON = json
+            if list.isEmpty { ringRect = nil }
+            webView.evaluateJavaScript("window.__zyRing && window.__zyRing(\(json)); true", completionHandler: nil)
+        }
+        drawRing()
+    }
+
+    /// La page dit où est le bouton : « x,y,largeur,hauteur,où » (où : 0 à l'écran, 1 plus bas, -1 plus haut), ou rien.
+    private func ringMoved(_ s: String) {
+        let n = s.split(separator: ",").compactMap { Double($0) }
+        if n.count == 5 {
+            ringRect = CGRect(x: n[0], y: n[1], width: n[2], height: n[3])
+            ringAt = Int(n[4])
+        } else {
+            ringRect = nil
+            ringAt = 0
+        }
+        drawRing()
+    }
+
+    private func drawRing() {
+        guard webView != nil, loginAlert.isEmpty, !webView.isLoading, !ringNames().isEmpty, let r = ringRect else { hideRing(); return }
+        let bounds = spot.bounds
+        if ringAt != 0 {
+            // Bouton hors de l'écran : une pastille dit dans quel sens faire défiler.
+            dimLayer.isHidden = true
+            ringView.isHidden = true
+            pointer.isHidden = true
+            moreLabel.text = ringAt > 0 ? "↓  Plus bas : fais défiler" : "↑  Plus haut : remonte"
+            let w = moreLabel.intrinsicContentSize.width + 32
+            let y = ringAt > 0 ? bounds.height - view.safeAreaInsets.bottom - 50 : 12
+            moreLabel.frame = CGRect(x: (bounds.width - w) / 2, y: y, width: w, height: 34)
+            moreLabel.isHidden = false
+            return
+        }
+        moreLabel.isHidden = true
+        let box = r.insetBy(dx: -5, dy: -5)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        let path = UIBezierPath(rect: bounds)
+        path.append(UIBezierPath(roundedRect: box, cornerRadius: 12))
+        dimLayer.frame = bounds
+        dimLayer.path = path.cgPath
+        CATransaction.commit()
+        ringView.frame = box
+        ringView.layer.borderColor = (warning != nil ? Self.alarm : Self.coral).cgColor
+        // La flèche est juste sous le bouton et pointe vers lui.
+        // Bouton tout en bas de l'écran : elle se met au-dessus et pointe vers le bas.
+        let hand = pointer.bounds.size
+        let below = box.maxY + hand.height + 4 < bounds.height
+        if pointer.pointsUp != below { pointer.pointsUp = below; pointer.setNeedsDisplay() }
+        let hx = box.midX
+        pointer.frame.origin = CGPoint(x: max(0, min(bounds.width - hand.width, hx - hand.width / 2)),
+                                         y: below ? box.maxY + 4 : box.minY - hand.height - 4)
+        dimLayer.isHidden = false
+        ringView.isHidden = false
+        pointer.isHidden = false
+    }
+
+    // MARK: Alerte « nouvelle connexion » d'Instagram (FOU-118)
+
+    /// Juste après la connexion, Zieuton prévient avant Instagram : l'alerte « nouvelle connexion près de… » c'est toi.
+    private func showLoginAlert() {
+        let veil = UIView()
+        veil.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        veil.alpha = 0
+        let card = UIView()
+        card.backgroundColor = Self.sheetBg
+        card.layer.cornerRadius = 28
+        card.layer.cornerCurve = .continuous
+        card.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        card.layer.shadowColor = UIColor.black.cgColor
+        card.layer.shadowOpacity = 0.2
+        card.layer.shadowRadius = 16
+
+        let face = UIImageView(image: avatar.image)
+        face.layer.cornerRadius = 13
+        face.layer.cornerCurve = .continuous
+        face.clipsToBounds = true
+        face.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([face.widthAnchor.constraint(equalToConstant: 50), face.heightAnchor.constraint(equalToConstant: 50)])
+        let title = UILabel()
+        title.text = "Une alerte d'Instagram ? C'est normal"
+        title.font = Self.rounded(21, .heavy)
+        title.textColor = Self.ink
+        title.numberOfLines = 0
+        let head = UIStackView(arrangedSubviews: [face, title])
+        head.spacing = 12
+        head.alignment = .center
+
+        // Exemple de l'alerte, pour la reconnaître (sans logo d'Instagram).
+        let sample = UIView()
+        sample.backgroundColor = .white
+        sample.layer.cornerRadius = 14
+        sample.layer.cornerCurve = .continuous
+        sample.layer.borderWidth = 1
+        sample.layer.borderColor = UIColor.black.withAlphaComponent(0.08).cgColor
+        let from = UILabel()
+        from.text = "INSTAGRAM"
+        from.font = .systemFont(ofSize: 11, weight: .semibold)
+        from.textColor = .systemGray
+        let what = UILabel()
+        what.text = "Nouvelle connexion à ton compte…"
+        what.font = .systemFont(ofSize: 15, weight: .medium)
+        what.textColor = .black
+        what.numberOfLines = 0
+        let pill: (String, UIColor, UIColor, Bool) -> UIView = { text, bg, fg, ringed in
+            let l = UILabel()
+            l.text = text
+            l.font = .systemFont(ofSize: 13, weight: .semibold)
+            l.textColor = fg
+            l.textAlignment = .center
+            l.backgroundColor = bg
+            l.layer.cornerRadius = 8
+            l.clipsToBounds = true
+            l.translatesAutoresizingMaskIntoConstraints = false
+            let w = l.intrinsicContentSize.width + 20
+            let wrap = UIView()
+            wrap.addSubview(l)
+            if ringed {
+                wrap.layer.borderWidth = 3
+                wrap.layer.borderColor = Self.coral.cgColor
+                wrap.layer.cornerRadius = 11
+            }
+            NSLayoutConstraint.activate([
+                l.topAnchor.constraint(equalTo: wrap.topAnchor, constant: 3),
+                l.bottomAnchor.constraint(equalTo: wrap.bottomAnchor, constant: -3),
+                l.leadingAnchor.constraint(equalTo: wrap.leadingAnchor, constant: 3),
+                l.trailingAnchor.constraint(equalTo: wrap.trailingAnchor, constant: -3),
+                l.widthAnchor.constraint(equalToConstant: w),
+                l.heightAnchor.constraint(equalToConstant: 28),
+            ])
+            return wrap
+        }
+        let pills = UIStackView(arrangedSubviews: [pill("C'était moi", Self.metaBlue, .white, true),
+                                                   pill("Ce n'était pas moi", UIColor(white: 0.93, alpha: 1), .darkGray, false), UIView()])
+        pills.spacing = 6
+        pills.alignment = .center
+        let inner = UIStackView(arrangedSubviews: [from, what, pills])
+        inner.axis = .vertical
+        inner.spacing = 6
+        inner.translatesAutoresizingMaskIntoConstraints = false
+        sample.addSubview(inner)
+        NSLayoutConstraint.activate([
+            inner.topAnchor.constraint(equalTo: sample.topAnchor, constant: 12),
+            inner.bottomAnchor.constraint(equalTo: sample.bottomAnchor, constant: -12),
+            inner.leadingAnchor.constraint(equalTo: sample.leadingAnchor, constant: 12),
+            inner.trailingAnchor.constraint(equalTo: sample.trailingAnchor, constant: -12),
+        ])
+
+        let why = UILabel()
+        why.text = "Tu viens de te connecter : Instagram vérifie juste que c'est toi, même si la ville n'est pas la bonne."
+        why.font = Self.rounded(15, .regular)
+        why.textColor = Self.ink.withAlphaComponent(0.75)
+        why.numberOfLines = 0
+        let doIt = UILabel()
+        doIt.text = "Réponds « C'était moi » 👍"
+        doIt.font = Self.rounded(19, .heavy)
+        doIt.textColor = Self.ink
+        doIt.numberOfLines = 0
+        var okConfig = UIButton.Configuration.filled()
+        okConfig.title = "J'ai compris"
+        okConfig.baseBackgroundColor = Self.ink
+        okConfig.baseForegroundColor = .white
+        okConfig.cornerStyle = .large
+        okConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
+            var a = a; a.font = MetaViewController.rounded(17, .bold); return a
+        }
+        let ok = UIButton(configuration: okConfig, primaryAction: UIAction { [weak self] _ in self?.closeLoginAlert() })
+        ok.translatesAutoresizingMaskIntoConstraints = false
+        ok.heightAnchor.constraint(equalToConstant: 52).isActive = true
+
+        let all = UIStackView(arrangedSubviews: [head, sample, why, doIt, ok])
+        all.axis = .vertical
+        all.spacing = 14
+        all.setCustomSpacing(4, after: why)
+        all.setCustomSpacing(18, after: doIt)
+        all.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(all)
+        for v in [veil, card] { v.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(v) }
+        NSLayoutConstraint.activate([
+            veil.topAnchor.constraint(equalTo: view.topAnchor),
+            veil.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            veil.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            veil.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            card.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            card.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            all.topAnchor.constraint(equalTo: card.topAnchor, constant: 22),
+            all.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            all.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
+            all.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+        ])
+        veil.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(loginAlertTapped)))
+        loginAlert = [veil, card]
+        hideRing()
+        view.layoutIfNeeded()
+        card.transform = CGAffineTransform(translationX: 0, y: card.bounds.height + 40)
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0.4, options: []) {
+            veil.alpha = 1
+            card.transform = .identity
+        }
+        UIAccessibility.post(notification: .screenChanged, argument: title)
+    }
+
+    @objc private func loginAlertTapped() { closeLoginAlert() }
+
+    private func closeLoginAlert() {
+        let views = loginAlert
+        guard views.count == 2 else { return }
+        loginAlert = []
+        UISelectionFeedbackGenerator().selectionChanged()
+        UIView.animate(withDuration: 0.25, animations: {
+            views[0].alpha = 0
+            views[1].transform = CGAffineTransform(translationX: 0, y: views[1].bounds.height + 40)
+        }, completion: { _ in views.forEach { $0.removeFromSuperview() } })
+        drawRing()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -1215,6 +1586,7 @@ final class MetaViewController: UIViewController {
         guardTimer?.invalidate()
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoTap")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoState")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoRing")
     }
 
     // MARK: Bandeau (compact : la page d'Instagram garde la place)
@@ -1234,17 +1606,17 @@ final class MetaViewController: UIViewController {
         banner.layer.insertSublayer(gradient, at: 0)
 
         avatar.image = Data(base64Encoded: WebViewController.logoPNG).flatMap { UIImage(data: $0, scale: 3) }
-        avatar.layer.cornerRadius = 10
+        avatar.layer.cornerRadius = 12
         avatar.layer.cornerCurve = .continuous
         avatar.clipsToBounds = true
         avatar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 34), avatar.heightAnchor.constraint(equalToConstant: 34)])
+        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 42), avatar.heightAnchor.constraint(equalToConstant: 42)])
 
         sayLabel.numberOfLines = 2
         sayLabel.adjustsFontSizeToFitWidth = true
         sayLabel.minimumScaleFactor = 0.8
-        tipLabel.font = Self.rounded(13, .regular)
-        tipLabel.textColor = Self.ink.withAlphaComponent(0.75)
+        tipLabel.font = Self.rounded(13.5, .medium)
+        tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
         tipLabel.numberOfLines = 2
 
         // Précédent / Suivant en petites pastilles : le bandeau avance tout seul, elles servent seulement en secours.
@@ -1480,22 +1852,24 @@ final class MetaViewController: UIViewController {
         guard key != shownKey else { return }
         shownKey = key
         let apply = {
+            // Alerte : le bandeau passe au corail vif, texte blanc, et garde le bouton à chercher bien visible.
+            let warn = self.warning != nil && normal
+            let fg: UIColor = warn ? .white : Self.ink
             let say = NSMutableAttributedString()
             if !step.verb.isEmpty {
-                say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(15, .medium), .foregroundColor: Self.ink.withAlphaComponent(0.7)]))
+                say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(15, .medium), .foregroundColor: fg.withAlphaComponent(0.75)]))
             }
-            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink]))
+            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(20, .heavy), .foregroundColor: fg]))
             if !step.after.isEmpty {
-                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(15, .semibold), .foregroundColor: Self.ink]))
+                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(15, .semibold), .foregroundColor: fg]))
             }
             self.sayLabel.attributedText = say
-            // Alerte : le bandeau passe au rouge doux, et garde le bouton à chercher bien visible.
-            let warn = self.warning != nil && normal
+            self.tipLabel.textColor = warn ? .white : Self.ink.withAlphaComponent(0.8)
             CATransaction.begin()
             CATransaction.setAnimationDuration(animated ? 0.25 : 0)
             self.gradient.colors = warn ? [Self.warnTop.cgColor, Self.warnBottom.cgColor] : [Self.peachTop.cgColor, Self.peachBottom.cgColor]
             CATransaction.commit()
-            self.replicaBox.layer.borderColor = (warn ? Self.alarm : Self.coral).cgColor
+            self.replicaBox.layer.borderColor = (warn ? UIColor.white : Self.coral).cgColor
             self.tipLabel.text = step.tip
             self.tipLabel.isHidden = step.tip.isEmpty
             self.replicaBox.isHidden = step.look.isEmpty || !normal
@@ -1526,6 +1900,7 @@ final class MetaViewController: UIViewController {
             banner.layer.add(shake, forKey: "zyShake")
         }
         progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
+        sendRingNames()
         if animated {
             UIView.animate(withDuration: 0.25, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
                 self.view.layoutIfNeeded()
@@ -1649,6 +2024,7 @@ final class MetaViewController: UIViewController {
         warning = Warning(title: title, text: text)
         warningAt = Date()
         UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { UIImpactFeedbackGenerator(style: .heavy).impactOccurred() }
         shownKey = "" // redessine même si c'était déjà la même alerte (on secoue encore)
         showStep()
     }
@@ -1700,6 +2076,7 @@ final class MetaViewController: UIViewController {
 
     /// Fait le point : écran de connexion ? demande bien partie ?
     private func watch() {
+        defer { sendRingNames() }
         guard pageKnown, !downloading, !finished else { return }
         let now = Date()
         let onLoginURL = (webView.url?.absoluteString.lowercased() ?? "").contains("login")
@@ -1709,6 +2086,13 @@ final class MetaViewController: UIViewController {
         if login != loginShown { loginShown = login; showStep() }
         let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
         if code != codeShown { codeShown = code; warning = nil; showStep() }
+        // Connexion finie (mot de passe, puis code s'il y en a un) : Zieuton prévient de l'alerte d'Instagram avant qu'elle arrive.
+        if login { sawLogin = true }
+        if sawLogin, !loginAlertShown, !login, code.isEmpty, !webView.isLoading,
+           now.timeIntervalSince(seenLogin) > 1.5, now.timeIntervalSince(seenCode) > 1.5 {
+            loginAlertShown = true
+            showLoginAlert()
+        }
         // Perdu ? Aucun écran du parcours reconnu depuis 2 s, et l'adresse n'est plus celle de l'export (ou rien de reconnu depuis 6 s).
         let urlNow = webView.url?.absoluteString.lowercased() ?? ""
         let offPath = !urlNow.isEmpty && !urlNow.contains("/dyi") && !onLoginURL
@@ -1838,12 +2222,54 @@ final class MetaViewController: UIViewController {
     }
 }
 
+/// FOU-118 : la flèche corail qui montre le bouton à toucher (vers le haut si le bouton est au-dessus, vers le bas sinon).
+final class PointingArrow: UIView {
+    var pointsUp = true
+    private static let coral = UIColor(red: 0xef / 255, green: 0x7f / 255, blue: 0x6a / 255, alpha: 1)
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isOpaque = false
+        backgroundColor = .clear
+        isUserInteractionEnabled = false
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOpacity = 0.25
+        layer.shadowRadius = 3
+        layer.shadowOffset = CGSize(width: 0, height: 1)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) non utilisé") }
+
+    override func draw(_ rect: CGRect) {
+        let w = bounds.width, h = bounds.height
+        // Flèche pleine, bord blanc : lisible sur une page claire ou assombrie.
+        let head = h * 0.48, shaft = w * 0.36
+        let p = UIBezierPath()
+        p.move(to: CGPoint(x: w / 2, y: 3))
+        p.addLine(to: CGPoint(x: w - 3, y: head))
+        p.addLine(to: CGPoint(x: (w + shaft) / 2, y: head))
+        p.addLine(to: CGPoint(x: (w + shaft) / 2, y: h - 3))
+        p.addLine(to: CGPoint(x: (w - shaft) / 2, y: h - 3))
+        p.addLine(to: CGPoint(x: (w - shaft) / 2, y: head))
+        p.addLine(to: CGPoint(x: 3, y: head))
+        p.close()
+        p.lineJoinStyle = .round
+        if !pointsUp { p.apply(CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: h)) }
+        Self.coral.setFill()
+        p.fill()
+        UIColor.white.setStroke()
+        p.lineWidth = 2.5
+        p.stroke()
+    }
+}
+
 extension MetaViewController: WKScriptMessageHandler {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "zyeutoState", let state = message.body as? [String: Any] {
             received(state: state, mainFrame: message.frameInfo.isMainFrame)
         } else if message.name == "zyeutoTap", let text = message.body as? String {
             tapped(text)
+        } else if message.name == "zyeutoRing", let text = message.body as? String {
+            ringMoved(text)
         }
     }
 }
@@ -1866,6 +2292,8 @@ extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // Nouvelle page : elle ne sait pas encore quel bouton chercher (FOU-118).
+        ringSentJSON = ""
         // Au cas où la page ne dit rien (page d'erreur…), le bandeau n'attend pas indéfiniment.
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self, !self.pageKnown else { return }

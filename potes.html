@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zieuton – Teste l'app</title>
+<link rel="apple-touch-icon" href="icone-v5-180.png">
+<style>
+  :root { --bg:#f6e3e6; --surface:#fff; --ink:#2e2328; --muted:#7d6e74; --line:#ecdfe2; --btn:#2e2328; --btn-ink:#fff; --soft:#fbeff1; --link:#a0505f;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161112; --surface:#1f181a; --ink:#f5ecee; --muted:#ab9aa0; --line:#2f2528; --btn:#f5ecee; --btn-ink:#2e2328; --soft:#2a2023; --link:#eab3bc; color-scheme:dark; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.5 var(--font); -webkit-text-size-adjust:100%; }
+  main { max-width:520px; margin:0 auto; padding:max(28px, env(safe-area-inset-top)) 16px 40px; }
+  .logo { display:block; width:88px; height:88px; border-radius:22px; margin:8px auto 14px; }
+  h1 { font-size:30px; line-height:1.15; text-align:center; margin:0 0 6px; letter-spacing:-.5px; }
+  .lead { text-align:center; color:var(--muted); margin:0 0 22px; }
+  .step { background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:16px; margin:12px 0; }
+  .step h2 { font-size:18px; margin:0 0 4px; display:flex; gap:10px; align-items:center; }
+  .num { flex:none; width:28px; height:28px; border-radius:50%; background:var(--btn); color:var(--btn-ink); font-size:15px; display:grid; place-items:center; }
+  .step p { margin:4px 0 12px; color:var(--muted); font-size:15px; }
+  .btn { display:block; text-align:center; padding:15px 18px; border-radius:999px; background:var(--btn); color:var(--btn-ink); font-weight:700; text-decoration:none; }
+  .alt { display:block; text-align:center; margin-top:10px; font-size:14px; color:var(--link); }
+  .tip { background:var(--soft); border-radius:16px; padding:12px 14px; font-size:14px; color:var(--muted); margin-top:18px; }
+  .tip b { color:var(--ink); }
+  .foot { text-align:center; font-size:13px; color:var(--muted); margin-top:22px; }
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="icone-v5-180.png" alt="">
+  <h1>Teste Zieuton avant tout le monde</h1>
+  <p class="lead">Sur iPhone, gratuit, en 3 étapes.</p>
+
+  <div class="step">
+    <h2><span class="num">1</span>Installe TestFlight</h2>
+    <p>C'est l'app d'Apple pour tester les apps avant leur sortie.</p>
+    <a class="btn" href="https://apps.apple.com/fr/app/testflight/id899247664">Installer TestFlight</a>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">2</span>Rejoins la bêta Zieuton</h2>
+    <p>TestFlight s'ouvre : touche « Accepter », puis « Installer ».</p>
+    <a class="btn" id="tf" href="https://testflight.apple.com/join/KqcHMWgs">Rejoindre la bêta</a>
+    <a class="alt" id="tf-alt" href="https://testflight.apple.com/join/KqcHMWgs">Rien ne s'ouvre ? Ouvrir dans Safari</a>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">3</span>Dis-moi ce que t'en penses</h2>
+    <p>Après quelques jours d'essai, réponds au petit questionnaire.</p>
+    <a class="btn" id="form" href="https://docs.google.com/forms/d/1FH0D1ZNeD8JA9bTR-kwGu2n2C5BoeHHbcDO1bmoYaI4/viewform">Répondre au questionnaire</a>
+  </div>
+
+  <p class="tip" id="tip" hidden><b>Tu es dans Instagram ?</b> Si un lien affiche « Not Found » ou ne s'ouvre pas, touche <b>⋯</b> en haut à droite, puis <b>Ouvrir dans le navigateur</b>.</p>
+  <p class="foot">Zieuton · tes données restent sur ton téléphone.</p>
+</main>
+<script>
+  // Dans le navigateur intégré d'Instagram (ou Facebook), les liens TestFlight et Google peuvent échouer :
+  // on ouvre directement l'app TestFlight, et on passe par Safari pour le reste.
+  (function () {
+    var ua = navigator.userAgent || "";
+    var ios = /iPhone|iPad|iPod/.test(ua);
+    var inApp = /Instagram|FBAN|FBAV|FB_IAB/.test(ua);
+    var code = "KqcHMWgs";
+    if (ios) document.getElementById("tf").href = "itms-beta://testflight.apple.com/join/" + code;
+    if (ios && inApp) {
+      document.getElementById("tf-alt").href = "x-safari-https://testflight.apple.com/join/" + code;
+      document.getElementById("form").href = "x-safari-https://docs.google.com/forms/d/1FH0D1ZNeD8JA9bTR-kwGu2n2C5BoeHHbcDO1bmoYaI4/viewform";
+      document.getElementById("tip").hidden = false;
+    } else {
+      document.getElementById("tf-alt").hidden = true;
+    }
+  })();
+</script>
+</body>
+</html>
