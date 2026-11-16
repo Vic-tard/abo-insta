@@ -863,12 +863,17 @@ final class MetaViewController: UIViewController {
         var oops = ""            // conseil quand on touche un mauvais choix
         var redoOops = ""        // conseil quand on a enregistré sans le bon choix
         var screen = ""          // l'écran d'Instagram de cette étape (home, profile, dest, summary:info, pick, period…)
+        var tone = BannerTone.consigne // FOU-121 P4 : couleur du bandeau (voir BannerTone)
     }
 
     /// Alerte « mauvais bouton » affichée dans le bandeau.
     private struct Warning: Equatable { var title: String; var text: String }
     private var warning: Warning?
     private var warningAt = Date.distantPast
+    /// FOU-121 P4 : depuis l'alerte, la page a quitté l'écran de l'étape (mauvais bouton touché).
+    private var warningLeft = false
+    /// Relecture ChatGPT (P4) : l'alerte « pas le bon compte » a déjà vibré pour cette visite de l'écran.
+    private var wrongProfileWarned = false
     /// Étape où la bonne option a été choisie (« Depuis le début », « JSON »).
     private var pickedAt = -1
     private var lastTapAt = Date.distantPast
@@ -979,7 +984,11 @@ final class MetaViewController: UIViewController {
     private let tipLabel = UILabel()
     private let replica = UIView()
     private let replicaBox = UIView()
-    private let progress = UIProgressView(progressViewStyle: .bar)
+    /// FOU-121 P4 : 4 grandes phases (Connexion, Réglages, Demande, Fichier) au lieu d'une barre d'étapes.
+    private let phaseRow = UIStackView()
+    private var phaseLabels: [UILabel] = []
+    /// FOU-121 P4 : clavier ouvert (petits iPhone) : la consigne se réduit, les alertes restent entières.
+    private var keyboardUp = false
     private let prevButton = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
     private let loading = UIActivityIndicatorView(style: .medium)
@@ -1005,11 +1014,20 @@ final class MetaViewController: UIViewController {
     // Couleurs Zieuton, les mêmes en clair et en sombre (le bandeau reprend la carte « Mettre à jour »).
     private static let ink = UIColor(red: 0x2e / 255, green: 0x23 / 255, blue: 0x28 / 255, alpha: 1)
     private static let coral = UIColor(red: 0xef / 255, green: 0x7f / 255, blue: 0x6a / 255, alpha: 1)
-    // FOU-118 : bandeau rose poudré, bien distinct de la page blanche d'Instagram ; alerte en corail vif, texte blanc.
+    // FOU-118 : bandeau rose poudré, bien distinct de la page blanche d'Instagram.
     private static let peachTop = UIColor(red: 0xf9 / 255, green: 0xdf / 255, blue: 0xe3 / 255, alpha: 1)
     private static let peachBottom = UIColor(red: 0xee / 255, green: 0xb0 / 255, blue: 0xb9 / 255, alpha: 1)
-    private static let warnTop = UIColor(red: 0xf7 / 255, green: 0x95 / 255, blue: 0x83 / 255, alpha: 1)
-    private static let warnBottom = UIColor(red: 0xe6 / 255, green: 0x5c / 255, blue: 0x4b / 255, alpha: 1)
+    // FOU-121 P4 (maquettes v2) : réussite lilas, réglage à corriger blanc cerclé de corail,
+    // petit souci rose doux avec un trait corail, pause lilas pâle neutre. Jamais de rouge vif pour une erreur courante.
+    private static let lilacTop = UIColor(red: 0xee / 255, green: 0xe8 / 255, blue: 0xfb / 255, alpha: 1)
+    private static let lilacBottom = UIColor(red: 0xd6 / 255, green: 0xc9 / 255, blue: 0xf4 / 255, alpha: 1)
+    private static let fixTop = UIColor.white
+    private static let fixBottom = UIColor(red: 0xff / 255, green: 0xf3 / 255, blue: 0xf1 / 255, alpha: 1)
+    private static let souciTop = UIColor(red: 0xfd / 255, green: 0xee / 255, blue: 0xec / 255, alpha: 1)
+    private static let souciBottom = UIColor(red: 0xf7 / 255, green: 0xd2 / 255, blue: 0xcd / 255, alpha: 1)
+    private static let pauseTop = UIColor(red: 0xf8 / 255, green: 0xf6 / 255, blue: 0xfd / 255, alpha: 1)
+    private static let pauseBottom = UIColor(red: 0xec / 255, green: 0xe7 / 255, blue: 0xf8 / 255, alpha: 1)
+    private static let lilac = UIColor(red: 0xa8 / 255, green: 0x94 / 255, blue: 0xe0 / 255, alpha: 1)
     private static let sheetBg = UIColor(red: 0xff / 255, green: 0xf7 / 255, blue: 0xf8 / 255, alpha: 1)
     private static let alarm = UIColor(red: 0xd9 / 255, green: 0x3f / 255, blue: 0x2e / 255, alpha: 1)
     private static let metaBlue = UIColor(red: 0x00 / 255, green: 0x64 / 255, blue: 0xe0 / 255, alpha: 1)
@@ -1397,6 +1415,14 @@ final class MetaViewController: UIViewController {
             spot.trailingAnchor.constraint(equalTo: webView.trailingAnchor),
             spot.bottomAnchor.constraint(equalTo: webView.bottomAnchor),
         ])
+        // FOU-121 P4 : petits iPhone, clavier ouvert (mot de passe, code) : la consigne se réduit pour laisser voir le champ.
+        for (name, up) in [(UIResponder.keyboardWillShowNotification, true), (UIResponder.keyboardWillHideNotification, false)] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                guard let self, self.keyboardUp != up else { return }
+                self.keyboardUp = up
+                self.showStep()
+            }
+        }
         showStep(animated: false)
         webView.load(URLRequest(url: url))
         // Toutes les 0,5 s : on fait le point avec ce que les cadres de la page ont signalé.
@@ -1740,7 +1766,7 @@ final class MetaViewController: UIViewController {
         sayLabel.minimumScaleFactor = 0.8
         tipLabel.font = Self.rounded(15, .semibold)
         tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
-        tipLabel.numberOfLines = 3
+        tipLabel.numberOfLines = 0
 
         // Précédent / Suivant en petites pastilles : le bandeau avance tout seul, elles servent seulement en secours.
         for (b, name) in [(prevButton, "chevron.left"), (nextButton, "chevron.right")] {
@@ -1787,12 +1813,24 @@ final class MetaViewController: UIViewController {
             replica.trailingAnchor.constraint(equalTo: replicaBox.trailingAnchor, constant: -4),
         ])
 
-        progress.progressTintColor = Self.ink
-        progress.trackTintColor = Self.ink.withAlphaComponent(0.12)
-        progress.layer.cornerRadius = 2
-        progress.clipsToBounds = true
-        progress.translatesAutoresizingMaskIntoConstraints = false
-        progress.heightAnchor.constraint(equalToConstant: 4).isActive = true
+        // Les 4 grandes phases, en petites pastilles : ✓ faite, entourée = en cours.
+        phaseRow.spacing = 5
+        phaseRow.distribution = .fillEqually
+        phaseLabels = BannerPhases.names.map { name in
+            let l = PaddedLabel()
+            l.inset = UIEdgeInsets(top: 4, left: 6, bottom: 4, right: 6)
+            l.text = name
+            l.font = Self.rounded(11.5, .bold)
+            l.textAlignment = .center
+            l.adjustsFontSizeToFitWidth = true
+            l.minimumScaleFactor = 0.75
+            l.layer.cornerRadius = 10
+            l.layer.cornerCurve = .continuous
+            l.clipsToBounds = true
+            phaseRow.addArrangedSubview(l)
+            return l
+        }
+        phaseRow.isAccessibilityElement = true
 
         // Sous le titre : le bouton à chercher et le conseil, avec une place à droite pour le zieuteur.
         let lower = UIStackView(arrangedSubviews: [replicaBox, tipLabel])
@@ -1805,7 +1843,7 @@ final class MetaViewController: UIViewController {
         let lowerRow = UIStackView(arrangedSubviews: [lower, room])
         lowerRow.alignment = .top
         lowerRow.spacing = 4
-        let all = UIStackView(arrangedSubviews: [progress, head, lowerRow])
+        let all = UIStackView(arrangedSubviews: [phaseRow, head, lowerRow])
         all.axis = .vertical
         all.spacing = 8
         all.translatesAutoresizingMaskIntoConstraints = false
@@ -1940,7 +1978,14 @@ final class MetaViewController: UIViewController {
 
     // MARK: Étapes
 
+    /// FOU-121 P4 : l'étape à afficher, avec sa couleur (consigne, réussite, réglage à corriger, petit souci, pause).
     private var currentStep: Step {
+        var step = baseStep
+        step.tone = BannerTone.of(verb: step.verb, isWarning: warning != nil && step.verb.isEmpty)
+        return step
+    }
+
+    private var baseStep: Step {
         if !pageKnown {
             return Step(verb: "Un instant,", target: "Instagram s'ouvre…")
         }
@@ -2055,7 +2100,8 @@ final class MetaViewController: UIViewController {
                         tip: "Instagram te demande peut-être une vérification : fais-la, je reprends dès que je reconnais la page. Pour revenir au début de l'export, touche ce bandeau.")
         }
         if let w = warning {
-            return Step(verb: "", target: w.title, tip: w.text, look: steps[index].look)
+            // FOU-121 P4 (C12) : l'alerte ne s'efface plus toute seule ; elle part quand c'est réglé, ou si on touche le bandeau.
+            return Step(verb: "", target: w.title, tip: w.text + " Touche ce bandeau pour fermer l'alerte.", look: steps[index].look)
         }
         if upShown {
             return Step(verb: "Presque :", target: "Exporter vos informations",
@@ -2087,13 +2133,15 @@ final class MetaViewController: UIViewController {
     private func showStep(animated: Bool = true) {
         let step = currentStep
         let normal = pageKnown && codeShown.isEmpty && !(loginShown || downloading || sentAt != nil)
-        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : "", cookiesShown ? "C" : ""].joined(separator: "|")
+        let phase = BannerPhases.current(login: loginShown, code: !codeShown.isEmpty, finalStep: steps[index].final,
+                                         requested: sentAt != nil || toCheck, file: !requesting || guarding || finished || downloading)
+        let reduced = keyboardUp && step.tone == .consigne
+        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : "", cookiesShown ? "C" : "", "\(step.tone)", String(phase), reduced ? "K" : ""].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
         let apply = {
-            // Alerte : le bandeau passe au corail vif, texte blanc, et garde le bouton à chercher bien visible.
-            let warn = self.warning != nil && normal
-            let fg: UIColor = warn ? .white : Self.ink
+            // FOU-121 P4 : texte toujours foncé ; c'est la couleur du bandeau qui dit s'il faut corriger quelque chose.
+            let fg: UIColor = Self.ink
             let say = NSMutableAttributedString()
             if !step.verb.isEmpty {
                 say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(17, .medium), .foregroundColor: fg.withAlphaComponent(0.75)]))
@@ -2103,17 +2151,32 @@ final class MetaViewController: UIViewController {
                 say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(17, .semibold), .foregroundColor: fg]))
             }
             self.sayLabel.attributedText = say
-            self.tipLabel.textColor = warn ? .white : Self.ink.withAlphaComponent(0.8)
+            self.tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
+            // Consigne : 4 lignes au plus (réductible) ; alerte ou souci : jamais coupé (BUG-06).
+            self.tipLabel.numberOfLines = step.tone == .consigne ? 4 : 0
+            let (top, bottom, border, width): (UIColor, UIColor, UIColor, CGFloat) = {
+                switch step.tone {
+                case .consigne: return (Self.peachTop, Self.peachBottom, .clear, 0)
+                case .success: return (Self.lilacTop, Self.lilacBottom, .clear, 0)
+                case .fix: return (Self.fixTop, Self.fixBottom, Self.coral, 2.5)
+                case .souci: return (Self.souciTop, Self.souciBottom, Self.coral, 1.5)
+                case .pause: return (Self.pauseTop, Self.pauseBottom, Self.lilac, 1.5)
+                }
+            }()
             CATransaction.begin()
             CATransaction.setAnimationDuration(animated ? 0.25 : 0)
-            self.gradient.colors = warn ? [Self.warnTop.cgColor, Self.warnBottom.cgColor] : [Self.peachTop.cgColor, Self.peachBottom.cgColor]
+            self.gradient.colors = [top.cgColor, bottom.cgColor]
             CATransaction.commit()
-            self.replicaBox.layer.borderColor = (warn ? UIColor.white : Self.coral).cgColor
+            self.banner.layer.borderColor = border.cgColor
+            self.banner.layer.borderWidth = width
+            self.replicaBox.layer.borderColor = Self.coral.cgColor
             self.tipLabel.text = step.tip
-            self.tipLabel.isHidden = step.tip.isEmpty
-            self.replicaBox.isHidden = step.look.isEmpty || !normal
-            if normal && !step.look.isEmpty { self.drawReplica(self.warning == nil ? step : self.steps[self.index]) }
-            self.progress.isHidden = !normal || self.steps.count < 2
+            // Clavier ouvert : la consigne se réduit au titre ; une alerte reste entière (FOU-121 P4).
+            self.tipLabel.isHidden = step.tip.isEmpty || reduced
+            self.replicaBox.isHidden = step.look.isEmpty || !normal || reduced
+            if normal && !step.look.isEmpty && !reduced { self.drawReplica(self.warning == nil ? step : self.steps[self.index]) }
+            self.drawPhases(phase)
+            self.phaseRow.isHidden = !self.pageKnown || self.lockedShown || reduced
             // À la première étape, pas de flèche « précédent » grisée : elle n'apparaît qu'à partir de l'étape 2.
             self.prevButton.isHidden = !normal || self.lostShown || self.steps.count < 2 || self.index == 0
             self.nextButton.isHidden = !normal || self.lostShown || self.steps.count < 2
@@ -2138,13 +2201,25 @@ final class MetaViewController: UIViewController {
             shake.duration = 0.4
             banner.layer.add(shake, forKey: "zyShake")
         }
-        progress.setProgress(Float(index + 1) / Float(steps.count + 1), animated: animated)
         sendRingNames()
         if animated {
             UIView.animate(withDuration: 0.25, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
                 self.view.layoutIfNeeded()
             }
         }
+    }
+
+    /// Pastilles des phases : faite (✓, foncée), en cours (entourée), à venir (pâle).
+    private func drawPhases(_ current: Int) {
+        for (i, l) in phaseLabels.enumerated() {
+            let name = BannerPhases.names[i]
+            l.text = i < current ? "✓ " + name : name
+            l.layer.borderWidth = i == current ? 1.5 : 0
+            l.layer.borderColor = Self.ink.cgColor
+            l.backgroundColor = i < current ? Self.ink : i == current ? UIColor.white.withAlphaComponent(0.85) : .clear
+            l.textColor = i < current ? .white : Self.ink.withAlphaComponent(i == current ? 1 : 0.45)
+        }
+        phaseRow.accessibilityLabel = "Étape en cours : " + BannerPhases.names[current]
     }
 
     private func go(_ delta: Int) {
@@ -2274,6 +2349,7 @@ final class MetaViewController: UIViewController {
     private func warn(_ title: String, _ text: String) {
         warning = Warning(title: title, text: text)
         warningAt = Date()
+        warningLeft = false
         UINotificationFeedbackGenerator().notificationOccurred(.warning)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { UIImpactFeedbackGenerator(style: .heavy).impactOccurred() }
         shownKey = "" // redessine même si c'était déjà la même alerte (on secoue encore)
@@ -2364,7 +2440,7 @@ final class MetaViewController: UIViewController {
         let createVisible = now.timeIntervalSince(seenCreate) < 1.6
         if login != loginShown { loginShown = login; showStep() }
         let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
-        if code != codeShown { codeShown = code; warning = nil; showStep() }
+        if code != codeShown { codeShown = code; if BannerPhases.clearsWarning(.codeChanged) { warning = nil }; showStep() }
         let cookies = now.timeIntervalSince(seenCookies) < 1.6
         if cookies != cookiesShown { cookiesShown = cookies; showStep() }
         // Connexion finie (mot de passe, puis code s'il y en a un) : Zieuton prévient de l'alerte d'Instagram avant qu'elle arrive.
@@ -2381,19 +2457,37 @@ final class MetaViewController: UIViewController {
         let unknownFor = now.timeIntervalSince(max(seenScreen, seenFlow, lostCheckFrom))
         let lost = !login && code.isEmpty && sentAt == nil && pageProblem.isEmpty && !webView.isLoading && unknownFor > 2
             && ((offSince.map { now.timeIntervalSince($0) > 1.5 } ?? false) || unknownFor > 6)
-        if lost != lostShown { lostShown = lost; warning = nil; showStep() }
+        // Relecture ChatGPT (P4) : un écran pas reconnu ne retire pas une alerte de mauvais choix. Le bandeau montre la pause
+        // par-dessus, et l'alerte revient avec la page ; elle part seulement si l'utilisateur revient sur l'écran de l'étape.
+        if lost != lostShown {
+            lostShown = lost
+            if lost, warning != nil { warningLeft = true }
+            if BannerPhases.clearsWarning(.lostChanged) { warning = nil }
+            showStep()
+        }
         let screenFresh = now.timeIntervalSince(seenScreen) < 1.6
         // Compte Facebook ou Threads choisi : l'alerte reste tant que cet écran est affiché.
+        // Relecture ChatGPT (P4) : une seule vibration en arrivant sur cet écran, jamais relancée toute seule ;
+        // elle ne part que quand un autre écran est vraiment reconnu (pas pendant un chargement).
         let wrongTitle = "Oups, ce n'est pas le bon compte !"
-        if screenFresh, screenKey == "wrongprofile", sentAt == nil, !login {
-            if warning?.title != wrongTitle || now.timeIntervalSince(warningAt) > 8 {
-                warn(wrongTitle, "C'est ton compte Facebook ou Threads. Touche la flèche ‹ en haut à gauche, puis ton compte marqué Instagram.")
-            }
-        } else if warning?.title == wrongTitle { warning = nil; showStep() }
+        let onWrongProfile = screenFresh && screenKey == "wrongprofile" && sentAt == nil && !login
+        let otherScreen = screenFresh && screenKey != "wrongprofile"
+        if BannerPhases.shouldWarnWrongProfile(onScreen: onWrongProfile, alreadyWarned: wrongProfileWarned) {
+            wrongProfileWarned = true
+            warn(wrongTitle, "C'est ton compte Facebook ou Threads. Touche la flèche ‹ en haut à gauche, puis ton compte marqué Instagram.")
+        } else if otherScreen {
+            wrongProfileWarned = false
+            if warning?.title == wrongTitle { warning = nil; showStep() }
+        }
         let up = screenFresh && screenKey == "up" && sentAt == nil && !login && code.isEmpty
         if up != upShown { upShown = up; showStep() }
-        // L'alerte s'efface toute seule au bout de 10 s : le bandeau remontre l'étape à faire.
-        if warning != nil, now.timeIntervalSince(warningAt) > 10 { warning = nil; showStep() }
+        // FOU-121 P4 (C12) : une alerte ne s'efface jamais au bout d'un délai. Elle part quand c'est réglé :
+        // bonne touche, retour sur l'écran de l'étape, ou l'utilisateur touche le bandeau.
+        if warning != nil, warning?.title != wrongTitle, screenFresh, !screenKey.isEmpty, !steps[index].screen.isEmpty {
+            let onStep = screenKey == steps[index].screen
+            if !onStep { warningLeft = true }
+            if BannerPhases.warningCleared(leftStepScreen: warningLeft, backOnStepScreen: onStep) { warning = nil; showStep() }
+        }
         // Écran « code de sécurité » d'Instagram (après « Commencer l'exportation ») : rien n'est parti tant qu'il est là (FOU-115).
         guard requesting, !login, code.isEmpty else { return }
         let rowsFresh = now.timeIntervalSince(seenRows) < 1.6
@@ -2798,6 +2892,58 @@ struct ExportProof: Equatable {
         }
     }
 }
+/// FOU-121 P4 : couleur du bandeau (maquettes v2).
+enum BannerTone: Equatable {
+    case consigne, success, fix, souci, pause
+
+    /// Déduite du texte du bandeau : « Petit souci : » et « Oups : » = petit souci ; une alerte de mauvais bouton ou un réglage
+    /// à refaire = réglage à corriger ; « Je ne reconnais pas encore » = pause ; « Parfait ! », « C'est prêt ! » = réussite.
+    static func of(verb: String, isWarning: Bool) -> BannerTone {
+        if isWarning { return .fix }
+        if verb.hasPrefix("Petit souci") || verb.hasPrefix("Oups") { return .souci }
+        if verb.hasPrefix("Demande enregistrée, mais") || verb.hasPrefix("Export en pause") { return .fix }
+        if verb.hasPrefix("Je ne reconnais pas") { return .pause }
+        if verb.hasPrefix("Parfait") || verb.hasPrefix("C'est prêt") { return .success }
+        return .consigne
+    }
+}
+
+/// FOU-121 P4 : les 4 grandes phases du bandeau, au lieu de « étape 4 sur 9 ».
+enum BannerPhases {
+    static let names = ["Connexion", "Réglages", "Demande", "Fichier"]
+
+    /// file : on récupère ou on guette le fichier ; requested : « Commencer l'exportation » touché (ou demande à vérifier).
+    static func current(login: Bool, code: Bool, finalStep: Bool, requested: Bool, file: Bool) -> Int {
+        if login || code { return 0 }
+        if file { return 3 }
+        if requested || finalStep { return 2 }
+        return 1
+    }
+
+    /// Ce qui peut arriver pendant qu'une alerte de mauvais choix est affichée.
+    enum WarningEvent { case lostChanged, codeChanged }
+
+    /// Relecture ChatGPT (P4) : un écran pas reconnu (chargement, nouvelle interface) ne retire jamais l'alerte.
+    /// Un code de sécurité d'Instagram, si : c'est une autre étape (Connexion), l'ancienne alerte n'a plus de sens.
+    static func clearsWarning(_ event: WarningEvent) -> Bool {
+        switch event {
+        case .lostChanged: return false
+        case .codeChanged: return true
+        }
+    }
+
+    /// Relecture ChatGPT (P4) : l'alerte « pas le bon compte » vibre une fois en arrivant sur l'écran, jamais en boucle.
+    static func shouldWarnWrongProfile(onScreen: Bool, alreadyWarned: Bool) -> Bool {
+        onScreen && !alreadyWarned
+    }
+
+    /// Une alerte ne part jamais au bout d'un délai (C12). Elle part toute seule seulement si la page a quitté l'écran
+    /// de l'étape (mauvais bouton) puis y est revenue. Sinon : bonne touche, ou l'utilisateur touche le bandeau.
+    static func warningCleared(leftStepScreen: Bool, backOnStepScreen: Bool) -> Bool {
+        leftStepScreen && backOnStepScreen
+    }
+}
+
 /// FOU-121 P2 : aide à la connexion, sans jamais lire ce que l'utilisateur tape.
 struct LoginHelp: Equatable {
     /// Nombre de fois où Instagram a affiché « mot de passe incorrect » (une apparition = un refus).
