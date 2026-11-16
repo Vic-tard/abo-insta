@@ -886,6 +886,9 @@ final class MetaViewController: UIViewController {
     private let steps: [Step]
     private var index = 0
     private var loginShown = false
+    /// Fenêtre des cookies d'Instagram affichée (FOU-121) : le bandeau dit quel bouton toucher.
+    private var cookiesShown = false
+    private var seenCookies = Date.distantPast
     /// Écran « tape le code de sécurité » d'Instagram : par où le code est arrivé (whatsapp, sms, email, app), vide sinon.
     private var codeShown = ""
     private var seenCode = Date.distantPast
@@ -1183,7 +1186,9 @@ final class MetaViewController: UIViewController {
             }
             // Export encore « En attente » chez Instagram (FOU-115) : vu sur la page d'accueil de l'export.
             var pending = !login && !code && /en attente|en préparation|pending|in progress|preparing/.test((document.body.innerText || '').toLowerCase());
-            window.webkit.messageHandlers.zyeutoState.postMessage({ login: login, badpw: badpw, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            // Fenêtre des cookies d'Instagram (FOU-121) : reconnue à ses deux boutons.
+            var cookies = seeAny(['refuser les cookies optionnels', 'autoriser tous les cookies', 'decline optional cookies', 'allow all cookies']);
+            window.webkit.messageHandlers.zyeutoState.postMessage({ cookies: cookies, login: login, badpw: badpw, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
           }, 700);
         })();
         """
@@ -1610,14 +1615,14 @@ final class MetaViewController: UIViewController {
         avatar.layer.cornerCurve = .continuous
         avatar.clipsToBounds = true
         avatar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 42), avatar.heightAnchor.constraint(equalToConstant: 42)])
+        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 50), avatar.heightAnchor.constraint(equalToConstant: 50)])
 
-        sayLabel.numberOfLines = 2
+        sayLabel.numberOfLines = 3
         sayLabel.adjustsFontSizeToFitWidth = true
         sayLabel.minimumScaleFactor = 0.8
-        tipLabel.font = Self.rounded(13.5, .medium)
+        tipLabel.font = Self.rounded(15, .semibold)
         tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
-        tipLabel.numberOfLines = 2
+        tipLabel.numberOfLines = 3
 
         // Précédent / Suivant en petites pastilles : le bandeau avance tout seul, elles servent seulement en secours.
         for (b, name) in [(prevButton, "chevron.left"), (nextButton, "chevron.right")] {
@@ -1634,9 +1639,9 @@ final class MetaViewController: UIViewController {
         prevButton.accessibilityLabel = "Étape précédente"
         nextButton.accessibilityLabel = "Étape suivante"
 
-        let head = UIStackView(arrangedSubviews: [avatar, sayLabel, prevButton, nextButton])
+        // FOU-121 : le zieuteur passe en bas à droite du bandeau ; le texte prend toute la largeur en haut.
+        let head = UIStackView(arrangedSubviews: [sayLabel, prevButton, nextButton])
         head.spacing = 8
-        head.setCustomSpacing(10, after: avatar)
         head.alignment = .center
         sayLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         // Le texte prend toute la place libre ; les flèches gardent leur taille de petite pastille ronde.
@@ -1671,16 +1676,30 @@ final class MetaViewController: UIViewController {
         progress.translatesAutoresizingMaskIntoConstraints = false
         progress.heightAnchor.constraint(equalToConstant: 4).isActive = true
 
-        let all = UIStackView(arrangedSubviews: [progress, head, replicaBox, tipLabel])
+        // Sous le titre : le bouton à chercher et le conseil, avec une place à droite pour le zieuteur.
+        let lower = UIStackView(arrangedSubviews: [replicaBox, tipLabel])
+        lower.axis = .vertical
+        lower.spacing = 8
+        let room = UIView()
+        room.translatesAutoresizingMaskIntoConstraints = false
+        room.widthAnchor.constraint(equalToConstant: 54).isActive = true
+        room.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        let lowerRow = UIStackView(arrangedSubviews: [lower, room])
+        lowerRow.alignment = .top
+        lowerRow.spacing = 4
+        let all = UIStackView(arrangedSubviews: [progress, head, lowerRow])
         all.axis = .vertical
         all.spacing = 8
         all.translatesAutoresizingMaskIntoConstraints = false
         banner.addSubview(all)
+        banner.addSubview(avatar)
         NSLayoutConstraint.activate([
-            all.topAnchor.constraint(equalTo: banner.topAnchor, constant: 10),
-            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
-            all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 12),
+            all.topAnchor.constraint(equalTo: banner.topAnchor, constant: 12),
+            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -12),
+            all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 14),
             all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
+            avatar.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
+            avatar.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
         ])
         // Toucher le bandeau ferme l'alerte.
         banner.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(bannerTapped)))
@@ -1783,6 +1802,10 @@ final class MetaViewController: UIViewController {
             return Step(verb: "Garde cet écran ouvert :", target: "je guette ton fichier",
                         tip: "Je regarde la page d'Instagram toutes les 10 secondes et je vibre dès que c'est prêt. Tu peux aussi fermer : je t'enverrai une notification.")
         }
+        if cookiesShown {
+            return Step(verb: "Cookies : touche", target: "Refuser les cookies optionnels",
+                        tip: "Instagram marche pareil, et Zieuton n'en a pas besoin.")
+        }
         if !codeShown.isEmpty {
             let place: (String, String) = {
                 switch codeShown {
@@ -1848,7 +1871,7 @@ final class MetaViewController: UIViewController {
     private func showStep(animated: Bool = true) {
         let step = currentStep
         let normal = pageKnown && codeShown.isEmpty && !(loginShown || downloading || sentAt != nil)
-        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : ""].joined(separator: "|")
+        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : "", cookiesShown ? "C" : ""].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
         let apply = {
@@ -1857,11 +1880,11 @@ final class MetaViewController: UIViewController {
             let fg: UIColor = warn ? .white : Self.ink
             let say = NSMutableAttributedString()
             if !step.verb.isEmpty {
-                say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(15, .medium), .foregroundColor: fg.withAlphaComponent(0.75)]))
+                say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(17, .medium), .foregroundColor: fg.withAlphaComponent(0.75)]))
             }
-            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(20, .heavy), .foregroundColor: fg]))
+            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(23, .heavy), .foregroundColor: fg]))
             if !step.after.isEmpty {
-                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(15, .semibold), .foregroundColor: fg]))
+                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(17, .semibold), .foregroundColor: fg]))
             }
             self.sayLabel.attributedText = say
             self.tipLabel.textColor = warn ? .white : Self.ink.withAlphaComponent(0.8)
@@ -2040,6 +2063,7 @@ final class MetaViewController: UIViewController {
             if bad != badPassword { badPassword = bad; showStep() }
         }
         if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
+        if state["cookies"] as? Bool == true { seenCookies = now }
         if state["flow"] as? Bool == true { seenFlow = now }
         if let pick = state["pick"] as? [String: Any], let n = pick["n"] as? Int {
             let before = (pickChecked, pickFollowers)
@@ -2086,6 +2110,8 @@ final class MetaViewController: UIViewController {
         if login != loginShown { loginShown = login; showStep() }
         let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
         if code != codeShown { codeShown = code; warning = nil; showStep() }
+        let cookies = now.timeIntervalSince(seenCookies) < 1.6
+        if cookies != cookiesShown { cookiesShown = cookies; showStep() }
         // Connexion finie (mot de passe, puis code s'il y en a un) : Zieuton prévient de l'alerte d'Instagram avant qu'elle arrive.
         if login { sawLogin = true }
         if sawLogin, !loginAlertShown, !login, code.isEmpty, !webView.isLoading,

@@ -544,6 +544,21 @@ if (!window.ZYEUTO_APP) {
   .pl-steps li { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border-radius: 18px; padding: 14px 16px; font: 800 17px/1.3 var(--round); }
   .pl-steps li i { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 15px; background: var(--rose); color: #fff; }
   .pl-foot .gf-huge { font-family: var(--round); }
+  .in h2 { font-size: 27px; }
+  .in-phone { width: min(230px, 62vw); margin: 0 auto; border: 5px solid var(--ink); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; background: var(--surface-2); }
+  .in-zy { position: relative; padding: 14px 54px 14px 12px; background: linear-gradient(135deg, #fbd8c4, #f6c2a8); color: #2e2328; font: 800 14px/1.25 var(--round); text-align: left; }
+  .in-av { position: absolute; right: 8px; bottom: 6px; width: 38px; height: 38px; border-radius: 28%; overflow: hidden; background: #d4919b; }
+  .in-av svg { width: 100%; height: 100%; display: block; }
+  .in-ig { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 12px 18px; background: #fff; color: #262626; font: 600 13px var(--round); }
+  .in-ig b { font: 800 17px var(--round); }
+  .in-btn { width: 80%; height: 22px; border-radius: 8px; background: #0095f6; }
+  .in-pts li { font-size: 15.5px; }
+  .in-pts li i { background: var(--surface); color: var(--ink); font-size: 15px; }
+  .in-pts li i svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-reduced-motion: no-preference) {
+    .in > .in-phone { animation: sticker .5s .5s cubic-bezier(.3,1.6,.5,1) both; }
+    .in ~ .pl-foot { animation-delay: 2.6s; }
+  }
   .pl-restore { align-self: center; border: 0; background: none; padding: 8px 12px; font: 600 13px var(--round); color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   @media (prefers-reduced-motion: no-preference) {
     .pl > * { animation: rise .5s both; }
@@ -4849,6 +4864,8 @@ function wlPlay() {
   };
 }
 let gfLeftAt = 0, gfOnReturn = null;
+// Écran « Zieuton en haut, Instagram en bas », entre le plan et Instagram (FOU-121).
+let gfIntro = false;
 let gmTick = null;
 // gfRepeat : le même parcours, rouvert depuis « Nouvel export » pour les imports suivants.
 let gfRepeat = false, gfRepeatFrom = 0;
@@ -4916,6 +4933,22 @@ function renderGuided() {
       <p class="lead">Ensuite, ouvre l'app depuis sa nouvelle icône : la suite t'attend là-bas.</p>
       <div class="gf-foot"><button class="alt" id="gf-stay" type="button">Je préfère rester dans Safari</button></div>`;
     $("gf-stay").onclick = () => { prefs.stayInSafari = true; savePrefs(); render(); };
+  } else if (step === "insta" && metaInApp() && gfIntro) {
+    // Juste avant Instagram : comment l'écran sera partagé, le mot de passe, les cookies (FOU-121).
+    gfOnReturn = null;
+    body.innerHTML = `<div class="gf-mid pl in">
+      <h2 id="gf-title">Zieuton en haut,<br>Instagram en bas</h2>
+      <div class="in-phone" aria-hidden="true">
+        <div class="in-zy"><span>Moi, je te dis où toucher</span><div class="in-av">${MASCOT}</div></div>
+        <div class="in-ig"><b>Instagram</b><span>Toi, tu touches ici</span><i class="in-btn"></i></div>
+      </div>
+      <ul class="pl-steps in-pts">
+        <li><i>${ICON.lock}</i><span>Ton mot de passe, tu le tapes chez Instagram. Zieuton ne le voit jamais.</span></li>
+        <li><i>🍪</i><span>Cookies&nbsp;? Touche « Refuser les cookies optionnels ».</span></li>
+      </ul></div>
+      <div class="gf-foot pl-foot"><button class="btn cheer big gf-huge" id="gf-meta" type="button">J'ai compris, on y va</button></div>`;
+    // On reste sur cet écran : en revenant d'Instagram sans avoir fini, une touche suffit pour y retourner.
+    $("gf-meta").onclick = wkGo;
   } else if (step === "insta" && metaInApp()) {
     // App iPhone : Instagram s'ouvre DANS Zieuton, avec le bandeau qui montre où toucher (comme « Mettre à jour »).
     gfOnReturn = null;
@@ -4933,7 +4966,7 @@ function renderGuided() {
         <button class="btn cheer big gf-huge" id="gf-meta" type="button">Ouvrir Instagram</button>
         <button class="pl-restore" id="gf-restore" type="button">J'ai une sauvegarde</button>
       </div>`;
-    $("gf-meta").onclick = wkGo;
+    $("gf-meta").onclick = () => { gfIntro = true; haptic("light"); renderGuided(); };
   } else if (step === "get" && metaInApp()) {
     // App iPhone : on attend Instagram ici. L'app guette la page d'Instagram et envoie une notification quand c'est prêt.
     const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
@@ -5055,6 +5088,7 @@ function renderGuided() {
       if (closes) { setRepeat(false); return render(); }
       if (step === "install") prefs.welcomed = false;
       else if (step === "get") { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; }
+      else if (step === "insta" && gfIntro) gfIntro = false;
       else if (step === "insta") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
       savePrefs(); render();
     };
@@ -5087,7 +5121,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-0306";
+const BUILD = "2026-11-16-0324";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
