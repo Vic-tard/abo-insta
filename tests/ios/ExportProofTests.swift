@@ -196,5 +196,19 @@ check(BannerTone.of(verb: "✓ Bonne case cochée ! Maintenant,", isWarning: fal
 check(BannerTone.of(verb: "✓ Bon choix ! Maintenant,", isWarning: false) == .success, "✓ Bon choix : lilas")
 check(ExportProof.problem("summary:info")?.title == "avec trop d'informations", "résumé avec plus que les abonnés : signalé après la demande")
 
+// 20. Relecture ChatGPT de P5 : la mémoire des cases ne s'efface pas toute seule, « ✓ Tout est bien réglé » seulement sur preuve.
+check(!PickMemory.resets(onScreen: "pick"), "retour sur la page des cases : on garde la mémoire")
+check(!PickMemory.resets(onScreen: "summary:info"), "passage par le résumé : on garde la mémoire")
+check(!PickMemory.resets(onScreen: ""), "écran pas reconnu (chargement) : on garde la mémoire")
+check(PickMemory.resets(onScreen: "home"), "accueil de l'export (nouvelle demande) : la mémoire repart de zéro")
+var longue = PickMemory()
+longue.saw([("Messages", true)])                    // cochée plus bas, vue il y a longtemps
+longue.saw([("Followers et suivi(e)s", true)])      // la page revient après un long chargement : seulement le haut
+check(longue.checked == 2, "case cochée vue avant un long chargement : toujours comptée (pas de faux « Bonne case cochée »)")
+check(PickMemory.settingsVerified(summaryInfo: "followers", followersAlone: false), "résumé « Followers et suivi(e)s » : ✓")
+check(PickMemory.settingsVerified(summaryInfo: "one", followersAlone: true), "« 1 élément » + Followers vue seule cochée : ✓")
+check(!PickMemory.settingsVerified(summaryInfo: "one", followersAlone: false), "« 1 élément » sans preuve que c'est Followers : pas de ✓")
+check(!PickMemory.settingsVerified(summaryInfo: "", followersAlone: true), "résumé illisible : pas de ✓")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

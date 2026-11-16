@@ -918,6 +918,8 @@ final class MetaViewController: UIViewController {
     private var pickExtra = ""
     /// FOU-121 P5 (R2) : cases vues pendant cette visite de la page des cases, même sorties de la page en défilant.
     private var pickMemory = PickMemory()
+    /// FOU-121 P5 : ce que dit la ligne « Personnaliser les informations » du résumé ('followers', 'one' ou '').
+    private var summaryInfo = ""
     /// Instagram a dit « mot de passe incorrect ».
     private var badPassword = false
     /// FOU-121 P2 : Instagram dit que l'identifiant ne correspond à aucun compte.
@@ -1155,6 +1157,15 @@ final class MetaViewController: UIViewController {
               .replace(/followers et suivi\(e\)s|followers et suivis|followers and following/g, '');
             return /followers et suivi|followers and following/.test(t) && /[,+]|\bet\s+\d|\band\s+\d/.test(rest);
           };
+          // FOU-121 P5 : la ligne « Personnaliser les informations » nomme-t-elle « Followers et suivi(e)s » seule ('followers'),
+          // ou dit-elle seulement « 1 élément » ('one') ? Sinon : '' (rien de prouvé).
+          var summaryInfo = function () {
+            var t = rowVal(['personnaliser les informations', 'customize information']);
+            if (t === null || moreThanFollowers(t)) return '';
+            if (/followers et suivi|followers and following/.test(t)) return 'followers';
+            if (/(^|\s)1\s*(élément|element|item)\b/.test(t)) return 'one';
+            return '';
+          };
           var screen = function () {
             // Résumé « Confirmer votre exportation » : reconnu par son titre aussi (le bouton « Commencer » est souvent plus bas, hors de l'écran).
             // … ou par ses lignes « Période » et « Format » visibles avec leur valeur (le titre n'est pas toujours affiché).
@@ -1339,7 +1350,7 @@ final class MetaViewController: UIViewController {
             // Fenêtre des cookies d'Instagram (FOU-121) : reconnue à ses deux boutons.
             var cookies = seeAny(['refuser les cookies optionnels', 'autoriser tous les cookies', 'decline optional cookies', 'allow all cookies']);
             var create = has(CREATE);
-            window.webkit.messageHandlers.zyeutoState.postMessage({ locked: locked(), rows: create ? pendingRows() : null, cookies: cookies, login: login, badpw: badpw, nouser: nouser, codebad: codebad, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: create, dl: __DL__ });
+            window.webkit.messageHandlers.zyeutoState.postMessage({ locked: locked(), rows: create ? pendingRows() : null, cookies: cookies, login: login, badpw: badpw, nouser: nouser, codebad: codebad, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), info: login || code ? '' : summaryInfo(), start: has(START), create: create, dl: __DL__ });
           }, 700);
         })();
         """#
@@ -2145,7 +2156,9 @@ final class MetaViewController: UIViewController {
                         tip: "Pour valider ton choix chez Instagram.", look: "button", screen: steps[index].screen)
         }
         // Résumé lu avec tous les bons réglages (une seule information, « Depuis le début », JSON) : ✓ avant la dernière touche.
-        if steps[index].final, sentAt == nil, screenKey == "summary:start", Date().timeIntervalSince(seenScreen) < 1.6 {
+        // Relecture ChatGPT (P5) : seulement si l'unique information est prouvée être « Followers et suivi(e)s ».
+        if steps[index].final, sentAt == nil, screenKey == "summary:start", Date().timeIntervalSince(seenScreen) < 1.6,
+           PickMemory.settingsVerified(summaryInfo: summaryInfo, followersAlone: pickMemory.followers && pickMemory.checked == 1) {
             var last = steps[index]
             last.verb = "✓ Tout est bien réglé ! " + last.verb
             return last
@@ -2413,8 +2426,6 @@ final class MetaViewController: UIViewController {
         if state["flow"] as? Bool == true { seenFlow = now }
         if let pick = state["pick"] as? [String: Any], let n = pick["n"] as? Int {
             let before = (pickChecked, pickFollowers)
-            // Nouvelle visite de la page des cases (plus vue depuis 5 s) : on repart de zéro.
-            if now.timeIntervalSince(seenPick) > 5 { pickMemory = PickMemory() }
             if let rows = pick["r"] as? [[Any]] {
                 pickMemory.saw(rows.compactMap { r -> (String, Bool)? in
                     guard r.count == 2, let name = r[0] as? String, let on = r[1] as? Bool else { return nil }
@@ -2432,9 +2443,13 @@ final class MetaViewController: UIViewController {
             seenPick = now
             if before != (pickChecked, pickFollowers), steps[index].screen == "pick" { showStep() }
         }
+        if mainFrame, let info = state["info"] as? String { summaryInfo = info }
         if let scr = state["screen"] as? String, !scr.isEmpty {
             if scr != screenKey { screenKey = scr; screenSince = now }
             if scr == "pick" || scr == "home" { pickRedo = false }
+            // Relecture ChatGPT (P5) : la mémoire des cases ne repart de zéro qu'à une vraie nouvelle demande (accueil de l'export,
+            // où Instagram remet ses cases par défaut). Jamais sur un délai, un chargement ou un défilement.
+            if PickMemory.resets(onScreen: scr) { pickMemory = PickMemory() }
             // Arrivé au résumé : la référence des lignes « En attente » est figée (la nouvelle ligne ne doit pas devenir la référence).
             if scr.hasPrefix("summary") { proof.freeze() }
             if scr.hasPrefix("summary:") { lastSummary = scr }
@@ -2950,6 +2965,16 @@ struct PickMemory: Equatable {
     }
 
     var checked: Int { rows.values.filter { $0 }.count }
+
+    /// Relecture ChatGPT (P5) : nouvelle visite = retour à l'accueil de l'export (nouvelle demande, cases remises par défaut).
+    /// Un délai, un chargement ou un écran pas reconnu ne remettent jamais la mémoire à zéro.
+    static func resets(onScreen screen: String) -> Bool { screen == "home" }
+
+    /// « ✓ Tout est bien réglé » seulement si le résumé nomme « Followers et suivi(e)s » seule, ou dit « 1 élément »
+    /// alors que Zieuton a vu « Followers et suivi(e)s » cochée et aucune autre case. « 1 élément » seul ne prouve rien.
+    static func settingsVerified(summaryInfo: String, followersAlone: Bool) -> Bool {
+        summaryInfo == "followers" || (summaryInfo == "one" && followersAlone)
+    }
     var followers: Bool { rows.contains { Self.isFollowers($0.key) && $0.value } }
     /// Première case cochée en trop (ordre alphabétique, pour un affichage stable).
     var extra: String? { rows.filter { $0.value && !Self.isFollowers($0.key) }.keys.sorted().first }

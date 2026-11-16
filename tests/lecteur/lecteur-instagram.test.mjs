@@ -214,3 +214,11 @@ test("page des cases : chaque ligne avec son état", async () => {
   assert.equal(on["Messages"], false);
   assert.equal(s.pick.r.length, 6);
 });
+
+// Relecture ChatGPT de P5 : ce que dit la ligne « Personnaliser les informations » (preuve pour « ✓ Tout est bien réglé »).
+test("résumé : « Followers et suivi(e)s » nommée, « 1 élément » seul, ou trop d'informations", async () => {
+  assert.equal((await stateOf("resume-followers-seul.html")).info, "followers");
+  assert.equal((await stateOf("resume-bon.html")).info, "one");
+  assert.equal((await stateOf("resume-quatre-elements.html")).info, "");
+  assert.equal((await stateOf("resume-followers-plus.html")).info, "");
+});
