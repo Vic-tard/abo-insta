@@ -18,6 +18,7 @@
 | BUG-07 | Notifications d'export mal affichées | Moyenne | Build 5 | – | Corrigé, à vérifier | PR #116 (FOU-100) | Présent dans le build 1.0 (7) ; vérification iPhone non notée |
 | BUG-08 | Chemin « démo » de la note examinateur peut-être faux (prénom → « Continuer » → « Voir la démo ») depuis la suppression de « Faisons connaissance » | **Critique pour la soumission** | Lire `docs/note-revue-apple.md` puis suivre le parcours actuel | PR #129 a retiré l'écran prénom et la démo du plan (**[Déduit]**, à vérifier sur iPhone) | Ouvert, nouveau | – | – |
 | BUG-09 | Un testeur a eu son compte Instagram verrouillé pendant l'export | Haute | Rapport d'un pote | Non prouvée ; la fenêtre de connexion compte comme « nouvel appareil » | En cours (FOU-121 P1 : arrêt propre ; P6 : chemin par l'app Instagram) | – | – |
+| BUG-22 | Le lien du questionnaire testeurs est le lien d'**édition** du Google Forms (seul Victor peut l'ouvrir) | Moyenne | Ouvrir le lien depuis un autre compte | Mauvais lien copié | Ouvert : attend le lien public `forms.gle/…` de Victor (fil vidéo com, 15 nov.) | – | – |
 | BUG-10 | Notification « prêt » rarement reçue quand l'app est fermée | Moyenne | App fermée après la demande | Limite d'iOS (BGAppRefreshTask) | Contourné | Notification « sûrement prête » à 10 min (PR #69) | Partielle |
 
 ## 2. Bugs corrigés (historique)

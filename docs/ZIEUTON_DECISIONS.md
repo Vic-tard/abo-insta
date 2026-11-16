@@ -46,6 +46,8 @@
 | D-35 | 9–10 nov. | Domaine zieuton.com (Cloudflare) + Cloudflare Pages en principal, GitHub en secours, même après le retour de GitHub | Suspension GitHub du 7 nov. | Active | PR #110, #111 ; FOU-87 à 92 |
 | D-36 | 10 nov. | Un seul build Xcode quand Victor est satisfait, pas de builds intermédiaires | Chaque build coûte du temps à Victor | Active | Mémoire `zieuton-build-unique` |
 | D-37 | 16 nov. | Claude seul écrit le code ; ChatGPT audite (bug confirmé / risque / recommandation), sans pousser ni changer Linear ; Victor tranche | Double regard | Active | `docs/COLLABORATION.md`, FOU-122 |
+| D-41 | 16 nov. 13h10 | Sources de référence : Linear pour les tâches, GitHub pour le code et les versions, `docs/` pour les décisions et le contexte ; `ZIEUTON_HANDOFF.md` mis à jour à chaque étape importante | Mêmes infos pour Claude et ChatGPT | Active | Message de Victor dans le fil « 00 · Réorganiser et documenter le projet » |
+| D-42 | 16 nov. 13h10 | Fils rangés par préfixe 00 à 06 ; 13 fils ouverts traités | Retrouver l'historique | Active | Même source ; audit §7 |
 | D-38 | 6 nov. | Chaque instruction de Victor a son ticket Linear, fermé à la fin | Traçabilité | Active | Mémoire |
 | D-39 | 16 nov. 2h50 | Victor écrit ses idées écran par écran ; Claude exécute sans réinventer | Garder la vision de Victor | Active | Mémoire `abo-insta-export-simple` |
 | D-40 | 6 nov. | Canal test / stable ; tout changement de page passe d'abord en test | Ne jamais bloquer un client | Active | PR #98 ; `MISES-A-JOUR.md` |
@@ -76,4 +78,5 @@
 3. Garder ou non la sortie au 3 décembre si la com (FOU-56, 59, 60) n'a pas démarré.
 4. Quand valider en canal stable les écrans d'arrivée du 15–16 nov.
 5. Accès à la démo pour l'examinateur Apple après la suppression de « Faisons connaissance ».
-6. Statut des tickets FOU-121 (marqué « Done » dans Linear alors que le travail continue) et FOU-119 (« In Progress » mais gelé).
+6. Statut des tickets FOU-121 (marqué « Done » dans Linear alors que le travail continue) et FOU-119 (« In Progress » mais gelé). Victor : ne pas les changer avant la fin de P1.
+7. Lien public du questionnaire testeurs (BUG-22).

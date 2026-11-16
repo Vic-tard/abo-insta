@@ -21,6 +21,14 @@ Ce document résume le projet. Il ne remplace pas les documents existants, il po
 | Résumé à donner à ChatGPT | [`ZIEUTON_HANDOFF.md`](ZIEUTON_HANDOFF.md) |
 | Audit du 16 nov., risques, rangement des fils | [`ZIEUTON_AUDIT_2026-11-16.md`](ZIEUTON_AUDIT_2026-11-16.md) |
 
+## 0. Qui fait foi
+
+**[Confirmé, Victor, 16 nov.]**
+- **Linear** est la référence pour les tâches et leurs statuts.
+- **GitHub** est la référence pour le code, les PR et les numéros de version.
+- **Ces documents** gardent les décisions, le contexte et les analyses. En cas d'écart avec Linear ou GitHub, ce sont eux qui ont raison et on corrige le document.
+- Les informations anciennes ou non vérifiées restent marquées [Déduit] ou [Inconnu].
+
 ## 1. Présentation
 
 **[Confirmé]** Zieuton est une app iPhone qui montre à une personne qui s'est désabonnée de son compte Instagram (et qui l'a rejoint), en comparant les exports officiels de ses données Instagram. Aucune connexion automatisée, aucun serveur, aucun compte Zieuton : tout reste sur le téléphone, avec une sauvegarde dans l'iCloud de l'utilisateur.
@@ -91,7 +99,7 @@ Non commencé ou en attente : Android, version anglaise, accessibilité, découp
 ## 7. État général (16 nov. 2026)
 
 - **[Confirmé]** Build 1.0 (7) sur TestFlight, testé par des amis (groupe « TEST ZIEUTON POTES », 50 places). Leurs retours ont montré que l'export reste difficile (connexion, alerte « appareil non reconnu », réglages, un compte verrouillé).
-- **[Confirmé]** En cours : refonte de la fiabilité de l'export (FOU-121), étape P1 en codage dans le fil « Rendre l'export Instagram simple et fiable ». Plan P1 à P6 validé par Victor et ChatGPT. Diagnostic : https://claude.ai/artifact/EoLTde9KQffLq2JGBuwqkj
+- **[Confirmé]** En cours : refonte de la fiabilité de l'export (FOU-121). L'étape P1 est dans la **PR #132** (ouverte, coque, `CURRENT_PROJECT_VERSION` 11), à relire par ChatGPT et à valider par Victor. Plan P1 à P6 validé par Victor et ChatGPT. Diagnostic : https://claude.ai/artifact/EoLTde9KQffLq2JGBuwqkj
 - **[Confirmé]** Gelé : com, zieuteur 3D, village (améliorations).
 - **[Confirmé]** Fiche App Store remplie, captures déposées, achats créés, App Privacy « Données non collectées ».
 

@@ -1,6 +1,6 @@
 # Zieuton : roadmap
 
-> Dernière mise à jour : 16 novembre 2026 (FOU-123). Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). Ce document donne l'ordre et les dépendances ; en cas d'écart, Linear gagne, puis on corrige ce fichier.
+> Dernière mise à jour : 16 novembre 2026 (FOU-123). Les statuts ci-dessous recopient Linear au 16 nov. ; deux écarts connus (FOU-121 « Done », FOU-119 « In Progress ») ne sont pas encore corrigés, à la demande de Victor. Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). Ce document donne l'ordre et les dépendances ; en cas d'écart, Linear gagne, puis on corrige ce fichier.
 > Statuts : **À faire** / **En cours** / **Bloqué** / **Terminé**. Une ligne = un ticket Linear quand il existe.
 
 ## 1. Priorités actuelles (dans l'ordre)
@@ -9,14 +9,16 @@ Règle de Victor : **un seul sujet à la fois**, clôturé à 100 % avant le sui
 
 | # | Tâche | Ticket | Statut | Dépend de |
 | --- | --- | --- | --- | --- |
-| 1 | Export fiable, P1 : détection fiable des étapes et des demandes, compte verrouillé | FOU-121 | En cours (PR coque en préparation) | – |
+| 1 | Export fiable, P1 : détection fiable des étapes et des demandes, compte verrouillé | FOU-121 | En cours : PR #132 ouverte (coque) | – |
 | 2 | Export, P2 à P6 (voir le diagnostic) | FOU-121 | À faire | P1 relu par ChatGPT et validé par Victor |
-| 3 | Valider en canal stable la page actuelle (`npm run canal -- valider`) | à créer | À faire | Test de Victor en canal test |
+| 3 | Valider en canal stable la page actuelle (`npm run canal -- valider`) | pas encore de ticket | À faire | Test de Victor en canal test |
 | 4 | Build final unique (coque ≥ version 11) + test iPhone complet, achats compris | FOU-105 (parent FOU-101) | En cours | 1, 2 |
 | 5 | Premier export réussi par un inconnu, sans aide | FOU-37 | À faire | 4 |
 | 6 | Retours des potes TestFlight | FOU-113 | À faire | 4 |
 | 7 | Soumission à Apple, publication manuelle | FOU-51 | En cours | 4, 5 ; coller la note examinateur à jour |
 | 8 | Sortie le 3 décembre 2026 | FOU-51 | À faire | 7 |
+
+**Après P1, à faire (liste de Victor, 16 nov.)** : vérifier le parcours de démonstration destiné à Apple ; corriger l'écart entre les statuts Linear et le travail réel ; fixer le minimum indispensable avant soumission ; tester le canal stable et les parcours sur les iPhone des testeurs ; revoir le calendrier de soumission. D'ici là : aucun statut Linear changé et aucune nouvelle PR technique sans l'accord de Victor.
 
 **[Déduit]** La soumission était prévue vers le 20 novembre. Avec P1 à P6 encore à faire dans la coque, cette date est à reconfirmer par Victor (voir l'audit, risque R2).
 

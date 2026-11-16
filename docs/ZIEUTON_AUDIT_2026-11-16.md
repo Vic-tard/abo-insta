@@ -117,6 +117,13 @@ Les fils marqués ★ contiennent des décisions importantes, toutes reprises da
 - **05 Stratégie et business** : Définir la monétisation de Zyeuto ★ · Plan launch and monetization ⧉ · Créer les achats Zieuton Plus ★ · Choisir le nouveau nom Zieuton ★ · Renommer l'app en Zieuton partout · Analyser Reports + et se démarquer · Find top free unfollow tracker competitors ⧉ · Check legal risks of selling the app ★ · Créer la micro-entreprise puis les textes légaux ★ · Mettre à jour les textes légaux · Mettre l'e-mail de contact public · S'inscrire au Small Business Program · Préparer la fiche App Store de Zieuton ⧉ · Remplir la fiche App Store de Zieuton · Finir la fiche App Store pour le build 6 · Préparer l'app pour la soumission Apple · Préparer la com de lancement · Avancer sur la com de Zieuton ⧉ · Écrire les scripts de vidéos virales
 - **06 Tests utilisateurs** : Faire tester Zyeuto via TestFlight ★ · Faire tester Zieuton par des amis
 
+### Résultat (16 nov., 13h10, après l'accord de Victor)
+
+- **Renommés** : « 00 · Réorganiser et documenter le projet » (par Claude) ; « 01 · Fabriquer le build final dans Xcode », « 00 · Soumettre Zieuton à l'App Store », « 05 · Démarches légales (ACRE, médiateur) », « 05 · Créer le zieuteur en 3D (gelé) » (par le coordinateur).
+- **Résolus** : les 7 fils listés ci-dessus (« Faire le récap » l'était déjà, à la demande de Victor). Aucun historique supprimé.
+- **Vérification avant résolution** : aucune action importante ne restait ouverte, sauf deux points du fil « Tester une vidéo de com » repris ailleurs : le lien du questionnaire (BUG-22) et un prompt Higgsfield en attente (com gelée, FOU-116).
+- **Pas touché** : « Rendre l'export Instagram simple et fiable » (P1 en cours, à renommer « 03 · … » après P1).
+
 **Fils à créer** (seulement quand le sujet démarre, un à la fois) : `06 · Retours des potes sur le build final` (FOU-113, FOU-37) ; `00 · Point hebdo et mise à jour des docs` (optionnel).
 
 ## 8. Procédure de maintenance (au quotidien)
@@ -137,9 +144,10 @@ Les fils marqués ★ contiennent des décisions importantes, toutes reprises da
 ## 9. Checklist manuelle pour Victor
 
 - [ ] Relire la PR de documentation et dire « fusionne » ou demander des retouches (ChatGPT peut la relire avant).
-- [ ] Dire si tu valides le plan de rangement (section 7). Ensuite, je renomme ce fil et le coordinateur renomme ou résout les autres ; tu n'as rien à faire à la main.
+- [x] Valider le plan de rangement (fait le 16 nov. ; voir le résultat en section 7).
 - [ ] Si tu veux le nom « ZIEUTON — DÉVELOPPEMENT & STRATÉGIE » pour le projet : ouvre le projet dans Claude → réglages du projet → nom (je ne peux pas le changer moi-même ; si l'option n'existe pas chez toi, garde « ZIEUTON »).
-- [ ] Linear : rouvrir FOU-121 (il est « Done » alors que P1 est en cours) et passer FOU-119 en Backlog, ou m'autoriser à le faire.
+- [ ] Après P1 : rouvrir FOU-121 et passer FOU-119 en Backlog (Victor a demandé de ne rien changer avant).
+- [ ] Envoyer le lien public du questionnaire (`forms.gle/…`), voir BUG-22.
 - [ ] Dire où est vraiment le projet Xcode sur ton Mac (Téléchargements ou Bureau/ZIEUTON).
 - [ ] Vérifier que la clé de signature des mises à jour est sauvegardée dans ton app Mots de passe ; renouveler le jeton Cloudflare (bouton « Roll ») si ce n'est pas fait.
 - [ ] Donner une date de soumission réaliste (ou demander mon avis chiffré).

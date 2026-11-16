@@ -27,6 +27,8 @@
 | 15 nov. | Victor | Build 1.0 (7) | Code de sécurité raté mais l'app dit « je guette ton fichier » | FOU-115 |
 | 16 nov. | ChatGPT (analyse d'une vidéo de Victor) | Build 1.0 (7) | A déclenché le diagnostic de l'export | Fil export |
 
+**[Confirmé, 15 nov.]** Le lien du questionnaire diffusé est le lien d'**édition** du formulaire : les testeurs ne peuvent sans doute pas répondre (BUG-22).
+
 **[Inconnu]** Nombre de testeurs inscrits, nombre d'imports réussis, réponses du questionnaire (FOU-113 à faire).
 
 ## 3. Problèmes d'ergonomie récurrents
