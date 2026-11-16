@@ -124,3 +124,43 @@ test("mot de passe faux : connexion + erreur reconnues", async () => {
   assert.equal(s.badpw, true);
   assert.equal(s.locked, "");
 });
+
+// FOU-121 P2 : connexion à Instagram, seulement sur des phrases claires d'Instagram.
+test("identifiant inconnu : connexion + compte introuvable, pas « mot de passe faux »", async () => {
+  const s = await stateOf("identifiant-inconnu.html");
+  assert.equal(s.login, true);
+  assert.equal(s.nouser, true);
+  assert.equal(s.badpw, false);
+});
+
+test("mot de passe faux : pas pris pour un compte introuvable", async () => {
+  const s = await stateOf("mot-de-passe-faux.html");
+  assert.equal(s.nouser, false);
+});
+
+test("code refusé : case du code + erreur reconnues", async () => {
+  const s = await stateOf("code-incorrect.html");
+  assert.equal(s.code, "sms");
+  assert.equal(s.codebad, true);
+});
+
+test("écran du code normal (« si le code a expiré… ») : pas d'erreur inventée", async () => {
+  const s = await stateOf("code-aide-expire.html");
+  assert.equal(s.code, "sms");
+  assert.equal(s.codebad, false);
+  const w = await stateOf("code-whatsapp.html");
+  assert.equal(w.codebad, false);
+});
+
+test("validation sur un autre appareil : reconnue, sans case ni mot de passe", async () => {
+  const s = await stateOf("validation-autre-appareil.html");
+  assert.equal(s.code, "approve");
+  assert.equal(s.login, false);
+  assert.equal(s.pending, false);
+});
+
+test("page sans champ de connexion : pas de demande de mot de passe", async () => {
+  const s = await stateOf("adresse-login-sans-champ.html");
+  assert.equal(s.login, false);
+  assert.equal(s.code, "");
+});

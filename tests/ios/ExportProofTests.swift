@@ -124,5 +124,22 @@ check(ExportProof.problem("summary:info") != nil, "toutes les informations signa
 check(ExportProof.problem("summary:start") == nil, "bons réglages : rien à signaler")
 check(ExportProof.problem("") == nil, "résumé jamais lu : rien à signaler (pas d'invention)")
 
+// 15. FOU-121 P2 : connexion. Un refus = une apparition du message, conseil « Mot de passe oublié ? » au 2e refus.
+var help = LoginHelp()
+check(!help.manyBadPasswords, "aucun refus : pas de conseil")
+help.saw(badPassword: true); help.saw(badPassword: true); help.saw(badPassword: true)
+check(help.badPasswords == 1 && !help.manyBadPasswords, "message affiché longtemps = un seul refus")
+help.saw(badPassword: false)
+check(help.badPasswords == 1, "message parti : pas de refus en plus")
+help.saw(badPassword: true)
+check(help.manyBadPasswords, "2e refus : conseil « Mot de passe oublié ? »")
+check(!LoginHelp.isRealLoadFailure(domain: NSURLErrorDomain, code: NSURLErrorCancelled), "navigation annulée : pas une panne")
+check(!LoginHelp.isRealLoadFailure(domain: "WebKitErrorDomain", code: 102), "page devenue téléchargement : pas une panne")
+check(LoginHelp.isRealLoadFailure(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet), "pas d'Internet : vraie panne")
+check(LoginHelp.isRealLoadFailure(domain: NSURLErrorDomain, code: NSURLErrorTimedOut), "délai dépassé : vraie panne")
+let t0 = Date(timeIntervalSince1970: 1_000_000)
+check(!LoginHelp.downloadStuck(since: t0, now: t0.addingTimeInterval(30)), "téléchargement de 30 s : normal")
+check(LoginHelp.downloadStuck(since: t0, now: t0.addingTimeInterval(91)), "téléchargement de plus de 90 s : bloqué")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
