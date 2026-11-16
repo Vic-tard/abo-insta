@@ -1955,6 +1955,10 @@ final class MetaViewController: UIViewController {
             }
             return Step(verb: "Presque fini :", target: "Zieuton récupère ton fichier…", tip: "Ne ferme pas cet écran.")
         }
+        if pageProblem == "offline", guarding, !guardReady {
+            return Step(verb: "Oups :", target: "Instagram ne répond pas",
+                        tip: "Vérifie ton Wi-Fi ou ta 4G. Ta demande n'est pas perdue : je réessaie toutes les 10 secondes.")
+        }
         if pageProblem == "offline" {
             return Step(verb: "Oups :", target: "Instagram ne répond pas",
                         tip: "Vérifie ton Wi-Fi ou ta 4G, puis touche ce bandeau pour recharger la page.")
@@ -1978,14 +1982,14 @@ final class MetaViewController: UIViewController {
             }
             if Date().timeIntervalSince(guardSince) > Self.guardFor {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
-                            tip: "Je t'envoie une notification dès que ton fichier est prêt.")
+                            tip: "Je regarde à nouveau dès que tu rouvres Zieuton, et je t'enverrai un rappel pour aller voir.")
             }
             if existingRequest {
                 return Step(verb: "Une demande est déjà en cours :", target: "je guette ton fichier",
-                            tip: "Instagram prépare déjà ton fichier, inutile d'en refaire une. Je vibre dès qu'il est prêt, ou je t'envoie une notification.")
+                            tip: "Instagram prépare déjà ton fichier, inutile d'en refaire une. Je vibre dès que je le vois prêt. Si tu fermes, je t'enverrai un rappel pour aller voir.")
             }
             return Step(verb: "Garde cet écran ouvert :", target: "je guette ton fichier",
-                        tip: "Je regarde la page d'Instagram toutes les 10 secondes et je vibre dès que c'est prêt. Tu peux aussi fermer : je t'enverrai une notification.")
+                        tip: "Je regarde la page d'Instagram toutes les 10 secondes et je vibre dès que je le vois prêt. Tu peux aussi fermer : je t'enverrai un rappel pour aller voir.")
         }
         if cookiesShown {
             return Step(verb: "Cookies : touche", target: "Refuser les cookies optionnels",
@@ -3127,8 +3131,8 @@ final class ExportWatcher: NSObject {
 
     // MARK: Étapes
 
-    /// Délai du filet de sécurité : le même que celui où la carte de l'accueil passe à « prêt ».
-    /// Instagram envoie son mail en 1 à 2 minutes en général : on prévient au bout de 3 (FOU-100).
+    /// Délai du filet de sécurité (Zieuton fermé, iOS ne le laisse pas vérifier) : une invitation à aller voir,
+    /// jamais une annonce « prêt » (FOU-121 P3 : « prêt » seulement quand le fichier est vu chez Instagram).
     static let likelyAfter: TimeInterval = 3 * 60
 
     /// La demande vient de partir dans Instagram.
@@ -3153,15 +3157,16 @@ final class ExportWatcher: NSObject {
                             after: 40 * 60, category: Id.readyCategory)
                 return
             }
-            self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive en général en 1 à 3 minutes. Je te préviens dès qu'il est là.",
+            self.notify(Id.asked, "C'est demandé ✓", "Instagram prépare ton fichier. Je te dis dès que je le vois prêt.",
                         subtitle: "Demande envoyée à Instagram à \(Self.hour(now))", after: 1)
             // Zieuton fermé, iOS décide seul quand le réveiller (parfois jamais) : sans ce filet, aucune notif ne partirait.
-            // Si Zieuton voit le fichier avant, cette notification est remplacée par « Ton fichier Instagram est prêt ».
-            self.notify(Id.likely, "Ton fichier Instagram est sûrement prêt 🎉", "Instagram met en général 1 à 3 minutes. Touche pour le récupérer : Zieuton se met à jour tout seul.",
-                        subtitle: "Demandé à \(Self.hour(now))", after: Self.likelyAfter, badge: true, category: Id.readyCategory)
-            self.notify(Id.reminder, "Ton fichier t'attend 📥", "Demandé à \(Self.hour(now)). Touche pour le récupérer et voir enfin qui est parti et qui est arrivé.",
+            // FOU-121 P3 : ce filet invite à aller voir, il n'annonce jamais un fichier prêt qu'on n'a pas vu.
+            // Si Zieuton voit le fichier avant, il est remplacé par « Ton fichier Instagram est prêt ».
+            self.notify(Id.likely, "Va voir où en est ton export 👀", "Zieuton fermé, je ne peux pas vérifier tout seul. Touche : je regarde chez Instagram, et s'il est prêt je m'occupe du reste.",
+                        subtitle: "Demandé à \(Self.hour(now))", after: Self.likelyAfter, category: Id.readyCategory)
+            self.notify(Id.reminder, "Ton export Instagram en est où ? 📥", "Demandé à \(Self.hour(now)). Je n'ai pas encore pu voir s'il est prêt : touche pour regarder chez Instagram.",
                         after: 40 * 60, category: Id.readyCategory)
-            self.notify(Id.lastDay, "⏳ Dernier jour pour ton fichier", "Ta demande de \(Self.day(now)) expire bientôt. Touche pour mettre Zieuton à jour avant qu'elle disparaisse.",
+            self.notify(Id.lastDay, "⏳ Ta demande Instagram expire bientôt", "Un fichier Instagram ne reste téléchargeable que quelques jours. Touche pour regarder s'il est prêt et le récupérer à temps.",
                         after: 3 * 86400, category: Id.readyCategory)
         }
         DispatchQueue.main.async {
@@ -3177,7 +3182,7 @@ final class ExportWatcher: NSObject {
     func stillPending() {
         guard let r = requestedAt, store.object(forKey: Key.ready) == nil else { return }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Id.likely])
-        notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
+        notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Touche pour regarder où il en est : je ne peux pas toujours vérifier quand Zieuton est fermé.",
                subtitle: isExisting ? nil : "Demandé à \(Self.hour(r))", after: 10 * 60)
     }
 
@@ -3204,13 +3209,14 @@ final class ExportWatcher: NSObject {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [Id.likely, Id.reminder, Id.lastDay])
         center.removeDeliveredNotifications(withIdentifiers: [Id.asked, Id.likely])
-        let now = Date(), expires = now.addingTimeInterval(4 * 86400)
+        let now = Date()
         // Demande déjà en cours : on ne sait pas quand elle est partie, donc pas de « Instagram a mis X ».
         let took = isExisting ? nil : requestedAt.map { Self.duration(now.timeIntervalSince($0)) }
-        notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour mettre Zieuton à jour : tu sauras qui est parti et qui est arrivé. Valable jusqu'au \(Self.day(expires)).",
-               subtitle: took.map { "Instagram a mis \($0)" }, after: 1, badge: true, category: Id.readyCategory)
-        notify(Id.lastDay, "⏳ Ton fichier expire demain à \(Self.hour(expires))", "Après, il faudra refaire une demande. Touche pour mettre Zieuton à jour maintenant.",
-               after: 3 * 86400, badge: true, category: Id.readyCategory)
+        // FOU-121 P3 : on sait quand on a VU le fichier, pas quand Instagram l'a préparé : pas de date d'expiration exacte.
+        notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour mettre Zieuton à jour : tu sauras qui est parti et qui est arrivé. Instagram le garde quelques jours.",
+               subtitle: took.map { "Vu prêt \($0) après la demande" }, after: 1, badge: true, category: Id.readyCategory)
+        notify(Id.lastDay, "⏳ Ton fichier Instagram expire bientôt", "Après, il faudra refaire une demande. Touche pour mettre Zieuton à jour maintenant.",
+               after: 2 * 86400, badge: true, category: Id.readyCategory)
         DispatchQueue.main.async { self.onReady?() }
     }
 

@@ -11,7 +11,7 @@
     "canal": "node scripts/channel.mjs",
     "version": "node scripts/version.mjs",
     "check:versions": "node scripts/check-versions.mjs origin/main",
-    "test:lecteur": "node --test tests/lecteur/*.test.mjs"
+    "test:lecteur": "node --test tests/lecteur/*.test.mjs tests/page/*.test.mjs"
   },
   "devDependencies": {
     "playwright": "1.63.0"

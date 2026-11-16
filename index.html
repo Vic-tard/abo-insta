@@ -2723,7 +2723,7 @@ if (!window.ZYEUTO_APP) {
   <div class="asked-card">
     <span class="zy-av asked-av" id="asked-av" aria-hidden="true"></span>
     <h2 id="asked-t">C'est demandé&nbsp;!</h2>
-    <p>Instagram prépare ta liste. En général, c'est prêt en quelques minutes&nbsp;: je te préviens dès que c'est le cas.</p>
+    <p>Instagram prépare ta liste. Je regarde chez Instagram et je te dis dès que je la vois prête.</p>
     <p class="asked-sub">En attendant&nbsp;?</p>
     <button class="asked-go games" id="asked-games" type="button">Jouer aux mini-jeux</button>
     <button class="asked-go stats" id="asked-stats" type="button">Explorer mes graphiques</button>
@@ -4374,8 +4374,10 @@ $("install-banner").hidden = !needsInstall || prefs.installDismissed;
 $("install-x").addEventListener("click", () => { prefs.installDismissed = true; savePrefs(); $("install-banner").hidden = true; });
 
 
-// Instagram envoie en général le fichier en 1 à 2 minutes : la carte passe à « prête » au bout de 3 (FOU-100).
-const READY_AFTER_MIN = 3;
+// FOU-121 P3 : « prête » seulement quand l'app a VU le fichier chez Instagram (prefs.readyAt), jamais après un délai.
+function exportSeenReady() { return !!prefs.readyAt; }
+// Au-delà, l'écran d'attente dit simplement qu'il n'a pas encore vu la liste prête et propose d'aller regarder.
+const WAIT_LONG_MIN = 10;
 var lastPendingSent = null;
 function daysSince(iso) { return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000); }
 function renderWeekly() {
@@ -4393,7 +4395,7 @@ function renderWeekly() {
   const pend = reqPending();
   const mins = pend && prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
   // Dans l'app iPhone (version 3), Zieuton regarde lui-même la page d'Instagram et dit quand le fichier est là.
-  const ready = pend && (!!prefs.readyAt || mins >= READY_AFTER_MIN);
+  const ready = pend && exportSeenReady();
   // L'app arrête de guetter (et retire ses rappels) dès qu'il n'y a plus d'export en attente.
   if (nativeApp && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend }); } catch (e) { logError("bridge-exportState", e); } }
   const at = !pend ? 0 : ready ? 2 : 1;
@@ -4408,7 +4410,7 @@ function renderWeekly() {
   $("wk-redo").hidden = !pend || simple;
   $("wk-help").hidden = !simple;
   if (simple) { $("wk-more").hidden = true; $("wk-toggle").setAttribute("aria-expanded", "false"); $("sos-redo").hidden = !pend; }
-  $("wk-go-t").textContent = !pend ? "C'est parti" : "Télécharger mon export";
+  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? "Télécharger mon export" : "Regarder si c'est prêt";
   $("wk-go-i").innerHTML = pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
@@ -4660,7 +4662,7 @@ function wkGo(mode) {
   } else {
     const dl = metaStep(GET_SHOTS[1]);
     // Le bandeau ne peut pas savoir si le fichier est prêt : il dit quoi faire dans les deux cas.
-    dl.tip = "Toujours « En cours » ? Ferme, je te préviens dès que c'est prêt.";
+    dl.tip = "Toujours « En cours » ? Tu peux fermer : je regarde à nouveau dès que tu rouvres Zieuton.";
     nativePost({ type: "meta", mode: "get", url: IG_EXPORT_URL, steps: [dl] });
   }
 }
@@ -4721,7 +4723,7 @@ $("wk-steps").addEventListener("click", (e) => {
   if (li.dataset.step === "get") return wkGo("get");
   if (li.dataset.step === "request") { if (reqPending()) $("wk-redo").click(); return wkGo("request"); }
   haptic("light");
-  toast(reqPending() ? "Instagram prépare ton fichier. Je te préviens dès qu'il est prêt, ou touche « Télécharger » pour aller voir." : "Commence par « Demander » : Instagram prépare ensuite ton fichier.", false);
+  toast(reqPending() ? "Instagram prépare ton fichier. Je te dis dès que je le vois prêt, ou touche le gros bouton pour aller voir." : "Commence par « Demander » : Instagram prépare ensuite ton fichier.", false);
 });
 $("wk-help").addEventListener("click", () => {
   const open = $("wk-sos").hidden;
@@ -4730,7 +4732,7 @@ $("wk-help").addEventListener("click", () => {
 $("sos-file").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); startImport(); });
 $("sos-redo").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); $("wk-redo").click(); });
 $("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
-// La carte passe toute seule à « Ton export est prêt » au bout de quelques minutes.
+// La carte se redessine (« Demandé il y a X min ») ; elle ne passe à « prêt » que si l'app a vu le fichier (FOU-121 P3).
 setInterval(() => { if (!document.hidden && reqPending()) { renderWeekly(); if (gfOn() && gfStep() === "get" && metaInApp()) renderGuided(); } }, 30000);
 
 // ---------- Parcours guidé du premier export ----------
@@ -4976,12 +4978,13 @@ function renderGuided() {
   } else if (step === "get" && metaInApp()) {
     // App iPhone : on attend Instagram ici. L'app guette la page d'Instagram et envoie une notification quand c'est prêt.
     const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
-    const ready = !!prefs.readyAt || since >= READY_AFTER_MIN;
+    // FOU-121 P3 : « prête » seulement si l'app l'a vue chez Instagram. Sinon, aucune promesse de délai.
+    const ready = exportSeenReady();
     const ago = since < 60 ? since + " min" : Math.round(since / 60) + " h";
-    const sure = !!prefs.readyAt;
-    const say = ready ? (sure ? "Ta liste est prête&nbsp;! On va la chercher 🏃" : "Ta liste devrait être prête&nbsp;! On va voir 🏃")
+    const say = ready ? "Ta liste est prête&nbsp;! On va la chercher 🏃"
       : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: je guette ta liste."
       : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste."
+      : since >= WAIT_LONG_MIN ? `Demandé il y a ${ago}. Je ne l'ai pas encore vue prête&nbsp;: touche « Regarder si c'est prêt ».`
       : `Demandé il y a ${ago}. Instagram y travaille encore…`;
     // Attente puis « prête » : même carte prune et or que l'accueil, puis des lignes façon Réglages.
     const SV = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
@@ -4995,18 +4998,18 @@ function renderGuided() {
     const track = (pct, st) => `<div class="gx-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
         <ol class="gx-steps">${["Demandé", "Instagram prépare", "Prête"].map((t, k) => `<li class="${k < st ? "done" : k === st ? "now" : ""}">${t}</li>`).join("")}</ol>`;
     if (!ready) {
-      // Attente : on rassure (1 à 3 min, notification, pas besoin du mail) et on emmène vers la démo.
-      const pct = Math.min(94, 6 + Math.round(since / READY_AFTER_MIN * 88));
+      // Attente : on rassure (rappel, pas besoin du mail) sans promettre de délai, et on emmène vers la démo (FOU-121 P3).
+      // La barre ne mesure pas le temps : elle reste à « Instagram prépare » tant que le fichier n'est pas vu.
       body.innerHTML = `${guide(say)}
       <h2 id="gf-title">Ta liste est en route</h2>
       <div class="gx">
-        <div class="gx-top"><span class="gx-ic">${I_MAIL}</span><div><small>Temps d'attente</small><b>1 à 3 min</b></div></div>
-        ${track(pct, 1)}
+        <div class="gx-top"><span class="gx-ic">${I_MAIL}</span><div><small>En général</small><b>Quelques minutes</b></div></div>
+        ${track(50, 1)}
       </div>
       <ul class="gx-list">
-        ${row(I_BELL, "lilac", "Une notification arrive", "Touche-la&nbsp;: je récupère tout pour toi.")}
+        ${row(I_BELL, "lilac", "Je te fais signe", "Je regarde chez Instagram quand Zieuton est ouvert. Sinon, je t'envoie un rappel pour aller voir.")}
         ${row(I_MAIL, "rose", "Pas besoin d'ouvrir le mail", "Instagram t'en envoie un aussi, mais tout se fait ici.")}
-        ${row(I_PHONE, "plum", "Tu peux fermer l'app", "Rien ne se perd, je te préviens.")}
+        ${row(I_PHONE, "plum", "Tu peux fermer l'app", "Rien ne se perd&nbsp;: quand tu la rouvres, je regarde tout de suite où en est Instagram.")}
       </ul>
       <div class="gf-foot">
         <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>En attendant, découvre l'app</button>
@@ -5014,18 +5017,18 @@ function renderGuided() {
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
       $("gf-wait-demo").onclick = () => enterDemo();
-      // La barre avance toute seule : on redessine chaque minute tant qu'on attend.
+      // Le texte (« Demandé il y a X min ») se met à jour chaque minute tant qu'on attend.
       clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get") renderGuided(); }, 60000);
     } else {
     body.innerHTML = `${guide(say)}
-      <h2 id="gf-title">${sure ? "Ta liste est prête" : "Ta liste devrait être prête"}</h2>
+      <h2 id="gf-title">Ta liste est prête</h2>
       <div class="gx ready">
-        <div class="gx-top"><span class="gx-ic">${I_CHECK}</span><div><small>${sure ? "Arrivée" : "Sans doute arrivée"}</small><b>Plus qu'une touche</b></div></div>
-        ${track(100, sure ? 3 : 2)}
+        <div class="gx-top"><span class="gx-ic">${I_CHECK}</span><div><small>Arrivée</small><b>Plus qu'une touche</b></div></div>
+        ${track(100, 3)}
       </div>
       <ul class="gx-list">
         ${row(I_TAP, "lilac", "Touche « Récupérer ma liste »", "Juste en dessous.")}
-        ${row(I_OUT, "rose", "Instagram s'ouvre ici", sure ? "Touche « Télécharger » à côté de ton export." : "Si l'export est encore « En cours », reviens un peu plus tard&nbsp;: je te préviens.")}
+        ${row(I_OUT, "rose", "Instagram s'ouvre ici", "Touche « Télécharger » à côté de ton export.")}
         ${row(I_CHECK, "plum", "Je m'occupe du reste", "Ta liste s'affiche toute seule.")}
       </ul>
       <div class="gf-foot">
@@ -5128,7 +5131,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-1312";
+const BUILD = "2026-11-16-1619";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -8520,12 +8523,12 @@ function realWait() {
   if (!DEMO || !realPrefs || !realState) return null;
   const sp = prefs, ss = state; prefs = realPrefs; state = realState;
   let r = null;
-  try { if (reqPending()) { const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0; r = { ready: !!prefs.readyAt || since >= READY_AFTER_MIN, left: Math.max(1, READY_AFTER_MIN - since) }; } } finally { prefs = sp; state = ss; }
+  try { if (reqPending()) { const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0; r = { ready: exportSeenReady(), since }; } } finally { prefs = sp; state = ss; }
   return r;
 }
 function renderDemoBar() {
   const w = realWait(), sp = $("demo-bar").querySelector("span:not(.demo-tag)");
-  sp.textContent = !w ? "Données inventées" : w.ready ? "Ta liste est prête 🎉" : `Ta liste arrive · ~${w.left} min`;
+  sp.textContent = !w ? "Données inventées" : w.ready ? "Ta liste est prête 🎉" : "Instagram prépare ta liste";
   $("demo-quit").textContent = w && w.ready ? "Récupérer ma liste" : w ? "Ma liste" : "Quitter la démo";
   $("demo-bar").classList.toggle("go", !!(w && w.ready));
 }
