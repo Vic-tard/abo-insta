@@ -1240,15 +1240,27 @@ final class MetaViewController: UIViewController {
           var NOUSER = /n'appartient à aucun compte|ne correspond à aucun compte|aucun compte (ne correspond|trouvé)|doesn't belong to an account|does not belong to an account|can't find an account|couldn't find an account|no account found/;
           var BADCODE = /code (de sécurité |de confirmation )?(est |que vous avez saisi est )?(incorrect|invalide|n'est pas valide|a expiré|expiré)|(this|that|the) code (is |was |has )?(incorrect|invalid|not valid|expired)|code (isn't|is not) (valid|right)|invalid (security |confirmation )?code|code expired/;
           var APPROVE = /consultez (vos )?notifications sur un autre appareil|vérifiez (vos )?notifications sur un autre appareil|approuvez (cette connexion|la connexion) (depuis|sur) un autre appareil|check (your )?notifications on another device|approve (this login|the login) (from|on) another device|waiting for approval|en attente d'approbation/;
-          // Une phrase visible, dans un petit bloc de texte (pas toute la page).
+          // Explications d'Instagram (« Si le code a expiré… », « If you forgot your password… ») : jamais prises pour une erreur.
+          var HINT = /(^|[\s(])(si|if|when|lorsque|quand) [^.!?\n]*/g;
+          // Vraiment lisible : pas transparent, pas réduit à un point (texte réservé aux lecteurs d'écran).
+          var shown = function (el) {
+            var r = el.getBoundingClientRect();
+            if (r.width < 4 || r.height < 4) return false;
+            for (var e = el; e && e.nodeType === 1; e = e.parentElement) {
+              var cs = getComputedStyle(e);
+              if (parseFloat(cs.opacity) < 0.1 || cs.visibility === 'hidden') return false;
+            }
+            return true;
+          };
+          // Une phrase visible, dans un petit bloc de texte (pas toute la page, pas un texte caché ni hors de l'écran).
           var seeText = function (re) {
-            var els = document.querySelectorAll('h1,h2,h3,[role=heading],span,div,p');
+            var els = document.querySelectorAll('h1,h2,h3,[role=heading],[role=alert],span,div,p');
             for (var i = 0; i < els.length; i++) {
               var el = els[i];
               if (el.childElementCount > 4) continue;
               var t = low(el);
-              if (t.length > 300 || !re.test(t)) continue;
-              if (vis(el)) return true;
+              if (t.length > 300 || !re.test(t.replace(HINT, ' '))) continue;
+              if (vis(el) && shown(el)) return true;
             }
             return false;
           };
@@ -1272,15 +1284,15 @@ final class MetaViewController: UIViewController {
             // Page des cases bien visible (« Tout sélectionner », « Followers et suivi(e)s ») : ce n'est pas une demande de mot de passe,
             // même si Instagram garde un champ caché dans la page.
             if (login && seeAny(['tout sélectionner', 'select all', 'tout effacer', 'clear all', 'followers et suivi(e)s', 'followers and following'])) login = false;
-            var bodyTxt = (document.body.innerText || '').replace(/’/g, "'").toLowerCase();
-            var badpw = login && BADPW.test(bodyTxt);
+            // FOU-121 P2 : une erreur n'est signalée que si Instagram l'affiche vraiment (phrase visible à l'écran, pas une explication).
+            var badpw = login && seeText(BADPW);
             // FOU-121 P2 : identifiant inconnu (C5), seulement sur l'écran de connexion.
-            var nouser = login && !badpw && NOUSER.test(bodyTxt);
+            var nouser = login && !badpw && seeText(NOUSER);
             // Code de sécurité : on regarde seulement s'il y a une case pour un code, et si la page parle de WhatsApp, SMS ou e-mail.
             var codeIn = Array.prototype.some.call(document.querySelectorAll('input[autocomplete="one-time-code"],input[name*="code" i],input[aria-label*="code" i],input[placeholder*="code" i]'), vis);
             var code = '';
             // FOU-121 P2 : code refusé ou expiré (C6), seulement quand une case pour le code est là.
-            var codebad = codeIn && !login && BADCODE.test(bodyTxt.replace(/(si|if) (le |ce |votre |the |your )?code[^.!?\n]*/g, ''));
+            var codebad = codeIn && !login && seeText(BADCODE);
             if (codeIn && !login) {
               var txt = (document.body.innerText || '').toLowerCase();
               code = txt.indexOf('whatsapp') >= 0 ? 'whatsapp'
@@ -1946,6 +1958,10 @@ final class MetaViewController: UIViewController {
         if pageProblem == "offline" {
             return Step(verb: "Oups :", target: "Instagram ne répond pas",
                         tip: "Vérifie ton Wi-Fi ou ta 4G, puis touche ce bandeau pour recharger la page.")
+        }
+        if pageProblem == "failed" {
+            return Step(verb: "Oups :", target: "la page ne s'est pas ouverte",
+                        tip: "Touche ce bandeau pour réessayer. Rien n'est envoyé à ta place.")
         }
         if pageProblem == "crashed" {
             return Step(verb: "Oups :", target: "la page s'est fermée",
@@ -2792,12 +2808,19 @@ struct LoginHelp: Equatable {
     /// Au 2e refus, on conseille « Mot de passe oublié ? » plutôt que de réessayer (évite un blocage du compte).
     var manyBadPasswords: Bool { badPasswords >= 2 }
 
-    /// Vraie panne de chargement ? Une navigation annulée (nouvelle page, téléchargement) n'en est pas une.
-    static func isRealLoadFailure(domain: String, code: Int) -> Bool {
-        if domain == NSURLErrorDomain && code == NSURLErrorCancelled { return false }
-        // WebKit : 102 = navigation remplacée par un téléchargement, 204 = contenu pris en charge par un module.
-        if domain == "WebKitErrorDomain" && (code == 102 || code == 204) { return false }
-        return true
+    enum LoadFailure: Equatable { case none, network, other }
+
+    /// Pourquoi la page n'a pas chargé ? « network » seulement pour une vraie erreur de réseau (relecture ChatGPT) :
+    /// toute autre erreur reçoit un message neutre, sans parler de Wi-Fi.
+    static func loadFailure(domain: String, code: Int) -> LoadFailure {
+        // Navigation annulée (nouvelle page) ou remplacée par un téléchargement / un module : pas une panne.
+        if domain == NSURLErrorDomain && code == NSURLErrorCancelled { return .none }
+        if domain == "WebKitErrorDomain" && (code == 102 || code == 204) { return .none }
+        let network: Set<Int> = [NSURLErrorNotConnectedToInternet, NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost,
+                                 NSURLErrorCannotFindHost, NSURLErrorCannotConnectToHost, NSURLErrorDNSLookupFailed,
+                                 NSURLErrorInternationalRoamingOff, NSURLErrorDataNotAllowed, NSURLErrorCallIsActive]
+        if domain == NSURLErrorDomain && network.contains(code) { return .network }
+        return .other
     }
 
     /// Au-delà de 90 s sans fin, le téléchargement est considéré comme bloqué (un export de suivis pèse quelques Ko).
@@ -2935,8 +2958,11 @@ extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
 
     private func loadFailed(_ error: Error) {
         let e = error as NSError
-        guard LoginHelp.isRealLoadFailure(domain: e.domain, code: e.code) else { return }
-        pageProblem = "offline"
+        switch LoginHelp.loadFailure(domain: e.domain, code: e.code) {
+        case .none: return
+        case .network: pageProblem = "offline"
+        case .other: pageProblem = "failed"
+        }
         pageKnown = true
         showStep()
     }

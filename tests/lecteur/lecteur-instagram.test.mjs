@@ -164,3 +164,24 @@ test("page sans champ de connexion : pas de demande de mot de passe", async () =
   assert.equal(s.login, false);
   assert.equal(s.code, "");
 });
+
+// Relecture ChatGPT n° 3 : un texte caché, hors de l'écran ou une simple explication ne déclenchent jamais d'erreur.
+test("erreurs de connexion cachées ou hors de l'écran : ignorées", async () => {
+  const s = await stateOf("erreurs-cachees.html");
+  assert.equal(s.login, true);
+  assert.equal(s.badpw, false);
+  assert.equal(s.nouser, false);
+});
+
+test("explications d'Instagram (« Si votre mot de passe est incorrect… ») : pas une erreur", async () => {
+  const s = await stateOf("connexion-explications.html");
+  assert.equal(s.login, true);
+  assert.equal(s.badpw, false);
+  assert.equal(s.nouser, false);
+});
+
+test("erreur de code cachée ou hors de l'écran : ignorée", async () => {
+  const s = await stateOf("code-erreur-cachee.html");
+  assert.equal(s.code, "sms");
+  assert.equal(s.codebad, false);
+});
