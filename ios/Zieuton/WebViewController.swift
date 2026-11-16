@@ -1776,11 +1776,9 @@ final class MetaViewController: UIViewController {
     }
 
     @objc private func bannerTapped() {
-        // « À vérifier » : l'utilisateur a regardé la liste et nous dit que la nouvelle ligne est bien sa demande.
-        if requesting, !finished, toCheck {
-            if sentAt == nil { sentAt = Date() }
-            toCheck = false
-            finishRequest()
+        // « À vérifier » : une simple touche ne valide rien, on demande une confirmation explicite (relecture ChatGPT).
+        if ExportProof.bannerTap(requesting: requesting, finished: finished, toCheck: toCheck) == .askConfirm {
+            askConfirmRequest()
             return
         }
         // Demande pas encore vue au bout de 20 s : on rouvre la liste des exports pour vérifier (rien n'est envoyé).
@@ -2078,12 +2076,14 @@ final class MetaViewController: UIViewController {
         lastTapAt = Date()
         // Demande pas encore vue, et l'utilisateur retouche « Créer une exportation » : il refait le parcours (son choix).
         // La référence (lignes « En attente » d'avant) ne bouge pas : la première demande, si elle est passée, sera vue aussi.
-        if requesting, sentAt != nil, !loose, hit(steps[0].wait) {
+        if requesting, !loose, hit(steps[0].wait),
+           ExportProof.duplicateRisk(tappedStart: sentAt != nil, toCheck: toCheck, finished: finished) {
             sentAt = nil
             verifiedAt = nil
             index = min(1, steps.count - 1)
             warning = nil
             showStep()
+            warnDuplicate()
             return
         }
         // « Commencer l'exportation » compte toujours, même si le bandeau s'est trompé d'étape avant :
@@ -2476,6 +2476,42 @@ final class MetaViewController: UIViewController {
         UIAccessibility.post(notification: .screenChanged, argument: title)
     }
 
+    /// « Demande à vérifier » : l'utilisateur confirme lui-même que la nouvelle ligne est sa demande (jamais sur une simple touche).
+    private func askConfirmRequest() {
+        guard presentedViewController == nil else { return }
+        let alert = UIAlertController(title: "Cette ligne est-elle ta demande ?",
+                                      message: "Confirme seulement si la nouvelle ligne « En attente » est datée d'aujourd'hui. Dans le doute, regarde encore la liste.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Pas sûr, je regarde encore", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Oui, c'est ma demande", style: .default) { [weak self] _ in
+            guard let self, self.requesting, !self.finished, self.toCheck else { return }
+            if self.sentAt == nil { self.sentAt = Date() }
+            self.toCheck = false
+            self.finishRequest()
+        })
+        present(alert, animated: true)
+    }
+
+    /// « Créer une exportation » retouché alors que la demande d'avant n'est pas confirmée : risque de doublon.
+    /// Zieuton ne bloque pas Instagram (c'est le choix de l'utilisateur) : il prévient, et propose de revoir la liste d'abord.
+    private func warnDuplicate() {
+        guard presentedViewController == nil else { return }
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        let alert = UIAlertController(title: "Attention au doublon",
+                                      message: "Ta demande d'avant est peut-être déjà enregistrée chez Instagram. Regarde d'abord la liste : une ligne « En attente » d'aujourd'hui, c'est bon, ne refais rien.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Revoir la liste", style: .cancel) { [weak self] _ in
+            guard let self else { return }
+            self.index = 0
+            self.pickedAt = -1
+            self.seenScreen = .distantPast
+            self.webView.load(URLRequest(url: self.url))
+            self.showStep()
+        })
+        alert.addAction(UIAlertAction(title: "Refaire quand même", style: .destructive))
+        present(alert, animated: true)
+    }
+
     /// La demande est vue dans la liste d'Instagram (ou une demande était déjà en cours) : on guette le fichier.
     private func finishRequest() {
         guard !finished else { return }
@@ -2617,6 +2653,17 @@ struct ExportProof: Equatable {
             let r = $0.range(at: group)
             return r.location == NSNotFound ? nil : ns.substring(with: r)
         }
+    }
+
+    /// Toucher le bandeau en « à vérifier » ouvre une confirmation, jamais une validation directe.
+    enum BannerTap: Equatable { case askConfirm, other }
+    static func bannerTap(requesting: Bool, finished: Bool, toCheck: Bool) -> BannerTap {
+        requesting && !finished && toCheck ? .askConfirm : .other
+    }
+
+    /// Retoucher « Créer une exportation » risque un doublon : demande touchée mais pas confirmée, ou ligne « à vérifier ».
+    static func duplicateRisk(tappedStart: Bool, toCheck: Bool, finished: Bool) -> Bool {
+        !finished && (tappedStart || toCheck)
     }
 
     /// Ce que le bandeau dit si la demande est partie avec un mauvais réglage (dernier résumé lu avant la demande).

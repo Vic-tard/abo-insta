@@ -105,7 +105,19 @@ check(!recent("il y a 2 h"), "« il y a 2 h » : trop vieux pour être la nouvel
 check(!recent("il y a 45 min"), "« il y a 45 min » : trop vieux")
 check(!recent("en attente"), "aucune date : pas récente (on demandera de vérifier)")
 
-// 12. Demande partie avec un mauvais réglage.
+// 12. Relecture ChatGPT n° 2 : en « à vérifier », toucher le bandeau demande une confirmation, jamais une validation directe.
+check(ExportProof.bannerTap(requesting: true, finished: false, toCheck: true) == .askConfirm, "« à vérifier » + touche du bandeau : fenêtre de confirmation")
+check(ExportProof.bannerTap(requesting: true, finished: false, toCheck: false) == .other, "pas en « à vérifier » : pas de confirmation")
+check(ExportProof.bannerTap(requesting: true, finished: true, toCheck: true) == .other, "déjà confirmée : plus rien à confirmer")
+check(ExportProof.bannerTap(requesting: false, finished: false, toCheck: true) == .other, "hors demande (récupération du fichier) : rien")
+
+// 13. Relecture ChatGPT n° 2 : retoucher « Créer une exportation » après une demande non confirmée avertit du doublon.
+check(ExportProof.duplicateRisk(tappedStart: true, toCheck: false, finished: false), "« Commencer » touché, pas encore confirmé : avertissement")
+check(ExportProof.duplicateRisk(tappedStart: false, toCheck: true, finished: false), "ligne « à vérifier » : avertissement")
+check(!ExportProof.duplicateRisk(tappedStart: false, toCheck: false, finished: false), "aucune demande en vue : pas d'avertissement (premier parcours)")
+check(!ExportProof.duplicateRisk(tappedStart: true, toCheck: false, finished: true), "demande confirmée : le parcours est fini, rien à avertir ici")
+
+// 14. Demande partie avec un mauvais réglage.
 check(ExportProof.problem("summary:period")?.title == "avec « Année dernière »", "« Année dernière » signalé")
 check(ExportProof.problem("summary:format") != nil, "HTML signalé")
 check(ExportProof.problem("summary:info") != nil, "toutes les informations signalé")
