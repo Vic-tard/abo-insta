@@ -1900,7 +1900,11 @@ final class MetaViewController: UIViewController {
             avatar.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
         ])
         // Toucher le bandeau ferme l'alerte.
-        banner.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(bannerTapped)))
+        // Relecture ChatGPT (FOU-124) : le geste du bandeau ne prend jamais une touche destinée à un bouton
+        // (« Revenir dans Zieuton », précédent, suivant) : le bouton garde son action, et elle seule.
+        let tap = UITapGestureRecognizer(target: self, action: #selector(bannerTapped))
+        tap.delegate = self
+        banner.addGestureRecognizer(tap)
     }
 
     @objc private func bannerTapped() {
@@ -3164,6 +3168,18 @@ extension MetaViewController: WKScriptMessageHandler {
         } else if message.name == "zyeutoRing", let text = message.body as? String {
             ringMoved(text)
         }
+    }
+}
+
+extension MetaViewController: UIGestureRecognizerDelegate {
+    /// Une touche sur un bouton (UIControl) du bandeau va au bouton, pas au geste « toucher le bandeau ».
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        var v = touch.view
+        while let cur = v, cur !== gestureRecognizer.view {
+            if cur is UIControl { return false }
+            v = cur.superview
+        }
+        return true
     }
 }
 

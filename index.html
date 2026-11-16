@@ -1102,8 +1102,6 @@ if (!window.ZYEUTO_APP) {
   @media (prefers-reduced-motion: no-preference) { .gx-track.wait i { animation: gxWait 2.4s ease-in-out infinite; } }
   @keyframes gxWait { from { transform: translateX(-105%); } to { transform: translateX(270%); } }
   .gx-top b.gx-mid { font-size: 23px; }
-  .gf-redo { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); font-size: 14px; line-height: 1.4; color: var(--ink); display: flex; flex-direction: column; gap: 8px; }
-  .gf-redo .btn { align-self: stretch; }
   .gx-steps { list-style: none; margin: -4px 0 0; padding: 0; display: flex; justify-content: space-between; gap: 6px; }
   .gx-steps li { display: flex; align-items: center; gap: 6px; font: 700 12px var(--round); color: rgb(255 255 255 / .5); white-space: nowrap; }
   .gx-steps li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgb(255 255 255 / .3); flex: none; }
@@ -4737,13 +4735,31 @@ $("first-notback").addEventListener("click", () => {
   $("first").hidden = true;
   openList("notback");
 });
+// FOU-124 : seul chemin qui efface une demande en cours. Tous les « Refaire / Recommencer la demande » passent ici :
+// une confirmation dans l'écran (pas de fenêtre du navigateur), et rien n'est effacé sans « Refaire quand même ».
+function confirmRedo(then) {
+  const clear = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); then(); };
+  if (!prefs.requestedAt) return clear();
+  if ($("gf-redo")) return;
+  haptic("light");
+  const o = document.createElement("div");
+  o.className = "asked"; o.id = "gf-redo"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "gf-redo-h");
+  o.innerHTML = `<div class="asked-card"><h2 id="gf-redo-h">Refaire la demande&nbsp;?</h2>
+    <p>Ta demande est sûrement déjà chez Instagram. En refaire une maintenant crée un doublon, et ton fichier peut mettre plus longtemps.</p>
+    <button class="asked-go stats" id="gf-redo-no" type="button">Non, j'attends</button>
+    <button class="asked-stay" id="gf-redo-yes" type="button">Refaire quand même</button></div>`;
+  document.body.appendChild(o);
+  $("gf-redo-no").onclick = () => o.remove();
+  $("gf-redo-yes").onclick = () => { o.remove(); clear(); };
+  $("gf-redo-no").focus();
+}
 $("wk-go").addEventListener("click", () => wkGo());
 // Les 3 pastilles se touchent : Demander = nouvelle demande, Télécharger = droit à l'écran de téléchargement d'Instagram.
 $("wk-steps").addEventListener("click", (e) => {
   const li = e.target.closest("li[data-step]");
   if (!li) return;
   if (li.dataset.step === "get") return wkGo("get");
-  if (li.dataset.step === "request") { if (reqPending()) $("wk-redo").click(); return wkGo("request"); }
+  if (li.dataset.step === "request") { if (reqPending()) return confirmRedo(() => { render(); wkGo("request"); }); return wkGo("request"); }
   haptic("light");
   toast(reqPending() ? "Instagram prépare ton fichier. Je te dis dès que je le vois prêt, ou touche le gros bouton pour aller voir." : "Commence par « Demander » : Instagram prépare ensuite ton fichier.", false);
 });
@@ -4754,7 +4770,7 @@ $("wk-help").addEventListener("click", () => {
 $("sos-file").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); startImport(); });
 $("sos-app").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); openViaApp(); });
 $("sos-redo").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); $("wk-redo").click(); });
-$("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
+$("wk-redo").addEventListener("click", () => confirmRedo(render));
 // La carte se redessine (« Demandé il y a X min ») ; elle ne passe à « prêt » que si l'app a vu le fichier (FOU-121 P3).
 // Une confirmation « Refaire la demande » ouverte n'est pas effacée par ce rafraîchissement (FOU-124).
 setInterval(() => { if (!document.hidden && reqPending()) { renderWeekly(); if (gfOn() && gfStep() === "get" && metaInApp() && !$("gf-redo")) renderGuided(); } }, 30000);
@@ -5133,7 +5149,6 @@ function renderGuided() {
         <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Découvrir Zieuton en attendant</button>
         <button class="btn ghost" id="gf-get" type="button">Regarder si c'est prêt</button>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
-        <div id="gf-redo-slot"></div>
       </div>`;
       $("gf-wait-demo").onclick = () => enterDemo();
       // Le texte (« Demandé il y a X min ») se met à jour chaque minute tant qu'on attend.
@@ -5153,20 +5168,12 @@ function renderGuided() {
       <div class="gf-foot">
         <button class="btn cheer big" id="gf-get" type="button">${I_TAP}Récupérer ma liste</button>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
-        <div id="gf-redo-slot"></div>
       </div>`;
     }
     $("gf-get").onclick = wkGo;
     // FOU-124 : pas de doublon involontaire. « Refaire la demande » demande d'abord une confirmation, dans l'écran
     // (pas de fenêtre du navigateur), et rien n'est effacé tant que l'utilisateur ne l'a pas confirmé.
-    $("gf-back").onclick = () => {
-      haptic("light");
-      $("gf-back").hidden = true;
-      $("gf-redo-slot").innerHTML = `<p class="gf-redo" id="gf-redo"><span>Ta demande est sûrement déjà chez Instagram. En refaire une maintenant crée un doublon, et ton fichier peut mettre plus longtemps.</span>
-        <button class="btn ghost" id="gf-redo-no" type="button">Non, j'attends</button><button class="btn ghost" id="gf-redo-yes" type="button">Refaire quand même</button></p>`;
-      $("gf-redo-no").onclick = () => { $("gf-redo-slot").innerHTML = ""; $("gf-back").hidden = false; };
-      $("gf-redo-yes").onclick = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; savePrefs(); render(); };
-    };
+    $("gf-back").onclick = () => confirmRedo(render);
   } else if (step === "insta") {
     const i = prefs.igOpened ? Math.min(prefs.igStep || 0, IG_SHOTS.length - 1) : 0, last = i === IG_SHOTS.length - 1;
     const foot = !prefs.igOpened
@@ -5215,18 +5222,19 @@ function renderGuided() {
     const fl = $("gf-file");
     if (fl) fl.onclick = startImport;
     const gb = $("gf-back");
-    if (gb) gb.onclick = () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; savePrefs(); render(); };
+    if (gb) gb.onclick = () => confirmRedo(render);
   }
   // Bouton Retour sur chaque page (sauf la bienvenue) : on défait le dernier choix.
-  if (step !== "welcome") {
+  // FOU-124 : une demande en cours ne s'efface jamais par un simple Retour. Première fois : pas de Retour sur
+  // l'attente ; en refaisant une demande : « Fermer » garde la demande. Seul « Refaire la demande » (confirmé) l'efface.
+  if (step !== "welcome" && !(step === "get" && !gfRepeat)) {
     const bk = document.createElement("button");
     bk.className = "gf-backbtn"; bk.type = "button"; bk.id = "gf-backbtn";
-    const closes = gfRepeat && step === "insta";
+    const closes = gfRepeat && (step === "insta" || step === "get");
     bk.innerHTML = closes ? `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Fermer` : `<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Retour`;
     bk.onclick = () => {
       if (closes) { setRepeat(false); return render(); }
       if (step === "install") prefs.welcomed = false;
-      else if (step === "get") { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; }
       else if (step === "insta" && gfIntro) gfIntro = false;
       else if (step === "insta") { if (needsInstall) delete prefs.stayInSafari; else prefs.welcomed = false; }
       savePrefs(); render();
@@ -5262,7 +5270,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-1811";
+const BUILD = "2026-11-16-1822";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
