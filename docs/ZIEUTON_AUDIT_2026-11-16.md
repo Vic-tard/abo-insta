@@ -124,7 +124,16 @@ Les fils marqués ★ contiennent des décisions importantes, toutes reprises da
 - **Vérification avant résolution** : aucune action importante ne restait ouverte, sauf deux points du fil « Tester une vidéo de com » repris ailleurs : le lien du questionnaire (BUG-22) et un prompt Higgsfield en attente (com gelée, FOU-116).
 - **Pas touché** : « Rendre l'export Instagram simple et fiable » (P1 en cours, à renommer « 03 · … » après P1).
 
-**Fils à créer** (seulement quand le sujet démarre, un à la fois) : `06 · Retours des potes sur le build final` (FOU-113, FOU-37) ; `00 · Point hebdo et mise à jour des docs` (optionnel).
+### Simplification finale (16 nov., 13h17, demande de Victor)
+
+Victor ne garde que **trois fils de travail visibles** :
+- **00 — TABLEAU DE BORD ZIEUTON** (ce fil) : point d'entrée ; synthèse courte (terminé, en cours, priorité, décisions à prendre) ; démarches légales (ACRE : photo du courrier URSSAF à envoyer ici).
+- **01 — EXPORT INSTAGRAM** : FOU-121, P1 à P6.
+- **02 — LANCEMENT APP STORE** : build final, test, soumission, sortie.
+
+Résolus ensuite, leur suivi étant dans Linear et cette doc : « Fabriquer le build final dans Xcode » (FOU-105), « Démarches légales » (FOU-83, FOU-82), « Créer le zieuteur en 3D » (FOU-119). Les préfixes 00 à 06 restent les catégories des sujets (dans la doc et Linear), plus des titres de fils.
+
+**Fils à créer** (remplacé par la règle des trois fils ci-dessus, sauf demande de Victor) (seulement quand le sujet démarre, un à la fois) : `06 · Retours des potes sur le build final` (FOU-113, FOU-37) ; `00 · Point hebdo et mise à jour des docs` (optionnel).
 
 ## 8. Procédure de maintenance (au quotidien)
 

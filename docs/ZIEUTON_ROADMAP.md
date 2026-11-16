@@ -49,7 +49,7 @@ Règle de Victor : **un seul sujet à la fois**, clôturé à 100 % avant le sui
 | Builds iPhone automatiques | FOU-55 | Basse |
 | Orca + Claude Code sur le Mac | FOU-53 | Basse (après FOU-41) |
 | Android | FOU-52 | Basse |
-| Zieuteur en 3D | FOU-119 | En cours dans Linear mais gelé |
+| Zieuteur en 3D | FOU-119 | En cours dans Linear mais gelé ; 4 styles proposés le 15 nov. (pâte à modeler, vinyle, pastel, animation), choix de Victor en attente |
 
 ## 4. Communication et lancement (tout en Backlog depuis le 10 nov., FOU-99)
 

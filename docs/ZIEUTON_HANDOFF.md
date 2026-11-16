@@ -56,4 +56,7 @@ Fiche App Store, captures, achats, confidentialité : prêts. Reste : export fia
 
 ## 9. Où trouver le reste
 
+Côté Claude, Victor travaille dans trois fils : « 00 — TABLEAU DE BORD ZIEUTON », « 01 — EXPORT INSTAGRAM », « 02 — LANCEMENT APP STORE ».
+
+
 Dépôt Vic-tard/abo-insta, dossier `docs/` : `ZIEUTON_MASTER_CONTEXT.md` (vue d'ensemble), `ZIEUTON_ROADMAP.md`, `ZIEUTON_DECISIONS.md`, `ZIEUTON_UX_RESEARCH.md`, `ZIEUTON_BUSINESS.md`, `ZIEUTON_CHANGELOG.md`, `SPEC.md`. Linear : équipe FOU, projet « Zieuton 1.0 ».

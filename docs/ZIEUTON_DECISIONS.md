@@ -48,6 +48,7 @@
 | D-37 | 16 nov. | Claude seul écrit le code ; ChatGPT audite (bug confirmé / risque / recommandation), sans pousser ni changer Linear ; Victor tranche | Double regard | Active | `docs/COLLABORATION.md`, FOU-122 |
 | D-41 | 16 nov. 13h10 | Sources de référence : Linear pour les tâches, GitHub pour le code et les versions, `docs/` pour les décisions et le contexte ; `ZIEUTON_HANDOFF.md` mis à jour à chaque étape importante | Mêmes infos pour Claude et ChatGPT | Active | Message de Victor dans le fil « 00 · Réorganiser et documenter le projet » |
 | D-42 | 16 nov. 13h10 | Fils rangés par préfixe 00 à 06 ; 13 fils ouverts traités | Retrouver l'historique | Active | Même source ; audit §7 |
+| D-43 | 16 nov. 13h17 | Trois fils de travail visibles seulement : 00 Tableau de bord, 01 Export Instagram, 02 Lancement App Store ; les autres sont résolus après vérification que Linear ou la doc gardent leur suivi | Simplicité au quotidien | Active (remplace la partie « titres de fils » de D-42) | Message de Victor, fil 00 |
 | D-38 | 6 nov. | Chaque instruction de Victor a son ticket Linear, fermé à la fin | Traçabilité | Active | Mémoire |
 | D-39 | 16 nov. 2h50 | Victor écrit ses idées écran par écran ; Claude exécute sans réinventer | Garder la vision de Victor | Active | Mémoire `abo-insta-export-simple` |
 | D-40 | 6 nov. | Canal test / stable ; tout changement de page passe d'abord en test | Ne jamais bloquer un client | Active | PR #98 ; `MISES-A-JOUR.md` |

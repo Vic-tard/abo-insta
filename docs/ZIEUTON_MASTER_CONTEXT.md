@@ -29,6 +29,10 @@ Ce document résume le projet. Il ne remplace pas les documents existants, il po
 - **Ces documents** gardent les décisions, le contexte et les analyses. En cas d'écart avec Linear ou GitHub, ce sont eux qui ont raison et on corrige le document.
 - Les informations anciennes ou non vérifiées restent marquées [Déduit] ou [Inconnu].
 
+## Où on parle de quoi (fils du projet Claude)
+
+**[Confirmé, Victor, 16 nov.]** Trois fils de travail seulement : **00 — TABLEAU DE BORD ZIEUTON** (point d'entrée, synthèse, administratif), **01 — EXPORT INSTAGRAM** (FOU-121), **02 — LANCEMENT APP STORE** (build, soumission, sortie). Pas de nouveau fil sans demande de Victor.
+
 ## 1. Présentation
 
 **[Confirmé]** Zieuton est une app iPhone qui montre à une personne qui s'est désabonnée de son compte Instagram (et qui l'a rejoint), en comparant les exports officiels de ses données Instagram. Aucune connexion automatisée, aucun serveur, aucun compte Zieuton : tout reste sur le téléphone, avec une sauvegarde dans l'iCloud de l'utilisateur.
