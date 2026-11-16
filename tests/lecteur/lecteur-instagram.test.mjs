@@ -50,7 +50,29 @@ test("accueil avec une demande en attente et un ancien export prêt : une seule 
   const s = await stateOf("accueil-en-attente.html");
   assert.equal(s.rows.length, 1);
   assert.match(s.rows[0], /en attente/);
+  // La date de la ligne part avec elle : c'est ce qui sépare une nouvelle demande d'une ancienne (ExportProof.isRecent).
+  assert.match(s.rows[0], /16 novembre 2026/);
   assert.equal(s.dl, 1);
+});
+
+test("ancienne demande « En attente » qui s'affiche en retard : d'abord rien, puis la ligne avec SA date", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.addInitScript(() => {
+    window.__sent = [];
+    const h = (n) => ({ postMessage: (b) => window.__sent.push({ n, b }) });
+    window.webkit = { messageHandlers: { zyeutoState: h("state"), zyeutoTap: h("tap"), zyeutoRing: h("ring") } };
+  });
+  await page.goto("file://" + root + "tests/lecteur/pages/accueil-ancienne-en-retard.html");
+  await page.evaluate(READER);
+  await page.waitForFunction(() => window.__sent.some((x) => x.n === "state"), null, { timeout: 3000 });
+  const first = await page.evaluate(() => window.__sent.filter((x) => x.n === "state")[0].b);
+  assert.deepEqual(first.rows, []);
+  await page.waitForFunction(() => window.__sent.some((x) => x.n === "state" && x.b.rows && x.b.rows.length === 1), null, { timeout: 4000 });
+  const late = await page.evaluate(() => window.__sent.filter((x) => x.n === "state").pop().b);
+  await page.close();
+  assert.equal(late.rows.length, 1);
+  // Swift ne la prend pas pour la nouvelle demande : elle est datée du 2 novembre (voir tests/ios/ExportProofTests.swift, cas 3).
+  assert.match(late.rows[0], /2 novembre 2026/);
 });
 
 test("deux demandes en attente le même jour : deux lignes (même texte)", async () => {

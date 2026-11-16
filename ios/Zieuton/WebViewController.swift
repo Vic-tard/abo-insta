@@ -708,7 +708,8 @@ extension WebViewController: WKScriptMessageHandler {
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
         meta.onRequested = { [weak self] downloadsBefore, existing in
-            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested'); true")
+            // existing : demande déjà en cours chez Instagram (une page plus ancienne ignore ce second argument).
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested', { existing: \(existing) }); true")
             ExportWatcher.shared.requested(downloadsBefore: downloadsBefore, existing: existing)
         }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
@@ -938,8 +939,8 @@ final class MetaViewController: UIViewController {
     private var seenCreate = Date.distantPast
     /// FOU-121 : preuve de la demande (lignes « En attente » avant / après), voir ExportProof.
     private var proof = ExportProof()
-    /// Nombre de lignes « En attente » sur l'accueil de l'export, et quand il a été lu.
-    private var lastRows: Int?
+    /// Lignes « En attente » sur l'accueil de l'export (leur texte, avec la date), et quand elles ont été lues.
+    private var lastRows: [String]?
     private var seenRows = Date.distantPast
     /// Dernier écran de résumé lu avec son réglage (« summary:period »…) : sert à dire si la demande est partie avec un mauvais réglage.
     private var lastSummary = ""
@@ -951,6 +952,9 @@ final class MetaViewController: UIViewController {
     private var allowSecond = false
     /// « Vérifier l'état de ma demande » touché : Zieuton a rouvert la liste d'Instagram.
     private var verifiedAt: Date?
+    /// Une ligne « En attente » de plus est apparue, mais sans preuve qu'elle est la nouvelle demande
+    /// (touche « Commencer » pas vue, ou ligne sans date d'aujourd'hui) : l'utilisateur regarde et décide.
+    private var toCheck = false
     /// Compte verrouillé, suspendu ou désactivé par Instagram : le parcours s'arrête (FOU-121).
     private var seenLocked = Date.distantPast
     private var lockKind = ""
@@ -1772,6 +1776,13 @@ final class MetaViewController: UIViewController {
     }
 
     @objc private func bannerTapped() {
+        // « À vérifier » : l'utilisateur a regardé la liste et nous dit que la nouvelle ligne est bien sa demande.
+        if requesting, !finished, toCheck {
+            if sentAt == nil { sentAt = Date() }
+            toCheck = false
+            finishRequest()
+            return
+        }
         // Demande pas encore vue au bout de 20 s : on rouvre la liste des exports pour vérifier (rien n'est envoyé).
         if requesting, !finished, let sent = sentAt, Date().timeIntervalSince(sent) > 20 {
             verifiedAt = Date()
@@ -1918,6 +1929,11 @@ final class MetaViewController: UIViewController {
                        tip: "Vérifie les majuscules. Oublié ? Touche « Mot de passe oublié ? » juste en dessous, chez Instagram.")
                 : Step(verb: "Instagram vérifie que c'est toi :", target: "tape ton mot de passe",
                        tip: "Puis touche « Continuer ». Chez Instagram, comme d'habitude : Zieuton ne le voit jamais.")
+        }
+        if toCheck, requesting, !finished {
+            // FOU-121 : une ligne de plus, mais sans preuve que c'est la nouvelle demande. Zieuton ne conclut pas à sa place.
+            return Step(verb: "Demande à vérifier :", target: "regarde la liste",
+                        tip: "Une nouvelle ligne « En attente » est apparue. Si elle est datée d'aujourd'hui, c'est ta demande : touche ce bandeau. Sinon, ne refais rien tout de suite, je continue de regarder.")
         }
         if let sent = sentAt {
             // FOU-121 : une demande pas encore vue n'est jamais un échec. On propose de vérifier, jamais de recommencer.
@@ -2177,9 +2193,9 @@ final class MetaViewController: UIViewController {
         if mainFrame, let lock = state["locked"] as? String, !lock.isEmpty { seenLocked = now; lockKind = lock }
         // Lignes « En attente » de l'accueil de l'export : avant la demande, elles servent de référence.
         if mainFrame, let rows = state["rows"] as? [String] {
-            lastRows = rows.count
+            lastRows = rows
             seenRows = now
-            if sentAt == nil, !finished { proof.saw(rows.count) }
+            if sentAt == nil, !finished { proof.saw(rows, now: now) }
         }
         if state["flow"] as? Bool == true { seenFlow = now }
         if let pick = state["pick"] as? [String: Any], let n = pick["n"] as? Int {
@@ -2265,14 +2281,19 @@ final class MetaViewController: UIViewController {
         let rowsFresh = now.timeIntervalSince(seenRows) < 1.6
         if createVisible { if createSince == nil { createSince = now } } else { createSince = nil }
         let homeSettled = createSince.map { now.timeIntervalSince($0) > 1.5 } ?? false
-        // FOU-121 : la demande n'est confirmée que par une preuve vue chez Instagram : une ligne « En attente » de plus
-        // qu'avant, sur l'accueil de l'export. Ni le bouton qui disparaît, ni un délai, ni un retour en arrière ne suffisent.
-        if rowsFresh, proof.confirms(lastRows) {
-            // Touche « Commencer » pas vue (ça arrive), mais la nouvelle ligne est là : c'est bien parti.
-            if sentAt == nil { sentAt = now }
+        // FOU-121 : la demande n'est confirmée que par une preuve vue chez Instagram : la touche « Commencer l'exportation »
+        // vue, puis une ligne « En attente » de plus qu'avant, datée d'aujourd'hui. Ni le bouton qui disparaît, ni un délai,
+        // ni un retour en arrière ne suffisent. Une ligne de plus sans cette preuve (ancienne ligne arrivée en retard,
+        // touche pas vue) : « à vérifier », l'utilisateur regarde la liste et décide.
+        let verdict = rowsFresh ? proof.verdict(lastRows, tapped: sentAt != nil, now: now) : .none
+        if verdict == .confirmed {
             finishRequest()
             return
         }
+        if rowsFresh, (verdict == .toCheck) != toCheck { toCheck = verdict == .toCheck; showStep() }
+        // Hors de la liste depuis un moment (il est reparti dans le parcours, par exemple) : on ne lui demande plus de vérifier.
+        if toCheck, now.timeIntervalSince(seenRows) > 4 { toCheck = false; showStep() }
+        if toCheck { return }
         // Une demande était déjà en cours avant de commencer : inutile d'en refaire une, on guette le fichier.
         if sentAt == nil, !allowSecond, homeSettled, rowsFresh, proof.alreadyPending {
             existingRequest = true
@@ -2327,6 +2348,7 @@ final class MetaViewController: UIViewController {
         finished = false
         sentAt = nil
         verifiedAt = nil
+        toCheck = false
         badSettings = nil
         existingRequest = false
         // La demande d'avant est bien dans la liste : sans ça, Zieuton bloquerait sur « une demande est déjà en cours ».
@@ -2514,20 +2536,29 @@ final class MetaViewController: UIViewController {
 
 // EXPORT-PROOF:BEGIN
 /// FOU-121 : preuve qu'une demande d'export est bien enregistrée chez Instagram.
-/// Avant la demande, on note combien de lignes « En attente » montre la liste des exports d'Instagram.
-/// Seule une ligne de plus après la demande la confirme. Une ligne qui manque ne prouve jamais un échec :
-/// elle peut arriver plus tard, ou Instagram peut avoir changé sa page. Dans le doute, on propose de vérifier.
+/// Avant la demande, on note les lignes « En attente » de la liste des exports d'Instagram (combien, et combien datées d'aujourd'hui).
+/// Après la demande, trois cas :
+/// - confirmée : la touche « Commencer l'exportation » a été vue ET une ligne de plus est là ET elle est datée d'aujourd'hui
+///   (ou « à l'instant », « il y a 2 min »…) ;
+/// - à vérifier : une ligne de plus, mais sans touche vue ou sans date récente. Ça peut être une ancienne demande
+///   qui s'affiche en retard : c'est l'utilisateur qui regarde et décide, Zieuton ne conclut pas à sa place ;
+/// - rien : pas de ligne de plus. Ce n'est jamais un échec : la ligne peut arriver plus tard.
 struct ExportProof: Equatable {
     /// Le plus grand nombre de lignes « En attente » vu sur l'accueil avant la demande (nil : liste jamais vue).
     private(set) var before: Int?
+    /// Parmi elles, le plus grand nombre de lignes datées d'aujourd'hui.
+    private(set) var recentBefore = 0
     /// Figée dès l'arrivée sur le résumé : la nouvelle ligne ne doit jamais devenir la référence.
     private(set) var frozen = false
 
-    /// L'accueil de l'export montre `count` lignes « En attente ».
-    /// On garde le plus grand nombre vu : la liste peut s'afficher en plusieurs fois.
-    mutating func saw(_ count: Int) {
+    enum Verdict: Equatable { case none, confirmed, toCheck }
+
+    /// L'accueil de l'export montre ces lignes « En attente » (texte de chaque ligne, en minuscules).
+    /// On garde les plus grands nombres vus : la liste peut s'afficher en plusieurs fois.
+    mutating func saw(_ rows: [String], now: Date, calendar: Calendar = .current) {
         guard !frozen else { return }
-        before = max(before ?? 0, count)
+        before = max(before ?? 0, rows.count)
+        recentBefore = max(recentBefore, rows.filter { Self.isRecent($0, now: now, calendar: calendar) }.count)
     }
 
     /// Le résumé (« Commencer l'exportation ») est atteint : la référence ne bouge plus.
@@ -2540,10 +2571,52 @@ struct ExportProof: Equatable {
     /// Une demande était déjà en cours avant de commencer (et on n'a pas encore commencé).
     var alreadyPending: Bool { !frozen && (before ?? 0) > 0 }
 
-    /// Vrai seulement si la liste montre plus de lignes « En attente » qu'avant la demande.
-    func confirms(_ count: Int?) -> Bool {
-        guard frozen, let before, let count else { return false }
-        return count > before
+    /// Ce que prouve la liste lue maintenant. `tapped` : la touche « Commencer l'exportation » a été vue.
+    func verdict(_ rows: [String]?, tapped: Bool, now: Date, calendar: Calendar = .current) -> Verdict {
+        guard frozen, let before, let rows, rows.count > before else { return .none }
+        let recent = rows.filter { Self.isRecent($0, now: now, calendar: calendar) }.count
+        return tapped && recent > recentBefore ? .confirmed : .toCheck
+    }
+
+    /// La ligne dit qu'elle date d'aujourd'hui : « à l'instant », « il y a 3 min », « aujourd'hui », « 16 novembre », « nov 16 », « 16/11 »…
+    /// Une autre année écrite en toutes lettres (« 16 novembre 2025 ») la rend ancienne.
+    static func isRecent(_ row: String, now: Date, calendar: Calendar = .current) -> Bool {
+        let t = row.lowercased().replacingOccurrences(of: "\u{00a0}", with: " ").replacingOccurrences(of: "’", with: "'")
+        let c = calendar.dateComponents([.year, .month, .day], from: now)
+        guard let year = c.year, let month = c.month, let day = c.day else { return false }
+        // Une année écrite qui n'est pas celle d'aujourd'hui : ancienne ligne.
+        for y in matches(t, "(?<![0-9])(?:19|20)[0-9]{2}(?![0-9])") where Int(y) != year { return false }
+        if has(t, "à l'instant|a l'instant|just now|aujourd'hui|today") { return true }
+        // « il y a 3 min », « il y a 40 s », « 3 min ago », « 2m ago » : 30 minutes au plus.
+        for n in matches(t, "il y a ([0-9]+) ?(?:s|sec|secondes?|min|minutes?)(?![\\p{L}])", group: 1)
+            + matches(t, "(?<![0-9])([0-9]+) ?(?:s|sec|seconds?|m|min|mins|minutes?) ago", group: 1)
+            where (Int(n) ?? 99) <= 30 { return true }
+        let fr = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+        let frShort = ["janv", "févr", "mars", "avr", "mai", "juin", "juil", "août", "sept", "oct", "nov", "déc"]
+        let en = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+        let enShort = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+        var names = [fr[month - 1], frShort[month - 1], en[month - 1], enShort[month - 1]]
+        if month == 9 { names.append("sept") }
+        let m = "(?:" + Set(names).sorted().joined(separator: "|") + ")"
+        let d = "0?\(day)"
+        // « 16 novembre », « 1er nov. », « 16 nov 2026 » / « november 16 », « nov. 16th »
+        if has(t, "(?<![0-9])\(d)(?:er|st|nd|rd|th)? (?:de )?\(m)\\.?(?![\\p{L}])") { return true }
+        if has(t, "(?<![\\p{L}])\(m)\\.? \(d)(?:st|nd|rd|th)?(?![0-9])") { return true }
+        // « 16/11 », « 16/11/2026 », « 2026-11-16 »
+        if has(t, "(?<![0-9])\(d)/0?\(month)(?![0-9])") { return true }
+        if has(t, "\(year)-\(String(format: "%02d", month))-\(String(format: "%02d", day))") { return true }
+        return false
+    }
+
+    private static func has(_ text: String, _ pattern: String) -> Bool { !matches(text, pattern).isEmpty }
+
+    private static func matches(_ text: String, _ pattern: String, group: Int = 0) -> [String] {
+        guard let re = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let ns = text as NSString
+        return re.matches(in: text, range: NSRange(location: 0, length: ns.length)).compactMap {
+            let r = $0.range(at: group)
+            return r.location == NSNotFound ? nil : ns.substring(with: r)
+        }
     }
 
     /// Ce que le bandeau dit si la demande est partie avec un mauvais réglage (dernier résumé lu avant la demande).
@@ -2745,6 +2818,8 @@ final class ExportWatcher: NSObject {
     private enum Key {
         static let requested = "zy.export.requestedAt", ready = "zy.export.readyAt", before = "zy.export.downloadsBefore"
         static let baselineChecked = "zy.export.baselineChecked"
+        /// La demande était déjà en cours chez Instagram : son heure est inconnue (Key.requested = début du guet, pas la demande).
+        static let existing = "zy.export.existing"
     }
     private enum Id {
         static let asked = "zy-asked", ready = "zy-ready", reminder = "zy-reminder", lastDay = "zy-last-day"
@@ -2803,6 +2878,8 @@ final class ExportWatcher: NSObject {
         return Date().timeIntervalSince(r) < 4 * 86400
     }
     var isReady: Bool { requestedAt != nil && readyAt != nil }
+    /// La demande guettée était déjà en cours chez Instagram : son heure est inconnue.
+    private var isExisting: Bool { store.bool(forKey: Key.existing) }
 
     private var timer: Timer?
     private var checker: WKWebView?
@@ -2817,9 +2894,12 @@ final class ExportWatcher: NSObject {
     static let likelyAfter: TimeInterval = 3 * 60
 
     /// La demande vient de partir dans Instagram.
-    /// existing : la demande était déjà en cours chez Instagram (pas de « C'est demandé » à l'heure de maintenant).
+    /// existing : la demande était déjà en cours chez Instagram, à une heure qu'on ne connaît pas (FOU-121).
+    /// Key.requested note alors le début du guet, jamais présenté comme l'heure de la demande : pas de « C'est demandé »,
+    /// pas de « Demandé à HH:MM », pas de « sûrement prêt » ni de « dernier jour » calculés depuis maintenant.
     func requested(downloadsBefore: Int, existing: Bool = false) {
         store.set(Date(), forKey: Key.requested)
+        store.set(existing, forKey: Key.existing)
         store.removeObject(forKey: Key.ready)
         store.set(downloadsBefore, forKey: Key.before)
         store.set(false, forKey: Key.baselineChecked)
@@ -2829,8 +2909,14 @@ final class ExportWatcher: NSObject {
         center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             guard granted, let self else { return }
             let now = Date()
-            if !existing { self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive en général en 1 à 3 minutes. Je te préviens dès qu'il est là.",
-                        subtitle: "Demande envoyée à Instagram à \(Self.hour(now))", after: 1) }
+            if existing {
+                // Heure de la demande inconnue : un seul rappel, sans heure ni promesse que le fichier est prêt.
+                self.notify(Id.reminder, "Ta demande Instagram est toujours là 📥", "Une demande était déjà en cours chez Instagram. Touche pour voir si ton fichier est prêt.",
+                            after: 40 * 60, category: Id.readyCategory)
+                return
+            }
+            self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive en général en 1 à 3 minutes. Je te préviens dès qu'il est là.",
+                        subtitle: "Demande envoyée à Instagram à \(Self.hour(now))", after: 1)
             // Zieuton fermé, iOS décide seul quand le réveiller (parfois jamais) : sans ce filet, aucune notif ne partirait.
             // Si Zieuton voit le fichier avant, cette notification est remplacée par « Ton fichier Instagram est prêt ».
             self.notify(Id.likely, "Ton fichier Instagram est sûrement prêt 🎉", "Instagram met en général 1 à 3 minutes. Touche pour le récupérer : Zieuton se met à jour tout seul.",
@@ -2854,7 +2940,7 @@ final class ExportWatcher: NSObject {
         guard let r = requestedAt, store.object(forKey: Key.ready) == nil else { return }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Id.likely])
         notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
-               subtitle: "Demandé à \(Self.hour(r))", after: 10 * 60)
+               subtitle: isExisting ? nil : "Demandé à \(Self.hour(r))", after: 10 * 60)
     }
 
     /// Le fichier a été téléchargé dans Zieuton : plus rien à guetter.
@@ -2865,7 +2951,7 @@ final class ExportWatcher: NSObject {
 
     func clear() {
         guard requestedAt != nil else { return }
-        for k in [Key.requested, Key.ready, Key.before, Key.baselineChecked] { store.removeObject(forKey: k) }
+        for k in [Key.requested, Key.ready, Key.before, Key.baselineChecked, Key.existing] { store.removeObject(forKey: k) }
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: Id.all)
         center.removeDeliveredNotifications(withIdentifiers: Id.all)
@@ -2881,7 +2967,8 @@ final class ExportWatcher: NSObject {
         center.removePendingNotificationRequests(withIdentifiers: [Id.likely, Id.reminder, Id.lastDay])
         center.removeDeliveredNotifications(withIdentifiers: [Id.asked, Id.likely])
         let now = Date(), expires = now.addingTimeInterval(4 * 86400)
-        let took = requestedAt.map { Self.duration(now.timeIntervalSince($0)) }
+        // Demande déjà en cours : on ne sait pas quand elle est partie, donc pas de « Instagram a mis X ».
+        let took = isExisting ? nil : requestedAt.map { Self.duration(now.timeIntervalSince($0)) }
         notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour mettre Zieuton à jour : tu sauras qui est parti et qui est arrivé. Valable jusqu'au \(Self.day(expires)).",
                subtitle: took.map { "Instagram a mis \($0)" }, after: 1, badge: true, category: Id.readyCategory)
         notify(Id.lastDay, "⏳ Ton fichier expire demain à \(Self.hour(expires))", "Après, il faudra refaire une demande. Touche pour mettre Zieuton à jour maintenant.",
