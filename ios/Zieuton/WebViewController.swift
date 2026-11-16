@@ -707,9 +707,10 @@ extension WebViewController: WKScriptMessageHandler {
                 screen: d["screen"] as? String ?? "")
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
-        meta.onRequested = { [weak self] downloadsBefore in
-            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested'); true")
-            ExportWatcher.shared.requested(downloadsBefore: downloadsBefore)
+        meta.onRequested = { [weak self] downloadsBefore, existing in
+            // existing : demande déjà en cours chez Instagram (une page plus ancienne ignore ce second argument).
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested', { existing: \(existing) }); true")
+            ExportWatcher.shared.requested(downloadsBefore: downloadsBefore, existing: existing)
         }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
         meta.modalPresentationStyle = .fullScreen
@@ -876,7 +877,7 @@ final class MetaViewController: UIViewController {
     private var guarded: Bool { steps.contains { $0.ok != nil } && seenCreate != .distantPast }
 
     /// La demande est partie (avec le nombre d'exports déjà téléchargeables avant elle).
-    var onRequested: ((Int) -> Void)?
+    var onRequested: ((Int, Bool) -> Void)?
     var onFile: ((URL) -> Void)?
     /// Nombre de boutons « Télécharger » vus sur la page (exports déjà prêts avant la nouvelle demande).
     private(set) var downloadsSeen = 0
@@ -935,9 +936,29 @@ final class MetaViewController: UIViewController {
     /// Derniers moments où chaque cadre de la page a vu : la connexion, « Commencer l'exportation », « Créer une exportation ».
     private var seenLogin = Date.distantPast
     private var seenMainScreen = Date.distantPast
-    private var seenStart = Date.distantPast
     private var seenCreate = Date.distantPast
-    private var sawStart = false
+    /// FOU-121 : preuve de la demande (lignes « En attente » avant / après), voir ExportProof.
+    private var proof = ExportProof()
+    /// Lignes « En attente » sur l'accueil de l'export (leur texte, avec la date), et quand elles ont été lues.
+    private var lastRows: [String]?
+    private var seenRows = Date.distantPast
+    /// Dernier écran de résumé lu avec son réglage (« summary:period »…) : sert à dire si la demande est partie avec un mauvais réglage.
+    private var lastSummary = ""
+    /// Demande enregistrée, mais avec un mauvais réglage : ce qu'il faut dire.
+    private var badSettings: ExportProof.Problem?
+    /// Une demande était déjà en cours chez Instagram : on ne la refait pas, on guette le fichier.
+    private var existingRequest = false
+    /// L'utilisateur a choisi de refaire une demande (après un mauvais réglage) : pas de blocage « déjà en cours ».
+    private var allowSecond = false
+    /// « Vérifier l'état de ma demande » touché : Zieuton a rouvert la liste d'Instagram.
+    private var verifiedAt: Date?
+    /// Une ligne « En attente » de plus est apparue, mais sans preuve qu'elle est la nouvelle demande
+    /// (touche « Commencer » pas vue, ou ligne sans date d'aujourd'hui) : l'utilisateur regarde et décide.
+    private var toCheck = false
+    /// Compte verrouillé, suspendu ou désactivé par Instagram : le parcours s'arrête (FOU-121).
+    private var seenLocked = Date.distantPast
+    private var lockKind = ""
+    private var lockedShown = false
     private var webView: WKWebView!
     private let banner = UIView()
     private let gradient = CAGradientLayer()
@@ -997,7 +1018,16 @@ final class MetaViewController: UIViewController {
         }
         let start = json(steps.last(where: { $0.final })?.wait ?? [])
         let create = json(steps.first?.wait ?? [])
-        return """
+        return Self.readerJS
+            .replacingOccurrences(of: "__START__", with: start)
+            .replacingOccurrences(of: "__CREATE__", with: create)
+            .replacingOccurrences(of: "__DL__", with: ExportWatcher.countScript)
+    }
+
+    // LECTEUR-INSTAGRAM:BEGIN (FOU-121 : le script est aussi testé hors de l'app, voir tests/lecteur-instagram.test.mjs)
+    /// Le script posé dans la page d'Instagram. Il lit seulement des libellés visibles ; il ne touche et ne change rien.
+    /// __START__, __CREATE__ et __DL__ sont remplacés au moment de l'ouvrir.
+    static let readerJS = #"""
         (function () {
           document.addEventListener('click', function (e) {
             var el = e.target && e.target.closest ? e.target.closest('button,a,label,[role=button],[role=link],[role=radio],[role=checkbox],[role=menuitem],[role=option],[tabindex]') : null;
@@ -1006,7 +1036,7 @@ final class MetaViewController: UIViewController {
             // Touche hors d'un bouton (texte, fond) : marquée « ~ », elle ne déclenche jamais d'alerte.
             if (t) window.webkit.messageHandlers.zyeutoTap.postMessage((el ? '' : '~') + t.slice(0, 300));
           }, true);
-          var START = \(start), CREATE = \(create);
+          var START = __START__, CREATE = __CREATE__;
           var vis = function (el) {
             var r = el.getBoundingClientRect();
             if (r.width <= 0 || r.height <= 0) return false;
@@ -1077,7 +1107,7 @@ final class MetaViewController: UIViewController {
               var t = low(row);
               if (t.indexOf('followers et suivi') >= 0 || t.indexOf('followers and following') >= 0) f = true;
               // La première case cochée en trop : son nom, pour que le bandeau dise laquelle décocher.
-              else if (!x) x = (row.innerText || '').trim().split('\\n')[0].slice(0, 40);
+              else if (!x) x = (row.innerText || '').trim().split('\n')[0].slice(0, 40);
             }
             return seen ? { n: n, f: f, t: seen, x: x } : null;
           };
@@ -1101,7 +1131,7 @@ final class MetaViewController: UIViewController {
             }
             // « Choisir où exporter » pour le compte Facebook ou Threads (l'en-tête dit « Prénom Nom • Facebook ») : mauvais compte.
             if (seeAny(['choisir où exporter', 'choose where to export']) && Array.prototype.some.call(document.querySelectorAll('span,div,h2,h3'), function (el) {
-              return el.childElementCount <= 3 && /[•·]\\s*(facebook|threads)\\s*$/.test(low(el)) && low(el).length < 80 && vis(el);
+              return el.childElementCount <= 3 && /[•·]\s*(facebook|threads)\s*$/.test(low(el)) && low(el).length < 80 && vis(el);
             })) return 'wrongprofile';
             if (seeAny(['choisissez un profil', 'choose a profile'])) return 'profile';
             if (seeAny(['exporter vers un service externe', 'export to external service', 'choisir où exporter', 'choose where to export'])) return 'dest';
@@ -1168,6 +1198,45 @@ final class MetaViewController: UIViewController {
           addEventListener('scroll', ringSoon, true);
           addEventListener('resize', ringSoon);
           setInterval(sendRing, 300);
+          // FOU-121 : lignes de la liste des exports dont le statut dit « en attente » ou « en cours ».
+          // Zieuton compare ces lignes avant et après « Commencer l'exportation » : seule une ligne nouvelle confirme la demande.
+          var STATUS = /^(en attente|en cours|en préparation|pending|in progress|preparing)\b/;
+          var pendingRows = function () {
+            var rows = [], out = [];
+            var els = document.querySelectorAll('span,div,p,a,li,[role=button],[role=link]');
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (el.childElementCount > 2) continue;
+              var t = low(el);
+              if (t.length > 40 || !STATUS.test(t)) continue;
+              // On remonte jusqu'au bloc de la ligne (statut + date), 5 niveaux au plus.
+              var row = el;
+              for (var up = 0; up < 5 && row.parentElement && low(row).length <= t.length + 3; up++) row = row.parentElement;
+              if (low(row).length > 200 || row.getClientRects().length === 0 || rows.indexOf(row) >= 0) continue;
+              // Un bloc qui contient déjà une ligne trouvée (ou qui est dans l'une d'elles) : c'est la même ligne.
+              if (rows.some(function (r) { return r.contains(row) || row.contains(r); })) continue;
+              rows.push(row);
+              out.push(low(row).replace(/\s+/g, ' ').slice(0, 160));
+            }
+            return out;
+          };
+          // FOU-121 : compte verrouillé, suspendu ou désactivé par Instagram. Seulement une phrase claire et visible :
+          // une demande de code de sécurité ou « Choisir un moyen de récupération » seuls ne suffisent jamais.
+          var LOCK = /nous avons verrouillé votre compte|votre compte (a été|est) (verrouillé|suspendu|désactivé)|nous avons (suspendu|désactivé) votre compte|we('ve| have) (locked|suspended|disabled) your account|your account (has been|was|is) (locked|suspended|disabled)/;
+          // Réponse : '' (rien), 'suspended', 'disabled' ou 'locked'.
+          var locked = function () {
+            var els = document.querySelectorAll('h1,h2,h3,[role=heading],span,div,p');
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (el.childElementCount > 4) continue;
+              var t = low(el);
+              if (t.length > 400) continue;
+              var m = t.match(LOCK);
+              if (!m || !vis(el)) continue;
+              return /suspend/.test(m[0]) ? 'suspended' : /désactiv|disabled/.test(m[0]) ? 'disabled' : 'locked';
+            }
+            return '';
+          };
           setInterval(function () {
             // Champ du mot de passe, même quand l'œil l'affiche en clair (il n'est plus de type « password »).
             var login = Array.prototype.some.call(document.querySelectorAll('input[type=password],input[name=username],input[name=email],input[autocomplete=username],input[autocomplete=current-password],input[name*=pass i],input[aria-label*="mot de passe" i],input[aria-label*=password i]'), vis);
@@ -1188,11 +1257,12 @@ final class MetaViewController: UIViewController {
             var pending = !login && !code && /en attente|en préparation|pending|in progress|preparing/.test((document.body.innerText || '').toLowerCase());
             // Fenêtre des cookies d'Instagram (FOU-121) : reconnue à ses deux boutons.
             var cookies = seeAny(['refuser les cookies optionnels', 'autoriser tous les cookies', 'decline optional cookies', 'allow all cookies']);
-            window.webkit.messageHandlers.zyeutoState.postMessage({ cookies: cookies, login: login, badpw: badpw, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: has(CREATE), dl: \(ExportWatcher.countScript) });
+            var create = has(CREATE);
+            window.webkit.messageHandlers.zyeutoState.postMessage({ locked: locked(), rows: create ? pendingRows() : null, cookies: cookies, login: login, badpw: badpw, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: create, dl: __DL__ });
           }, 700);
         })();
-        """
-    }
+        """#
+    // LECTEUR-INSTAGRAM:END
 
 
     init(url: URL, requesting: Bool, steps: [Step]) {
@@ -1342,7 +1412,7 @@ final class MetaViewController: UIViewController {
 
     /// Les noms possibles du bouton à toucher maintenant (vide : rien à entourer).
     private func ringNames() -> [String] {
-        guard pageKnown, !downloading, codeShown.isEmpty, !loginShown, sentAt == nil, !lostShown, !finished || guarding else { return [] }
+        guard pageKnown, !lockedShown, !downloading, codeShown.isEmpty, !loginShown, sentAt == nil, !lostShown, !finished || guarding else { return [] }
         if guarding { return guardReady ? ["Télécharger", "Download"] : [] }
         // Lecture sûre seulement : l'écran d'Instagram reconnu est bien celui de l'étape, depuis un moment, sans touche récente
         // ni page qui charge. Au moindre doute, pas de cercle : le bandeau suffit.
@@ -1706,6 +1776,24 @@ final class MetaViewController: UIViewController {
     }
 
     @objc private func bannerTapped() {
+        // « À vérifier » : une simple touche ne valide rien, on demande une confirmation explicite (relecture ChatGPT).
+        if ExportProof.bannerTap(requesting: requesting, finished: finished, toCheck: toCheck) == .askConfirm {
+            askConfirmRequest()
+            return
+        }
+        // Demande pas encore vue au bout de 20 s : on rouvre la liste des exports pour vérifier (rien n'est envoyé).
+        if requesting, !finished, let sent = sentAt, Date().timeIntervalSince(sent) > 20 {
+            verifiedAt = Date()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            webView.load(URLRequest(url: url))
+            showStep()
+            return
+        }
+        // Demande partie avec un mauvais réglage : la refaire seulement si l'utilisateur le choisit (il touche le bandeau).
+        if badSettings != nil, requesting {
+            restartRequest()
+            return
+        }
         // Hors du parcours d'export : on ramène sur la page d'export d'Instagram, et le bandeau repart de là.
         if lostShown {
             lostShown = false
@@ -1787,8 +1875,16 @@ final class MetaViewController: UIViewController {
         if !pageKnown {
             return Step(verb: "Un instant,", target: "Instagram s'ouvre…")
         }
+        if lockedShown {
+            return Step(verb: "Export en pause :", target: lockText.title,
+                        tip: "Ouvre l'application Instagram officielle.")
+        }
         if downloading {
             return Step(verb: "Presque fini :", target: "Zieuton récupère ton fichier…", tip: "Ne ferme pas cet écran.")
+        }
+        if let bad = badSettings, guarding, !guardReady {
+            return Step(verb: "Demande enregistrée, mais", target: bad.title,
+                        tip: bad.text + " Pour la refaire avec le bon réglage, touche ce bandeau.")
         }
         if guarding {
             if guardReady {
@@ -1798,6 +1894,10 @@ final class MetaViewController: UIViewController {
             if Date().timeIntervalSince(guardSince) > Self.guardFor {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
                             tip: "Je t'envoie une notification dès que ton fichier est prêt.")
+            }
+            if existingRequest {
+                return Step(verb: "Une demande est déjà en cours :", target: "je guette ton fichier",
+                            tip: "Instagram prépare déjà ton fichier, inutile d'en refaire une. Je vibre dès qu'il est prêt, ou je t'envoie une notification.")
             }
             return Step(verb: "Garde cet écran ouvert :", target: "je guette ton fichier",
                         tip: "Je regarde la page d'Instagram toutes les 10 secondes et je vibre dès que c'est prêt. Tu peux aussi fermer : je t'enverrai une notification.")
@@ -1828,15 +1928,28 @@ final class MetaViewController: UIViewController {
                 : Step(verb: "Instagram vérifie que c'est toi :", target: "tape ton mot de passe",
                        tip: "Puis touche « Continuer ». Chez Instagram, comme d'habitude : Zieuton ne le voit jamais.")
         }
+        if toCheck, requesting, !finished {
+            // FOU-121 : une ligne de plus, mais sans preuve que c'est la nouvelle demande. Zieuton ne conclut pas à sa place.
+            return Step(verb: "Demande à vérifier :", target: "regarde la liste",
+                        tip: "Une nouvelle ligne « En attente » est apparue. Si elle est datée d'aujourd'hui, c'est ta demande : touche ce bandeau. Sinon, ne refais rien tout de suite, je continue de regarder.")
+        }
         if let sent = sentAt {
+            // FOU-121 : une demande pas encore vue n'est jamais un échec. On propose de vérifier, jamais de recommencer.
+            if let v = verifiedAt, Date().timeIntervalSince(v) > 6 {
+                return Step(verb: "Je ne vois pas encore", target: "de nouvelle demande",
+                            tip: "Regarde la liste : une ligne « En attente » d'aujourd'hui, c'est bon, ne refais rien. Si tu n'en vois aucune, tu peux toucher « Créer une exportation ».")
+            }
+            if Date().timeIntervalSince(sent) > 20 {
+                return Step(verb: "Je n'ai pas encore vu ta demande :", target: "Vérifier son état",
+                            tip: "Ça ne veut pas dire qu'elle a raté : ne la refais pas. Touche ce bandeau, j'ouvre la liste de tes exports chez Instagram (je n'envoie rien).")
+            }
             return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…",
-                        tip: Date().timeIntervalSince(sent) > 15
-                            ? "Rien ne bouge ? Touche encore « Commencer l'exportation » sur la page."
-                            : "Zieuton vérifie que c'est bien parti.")
+                        tip: "Je vérifie qu'elle apparaît dans la liste d'Instagram.")
         }
         if lostShown {
-            return Step(verb: "Tu t'es un peu éloigné :", target: "Revenir à l'export",
-                        tip: "Touche ici, je te ramène sur la bonne page d'Instagram.", look: "button")
+            // FOU-121 : écran inconnu = pas forcément une erreur (vérification, chargement, nouvelle interface). Rien ne se recharge tout seul.
+            return Step(verb: "Je ne reconnais pas encore", target: "cet écran",
+                        tip: "Instagram te demande peut-être une vérification : fais-la, je reprends dès que je reconnais la page. Pour revenir au début de l'export, touche ce bandeau.")
         }
         if let w = warning {
             return Step(verb: "", target: w.title, tip: w.text, look: steps[index].look)
@@ -1961,6 +2074,18 @@ final class MetaViewController: UIViewController {
             return !n.isEmpty && (t.hasPrefix(n) || lines.contains(n))
         } }
         lastTapAt = Date()
+        // Demande pas encore vue, et l'utilisateur retouche « Créer une exportation » : il refait le parcours (son choix).
+        // La référence (lignes « En attente » d'avant) ne bouge pas : la première demande, si elle est passée, sera vue aussi.
+        if requesting, !loose, hit(steps[0].wait),
+           ExportProof.duplicateRisk(tappedStart: sentAt != nil, toCheck: toCheck, finished: finished) {
+            sentAt = nil
+            verifiedAt = nil
+            index = min(1, steps.count - 1)
+            warning = nil
+            showStep()
+            warnDuplicate()
+            return
+        }
         // « Commencer l'exportation » compte toujours, même si le bandeau s'est trompé d'étape avant :
         // sinon la demande n'est jamais notée et aucune notification ne part (vu par Victor le 4 novembre).
         if requesting, sentAt == nil, !loose, let f = steps.lastIndex(where: { $0.final }), index < f, hit(steps[f].wait) {
@@ -2064,6 +2189,14 @@ final class MetaViewController: UIViewController {
         }
         if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
         if state["cookies"] as? Bool == true { seenCookies = now }
+        // Compte verrouillé : seulement le cadre principal, et seulement une phrase claire (voir le script).
+        if mainFrame, let lock = state["locked"] as? String, !lock.isEmpty { seenLocked = now; lockKind = lock }
+        // Lignes « En attente » de l'accueil de l'export : avant la demande, elles servent de référence.
+        if mainFrame, let rows = state["rows"] as? [String] {
+            lastRows = rows
+            seenRows = now
+            if sentAt == nil, !finished { proof.saw(rows, now: now) }
+        }
         if state["flow"] as? Bool == true { seenFlow = now }
         if let pick = state["pick"] as? [String: Any], let n = pick["n"] as? Int {
             let before = (pickChecked, pickFollowers)
@@ -2076,9 +2209,11 @@ final class MetaViewController: UIViewController {
         if let scr = state["screen"] as? String, !scr.isEmpty {
             if scr != screenKey { screenKey = scr; screenSince = now }
             if scr == "pick" || scr == "home" { pickRedo = false }
+            // Arrivé au résumé : la référence des lignes « En attente » est figée (la nouvelle ligne ne doit pas devenir la référence).
+            if scr.hasPrefix("summary") { proof.freeze() }
+            if scr.hasPrefix("summary:") { lastSummary = scr }
             seenScreen = now
         }
-        if state["start"] as? Bool == true { seenStart = now; sawStart = true }
         if state["create"] as? Bool == true { seenCreate = now }
         if !finished, let dl = state["dl"] as? Int { downloadsSeen = max(downloadsSeen, dl) }
         // Ouvert pour récupérer le fichier (notification « sûrement prêt »), mais Instagram le prépare encore :
@@ -2101,11 +2236,13 @@ final class MetaViewController: UIViewController {
     /// Fait le point : écran de connexion ? demande bien partie ?
     private func watch() {
         defer { sendRingNames() }
-        guard pageKnown, !downloading, !finished else { return }
+        guard pageKnown, !lockedShown else { return }
+        // Compte verrouillé, suspendu ou désactivé : on arrête tout de suite le parcours (FOU-121).
+        if Date().timeIntervalSince(seenLocked) < 1.6 { showLocked(); return }
+        guard !downloading, !finished else { return }
         let now = Date()
         let onLoginURL = (webView.url?.absoluteString.lowercased() ?? "").contains("login")
         let login = now.timeIntervalSince(seenLogin) < 1.6 || onLoginURL
-        let startVisible = now.timeIntervalSince(seenStart) < 1.6
         let createVisible = now.timeIntervalSince(seenCreate) < 1.6
         if login != loginShown { loginShown = login; showStep() }
         let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
@@ -2141,10 +2278,36 @@ final class MetaViewController: UIViewController {
         if warning != nil, now.timeIntervalSince(warningAt) > 10 { warning = nil; showStep() }
         // Écran « code de sécurité » d'Instagram (après « Commencer l'exportation ») : rien n'est parti tant qu'il est là (FOU-115).
         guard requesting, !login, code.isEmpty else { return }
+        let rowsFresh = now.timeIntervalSince(seenRows) < 1.6
+        if createVisible { if createSince == nil { createSince = now } } else { createSince = nil }
+        let homeSettled = createSince.map { now.timeIntervalSince($0) > 1.5 } ?? false
+        // FOU-121 : la demande n'est confirmée que par une preuve vue chez Instagram : la touche « Commencer l'exportation »
+        // vue, puis une ligne « En attente » de plus qu'avant, datée d'aujourd'hui. Ni le bouton qui disparaît, ni un délai,
+        // ni un retour en arrière ne suffisent. Une ligne de plus sans cette preuve (ancienne ligne arrivée en retard,
+        // touche pas vue) : « à vérifier », l'utilisateur regarde la liste et décide.
+        let verdict = rowsFresh ? proof.verdict(lastRows, tapped: sentAt != nil, now: now) : .none
+        if verdict == .confirmed {
+            finishRequest()
+            return
+        }
+        if rowsFresh, (verdict == .toCheck) != toCheck { toCheck = verdict == .toCheck; showStep() }
+        // Hors de la liste depuis un moment (il est reparti dans le parcours, par exemple) : on ne lui demande plus de vérifier.
+        if toCheck, now.timeIntervalSince(seenRows) > 4 { toCheck = false; showStep() }
+        if toCheck { return }
+        // Une demande était déjà en cours avant de commencer : inutile d'en refaire une, on guette le fichier.
+        if sentAt == nil, !allowSecond, homeSettled, rowsFresh, proof.alreadyPending {
+            existingRequest = true
+            finishRequest()
+            return
+        }
+        // Demande touchée mais pas encore vue : le bandeau passe à « Vérifier son état » au bout de 20 s (jamais « recommence »).
+        if sentAt != nil {
+            showStep(animated: false)
+            return
+        }
         // Revenu sur la page d'accueil de l'export (« Créer une exportation » bien visible depuis un moment) :
         // le bandeau reprend à la première étape.
-        if createVisible { if createSince == nil { createSince = now } } else { createSince = nil }
-        if sentAt == nil, index > 0, !(sawStart && index >= steps.count - 1), let since = createSince,
+        if index > 0, let since = createSince,
            now.timeIntervalSince(since) > 2.5, now.timeIntervalSince(lastTapAt) > 2.5 {
             index = 0
             pickedAt = -1
@@ -2153,32 +2316,16 @@ final class MetaViewController: UIViewController {
             showStep()
             return
         }
-        // Le bandeau suit l'écran d'Instagram : si l'écran affiché correspond à une autre étape, on s'y cale.
+        // Le bandeau suit l'écran d'Instagram : si l'écran affiché correspond à une autre étape, on s'y cale
+        // (y compris en revenant en arrière depuis le résumé final : rien n'est considéré comme envoyé).
         syncToScreen(now)
-        // « Commencer l'exportation » a été touché, et Instagram a quitté cet écran (retour à « Créer une exportation »,
-        // ou le bouton a disparu) : la demande est partie. Si la touche n'a pas été vue, le retour à l'accueil
-        // d'Instagram juste après l'écran final suffit aussi.
-        if let sent = sentAt {
-            // Retour sur « Créer une exportation » : c'est parti. Bouton disparu (Instagram tourne encore) : on attend un peu plus.
-            let gone = now.timeIntervalSince(sent)
-            // Jamais juste après un écran de mot de passe (l'œil peut cacher le champ à la détection).
-            let calm = now.timeIntervalSince(seenLogin) > 4 && now.timeIntervalSince(seenCode) > 4
-            // Code de sécurité demandé après la touche : seul le retour sur « Créer une exportation » prouve qu'il était bon
-            // (code raté ou abandonné = le bouton a disparu aussi, mais rien n'est parti ; vu par Victor le 15 novembre).
-            let codeAsked = seenCode > sent
-            if (gone > 1.5 && createVisible) || (gone > 5 && calm && !codeAsked && !startVisible && !webView.isLoading) { finishRequest() }
-            else if now.timeIntervalSince(sent) > 15 { showStep(animated: false) }
-        } else if sawStart, index >= steps.count - 1, createVisible, !startVisible {
-            finishRequest()
-        }
     }
 
     /// Cale le bandeau sur l'étape qui correspond à l'écran d'Instagram (vu depuis au moins 1 s, sans touche récente).
     private func syncToScreen(_ now: Date) {
         guard sentAt == nil, codeShown.isEmpty, !loginShown,
               now.timeIntervalSince(seenScreen) < 1.6, now.timeIntervalSince(screenSince) > 1.0,
-              now.timeIntervalSince(lastTapAt) > 0.8,
-              !(sawStart && index >= steps.count - 1) else { return }
+              now.timeIntervalSince(lastTapAt) > 0.8 else { return }
         // Une alerte toute fraîche reste lisible 3 s avant que le bandeau ne bouge.
         if warning != nil, now.timeIntervalSince(warningAt) < 3 { return }
         let scr = screenKey
@@ -2193,18 +2340,193 @@ final class MetaViewController: UIViewController {
         showStep()
     }
 
+    /// L'utilisateur choisit de refaire sa demande (elle était partie avec un mauvais réglage) : on repart du début.
+    private func restartRequest() {
+        guardTimer?.invalidate(); guardTimer = nil
+        guarding = false
+        guardReady = false
+        finished = false
+        sentAt = nil
+        verifiedAt = nil
+        toCheck = false
+        badSettings = nil
+        existingRequest = false
+        // La demande d'avant est bien dans la liste : sans ça, Zieuton bloquerait sur « une demande est déjà en cours ».
+        allowSecond = true
+        proof.reset()
+        lastSummary = ""
+        index = 0
+        pickedAt = -1
+        warning = nil
+        seenScreen = .distantPast
+        lostCheckFrom = Date()
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        webView.load(URLRequest(url: url))
+        showStep()
+    }
+
+    /// Textes du compte verrouillé, suspendu ou désactivé (formulation neutre validée par Victor le 16 novembre).
+    private var lockText: (title: String, text: String) {
+        switch lockKind {
+        case "suspended": return ("Instagram a suspendu ton compte",
+                                  "Zieuton ne peut rien y changer. Ouvre l'application Instagram officielle pour voir ce qu'Instagram te propose.")
+        case "disabled": return ("Instagram a désactivé ton compte",
+                                 "Zieuton ne peut rien y changer. Ouvre l'application Instagram officielle pour voir ce qu'Instagram te propose.")
+        default: return ("Instagram a verrouillé ton compte par sécurité",
+                         "Zieuton ne peut pas le débloquer. Ouvre l'application Instagram officielle pour suivre les étapes de récupération.")
+        }
+    }
+
+    /// FOU-121 : compte verrouillé par Instagram. Le parcours s'arrête net : plus de consigne, plus de cercle, plus de guet.
+    /// Zieuton ne lit, ne demande et ne touche aucun code ni aucun choix de récupération : il renvoie vers l'app Instagram officielle.
+    private func showLocked() {
+        guard !lockedShown else { return }
+        lockedShown = true
+        guardTimer?.invalidate(); guardTimer = nil
+        warning = nil
+        if !loginAlert.isEmpty { loginAlert.forEach { $0.removeFromSuperview() }; loginAlert = [] }
+        hideRing()
+        showStep()
+
+        let veil = UIView()
+        veil.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        let card = UIView()
+        card.backgroundColor = Self.sheetBg
+        card.layer.cornerRadius = 28
+        card.layer.cornerCurve = .continuous
+        card.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+
+        let face = UIImageView(image: avatar.image)
+        face.layer.cornerRadius = 13
+        face.layer.cornerCurve = .continuous
+        face.clipsToBounds = true
+        face.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([face.widthAnchor.constraint(equalToConstant: 50), face.heightAnchor.constraint(equalToConstant: 50)])
+        let tag = UILabel()
+        tag.text = "🔒  EXPORT EN PAUSE"
+        tag.font = .systemFont(ofSize: 13, weight: .heavy)
+        tag.textColor = Self.alarm
+        let head = UIStackView(arrangedSubviews: [face, tag])
+        head.spacing = 12
+        head.alignment = .center
+        let title = UILabel()
+        title.text = lockText.title
+        title.font = Self.rounded(23, .heavy)
+        title.textColor = Self.ink
+        title.numberOfLines = 0
+        let body = UILabel()
+        body.text = lockText.text
+        body.font = Self.rounded(16, .regular)
+        body.textColor = Self.ink.withAlphaComponent(0.8)
+        body.numberOfLines = 0
+        let safe = PaddedLabel()
+        safe.text = "Ne donne jamais un code reçu à quelqu'un. Zieuton ne te le demandera jamais."
+        safe.font = Self.rounded(14, .bold)
+        safe.textColor = Self.alarm
+        safe.numberOfLines = 0
+        safe.backgroundColor = Self.alarm.withAlphaComponent(0.1)
+        safe.layer.cornerRadius = 12
+        safe.clipsToBounds = true
+
+        var openConfig = UIButton.Configuration.filled()
+        openConfig.title = "Ouvrir l'app Instagram"
+        openConfig.baseBackgroundColor = Self.ink
+        openConfig.baseForegroundColor = .white
+        openConfig.cornerStyle = .large
+        openConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
+            var a = a; a.font = MetaViewController.rounded(17, .bold); return a
+        }
+        let open = UIButton(configuration: openConfig, primaryAction: UIAction { _ in
+            // L'app Instagram si elle est installée, sinon sa page sur l'App Store.
+            guard let app = URL(string: "instagram://app"), let store = URL(string: "https://apps.apple.com/app/instagram/id389801252") else { return }
+            UIApplication.shared.open(app) { ok in if !ok { UIApplication.shared.open(store) } }
+        })
+        open.translatesAutoresizingMaskIntoConstraints = false
+        open.heightAnchor.constraint(equalToConstant: 52).isActive = true
+        var laterConfig = UIButton.Configuration.plain()
+        laterConfig.title = "Fermer, je reviendrai plus tard"
+        laterConfig.baseForegroundColor = Self.ink
+        laterConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
+            var a = a; a.font = MetaViewController.rounded(16, .semibold); return a
+        }
+        let later = UIButton(configuration: laterConfig, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
+
+        let all = UIStackView(arrangedSubviews: [head, title, body, safe, open, later])
+        all.axis = .vertical
+        all.spacing = 12
+        all.setCustomSpacing(16, after: safe)
+        all.setCustomSpacing(4, after: open)
+        all.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(all)
+        for v in [veil, card] { v.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(v) }
+        NSLayoutConstraint.activate([
+            veil.topAnchor.constraint(equalTo: view.topAnchor),
+            veil.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            veil.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            veil.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            card.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            card.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            all.topAnchor.constraint(equalTo: card.topAnchor, constant: 22),
+            all.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            all.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
+            all.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+        ])
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
+        UIAccessibility.post(notification: .screenChanged, argument: title)
+    }
+
+    /// « Demande à vérifier » : l'utilisateur confirme lui-même que la nouvelle ligne est sa demande (jamais sur une simple touche).
+    private func askConfirmRequest() {
+        guard presentedViewController == nil else { return }
+        let alert = UIAlertController(title: "Cette ligne est-elle ta demande ?",
+                                      message: "Confirme seulement si la nouvelle ligne « En attente » est datée d'aujourd'hui. Dans le doute, regarde encore la liste.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Pas sûr, je regarde encore", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Oui, c'est ma demande", style: .default) { [weak self] _ in
+            guard let self, self.requesting, !self.finished, self.toCheck else { return }
+            if self.sentAt == nil { self.sentAt = Date() }
+            self.toCheck = false
+            self.finishRequest()
+        })
+        present(alert, animated: true)
+    }
+
+    /// « Créer une exportation » retouché alors que la demande d'avant n'est pas confirmée : risque de doublon.
+    /// Zieuton ne bloque pas Instagram (c'est le choix de l'utilisateur) : il prévient, et propose de revoir la liste d'abord.
+    private func warnDuplicate() {
+        guard presentedViewController == nil else { return }
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        let alert = UIAlertController(title: "Attention au doublon",
+                                      message: "Ta demande d'avant est peut-être déjà enregistrée chez Instagram. Regarde d'abord la liste : une ligne « En attente » d'aujourd'hui, c'est bon, ne refais rien.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Revoir la liste", style: .cancel) { [weak self] _ in
+            guard let self else { return }
+            self.index = 0
+            self.pickedAt = -1
+            self.seenScreen = .distantPast
+            self.webView.load(URLRequest(url: self.url))
+            self.showStep()
+        })
+        alert.addAction(UIAlertAction(title: "Refaire quand même", style: .destructive))
+        present(alert, animated: true)
+    }
+
+    /// La demande est vue dans la liste d'Instagram (ou une demande était déjà en cours) : on guette le fichier.
     private func finishRequest() {
         guard !finished else { return }
         finished = true
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         let done = onRequested
         let before = downloadsSeen
-        // On laisse une seconde pour voir la confirmation d'Instagram.
-        sayLabel.attributedText = NSAttributedString(string: "C'est parti ! Instagram prépare ta liste.",
+        // Partie avec « Année dernière », HTML ou toutes les informations : on le dit, sans la refaire à sa place.
+        if !existingRequest { badSettings = ExportProof.problem(lastSummary) }
+        sayLabel.attributedText = NSAttributedString(string: existingRequest ? "Une demande est déjà en cours chez Instagram."
+                                                        : "C'est confirmé ! Instagram prépare ta liste.",
                                                      attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink])
         tipLabel.text = "Zieuton te prévient dès que ton fichier est prêt."
         // La page passe tout de suite sur « Instagram prépare ta liste », derrière : pas d'ancien écran au retour.
-        done?(before)
+        done?(before, existingRequest)
         // Au lieu de fermer, on reste sur la page d'Instagram et on guette le fichier (FOU-100).
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
             self?.startGuarding(before: before)
@@ -2245,6 +2567,132 @@ final class MetaViewController: UIViewController {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+}
+
+// EXPORT-PROOF:BEGIN
+/// FOU-121 : preuve qu'une demande d'export est bien enregistrée chez Instagram.
+/// Avant la demande, on note les lignes « En attente » de la liste des exports d'Instagram (combien, et combien datées d'aujourd'hui).
+/// Après la demande, trois cas :
+/// - confirmée : la touche « Commencer l'exportation » a été vue ET une ligne de plus est là ET elle est datée d'aujourd'hui
+///   (ou « à l'instant », « il y a 2 min »…) ;
+/// - à vérifier : une ligne de plus, mais sans touche vue ou sans date récente. Ça peut être une ancienne demande
+///   qui s'affiche en retard : c'est l'utilisateur qui regarde et décide, Zieuton ne conclut pas à sa place ;
+/// - rien : pas de ligne de plus. Ce n'est jamais un échec : la ligne peut arriver plus tard.
+struct ExportProof: Equatable {
+    /// Le plus grand nombre de lignes « En attente » vu sur l'accueil avant la demande (nil : liste jamais vue).
+    private(set) var before: Int?
+    /// Parmi elles, le plus grand nombre de lignes datées d'aujourd'hui.
+    private(set) var recentBefore = 0
+    /// Figée dès l'arrivée sur le résumé : la nouvelle ligne ne doit jamais devenir la référence.
+    private(set) var frozen = false
+
+    enum Verdict: Equatable { case none, confirmed, toCheck }
+
+    /// L'accueil de l'export montre ces lignes « En attente » (texte de chaque ligne, en minuscules).
+    /// On garde les plus grands nombres vus : la liste peut s'afficher en plusieurs fois.
+    mutating func saw(_ rows: [String], now: Date, calendar: Calendar = .current) {
+        guard !frozen else { return }
+        before = max(before ?? 0, rows.count)
+        recentBefore = max(recentBefore, rows.filter { Self.isRecent($0, now: now, calendar: calendar) }.count)
+    }
+
+    /// Le résumé (« Commencer l'exportation ») est atteint : la référence ne bouge plus.
+    mutating func freeze() {
+        if before != nil { frozen = true }
+    }
+
+    mutating func reset() { self = ExportProof() }
+
+    /// Une demande était déjà en cours avant de commencer (et on n'a pas encore commencé).
+    var alreadyPending: Bool { !frozen && (before ?? 0) > 0 }
+
+    /// Ce que prouve la liste lue maintenant. `tapped` : la touche « Commencer l'exportation » a été vue.
+    func verdict(_ rows: [String]?, tapped: Bool, now: Date, calendar: Calendar = .current) -> Verdict {
+        guard frozen, let before, let rows, rows.count > before else { return .none }
+        let recent = rows.filter { Self.isRecent($0, now: now, calendar: calendar) }.count
+        return tapped && recent > recentBefore ? .confirmed : .toCheck
+    }
+
+    /// La ligne dit qu'elle date d'aujourd'hui : « à l'instant », « il y a 3 min », « aujourd'hui », « 16 novembre », « nov 16 », « 16/11 »…
+    /// Une autre année écrite en toutes lettres (« 16 novembre 2025 ») la rend ancienne.
+    static func isRecent(_ row: String, now: Date, calendar: Calendar = .current) -> Bool {
+        let t = row.lowercased().replacingOccurrences(of: "\u{00a0}", with: " ").replacingOccurrences(of: "’", with: "'")
+        let c = calendar.dateComponents([.year, .month, .day], from: now)
+        guard let year = c.year, let month = c.month, let day = c.day else { return false }
+        // Une année écrite qui n'est pas celle d'aujourd'hui : ancienne ligne.
+        for y in matches(t, "(?<![0-9])(?:19|20)[0-9]{2}(?![0-9])") where Int(y) != year { return false }
+        if has(t, "à l'instant|a l'instant|just now|aujourd'hui|today") { return true }
+        // « il y a 3 min », « il y a 40 s », « 3 min ago », « 2m ago » : 30 minutes au plus.
+        for n in matches(t, "il y a ([0-9]+) ?(?:s|sec|secondes?|min|minutes?)(?![\\p{L}])", group: 1)
+            + matches(t, "(?<![0-9])([0-9]+) ?(?:s|sec|seconds?|m|min|mins|minutes?) ago", group: 1)
+            where (Int(n) ?? 99) <= 30 { return true }
+        let fr = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+        let frShort = ["janv", "févr", "mars", "avr", "mai", "juin", "juil", "août", "sept", "oct", "nov", "déc"]
+        let en = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+        let enShort = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+        var names = [fr[month - 1], frShort[month - 1], en[month - 1], enShort[month - 1]]
+        if month == 9 { names.append("sept") }
+        let m = "(?:" + Set(names).sorted().joined(separator: "|") + ")"
+        let d = "0?\(day)"
+        // « 16 novembre », « 1er nov. », « 16 nov 2026 » / « november 16 », « nov. 16th »
+        if has(t, "(?<![0-9])\(d)(?:er|st|nd|rd|th)? (?:de )?\(m)\\.?(?![\\p{L}])") { return true }
+        if has(t, "(?<![\\p{L}])\(m)\\.? \(d)(?:st|nd|rd|th)?(?![0-9])") { return true }
+        // « 16/11 », « 16/11/2026 », « 2026-11-16 »
+        if has(t, "(?<![0-9])\(d)/0?\(month)(?![0-9])") { return true }
+        if has(t, "\(year)-\(String(format: "%02d", month))-\(String(format: "%02d", day))") { return true }
+        return false
+    }
+
+    private static func has(_ text: String, _ pattern: String) -> Bool { !matches(text, pattern).isEmpty }
+
+    private static func matches(_ text: String, _ pattern: String, group: Int = 0) -> [String] {
+        guard let re = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let ns = text as NSString
+        return re.matches(in: text, range: NSRange(location: 0, length: ns.length)).compactMap {
+            let r = $0.range(at: group)
+            return r.location == NSNotFound ? nil : ns.substring(with: r)
+        }
+    }
+
+    /// Toucher le bandeau en « à vérifier » ouvre une confirmation, jamais une validation directe.
+    enum BannerTap: Equatable { case askConfirm, other }
+    static func bannerTap(requesting: Bool, finished: Bool, toCheck: Bool) -> BannerTap {
+        requesting && !finished && toCheck ? .askConfirm : .other
+    }
+
+    /// Retoucher « Créer une exportation » risque un doublon : demande touchée mais pas confirmée, ou ligne « à vérifier ».
+    static func duplicateRisk(tappedStart: Bool, toCheck: Bool, finished: Bool) -> Bool {
+        !finished && (tappedStart || toCheck)
+    }
+
+    /// Ce que le bandeau dit si la demande est partie avec un mauvais réglage (dernier résumé lu avant la demande).
+    struct Problem: Equatable { let title: String; let text: String }
+    static func problem(_ summary: String) -> Problem? {
+        switch summary {
+        case "summary:info": return Problem(title: "avec toutes les informations",
+                                            text: "Instagram prépare tout ton compte : ce sera beaucoup plus long.")
+        case "summary:period": return Problem(title: "avec « Année dernière »",
+                                              text: "Il manquera tes plus anciens abonnés.")
+        case "summary:format": return Problem(title: "en HTML",
+                                              text: "Zieuton ne lit que le JSON : ce fichier ne pourra pas être importé.")
+        default: return nil
+        }
+    }
+}
+// EXPORT-PROOF:END
+
+/// Étiquette avec une marge intérieure (le rappel « ne donne jamais un code »).
+final class PaddedLabel: UILabel {
+    var inset = UIEdgeInsets(top: 10, left: 12, bottom: 10, right: 12)
+    override func drawText(in rect: CGRect) { super.drawText(in: rect.inset(by: inset)) }
+    override var intrinsicContentSize: CGSize {
+        let s = super.intrinsicContentSize
+        return CGSize(width: s.width + inset.left + inset.right, height: s.height + inset.top + inset.bottom)
+    }
+    override func textRect(forBounds bounds: CGRect, limitedToNumberOfLines n: Int) -> CGRect {
+        let r = super.textRect(forBounds: bounds.inset(by: inset), limitedToNumberOfLines: n)
+        return r.inset(by: UIEdgeInsets(top: -inset.top, left: -inset.left, bottom: -inset.bottom, right: -inset.right))
     }
 }
 
@@ -2417,6 +2865,8 @@ final class ExportWatcher: NSObject {
     private enum Key {
         static let requested = "zy.export.requestedAt", ready = "zy.export.readyAt", before = "zy.export.downloadsBefore"
         static let baselineChecked = "zy.export.baselineChecked"
+        /// La demande était déjà en cours chez Instagram : son heure est inconnue (Key.requested = début du guet, pas la demande).
+        static let existing = "zy.export.existing"
     }
     private enum Id {
         static let asked = "zy-asked", ready = "zy-ready", reminder = "zy-reminder", lastDay = "zy-last-day"
@@ -2475,6 +2925,8 @@ final class ExportWatcher: NSObject {
         return Date().timeIntervalSince(r) < 4 * 86400
     }
     var isReady: Bool { requestedAt != nil && readyAt != nil }
+    /// La demande guettée était déjà en cours chez Instagram : son heure est inconnue.
+    private var isExisting: Bool { store.bool(forKey: Key.existing) }
 
     private var timer: Timer?
     private var checker: WKWebView?
@@ -2489,8 +2941,12 @@ final class ExportWatcher: NSObject {
     static let likelyAfter: TimeInterval = 3 * 60
 
     /// La demande vient de partir dans Instagram.
-    func requested(downloadsBefore: Int) {
+    /// existing : la demande était déjà en cours chez Instagram, à une heure qu'on ne connaît pas (FOU-121).
+    /// Key.requested note alors le début du guet, jamais présenté comme l'heure de la demande : pas de « C'est demandé »,
+    /// pas de « Demandé à HH:MM », pas de « sûrement prêt » ni de « dernier jour » calculés depuis maintenant.
+    func requested(downloadsBefore: Int, existing: Bool = false) {
         store.set(Date(), forKey: Key.requested)
+        store.set(existing, forKey: Key.existing)
         store.removeObject(forKey: Key.ready)
         store.set(downloadsBefore, forKey: Key.before)
         store.set(false, forKey: Key.baselineChecked)
@@ -2500,6 +2956,12 @@ final class ExportWatcher: NSObject {
         center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             guard granted, let self else { return }
             let now = Date()
+            if existing {
+                // Heure de la demande inconnue : un seul rappel, sans heure ni promesse que le fichier est prêt.
+                self.notify(Id.reminder, "Ta demande Instagram est toujours là 📥", "Une demande était déjà en cours chez Instagram. Touche pour voir si ton fichier est prêt.",
+                            after: 40 * 60, category: Id.readyCategory)
+                return
+            }
             self.notify(Id.asked, "C'est demandé ✓", "Ton fichier arrive en général en 1 à 3 minutes. Je te préviens dès qu'il est là.",
                         subtitle: "Demande envoyée à Instagram à \(Self.hour(now))", after: 1)
             // Zieuton fermé, iOS décide seul quand le réveiller (parfois jamais) : sans ce filet, aucune notif ne partirait.
@@ -2525,7 +2987,7 @@ final class ExportWatcher: NSObject {
         guard let r = requestedAt, store.object(forKey: Key.ready) == nil else { return }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Id.likely])
         notify(Id.reminder, "Instagram prépare encore ton fichier ⏳", "C'est plus long que d'habitude. Je regarde encore et je te préviens dès qu'il est là.",
-               subtitle: "Demandé à \(Self.hour(r))", after: 10 * 60)
+               subtitle: isExisting ? nil : "Demandé à \(Self.hour(r))", after: 10 * 60)
     }
 
     /// Le fichier a été téléchargé dans Zieuton : plus rien à guetter.
@@ -2536,7 +2998,7 @@ final class ExportWatcher: NSObject {
 
     func clear() {
         guard requestedAt != nil else { return }
-        for k in [Key.requested, Key.ready, Key.before, Key.baselineChecked] { store.removeObject(forKey: k) }
+        for k in [Key.requested, Key.ready, Key.before, Key.baselineChecked, Key.existing] { store.removeObject(forKey: k) }
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: Id.all)
         center.removeDeliveredNotifications(withIdentifiers: Id.all)
@@ -2552,7 +3014,8 @@ final class ExportWatcher: NSObject {
         center.removePendingNotificationRequests(withIdentifiers: [Id.likely, Id.reminder, Id.lastDay])
         center.removeDeliveredNotifications(withIdentifiers: [Id.asked, Id.likely])
         let now = Date(), expires = now.addingTimeInterval(4 * 86400)
-        let took = requestedAt.map { Self.duration(now.timeIntervalSince($0)) }
+        // Demande déjà en cours : on ne sait pas quand elle est partie, donc pas de « Instagram a mis X ».
+        let took = isExisting ? nil : requestedAt.map { Self.duration(now.timeIntervalSince($0)) }
         notify(Id.ready, "Ton fichier Instagram est prêt 🎉", "Touche pour mettre Zieuton à jour : tu sauras qui est parti et qui est arrivé. Valable jusqu'au \(Self.day(expires)).",
                subtitle: took.map { "Instagram a mis \($0)" }, after: 1, badge: true, category: Id.readyCategory)
         notify(Id.lastDay, "⏳ Ton fichier expire demain à \(Self.hour(expires))", "Après, il faudra refaire une demande. Touche pour mettre Zieuton à jour maintenant.",

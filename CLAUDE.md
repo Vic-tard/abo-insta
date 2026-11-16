@@ -48,5 +48,6 @@ Zieuton est une app iPhone qui compare les exports officiels Instagram d'un util
 
 - `npm test` : tests Node de l'import et de la comparaison (`tests/`), avec des exports d'exemple dans `tests/fixtures/`.
 - `npm run check:page` : ouvre la page dans Playwright et échoue s'il y a une erreur dans la console.
+- `npm run test:lecteur` : teste le script qui lit les écrans d'Instagram (bloc `LECTEUR-INSTAGRAM` de `WebViewController.swift`) sur des pages reconstituées (`tests/lecteur/pages`). `npm run test:ios` (Mac) teste aussi la preuve de demande d'export (bloc `EXPORT-PROOF`).
 - GitHub Actions (`.github/workflows/verifications.yml`) relance tout à chaque PR, plus la compilation Xcode sans signature.
 - Ajoute un test à chaque bug corrigé dans l'import ou la comparaison.

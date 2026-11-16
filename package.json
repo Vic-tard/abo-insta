@@ -7,10 +7,11 @@
     "check:syntax": "node scripts/check-syntax.mjs && node scripts/sync-core.mjs --check",
     "check:page": "node scripts/check-console.mjs",
     "sync": "node scripts/sync-core.mjs",
-    "test:ios": "sh scripts/test-page-guard.sh",
+    "test:ios": "sh scripts/test-page-guard.sh && sh scripts/test-export-proof.sh",
     "canal": "node scripts/channel.mjs",
     "version": "node scripts/version.mjs",
-    "check:versions": "node scripts/check-versions.mjs origin/main"
+    "check:versions": "node scripts/check-versions.mjs origin/main",
+    "test:lecteur": "node --test tests/lecteur/*.test.mjs"
   },
   "devDependencies": {
     "playwright": "1.63.0"

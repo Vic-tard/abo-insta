@@ -4351,8 +4351,11 @@ let prefs = {};
   prefs = m.ok ? m.data : {};
 }
 function savePrefs() { if (DEMO) return; prefs.v = PREFS_V; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch (e) { logError("prefs-save", e); } }
-function markRequested() {
+// existing : la demande était déjà en cours chez Instagram (FOU-121). Son heure est inconnue : requestedAt note
+// le début du guet, et les textes ne disent jamais « demandé à l'instant » ni « demandé le … » pour elle.
+function markRequested(existing) {
   prefs.requestedAt = new Date().toISOString();
+  if (existing === true) prefs.requestExisting = true; else delete prefs.requestExisting;
   delete prefs.readyAt;
   prefs.getStep = 0; prefs.igStep = 0;
   savePrefs();
@@ -4399,7 +4402,7 @@ function renderWeekly() {
     li.querySelector("i").textContent = i < at ? "✓" : String(i + 1);
   });
   $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : "En préparation";
-  if (pend) { due.textContent = mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
+  if (pend) { due.textContent = prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
   // App iPhone : le gros bouton fait tout (Instagram dans Zieuton, téléchargement, import). Le reste est rangé dans « Un souci ? ».
   const simple = metaInApp();
   $("wk-redo").hidden = !pend || simple;
@@ -4439,7 +4442,7 @@ function renderJourney() {
   setStep("j-export", req ? "done" : needsInstall ? "todo" : "current", 1 + off);
   setStep("j-import", req ? "current" : "todo", 2 + off);
   $("j-export-sub").textContent = req
-    ? `Demandé le ${fmtDate(req)}. Pas reçu ? Tu peux le redemander.`
+    ? (prefs.requestExisting ? "Une demande était déjà en cours chez Instagram. Pas reçu ? Tu peux le redemander." : `Demandé le ${fmtDate(req)}. Pas reçu ? Tu peux le redemander.`)
     : "Instagram prépare un fichier avec la liste de tes abonnés. C'est officiel et gratuit, sans donner ton mot de passe.";
   $("start-export").className = "btn " + (req || needsInstall ? "ghost" : "primary");
   $("start-import").className = "btn " + (req && !needsInstall ? "primary" : "ghost");
@@ -4662,7 +4665,7 @@ function wkGo(mode) {
   }
 }
 // Réponses de l'app iPhone : « requested » quand la demande est faite dans Instagram.
-window.zyeutoMeta = (ev) => {
+window.zyeutoMeta = (ev, info) => {
   // Pendant la démo : « prêt » est noté sur les vraies données (la barre du haut le dit), une notification touchée ramène aux vraies données.
   if (DEMO && ev === "ready") {
     if (realPrefs && !realPrefs.readyAt) { realPrefs.readyAt = new Date().toISOString(); try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch { /* normal : stockage du navigateur indisponible */ } }
@@ -4683,9 +4686,12 @@ window.zyeutoMeta = (ev) => {
     return;
   }
   if (ev === "requested") {
-    markRequested(); haptic("success"); scrollTo({ top: 0 });
+    const existing = !!(info && info.existing === true);
+    markRequested(existing); haptic("success"); scrollTo({ top: 0 });
     // Premier export : l'écran d'attente du parcours prend le relais (pas de jeux ni de graphiques encore vides).
     if (gfOn()) return;
+    // Demande déjà en cours (FOU-121) : pas de « C'est demandé » comme si elle venait de partir.
+    if (existing) { toast("Une demande était déjà en cours chez Instagram : je guette ton fichier.", false); return; }
     $("asked-av").innerHTML = $("wk-av").innerHTML;
     $("asked").hidden = false;
   }
@@ -4974,6 +4980,7 @@ function renderGuided() {
     const ago = since < 60 ? since + " min" : Math.round(since / 60) + " h";
     const sure = !!prefs.readyAt;
     const say = ready ? (sure ? "Ta liste est prête&nbsp;! On va la chercher 🏃" : "Ta liste devrait être prête&nbsp;! On va voir 🏃")
+      : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: je guette ta liste."
       : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste."
       : `Demandé il y a ${ago}. Instagram y travaille encore…`;
     // Attente puis « prête » : même carte prune et or que l'accueil, puis des lignes façon Réglages.
@@ -5121,7 +5128,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-0338";
+const BUILD = "2026-11-16-1312";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
