@@ -59,6 +59,9 @@ jobs:
       - name: Ouvrir la page et vérifier la console
         run: npm run check:page
 
+      - name: Lecture des écrans d'Instagram sur des pages reconstituées (FOU-121)
+        run: npm run test:lecteur
+
   ios:
     name: Coque iPhone (compilation Xcode, sans signature)
     runs-on: macos-latest
@@ -69,6 +72,9 @@ jobs:
         run: xcodebuild -version
       - name: Règles de sécurité des mises à jour de la page (PageGuard)
         run: sh scripts/test-page-guard.sh
+      - name: Preuve de demande d'export (FOU-121)
+        if: ${{ !cancelled() }}
+        run: sh scripts/test-export-proof.sh
       - name: Compiler l'app
         # Compile même si les tests au-dessus échouent : on voit les deux résultats d'un coup.
         if: ${{ !cancelled() }}
