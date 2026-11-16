@@ -1097,6 +1097,13 @@ if (!window.ZYEUTO_APP) {
   .gx-ic svg { width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .gx-track { height: 8px; border-radius: 999px; background: rgb(255 255 255 / .14); overflow: hidden; }
   .gx-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #b9a5f0, #ef7f6a); transition: width .6s ease; }
+  /* FOU-124 : attente sans estimation. La barre ne mesure rien : une lueur passe, sans pourcentage. */
+  .gx-track.wait i { width: 38%; opacity: .9; }
+  @media (prefers-reduced-motion: no-preference) { .gx-track.wait i { animation: gxWait 2.4s ease-in-out infinite; } }
+  @keyframes gxWait { from { transform: translateX(-105%); } to { transform: translateX(270%); } }
+  .gx-top b.gx-mid { font-size: 23px; }
+  .gf-redo { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); font-size: 14px; line-height: 1.4; color: var(--ink); display: flex; flex-direction: column; gap: 8px; }
+  .gf-redo .btn { align-self: stretch; }
   .gx-steps { list-style: none; margin: -4px 0 0; padding: 0; display: flex; justify-content: space-between; gap: 6px; }
   .gx-steps li { display: flex; align-items: center; gap: 6px; font: 700 12px var(--round); color: rgb(255 255 255 / .5); white-space: nowrap; }
   .gx-steps li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgb(255 255 255 / .3); flex: none; }
@@ -4749,7 +4756,8 @@ $("sos-app").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-
 $("sos-redo").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); $("wk-redo").click(); });
 $("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
 // La carte se redessine (« Demandé il y a X min ») ; elle ne passe à « prêt » que si l'app a vu le fichier (FOU-121 P3).
-setInterval(() => { if (!document.hidden && reqPending()) { renderWeekly(); if (gfOn() && gfStep() === "get" && metaInApp()) renderGuided(); } }, 30000);
+// Une confirmation « Refaire la demande » ouverte n'est pas effacée par ce rafraîchissement (FOU-124).
+setInterval(() => { if (!document.hidden && reqPending()) { renderWeekly(); if (gfOn() && gfStep() === "get" && metaInApp() && !$("gf-redo")) renderGuided(); } }, 30000);
 
 // ---------- Parcours guidé du premier export ----------
 // Tant qu'aucun import n'est fait, l'app n'affiche que ce parcours : une étape à la fois, un seul gros bouton.
@@ -5091,8 +5099,8 @@ function renderGuided() {
     const ready = exportSeenReady();
     const ago = since < 60 ? since + " min" : Math.round(since / 60) + " h";
     const say = ready ? "Ta liste est prête&nbsp;! On va la chercher 🏃"
-      : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: je guette ta liste."
-      : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Instagram prépare ta liste."
+      : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: inutile d'en refaire une."
+      : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Tu n'as plus rien à faire."
       : since >= WAIT_LONG_MIN ? `Demandé il y a ${ago}. Je ne l'ai pas encore vue prête&nbsp;: touche « Regarder si c'est prêt ».`
       : `Demandé il y a ${ago}. Instagram y travaille encore…`;
     // Attente puis « prête » : même carte prune et or que l'accueil, puis des lignes façon Réglages.
@@ -5107,27 +5115,29 @@ function renderGuided() {
     const track = (pct, st) => `<div class="gx-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
         <ol class="gx-steps">${["Demandé", "Instagram prépare", "Prête"].map((t, k) => `<li class="${k < st ? "done" : k === st ? "now" : ""}">${t}</li>`).join("")}</ol>`;
     if (!ready) {
-      // Attente : on rassure (rappel, pas besoin du mail) sans promettre de délai, et on emmène vers la démo (FOU-121 P3).
-      // La barre ne mesure pas le temps : elle reste à « Instagram prépare » tant que le fichier n'est pas vu.
+      // Attente (FOU-124) : Instagram prépare le fichier, aucune estimation de délai, aucune promesse de surveillance
+      // quand Zieuton est fermé. La barre ne mesure rien : une lueur passe, sans pourcentage.
       body.innerHTML = `${guide(say)}
-      <h2 id="gf-title">Ta liste est en route</h2>
+      <h2 id="gf-title">Instagram prépare ta liste</h2>
       <div class="gx">
-        <div class="gx-top"><span class="gx-ic">${I_MAIL}</span><div><small>En général</small><b>Quelques minutes</b></div></div>
-        ${track(50, 1)}
+        <div class="gx-top"><span class="gx-ic">${I_MAIL}</span><div><small>En cours chez Instagram</small><b class="gx-mid">Ton fichier se prépare</b></div></div>
+        <div class="gx-track wait" role="progressbar" aria-label="Instagram prépare ton fichier"><i></i></div>
+        <ol class="gx-steps">${["Demandé", "Instagram prépare", "Prête"].map((t, k) => `<li class="${k < 1 ? "done" : k === 1 ? "now" : ""}">${t}</li>`).join("")}</ol>
       </div>
       <ul class="gx-list">
-        ${row(I_BELL, "lilac", "Je te fais signe", "Je regarde chez Instagram quand Zieuton est ouvert. Sinon, je t'envoie un rappel pour aller voir.")}
+        ${row(I_PHONE, "plum", "Tu peux fermer l'app", "Reviens quand tu veux&nbsp;: à chaque ouverture de Zieuton, je regarde où en est Instagram.")}
+        ${row(I_BELL, "lilac", "Je t'envoie un rappel", "Pour penser à revenir voir. Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")}
         ${row(I_MAIL, "rose", "Pas besoin d'ouvrir le mail", "Instagram t'en envoie un aussi, mais tout se fait ici.")}
-        ${row(I_PHONE, "plum", "Tu peux fermer l'app", "Rien ne se perd&nbsp;: quand tu la rouvres, je regarde tout de suite où en est Instagram.")}
       </ul>
       <div class="gf-foot">
-        <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>En attendant, découvre l'app</button>
-        <button class="alt" id="gf-get" type="button">Regarder si c'est prêt</button>
+        <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Découvrir Zieuton en attendant</button>
+        <button class="btn ghost" id="gf-get" type="button">Regarder si c'est prêt</button>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
+        <div id="gf-redo-slot"></div>
       </div>`;
       $("gf-wait-demo").onclick = () => enterDemo();
       // Le texte (« Demandé il y a X min ») se met à jour chaque minute tant qu'on attend.
-      clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get") renderGuided(); }, 60000);
+      clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get" && !$("gf-redo")) renderGuided(); }, 60000);
     } else {
     body.innerHTML = `${guide(say)}
       <h2 id="gf-title">Ta liste est prête</h2>
@@ -5143,10 +5153,20 @@ function renderGuided() {
       <div class="gf-foot">
         <button class="btn cheer big" id="gf-get" type="button">${I_TAP}Récupérer ma liste</button>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
+        <div id="gf-redo-slot"></div>
       </div>`;
     }
     $("gf-get").onclick = wkGo;
-    $("gf-back").onclick = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; savePrefs(); render(); };
+    // FOU-124 : pas de doublon involontaire. « Refaire la demande » demande d'abord une confirmation, dans l'écran
+    // (pas de fenêtre du navigateur), et rien n'est effacé tant que l'utilisateur ne l'a pas confirmé.
+    $("gf-back").onclick = () => {
+      haptic("light");
+      $("gf-back").hidden = true;
+      $("gf-redo-slot").innerHTML = `<p class="gf-redo" id="gf-redo"><span>Ta demande est sûrement déjà chez Instagram. En refaire une maintenant crée un doublon, et ton fichier peut mettre plus longtemps.</span>
+        <button class="btn ghost" id="gf-redo-no" type="button">Non, j'attends</button><button class="btn ghost" id="gf-redo-yes" type="button">Refaire quand même</button></p>`;
+      $("gf-redo-no").onclick = () => { $("gf-redo-slot").innerHTML = ""; $("gf-back").hidden = false; };
+      $("gf-redo-yes").onclick = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; savePrefs(); render(); };
+    };
   } else if (step === "insta") {
     const i = prefs.igOpened ? Math.min(prefs.igStep || 0, IG_SHOTS.length - 1) : 0, last = i === IG_SHOTS.length - 1;
     const foot = !prefs.igOpened
@@ -5242,7 +5262,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-1720";
+const BUILD = "2026-11-16-1811";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

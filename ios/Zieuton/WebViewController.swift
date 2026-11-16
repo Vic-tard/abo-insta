@@ -988,6 +988,8 @@ final class MetaViewController: UIViewController {
     private let tipLabel = UILabel()
     private let replica = UIView()
     private let replicaBox = UIView()
+    /// Demande vérifiée : bouton qui ferme la fenêtre d'Instagram (même effet que « ‹ Zieuton » en haut à gauche).
+    private let homeButton = UIButton(type: .system)
     /// FOU-121 P4 : 4 grandes phases (Connexion, Réglages, Demande, Fichier) au lieu d'une barre d'étapes.
     private let phaseRow = UIStackView()
     private var phaseLabels: [UILabel] = []
@@ -1859,7 +1861,21 @@ final class MetaViewController: UIViewController {
         phaseRow.isAccessibilityElement = true
 
         // Sous le titre : le bouton à chercher et le conseil, avec une place à droite pour le zieuteur.
-        let lower = UIStackView(arrangedSubviews: [replicaBox, tipLabel])
+        var homeConfig = UIButton.Configuration.filled()
+        homeConfig.title = "Revenir dans Zieuton"
+        homeConfig.image = UIImage(systemName: "chevron.left", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold))
+        homeConfig.imagePadding = 6
+        homeConfig.baseBackgroundColor = Self.ink
+        homeConfig.baseForegroundColor = .white
+        homeConfig.cornerStyle = .large
+        homeConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
+            var a = a; a.font = MetaViewController.rounded(16, .bold); return a
+        }
+        homeButton.configuration = homeConfig
+        homeButton.addAction(UIAction { [weak self] _ in self?.dismiss(animated: true) }, for: .primaryActionTriggered)
+        homeButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        homeButton.isHidden = true
+        let lower = UIStackView(arrangedSubviews: [replicaBox, tipLabel, homeButton])
         lower.axis = .vertical
         lower.spacing = 8
         let room = UIView()
@@ -2055,12 +2071,8 @@ final class MetaViewController: UIViewController {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
                             tip: "Je regarde à nouveau dès que tu rouvres Zieuton, et je t'enverrai un rappel pour aller voir.")
             }
-            if existingRequest {
-                return Step(verb: "Une demande est déjà en cours :", target: "je guette ton fichier",
-                            tip: "Instagram prépare déjà ton fichier, inutile d'en refaire une. Je vibre dès que je le vois prêt. Si tu fermes, je t'enverrai un rappel pour aller voir.")
-            }
-            return Step(verb: "Garde cet écran ouvert :", target: "je guette ton fichier",
-                        tip: "Je regarde la page d'Instagram toutes les 10 secondes et je vibre dès que je le vois prêt. Tu peux aussi fermer : je t'enverrai un rappel pour aller voir.")
+            // Demande vérifiée (on n'arrive ici qu'après la preuve) : on dit clairement comment sortir d'Instagram.
+            return Step(verb: LeaveHint.verb(existing: existingRequest), target: LeaveHint.target, tip: LeaveHint.tip)
         }
         if cookiesShown {
             return Step(verb: "Cookies : touche", target: "Refuser les cookies optionnels",
@@ -2175,7 +2187,9 @@ final class MetaViewController: UIViewController {
         let phase = BannerPhases.current(login: loginShown, code: !codeShown.isEmpty, finalStep: steps[index].final,
                                          requested: sentAt != nil || toCheck, file: !requesting || guarding || finished || downloading)
         let reduced = keyboardUp && step.tone == .consigne
-        let key = [step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : "", cookiesShown ? "C" : "", "\(step.tone)", String(phase), reduced ? "K" : ""].joined(separator: "|")
+        let home = LeaveHint.showsButton(guarding: guarding, ready: guardReady, badSettings: badSettings != nil,
+                                         pageProblem: !pageProblem.isEmpty, downloading: downloading)
+        let key = [home ? "H" : "", step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : "", cookiesShown ? "C" : "", "\(step.tone)", String(phase), reduced ? "K" : ""].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
         let apply = {
@@ -2213,6 +2227,7 @@ final class MetaViewController: UIViewController {
             // Clavier ouvert : la consigne se réduit au titre ; une alerte reste entière (FOU-121 P4).
             self.tipLabel.isHidden = step.tip.isEmpty || reduced
             self.replicaBox.isHidden = step.look.isEmpty || !normal || reduced
+            self.homeButton.isHidden = !home
             if normal && !step.look.isEmpty && !reduced { self.drawReplica(self.warning == nil ? step : self.steps[self.index]) }
             self.drawPhases(phase)
             self.phaseRow.isHidden = !self.pageKnown || self.lockedShown || reduced
@@ -2790,7 +2805,7 @@ final class MetaViewController: UIViewController {
         sayLabel.attributedText = NSAttributedString(string: existingRequest ? "Une demande est déjà en cours chez Instagram."
                                                         : "C'est confirmé ! Instagram prépare ta liste.",
                                                      attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink])
-        tipLabel.text = "Zieuton te prévient dès que ton fichier est prêt."
+        tipLabel.text = "Tu n'as plus rien à faire ici."
         // La page passe tout de suite sur « Instagram prépare ta liste », derrière : pas d'ancien écran au retour.
         done?(before, existingRequest)
         // Au lieu de fermer, on reste sur la page d'Instagram et on guette le fichier (FOU-100).
@@ -2993,6 +3008,22 @@ enum BannerTone: Equatable {
         if verb.hasPrefix("Je ne reconnais pas") { return .pause }
         if verb.hasPrefix("Parfait") || verb.hasPrefix("C'est prêt") || verb.hasPrefix("✓") { return .success }
         return .consigne
+    }
+}
+
+/// FOU-124 : après une demande VÉRIFIÉE, on dit clairement que tout est fait chez Instagram et comment revenir.
+/// Test réel : l'utilisateur restait sur Instagram sans voir « ‹ Zieuton » en haut à gauche.
+enum LeaveHint {
+    static func verb(existing: Bool) -> String {
+        existing ? "✓ Une demande est déjà en cours. Tu n'as plus rien à faire ici :" : "✓ C'est demandé ! Tu n'as plus rien à faire ici :"
+    }
+    static let target = "touche ‹ Zieuton en haut à gauche"
+    static let tip = "Instagram prépare ton fichier. Tu peux fermer l'app : quand tu reviens dans Zieuton, je regarde où il en est."
+
+    /// Le bouton « Revenir dans Zieuton » : seulement pendant le guet d'une demande vérifiée, fichier pas encore prêt,
+    /// sans réglage à corriger, sans page en panne, sans téléchargement en cours.
+    static func showsButton(guarding: Bool, ready: Bool, badSettings: Bool, pageProblem: Bool, downloading: Bool) -> Bool {
+        guarding && !ready && !badSettings && !pageProblem && !downloading
     }
 }
 

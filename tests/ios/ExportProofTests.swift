@@ -210,5 +210,23 @@ check(PickMemory.settingsVerified(summaryInfo: "one", followersAlone: true), "«
 check(!PickMemory.settingsVerified(summaryInfo: "one", followersAlone: false), "« 1 élément » sans preuve que c'est Followers : pas de ✓")
 check(!PickMemory.settingsVerified(summaryInfo: "", followersAlone: true), "résumé illisible : pas de ✓")
 
+// 21. FOU-124 : après une demande vérifiée, on dit comment revenir dans Zieuton, jamais avant.
+check(LeaveHint.showsButton(guarding: true, ready: false, badSettings: false, pageProblem: false, downloading: false),
+      "demande vérifiée, fichier pas prêt : bouton « Revenir dans Zieuton »")
+check(!LeaveHint.showsButton(guarding: false, ready: false, badSettings: false, pageProblem: false, downloading: false),
+      "demande pas encore vérifiée (pas de guet) : pas de bouton")
+check(!LeaveHint.showsButton(guarding: true, ready: true, badSettings: false, pageProblem: false, downloading: false),
+      "fichier prêt : on montre « Télécharger », pas le bouton de sortie")
+check(!LeaveHint.showsButton(guarding: true, ready: false, badSettings: true, pageProblem: false, downloading: false),
+      "demande partie avec un mauvais réglage : pas de « plus rien à faire »")
+check(!LeaveHint.showsButton(guarding: true, ready: false, badSettings: false, pageProblem: true, downloading: false),
+      "page en panne : pas de bouton de sortie")
+check(!LeaveHint.showsButton(guarding: true, ready: false, badSettings: false, pageProblem: false, downloading: true),
+      "téléchargement en cours : on ne propose pas de fermer")
+check(LeaveHint.verb(existing: false).hasPrefix("✓") && LeaveHint.verb(existing: true).hasPrefix("✓"), "message de sortie en lilas (réussite vérifiée)")
+check(BannerTone.of(verb: LeaveHint.verb(existing: false), isWarning: false) == .success, "couleur : réussite")
+check(LeaveHint.target.contains("‹ Zieuton") && LeaveHint.target.contains("en haut à gauche"), "le message dit où toucher")
+check(!LeaveHint.tip.contains("toutes les") && !LeaveHint.tip.contains("en continu"), "pas de promesse de surveillance continue")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
