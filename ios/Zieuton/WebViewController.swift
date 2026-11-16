@@ -872,6 +872,8 @@ final class MetaViewController: UIViewController {
     private var warningAt = Date.distantPast
     /// FOU-121 P4 : depuis l'alerte, la page a quitté l'écran de l'étape (mauvais bouton touché).
     private var warningLeft = false
+    /// Relecture ChatGPT (P4) : l'alerte « pas le bon compte » a déjà vibré pour cette visite de l'écran.
+    private var wrongProfileWarned = false
     /// Étape où la bonne option a été choisie (« Depuis le début », « JSON »).
     private var pickedAt = -1
     private var lastTapAt = Date.distantPast
@@ -2438,7 +2440,7 @@ final class MetaViewController: UIViewController {
         let createVisible = now.timeIntervalSince(seenCreate) < 1.6
         if login != loginShown { loginShown = login; showStep() }
         let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
-        if code != codeShown { codeShown = code; warning = nil; showStep() }
+        if code != codeShown { codeShown = code; if BannerPhases.clearsWarning(.codeChanged) { warning = nil }; showStep() }
         let cookies = now.timeIntervalSince(seenCookies) < 1.6
         if cookies != cookiesShown { cookiesShown = cookies; showStep() }
         // Connexion finie (mot de passe, puis code s'il y en a un) : Zieuton prévient de l'alerte d'Instagram avant qu'elle arrive.
@@ -2455,15 +2457,28 @@ final class MetaViewController: UIViewController {
         let unknownFor = now.timeIntervalSince(max(seenScreen, seenFlow, lostCheckFrom))
         let lost = !login && code.isEmpty && sentAt == nil && pageProblem.isEmpty && !webView.isLoading && unknownFor > 2
             && ((offSince.map { now.timeIntervalSince($0) > 1.5 } ?? false) || unknownFor > 6)
-        if lost != lostShown { lostShown = lost; warning = nil; showStep() }
+        // Relecture ChatGPT (P4) : un écran pas reconnu ne retire pas une alerte de mauvais choix. Le bandeau montre la pause
+        // par-dessus, et l'alerte revient avec la page ; elle part seulement si l'utilisateur revient sur l'écran de l'étape.
+        if lost != lostShown {
+            lostShown = lost
+            if lost, warning != nil { warningLeft = true }
+            if BannerPhases.clearsWarning(.lostChanged) { warning = nil }
+            showStep()
+        }
         let screenFresh = now.timeIntervalSince(seenScreen) < 1.6
         // Compte Facebook ou Threads choisi : l'alerte reste tant que cet écran est affiché.
+        // Relecture ChatGPT (P4) : une seule vibration en arrivant sur cet écran, jamais relancée toute seule ;
+        // elle ne part que quand un autre écran est vraiment reconnu (pas pendant un chargement).
         let wrongTitle = "Oups, ce n'est pas le bon compte !"
-        if screenFresh, screenKey == "wrongprofile", sentAt == nil, !login {
-            if warning?.title != wrongTitle || now.timeIntervalSince(warningAt) > 8 {
-                warn(wrongTitle, "C'est ton compte Facebook ou Threads. Touche la flèche ‹ en haut à gauche, puis ton compte marqué Instagram.")
-            }
-        } else if warning?.title == wrongTitle { warning = nil; showStep() }
+        let onWrongProfile = screenFresh && screenKey == "wrongprofile" && sentAt == nil && !login
+        let otherScreen = screenFresh && screenKey != "wrongprofile"
+        if BannerPhases.shouldWarnWrongProfile(onScreen: onWrongProfile, alreadyWarned: wrongProfileWarned) {
+            wrongProfileWarned = true
+            warn(wrongTitle, "C'est ton compte Facebook ou Threads. Touche la flèche ‹ en haut à gauche, puis ton compte marqué Instagram.")
+        } else if otherScreen {
+            wrongProfileWarned = false
+            if warning?.title == wrongTitle { warning = nil; showStep() }
+        }
         let up = screenFresh && screenKey == "up" && sentAt == nil && !login && code.isEmpty
         if up != upShown { upShown = up; showStep() }
         // FOU-121 P4 (C12) : une alerte ne s'efface jamais au bout d'un délai. Elle part quand c'est réglé :
@@ -2903,6 +2918,23 @@ enum BannerPhases {
         if file { return 3 }
         if requested || finalStep { return 2 }
         return 1
+    }
+
+    /// Ce qui peut arriver pendant qu'une alerte de mauvais choix est affichée.
+    enum WarningEvent { case lostChanged, codeChanged }
+
+    /// Relecture ChatGPT (P4) : un écran pas reconnu (chargement, nouvelle interface) ne retire jamais l'alerte.
+    /// Un code de sécurité d'Instagram, si : c'est une autre étape (Connexion), l'ancienne alerte n'a plus de sens.
+    static func clearsWarning(_ event: WarningEvent) -> Bool {
+        switch event {
+        case .lostChanged: return false
+        case .codeChanged: return true
+        }
+    }
+
+    /// Relecture ChatGPT (P4) : l'alerte « pas le bon compte » vibre une fois en arrivant sur l'écran, jamais en boucle.
+    static func shouldWarnWrongProfile(onScreen: Bool, alreadyWarned: Bool) -> Bool {
+        onScreen && !alreadyWarned
     }
 
     /// Une alerte ne part jamais au bout d'un délai (C12). Elle part toute seule seulement si la page a quitté l'écran

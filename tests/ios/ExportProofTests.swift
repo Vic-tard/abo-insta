@@ -166,5 +166,17 @@ check(!BannerPhases.warningCleared(leftStepScreen: false, backOnStepScreen: true
 check(!BannerPhases.warningCleared(leftStepScreen: true, backOnStepScreen: false), "toujours sur le mauvais écran : l'alerte reste")
 check(BannerPhases.warningCleared(leftStepScreen: true, backOnStepScreen: true), "revenu sur le bon écran : l'alerte part")
 
+// 17. Relecture ChatGPT de P4 : pas d'alerte perdue sur un écran inconnu, pas de vibration en boucle.
+check(!BannerPhases.clearsWarning(.lostChanged), "écran pas reconnu (chargement) : l'alerte de mauvais choix reste")
+check(BannerPhases.clearsWarning(.codeChanged), "code de sécurité d'Instagram : autre étape, l'ancienne alerte part")
+check(BannerPhases.shouldWarnWrongProfile(onScreen: true, alreadyWarned: false), "arrivée sur le compte Facebook/Threads : une alerte")
+check(!BannerPhases.shouldWarnWrongProfile(onScreen: true, alreadyWarned: true), "toujours sur cet écran : pas de nouvelle vibration")
+check(!BannerPhases.shouldWarnWrongProfile(onScreen: false, alreadyWarned: false), "autre écran : pas d'alerte")
+var warned = false, shakes = 0
+for onScreen in [true, true, true, true, true, true] {   // 6 passages de watch() (3 s) sur le même écran
+    if BannerPhases.shouldWarnWrongProfile(onScreen: onScreen, alreadyWarned: warned) { warned = true; shakes += 1 }
+}
+check(shakes == 1, "rester 3 s sur l'écran du mauvais compte : une seule secousse")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
