@@ -545,13 +545,13 @@ if (!window.ZYEUTO_APP) {
   .pl-steps li i { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 15px; background: var(--rose); color: #fff; }
   .pl-foot .gf-huge { font-family: var(--round); }
   .in h2 { font-size: 27px; }
-  .in-phone { width: min(230px, 62vw); margin: 0 auto; border: 5px solid var(--ink); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; background: var(--surface-2); }
-  .in-zy { position: relative; padding: 14px 54px 14px 12px; background: linear-gradient(135deg, #fbd8c4, #f6c2a8); color: #2e2328; font: 800 14px/1.25 var(--round); text-align: left; }
-  .in-av { position: absolute; right: 8px; bottom: 6px; width: 38px; height: 38px; border-radius: 28%; overflow: hidden; background: #d4919b; }
+  .in-phone { width: min(290px, 76vw); margin: 0 auto; border: 5px solid var(--ink); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; background: var(--surface-2); }
+  .in-zy { position: relative; padding: 20px 64px 20px 14px; background: linear-gradient(135deg, #fbd8c4, #f6c2a8); color: #2e2328; font: 800 16px/1.25 var(--round); text-align: left; }
+  .in-av { position: absolute; right: 10px; bottom: 8px; width: 46px; height: 46px; border-radius: 28%; overflow: hidden; background: #d4919b; }
   .in-av svg { width: 100%; height: 100%; display: block; }
-  .in-ig { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 12px 18px; background: #fff; color: #262626; font: 600 13px var(--round); }
-  .in-ig b { font: 800 17px var(--round); }
-  .in-btn { width: 80%; height: 22px; border-radius: 8px; background: #0095f6; }
+  .in-ig { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px 28px; background: #fff; color: #262626; font: 600 15px var(--round); }
+  .in-ig b { font: 800 20px var(--round); }
+  .in-btn { width: 80%; height: 28px; border-radius: 8px; background: #0095f6; }
   .in-pts li { font-size: 15.5px; }
   .in-pts li i { background: var(--surface); color: var(--ink); font-size: 15px; }
   .in-pts li i svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
@@ -5121,7 +5121,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-0324";
+const BUILD = "2026-11-16-0330";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
