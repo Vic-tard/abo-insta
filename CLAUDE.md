@@ -2,6 +2,8 @@
 
 Lis aussi `docs/SPEC.md` (ce que fait l'app, ce qu'elle ne fera pas). En cas de doute sur une fonction, la spec gagne.
 
+Lis aussi `docs/COLLABORATION.md` : Claude écrit le code, ChatGPT relit en auditeur (sans pousser ni fusionner), Victor tranche.
+
 ## Le projet en bref
 
 Zieuton est une app iPhone qui compare les exports officiels Instagram d'un utilisateur pour lui montrer qui s'est désabonné. Pas de serveur, pas de compte : tout reste sur le téléphone (+ sauvegarde iCloud). Propriétaire : Victor, non développeur. Il valide chaque changement.
