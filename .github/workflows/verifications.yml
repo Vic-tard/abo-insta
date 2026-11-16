@@ -64,7 +64,7 @@ jobs:
 
   ios:
     name: Coque iPhone (compilation Xcode, sans signature)
-    runs-on: macos-15 # macos-latest restait sans Mac libre (16 nov., PR #132)
+    runs-on: macos-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
