@@ -85,3 +85,7 @@ Zieuton montre à une personne qui s'est désabonnée de son compte Instagram (e
 3. Elle marche en clair et en sombre, sur petit et grand iPhone.
 4. Victor l'a vue sur son iPhone (ou en capture) et a dit oui.
 5. Le ticket Linear est fermé par la PR.
+
+## 8. Qui fait quoi
+
+Claude écrit le code, ChatGPT relit en auditeur indépendant, Victor décide. Détails : [`docs/COLLABORATION.md`](COLLABORATION.md).
