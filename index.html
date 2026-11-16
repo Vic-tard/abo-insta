@@ -545,11 +545,11 @@ if (!window.ZYEUTO_APP) {
   .pl-steps li i { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 15px; background: var(--rose); color: #fff; }
   .pl-foot .gf-huge { font-family: var(--round); }
   .in h2 { font-size: 27px; }
-  .in-phone { width: min(290px, 76vw); margin: 0 auto; border: 5px solid var(--ink); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; background: var(--surface-2); }
+  .in-phone { width: min(300px, 78vw); min-height: min(330px, 40svh); margin: 0 auto; border: 5px solid var(--ink); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; background: var(--surface-2); }
   .in-zy { position: relative; padding: 20px 64px 20px 14px; background: linear-gradient(135deg, #fbd8c4, #f6c2a8); color: #2e2328; font: 800 16px/1.25 var(--round); text-align: left; }
   .in-av { position: absolute; right: 10px; bottom: 8px; width: 46px; height: 46px; border-radius: 28%; overflow: hidden; background: #d4919b; }
   .in-av svg { width: 100%; height: 100%; display: block; }
-  .in-ig { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px 28px; background: #fff; color: #262626; font: 600 15px var(--round); }
+  .in-ig { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 14px 28px; background: #fff; color: #262626; font: 600 15px var(--round); }
   .in-ig b { font: 800 20px var(--round); }
   .in-btn { width: 80%; height: 28px; border-radius: 8px; background: #0095f6; }
   .in-pts li { font-size: 15.5px; }
@@ -5121,7 +5121,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-0330";
+const BUILD = "2026-11-16-0338";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
