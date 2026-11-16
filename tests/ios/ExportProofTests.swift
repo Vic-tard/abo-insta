@@ -178,5 +178,37 @@ for onScreen in [true, true, true, true, true, true] {   // 6 passages de watch(
 }
 check(shakes == 1, "rester 3 s sur l'écran du mauvais compte : une seule secousse")
 
+// 18. FOU-121 P5 (R2) : les cases sorties de la page en défilant restent comptées.
+var cases = PickMemory()
+cases.saw([("Followers et suivi(e)s", true), ("Contacts synchronisés", false)])
+check(cases.checked == 1 && cases.followers && cases.extra == nil, "en haut de la liste : seulement Followers cochée")
+cases.saw([("Messages", true), ("Commentaires", false)])   // plus bas : Followers n'est plus dans la page
+check(cases.checked == 2 && cases.followers, "case cochée plus bas : comptée, et Followers reste retenue")
+check(cases.extra == "Messages", "la case en trop est nommée")
+cases.saw([("Messages", false)])                            // décochée par l'utilisateur
+check(cases.checked == 1 && cases.extra == nil, "case décochée : plus en trop")
+var vide = PickMemory()
+vide.saw([("Contacts synchronisés", false)])
+check(!vide.followers && vide.checked == 0, "Followers jamais vue cochée : pas de « Bonne case cochée »")
+check(PickMemory.isFollowers("Followers and following"), "nom anglais reconnu")
+// 19. FOU-121 P5 : un bon choix confirmé (✓) passe au lilas.
+check(BannerTone.of(verb: "✓ Bonne case cochée ! Maintenant,", isWarning: false) == .success, "✓ Bonne case cochée : lilas")
+check(BannerTone.of(verb: "✓ Bon choix ! Maintenant,", isWarning: false) == .success, "✓ Bon choix : lilas")
+check(ExportProof.problem("summary:info")?.title == "avec trop d'informations", "résumé avec plus que les abonnés : signalé après la demande")
+
+// 20. Relecture ChatGPT de P5 : la mémoire des cases ne s'efface pas toute seule, « ✓ Tout est bien réglé » seulement sur preuve.
+check(!PickMemory.resets(onScreen: "pick"), "retour sur la page des cases : on garde la mémoire")
+check(!PickMemory.resets(onScreen: "summary:info"), "passage par le résumé : on garde la mémoire")
+check(!PickMemory.resets(onScreen: ""), "écran pas reconnu (chargement) : on garde la mémoire")
+check(PickMemory.resets(onScreen: "home"), "accueil de l'export (nouvelle demande) : la mémoire repart de zéro")
+var longue = PickMemory()
+longue.saw([("Messages", true)])                    // cochée plus bas, vue il y a longtemps
+longue.saw([("Followers et suivi(e)s", true)])      // la page revient après un long chargement : seulement le haut
+check(longue.checked == 2, "case cochée vue avant un long chargement : toujours comptée (pas de faux « Bonne case cochée »)")
+check(PickMemory.settingsVerified(summaryInfo: "followers", followersAlone: false), "résumé « Followers et suivi(e)s » : ✓")
+check(PickMemory.settingsVerified(summaryInfo: "one", followersAlone: true), "« 1 élément » + Followers vue seule cochée : ✓")
+check(!PickMemory.settingsVerified(summaryInfo: "one", followersAlone: false), "« 1 élément » sans preuve que c'est Followers : pas de ✓")
+check(!PickMemory.settingsVerified(summaryInfo: "", followersAlone: true), "résumé illisible : pas de ✓")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
