@@ -916,6 +916,8 @@ final class MetaViewController: UIViewController {
     private var pickRedo = false
     /// Nom de la première case cochée en trop (« Applications et sites Web »…).
     private var pickExtra = ""
+    /// FOU-121 P5 (R2) : cases vues pendant cette visite de la page des cases, même sorties de la page en défilant.
+    private var pickMemory = PickMemory()
     /// Instagram a dit « mot de passe incorrect ».
     private var badPassword = false
     /// FOU-121 P2 : Instagram dit que l'identifiant ne correspond à aucun compte.
@@ -1123,7 +1125,7 @@ final class MetaViewController: UIViewController {
           // Page des cases à cocher : combien sont cochées, et « Followers et suivi(e)s » l'est-elle ? (aucun autre contenu lu)
           var pickState = function () {
             var boxes = document.querySelectorAll('input[type=checkbox],[role=checkbox]');
-            var n = 0, f = false, seen = 0, x = '';
+            var n = 0, f = false, seen = 0, x = '', r = [];
             for (var i = 0; i < boxes.length; i++) {
               var el = boxes[i];
               var row = el.closest('label,[role=listitem],[role=row],li') || el.parentElement;
@@ -1132,6 +1134,8 @@ final class MetaViewController: UIViewController {
               if (!row || row.getClientRects().length === 0) continue;
               seen++;
               var on = el.checked === true || el.getAttribute('aria-checked') === 'true';
+              // FOU-121 P5 (R2) : chaque ligne présente, cochée ou non, pour que Zieuton se souvienne des cases qui sortent de la page en défilant.
+              r.push([(row.innerText || '').trim().split('\n')[0].slice(0, 60), on]);
               if (!on) continue;
               n++;
               var t = low(row);
@@ -1139,9 +1143,18 @@ final class MetaViewController: UIViewController {
               // La première case cochée en trop : son nom, pour que le bandeau dise laquelle décocher.
               else if (!x) x = (row.innerText || '').trim().split('\n')[0].slice(0, 40);
             }
-            return seen ? { n: n, f: f, t: seen, x: x } : null;
+            return seen ? { n: n, f: f, t: seen, x: x, r: r } : null;
           };
           var hasWord = function (t, words) { return words.some(function (w) { return t.indexOf(w) >= 0; }); };
+          // FOU-121 P5 (R3) : la ligne « Personnaliser les informations » du résumé annonce-t-elle plus que « Followers et suivi(e)s » ?
+          // Seulement sur un signe clair : un nombre d'éléments de 2 ou plus, ou un autre nom à côté de « Followers et suivi(e)s ».
+          var moreThanFollowers = function (t) {
+            var m = t.match(/(\d+)\s*(éléments|elements|items|catégories|categories|types d'informations|types of information)/);
+            if (m && parseInt(m[1], 10) >= 2) return true;
+            var rest = t.replace(/^(personnaliser les informations|customize information)\s*/, '')
+              .replace(/followers et suivi\(e\)s|followers et suivis|followers and following/g, '');
+            return /followers et suivi|followers and following/.test(t) && /[,+]|\bet\s+\d|\band\s+\d/.test(rest);
+          };
           var screen = function () {
             // Résumé « Confirmer votre exportation » : reconnu par son titre aussi (le bouton « Commencer » est souvent plus bas, hors de l'écran).
             // … ou par ses lignes « Période » et « Format » visibles avec leur valeur (le titre n'est pas toujours affiché).
@@ -1153,6 +1166,8 @@ final class MetaViewController: UIViewController {
               // On décide dans l'ordre du résumé : une ligne pas encore visible laisse la décision en attente.
               if (info === null) return 'summary';
               if (hasWord(info, ['toutes les informations', 'all available', 'all information'])) return 'summary:info';
+              // FOU-121 P5 (R3) : « 4 éléments », ou « Followers et suivi(e)s, Messages… » : plus que les abonnés.
+              if (moreThanFollowers(info)) return 'summary:info';
               if (per === null) return 'summary';
               if (hasWord(per, ['dernière', 'dernier', 'derniers', 'last '])) return 'summary:period';
               if (fmt === null) return 'summary';
@@ -2122,7 +2137,18 @@ final class MetaViewController: UIViewController {
                 return Step(verb: "Encore \(more) case\(more > 1 ? "s" : "") en trop :", target: "Tout effacer",
                             tip: "Touche « Tout effacer » dans chaque rubrique, puis recoche seulement « Followers et suivi(e)s ».", look: "link", screen: "pick")
             }
-            return Step(verb: "Parfait ! Maintenant,", target: "Enregistrer", tip: "Tout en bas de la liste.", look: "button", screen: "pick")
+            return Step(verb: "✓ Bonne case cochée ! Maintenant,", target: "Enregistrer", tip: "Tout en bas de la liste.", look: "button", screen: "pick")
+        }
+        // FOU-121 P5 : le bon choix est confirmé (✓) dès qu'il est vu, avant « Enregistrer ».
+        if steps[index].pick, pickedAt == index {
+            return Step(verb: "✓ Bon choix ! Maintenant,", target: "Enregistrer",
+                        tip: "Pour valider ton choix chez Instagram.", look: "button", screen: steps[index].screen)
+        }
+        // Résumé lu avec tous les bons réglages (une seule information, « Depuis le début », JSON) : ✓ avant la dernière touche.
+        if steps[index].final, sentAt == nil, screenKey == "summary:start", Date().timeIntervalSince(seenScreen) < 1.6 {
+            var last = steps[index]
+            last.verb = "✓ Tout est bien réglé ! " + last.verb
+            return last
         }
         return steps[index]
     }
@@ -2387,9 +2413,22 @@ final class MetaViewController: UIViewController {
         if state["flow"] as? Bool == true { seenFlow = now }
         if let pick = state["pick"] as? [String: Any], let n = pick["n"] as? Int {
             let before = (pickChecked, pickFollowers)
-            pickChecked = n
-            pickFollowers = pick["f"] as? Bool == true
-            pickExtra = pick["x"] as? String ?? ""
+            // Nouvelle visite de la page des cases (plus vue depuis 5 s) : on repart de zéro.
+            if now.timeIntervalSince(seenPick) > 5 { pickMemory = PickMemory() }
+            if let rows = pick["r"] as? [[Any]] {
+                pickMemory.saw(rows.compactMap { r -> (String, Bool)? in
+                    guard r.count == 2, let name = r[0] as? String, let on = r[1] as? Bool else { return nil }
+                    return (name, on)
+                })
+                pickChecked = pickMemory.checked
+                pickFollowers = pickMemory.followers
+                pickExtra = pickMemory.extra ?? ""
+            } else {
+                // Ancienne page (sans la liste des lignes) : comme avant.
+                pickChecked = n
+                pickFollowers = pick["f"] as? Bool == true
+                pickExtra = pick["x"] as? String ?? ""
+            }
             seenPick = now
             if before != (pickChecked, pickFollowers), steps[index].screen == "pick" { showStep() }
         }
@@ -2882,8 +2921,8 @@ struct ExportProof: Equatable {
     struct Problem: Equatable { let title: String; let text: String }
     static func problem(_ summary: String) -> Problem? {
         switch summary {
-        case "summary:info": return Problem(title: "avec toutes les informations",
-                                            text: "Instagram prépare tout ton compte : ce sera beaucoup plus long.")
+        case "summary:info": return Problem(title: "avec trop d'informations",
+                                            text: "Instagram prépare plus que tes abonnés : ce sera plus long, et le fichier plus gros.")
         case "summary:period": return Problem(title: "avec « Année dernière »",
                                               text: "Il manquera tes plus anciens abonnés.")
         case "summary:format": return Problem(title: "en HTML",
@@ -2892,6 +2931,30 @@ struct ExportProof: Equatable {
         }
     }
 }
+/// FOU-121 P5 (R2) : les cases de « Personnaliser les informations », vues au fil du défilement.
+/// Instagram peut retirer de la page les lignes sorties de l'écran : on garde le dernier état vu de chaque ligne.
+/// Une case ne change que si on la touche, donc quand elle est visible : son dernier état vu est le bon.
+struct PickMemory: Equatable {
+    private(set) var rows: [String: Bool] = [:]
+
+    static func isFollowers(_ name: String) -> Bool {
+        let n = name.lowercased().replacingOccurrences(of: "’", with: "'")
+        return n.contains("followers et suivi") || n.contains("followers and following")
+    }
+
+    mutating func saw(_ list: [(String, Bool)]) {
+        for (name, on) in list {
+            let key = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !key.isEmpty { rows[key] = on }
+        }
+    }
+
+    var checked: Int { rows.values.filter { $0 }.count }
+    var followers: Bool { rows.contains { Self.isFollowers($0.key) && $0.value } }
+    /// Première case cochée en trop (ordre alphabétique, pour un affichage stable).
+    var extra: String? { rows.filter { $0.value && !Self.isFollowers($0.key) }.keys.sorted().first }
+}
+
 /// FOU-121 P4 : couleur du bandeau (maquettes v2).
 enum BannerTone: Equatable {
     case consigne, success, fix, souci, pause
@@ -2903,7 +2966,7 @@ enum BannerTone: Equatable {
         if verb.hasPrefix("Petit souci") || verb.hasPrefix("Oups") { return .souci }
         if verb.hasPrefix("Demande enregistrée, mais") || verb.hasPrefix("Export en pause") { return .fix }
         if verb.hasPrefix("Je ne reconnais pas") { return .pause }
-        if verb.hasPrefix("Parfait") || verb.hasPrefix("C'est prêt") { return .success }
+        if verb.hasPrefix("Parfait") || verb.hasPrefix("C'est prêt") || verb.hasPrefix("✓") { return .success }
         return .consigne
     }
 }

@@ -185,3 +185,32 @@ test("erreur de code cachée ou hors de l'écran : ignorée", async () => {
   assert.equal(s.code, "sms");
   assert.equal(s.codebad, false);
 });
+
+// FOU-121 P5 (R3) : le résumé annonce plus que les abonnés.
+test("résumé « 4 éléments » : signalé comme trop d'informations", async () => {
+  const s = await stateOf("resume-quatre-elements.html");
+  assert.equal(s.screen, "summary:info");
+});
+
+test("résumé « Followers et suivi(e)s, Messages » : signalé", async () => {
+  const s = await stateOf("resume-followers-plus.html");
+  assert.equal(s.screen, "summary:info");
+});
+
+test("résumé « Followers et suivi(e)s » seul, ou « 1 élément » : bons réglages", async () => {
+  assert.equal((await stateOf("resume-followers-seul.html")).screen, "summary:start");
+  assert.equal((await stateOf("resume-bon.html")).screen, "summary:start");
+});
+
+// FOU-121 P5 (R2) : chaque case présente part avec son nom et son état, pour que Zieuton s'en souvienne en défilant.
+test("page des cases : chaque ligne avec son état", async () => {
+  const s = await stateOf("cases-liste.html");
+  assert.equal(s.screen, "pick");
+  assert.equal(s.pick.n, 2);
+  assert.equal(s.pick.f, true);
+  const on = Object.fromEntries(s.pick.r);
+  assert.equal(on["Followers et suivi(e)s"], true);
+  assert.equal(on["Comptes masqués"], true);
+  assert.equal(on["Messages"], false);
+  assert.equal(s.pick.r.length, 6);
+});
