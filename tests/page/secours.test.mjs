@@ -42,6 +42,12 @@ test("le plan propose « Passer par l'app Instagram », qui ouvre le chemin de s
   assert.match(txt, /Espace Comptes/);
   assert.match(txt, /Exporter vos informations/);
   assert.match(txt, /Ne le donne jamais/);
+  // Si le bouton ouvre Safari : comment ouvrir l'app Instagram à la main. Et aucune promesse « pas d'alerte ».
+  assert.ok(await vis(page, "va-manual"));
+  assert.match(await page.textContent("#va-manual"), /ouvre Safari/);
+  assert.match(await page.textContent("#va-manual"), /écran d'accueil/);
+  assert.match(txt, /Instagram demande une vérification/);
+  assert.doesNotMatch(txt, /pas d'alerte|aucune alerte|sans alerte/i);
   // Bouton vers l'app Instagram officielle, jamais un mot de passe ni un code demandé.
   assert.equal(await page.getAttribute("#va-open", "href"), "https://www.instagram.com/");
   assert.equal(await page.locator("#va input").count(), 0, "aucun champ à remplir");
@@ -74,6 +80,8 @@ test("les captures défilent une à une, et la demande n'est jamais notée comme
   await page.click("#va-next");
   assert.match(await say(page), /quand c'est prêt/);
   assert.ok(await vis(page, "va-file"));
+  // Le rappel pour ouvrir l'app à la main est aussi là au moment de télécharger.
+  assert.match(await page.evaluate(() => document.getElementById("va").innerText), /depuis l'écran d'accueil si le bouton ouvre Safari/);
   // Zieuton ne voit pas ce qui se passe dans l'app Instagram : pas de « demandé », pas de guet.
   const p = await page.evaluate(() => JSON.parse(localStorage.getItem("abo-prefs")));
   assert.equal(p.requestedAt, undefined);

@@ -4838,10 +4838,12 @@ function shotsWire(body, list, get, set) {
   const nxt = list[get() + 1]; if (nxt) new Image().src = asset(`guide/${nxt.img}.jpg`);
 }
 // ---------- FOU-121 P6 : chemin de secours par l'app Instagram officielle ----------
-// L'utilisateur y est déjà connecté : pas de nouvelle connexion, donc pas d'alerte « nouvel appareil ».
+// L'utilisateur y est souvent déjà connecté : moins de nouvelles connexions. Instagram peut quand même demander une vérification.
 // Moins guidé : pas de bandeau, les captures du guide à la place. Zieuton ne voit rien de ce qui se passe là-bas :
 // la demande n'est jamais notée comme faite, et le fichier arrive par « Partager → Zieuton » ou « Choisir mon fichier ».
-const VA_OPEN_URL = "https://www.instagram.com/"; // ouvre l'app Instagram si elle est installée, sinon le site
+// Lien universel : iOS ouvre l'app Instagram si elle est installée, mais ce n'est pas garanti (Safari peut s'ouvrir).
+// L'écran dit donc toujours comment ouvrir l'app à la main (relecture P6).
+const VA_OPEN_URL = "https://www.instagram.com/";
 const VA_ROUTE = [
   `Ouvre l'app Instagram, puis ton profil (ta photo, en bas à droite)`,
   `Touche ${igc("☰")} en haut à droite`,
@@ -4884,8 +4886,10 @@ function renderViaApp() {
   if (vaAt === 0) {
     body.innerHTML = `
       <h2 id="va-title">Fais ta demande dans l'app Instagram</h2>
-      <p class="lead">Tu y es déjà connecté&nbsp;: pas de nouvelle connexion, pas d'alerte. Je ne peux pas te guider là-bas, alors je te montre chaque écran en images.</p>
+      <p class="lead">Tu y es sûrement déjà connecté&nbsp;: souvent, pas besoin de te reconnecter. Je ne peux pas te guider là-bas, alors je te montre chaque écran en images.</p>
       <ol class="gf-how">${VA_ROUTE.map((t, k) => `<li><i>${k + 1}</i><span>${t}</span></li>`).join("")}</ol>
+      <p class="va-safe" id="va-manual"><b>Le bouton ouvre Safari&nbsp;?</b> Ferme Safari et ouvre toi-même l'app Instagram depuis l'écran d'accueil de ton iPhone (l'icône Instagram). C'est là qu'il faut faire la demande.</p>
+      <p class="va-safe"><b>Instagram demande une vérification&nbsp;?</b> Ça peut arriver, c'est Instagram qui décide. Suis ses étapes dans son app.</p>
       <p class="va-safe"><b>Un code reçu par SMS ou e-mail&nbsp;?</b> Ne le donne jamais à personne. Zieuton ne te le demandera jamais.</p>
       <div class="gf-foot">${open("ghost big")}<button class="btn primary big" id="va-next" type="button">J'y suis, la suite</button></div>`;
   } else if (vaAt < VA_LAST) {
@@ -4900,7 +4904,7 @@ function renderViaApp() {
       <h2 id="va-title">Et quand c'est prêt&nbsp;?</h2>
       <ol class="gf-how">
         <li><i>1</i><span>Instagram te prévient par notification ou par e-mail. Ça prend de quelques minutes à quelques heures.</span></li>
-        <li><i>2</i><span>Retourne dans l'app Instagram, sur «&nbsp;Exporter vos informations&nbsp;», et touche «&nbsp;Télécharger&nbsp;».</span></li>
+        <li><i>2</i><span>Retourne dans l'app Instagram (ouvre-la toi-même depuis l'écran d'accueil si le bouton ouvre Safari), sur «&nbsp;Exporter vos informations&nbsp;», et touche «&nbsp;Télécharger&nbsp;».</span></li>
         <li><i>3</i><span>Touche Partager puis Zieuton. Ou reviens ici et touche «&nbsp;Choisir mon fichier&nbsp;».</span></li>
       </ol>
       ${shotHTML("get-2", "in", "va-fig")}
@@ -5238,7 +5242,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-1715";
+const BUILD = "2026-11-16-1720";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
