@@ -535,10 +535,24 @@ if (!window.ZYEUTO_APP) {
   .demo-bar button:active { background: rgb(255 255 255 / .24); }
   body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 54px); }
   /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
-  .gf .alt.gf-demo { display: inline-flex; align-items: center; gap: 8px; align-self: center; text-decoration: none; padding: 11px 20px; border-radius: 999px;
-    background: var(--rose-soft); color: var(--rose-ink); font: 600 15px/1 var(--round); letter-spacing: .01em; transition: transform .15s; }
-  .gf .alt.gf-demo:active { transform: scale(.96); }
-  .gf .alt.gf-demo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  /* Plan avant Instagram (FOU-121) */
+  .pl { text-align: center; gap: 18px; }
+  .pl-av { width: 72px; height: 72px; margin: 0 auto; border-radius: 28%; overflow: hidden; background: #d4919b; }
+  .pl-av svg { width: 100%; height: 100%; display: block; }
+  .pl h2 { margin: 0; font: 800 26px/1.2 var(--round); text-wrap: balance; }
+  .pl-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; text-align: left; }
+  .pl-steps li { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border-radius: 18px; padding: 14px 16px; font: 800 17px/1.3 var(--round); }
+  .pl-steps li i { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 15px; background: var(--rose); color: #fff; }
+  .pl-foot .gf-huge { font-family: var(--round); }
+  .pl-restore { align-self: center; border: 0; background: none; padding: 8px 12px; font: 600 13px var(--round); color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  @media (prefers-reduced-motion: no-preference) {
+    .pl > * { animation: rise .5s both; }
+    .pl > h2 { animation-delay: .25s; }
+    .pl-steps li { animation: rise .55s both; }
+    .pl-steps li:nth-child(1) { animation-delay: 1s; } .pl-steps li:nth-child(2) { animation-delay: 1.8s; } .pl-steps li:nth-child(3) { animation-delay: 2.6s; }
+    .pl-steps { animation: none !important; }
+    .pl-foot { animation: rise .5s 3.4s both; }
+  }
   .pg { position: fixed; inset: 0; z-index: 15; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     transition: transform .34s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
   .pg.dragging { transition: none; }
@@ -1030,23 +1044,11 @@ if (!window.ZYEUTO_APP) {
   .gf-short { gap: 14px; }
   .gf-short li { padding: 18px 16px; align-items: center; }
   .gf-short li span { font-size: 17px; line-height: 1.4; }
-  .gf-plan { gap: 6px; }
-  .gf-how.gf-plan li { padding: 9px 14px; align-items: center; font-size: 15px; line-height: 1.3; }
-  .gf-plan small { font-size: 12.5px; margin-top: 1px; }
-  .gf-plan li.end { background: none; padding-top: 4px; }
   /* Petits iPhone (SE) : le plan et « Ouvrir Instagram » tiennent sur un seul écran. */
-  @media (max-height: 720px) { .gf-mid:has(.gf-plan) .guide { display: none; } .gf-how.gf-plan li { padding: 6px 12px; } .gf-plan li.end { padding-top: 0; } }
-  .gf-plan li.end > i { background: none; font-size: 18px; }
   .gf-safe { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 0 2px; font-size: 12.5px; color: var(--muted); }
   .gf-safe svg { width: 13px; height: 13px; flex: none; fill: none; stroke: var(--up); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .gf .btn.gf-huge { min-height: 64px; font-size: 21px; border-radius: 20px; }
   .gf .btn.gf-huge svg { width: 22px; height: 22px; }
-  .gf-duo { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 4px; }
-  .gf-duo:has(> :only-child) { grid-auto-columns: minmax(0, 50%); justify-content: center; }
-  .gf-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-height: 84px; padding: 12px 8px;
-    border: 0; border-radius: 18px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; line-height: 1.2; text-align: center; cursor: pointer; }
-  .gf-tile:active { transform: scale(.96); }
-  .gf-tile svg { width: 24px; height: 24px; fill: none; stroke: var(--rose); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .gf-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
   .gf-why { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: flex-start; margin: 0; }
   .gf-why svg { width: 18px; height: 18px; flex: none; margin-top: 1px; fill: none; stroke: var(--up); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
@@ -4917,22 +4919,19 @@ function renderGuided() {
   } else if (step === "insta" && metaInApp()) {
     // App iPhone : Instagram s'ouvre DANS Zieuton, avec le bandeau qui montre où toucher (comme « Mettre à jour »).
     gfOnReturn = null;
-    // Le plan, dès l'arrivée : les 4 étapes jusqu'aux stats, avec ce qui peut surprendre (alerte « nouvel appareil » d'Instagram).
+    // Le plan, dès l'arrivée (FOU-121) : peu de texte, 3 étapes qui apparaissent une à une, en gras.
     const PLAN = [
-      ["Connecte-toi à Instagram", "Ici, dans Zieuton. Ton mot de passe reste chez lui."],
-      ["Alerte d'Instagram ? C'est normal", "Tu viens de te connecter : réponds « C'était moi »."],
-      ["Demande ta liste", "3 réglages, je te montre chaque touche."],
-      ["Touche « Télécharger »", "1 à 3 min plus tard : je te préviens."],
+      "Instagram s'ouvre ici, sans quitter Zieuton.",
+      "Mon bandeau te guide, bouton par bouton.",
+      "Je te préviens dès que ton fichier arrive 🎉",
     ];
-    body.innerHTML = `<div class="gf-mid">${guide(gfRepeat ? "On remet ça&nbsp;? Même chemin que la dernière fois 😉" : "Voici le plan. Je reste avec toi à chaque étape&nbsp;!")}
-      <h2 id="gf-title">Récupère ta liste Instagram</h2>
-      <ol class="gf-how gf-plan">
-        ${PLAN.map(([t, d], k) => `<li><i>${k + 1}</i><span>${t}<small>${d}</small></span></li>`).join("")}
-        <li class="end"><i>🎉</i><span>Tu vois qui part, qui arrive<small>Et qui ne te suit pas en retour.</small></span></li>
-      </ol></div>
-      <div class="gf-foot">
-        <button class="btn cheer big gf-huge" id="gf-meta" type="button">${ICON.out}Ouvrir Instagram</button>
-        <div class="gf-duo"><button class="gf-tile" id="gf-restore" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM3 4h18v3H3zM10 11h4"/></svg>J'ai une sauvegarde</button></div>
+    body.innerHTML = `<div class="gf-mid pl">
+      <div class="pl-av" aria-hidden="true">${MASCOT}</div>
+      <h2 id="gf-title">On va chercher tes abonnés chez Instagram</h2>
+      <ol class="pl-steps">${PLAN.map((t, k) => `<li><i>${k + 1}</i><span>${t}</span></li>`).join("")}</ol></div>
+      <div class="gf-foot pl-foot">
+        <button class="btn cheer big gf-huge" id="gf-meta" type="button">Ouvrir Instagram</button>
+        <button class="pl-restore" id="gf-restore" type="button">J'ai une sauvegarde</button>
       </div>`;
     $("gf-meta").onclick = wkGo;
   } else if (step === "get" && metaInApp()) {
@@ -5083,24 +5082,12 @@ function renderGuided() {
     body.prepend(top);
   }
   // « Voir la démo » : pour découvrir l'app tout de suite, sans attendre Instagram.
-  if (!gfRepeat && !state.snapshots.length && step !== "install" && step !== "welcome" && step !== "get") {
-    const foot = body.querySelector(".gf-foot");
-    if (foot) {
-      const d = document.createElement("button");
-      const duo = foot.querySelector(".gf-duo");
-      d.className = duo ? "gf-tile" : "alt gf-demo"; d.type = "button";
-      d.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>`
-        + (step === "welcome" ? "Jeter un œil à la démo" : step === "get" ? "En attendant, voir la démo" : "Voir la démo");
-      d.onclick = () => { if (step === "welcome") { prefs.welcomed = true; savePrefs(); } enterDemo(); };
-      if (duo) duo.prepend(d); else foot.append(d);
-    }
-  }
   const rs = $("gf-restore");
   if (rs) rs.onclick = () => $("restore").click();
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-0257";
+const BUILD = "2026-11-16-0306";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
