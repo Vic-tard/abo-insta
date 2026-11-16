@@ -913,6 +913,18 @@ final class MetaViewController: UIViewController {
     private var pickExtra = ""
     /// Instagram a dit « mot de passe incorrect ».
     private var badPassword = false
+    /// FOU-121 P2 : Instagram dit que l'identifiant ne correspond à aucun compte.
+    private var unknownUser = false
+    /// FOU-121 P2 : Instagram dit que le code de sécurité est faux ou expiré.
+    private var badCode = false
+    /// FOU-121 P2 : compte les refus de mot de passe (conseil « Mot de passe oublié ? » au 2e).
+    private var loginHelp = LoginHelp()
+    /// FOU-121 P2 : page qui ne charge pas (« offline ») ou qui s'est fermée (« crashed »). Rien ne se recharge tout seul.
+    private var pageProblem = ""
+    /// FOU-121 P2 : téléchargement en cours depuis quand, pour ne pas afficher « récupère ton fichier » à l'infini.
+    private var downloadSince: Date?
+    private var activeDownloads: [WKDownload] = []
+    private var downloadStuckShown = false
     /// Un cran trop haut (« Vos informations et autorisations ») : le bandeau montre « Exporter vos informations ».
     private var upShown = false
     private var pickFresh: Bool { Date().timeIntervalSince(seenPick) < 1.6 }
@@ -1223,6 +1235,35 @@ final class MetaViewController: UIViewController {
           // FOU-121 : compte verrouillé, suspendu ou désactivé par Instagram. Seulement une phrase claire et visible :
           // une demande de code de sécurité ou « Choisir un moyen de récupération » seuls ne suffisent jamais.
           var LOCK = /nous avons verrouillé votre compte|votre compte (a été|est) (verrouillé|suspendu|désactivé)|nous avons (suspendu|désactivé) votre compte|we('ve| have) (locked|suspended|disabled) your account|your account (has been|was|is) (locked|suspended|disabled)/;
+          // FOU-121 P2 : erreurs de connexion écrites par Instagram (FR et EN).
+          var BADPW = /mot de passe (que vous avez (saisi|entré) )?(est )?incorrect|incorrect password|password (you entered )?(was|is) incorrect/;
+          var NOUSER = /n'appartient à aucun compte|ne correspond à aucun compte|aucun compte (ne correspond|trouvé)|doesn't belong to an account|does not belong to an account|can't find an account|couldn't find an account|no account found/;
+          var BADCODE = /code (de sécurité |de confirmation )?(est |que vous avez saisi est )?(incorrect|invalide|n'est pas valide|a expiré|expiré)|(this|that|the) code (is |was |has )?(incorrect|invalid|not valid|expired)|code (isn't|is not) (valid|right)|invalid (security |confirmation )?code|code expired/;
+          var APPROVE = /consultez (vos )?notifications sur un autre appareil|vérifiez (vos )?notifications sur un autre appareil|approuvez (cette connexion|la connexion) (depuis|sur) un autre appareil|check (your )?notifications on another device|approve (this login|the login) (from|on) another device|waiting for approval|en attente d'approbation/;
+          // Explications d'Instagram (« Si le code a expiré… », « If you forgot your password… ») : jamais prises pour une erreur.
+          var HINT = /(^|[\s(])(si|if|when|lorsque|quand) [^.!?\n]*/g;
+          // Vraiment lisible : pas transparent, pas réduit à un point (texte réservé aux lecteurs d'écran).
+          var shown = function (el) {
+            var r = el.getBoundingClientRect();
+            if (r.width < 4 || r.height < 4) return false;
+            for (var e = el; e && e.nodeType === 1; e = e.parentElement) {
+              var cs = getComputedStyle(e);
+              if (parseFloat(cs.opacity) < 0.1 || cs.visibility === 'hidden') return false;
+            }
+            return true;
+          };
+          // Une phrase visible, dans un petit bloc de texte (pas toute la page, pas un texte caché ni hors de l'écran).
+          var seeText = function (re) {
+            var els = document.querySelectorAll('h1,h2,h3,[role=heading],[role=alert],span,div,p');
+            for (var i = 0; i < els.length; i++) {
+              var el = els[i];
+              if (el.childElementCount > 4) continue;
+              var t = low(el);
+              if (t.length > 300 || !re.test(t.replace(HINT, ' '))) continue;
+              if (vis(el) && shown(el)) return true;
+            }
+            return false;
+          };
           // Réponse : '' (rien), 'suspended', 'disabled' ou 'locked'.
           var locked = function () {
             var els = document.querySelectorAll('h1,h2,h3,[role=heading],span,div,p');
@@ -1243,22 +1284,29 @@ final class MetaViewController: UIViewController {
             // Page des cases bien visible (« Tout sélectionner », « Followers et suivi(e)s ») : ce n'est pas une demande de mot de passe,
             // même si Instagram garde un champ caché dans la page.
             if (login && seeAny(['tout sélectionner', 'select all', 'tout effacer', 'clear all', 'followers et suivi(e)s', 'followers and following'])) login = false;
-            var badpw = login && /mot de passe incorrect|mot de passe est incorrect|incorrect password|password was incorrect/.test((document.body.innerText || '').toLowerCase());
+            // FOU-121 P2 : une erreur n'est signalée que si Instagram l'affiche vraiment (phrase visible à l'écran, pas une explication).
+            var badpw = login && seeText(BADPW);
+            // FOU-121 P2 : identifiant inconnu (C5), seulement sur l'écran de connexion.
+            var nouser = login && !badpw && seeText(NOUSER);
             // Code de sécurité : on regarde seulement s'il y a une case pour un code, et si la page parle de WhatsApp, SMS ou e-mail.
             var codeIn = Array.prototype.some.call(document.querySelectorAll('input[autocomplete="one-time-code"],input[name*="code" i],input[aria-label*="code" i],input[placeholder*="code" i]'), vis);
             var code = '';
+            // FOU-121 P2 : code refusé ou expiré (C6), seulement quand une case pour le code est là.
+            var codebad = codeIn && !login && seeText(BADCODE);
             if (codeIn && !login) {
               var txt = (document.body.innerText || '').toLowerCase();
               code = txt.indexOf('whatsapp') >= 0 ? 'whatsapp'
                 : (txt.indexOf('sms') >= 0 || txt.indexOf('texto') >= 0 || txt.indexOf('text message') >= 0) ? 'sms'
                 : (txt.indexOf('e-mail') >= 0 || txt.indexOf('email') >= 0) ? 'email' : 'app';
             }
+            // FOU-121 P2 (C7) : validation sur un autre appareil, sans case à remplir. Phrase claire et visible seulement.
+            if (!code && !login && seeText(APPROVE)) code = 'approve';
             // Export encore « En attente » chez Instagram (FOU-115) : vu sur la page d'accueil de l'export.
             var pending = !login && !code && /en attente|en préparation|pending|in progress|preparing/.test((document.body.innerText || '').toLowerCase());
             // Fenêtre des cookies d'Instagram (FOU-121) : reconnue à ses deux boutons.
             var cookies = seeAny(['refuser les cookies optionnels', 'autoriser tous les cookies', 'decline optional cookies', 'allow all cookies']);
             var create = has(CREATE);
-            window.webkit.messageHandlers.zyeutoState.postMessage({ locked: locked(), rows: create ? pendingRows() : null, cookies: cookies, login: login, badpw: badpw, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: create, dl: __DL__ });
+            window.webkit.messageHandlers.zyeutoState.postMessage({ locked: locked(), rows: create ? pendingRows() : null, cookies: cookies, login: login, badpw: badpw, nouser: nouser, codebad: codebad, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), start: has(START), create: create, dl: __DL__ });
           }, 700);
         })();
         """#
@@ -1776,6 +1824,27 @@ final class MetaViewController: UIViewController {
     }
 
     @objc private func bannerTapped() {
+        // FOU-121 P2 : téléchargement bloqué, arrêté seulement quand l'utilisateur touche le bandeau.
+        if downloading, downloadStuckShown {
+            activeDownloads.forEach { $0.cancel { _ in } }
+            activeDownloads.removeAll()
+            downloads.removeAll()
+            downloading = false
+            downloadSince = nil
+            downloadStuckShown = false
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showStep()
+            return
+        }
+        // FOU-121 P2 : page en panne. On ne recharge que sur la touche de l'utilisateur, jamais tout seul.
+        if !pageProblem.isEmpty {
+            let again = webView.url.flatMap { $0.scheme == "https" ? $0 : nil } ?? url
+            pageProblem = ""
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            webView.load(URLRequest(url: again))
+            showStep()
+            return
+        }
         // « À vérifier » : une simple touche ne valide rien, on demande une confirmation explicite (relecture ChatGPT).
         if ExportProof.bannerTap(requesting: requesting, finished: finished, toCheck: toCheck) == .askConfirm {
             askConfirmRequest()
@@ -1880,7 +1949,23 @@ final class MetaViewController: UIViewController {
                         tip: "Ouvre l'application Instagram officielle.")
         }
         if downloading {
+            if downloadStuckShown {
+                return Step(verb: "Petit souci :", target: "le téléchargement traîne",
+                            tip: "Touche ce bandeau pour l'arrêter, puis touche encore « Télécharger » chez Instagram.")
+            }
             return Step(verb: "Presque fini :", target: "Zieuton récupère ton fichier…", tip: "Ne ferme pas cet écran.")
+        }
+        if pageProblem == "offline" {
+            return Step(verb: "Oups :", target: "Instagram ne répond pas",
+                        tip: "Vérifie ton Wi-Fi ou ta 4G, puis touche ce bandeau pour recharger la page.")
+        }
+        if pageProblem == "failed" {
+            return Step(verb: "Oups :", target: "la page ne s'est pas ouverte",
+                        tip: "Touche ce bandeau pour réessayer. Rien n'est envoyé à ta place.")
+        }
+        if pageProblem == "crashed" {
+            return Step(verb: "Oups :", target: "la page s'est fermée",
+                        tip: "Touche ce bandeau pour la rouvrir. Rien n'est envoyé à ta place.")
         }
         if let bad = badSettings, guarding, !guardReady {
             return Step(verb: "Demande enregistrée, mais", target: bad.title,
@@ -1906,11 +1991,16 @@ final class MetaViewController: UIViewController {
             return Step(verb: "Cookies : touche", target: "Refuser les cookies optionnels",
                         tip: "Instagram marche pareil, et Zieuton n'en a pas besoin.")
         }
+        if !codeShown.isEmpty, badCode, codeShown != "approve" {
+            return Step(verb: "Petit souci :", target: "code refusé",
+                        tip: "Il est faux ou trop vieux. Demande un nouveau code chez Instagram et tape le plus récent. Zieuton ne voit jamais ce code.")
+        }
         if !codeShown.isEmpty {
             let place: (String, String) = {
                 switch codeShown {
                 case "whatsapp": return ("va chercher le code sur WhatsApp", "Instagram vient de te l'envoyer sur WhatsApp. Ouvre WhatsApp, note le code, puis reviens ici le taper.")
                 case "sms": return ("regarde tes SMS", "Instagram vient de t'envoyer un code par SMS. Tape-le ici : souvent, ton iPhone te le propose tout seul au-dessus du clavier.")
+                case "approve": return ("valide sur ton autre appareil", "Instagram t'a envoyé une notification là où tu es déjà connecté (l'app Instagram, par exemple). Accepte-la, puis reviens ici.")
                 case "email": return ("regarde tes e-mails", "Instagram vient de t'envoyer un code par e-mail. Ouvre ta boîte mail, note le code, puis reviens ici le taper.")
                 default: return ("tape le code de sécurité", "Instagram vérifie que c'est bien toi. Le code arrive par WhatsApp, SMS ou e-mail, selon ton compte.")
                 }
@@ -1919,12 +2009,21 @@ final class MetaViewController: UIViewController {
                         tip: place.1 + " Zieuton ne voit jamais ce code. En général, Instagram ne le demande qu'à la première connexion.")
         }
         if loginShown {
+            // FOU-121 P2 : les refus d'Instagram passent avant tout le reste, même à la toute première connexion.
+            if unknownUser {
+                return Step(verb: "Petit souci :", target: "compte introuvable",
+                            tip: "Instagram ne trouve pas ce compte. Vérifie ton nom d'utilisateur (sans @), ou essaie ton e-mail ou ton numéro.")
+            }
+            if badPassword {
+                return loginHelp.manyBadPasswords
+                    ? Step(verb: "Petit souci :", target: "mot de passe encore refusé",
+                           tip: "Pour éviter un blocage, touche « Mot de passe oublié ? » chez Instagram plutôt que de réessayer.")
+                    : Step(verb: "Petit souci :", target: "mot de passe incorrect",
+                           tip: "Vérifie les majuscules et réessaie. Zieuton ne voit jamais ton mot de passe.")
+            }
             return index == 0 && sentAt == nil
                 ? Step(verb: "D'abord,", target: "connecte-toi à Instagram",
                        tip: "Ton mot de passe se tape chez Instagram : Zieuton ne le voit jamais. Tu ne le feras qu'une fois.")
-                : badPassword
-                ? Step(verb: "Mot de passe incorrect :", target: "réessaie",
-                       tip: "Vérifie les majuscules. Oublié ? Touche « Mot de passe oublié ? » juste en dessous, chez Instagram.")
                 : Step(verb: "Instagram vérifie que c'est toi :", target: "tape ton mot de passe",
                        tip: "Puis touche « Continuer ». Chez Instagram, comme d'habitude : Zieuton ne le voit jamais.")
         }
@@ -2185,9 +2284,17 @@ final class MetaViewController: UIViewController {
         if state["login"] as? Bool == true, mainFrame || now.timeIntervalSince(seenMainScreen) > 1.6 {
             seenLogin = now
             let bad = state["badpw"] as? Bool == true
+            loginHelp.saw(badPassword: bad)
             if bad != badPassword { badPassword = bad; showStep() }
+            let nouser = state["nouser"] as? Bool == true
+            if nouser != unknownUser { unknownUser = nouser; showStep() }
         }
-        if let code = state["code"] as? String, !code.isEmpty { seenCode = now; codeKind = code }
+        if let code = state["code"] as? String, !code.isEmpty {
+            seenCode = now
+            codeKind = code
+            let wrong = state["codebad"] as? Bool == true
+            if wrong != badCode { badCode = wrong; showStep() }
+        }
         if state["cookies"] as? Bool == true { seenCookies = now }
         // Compte verrouillé : seulement le cadre principal, et seulement une phrase claire (voir le script).
         if mainFrame, let lock = state["locked"] as? String, !lock.isEmpty { seenLocked = now; lockKind = lock }
@@ -2228,7 +2335,8 @@ final class MetaViewController: UIViewController {
         if guarding, !guardReady, let dl = state["dl"] as? Int, dl > guardBefore { guardIsReady() }
         if mainFrame && !pageKnown {
             pageKnown = true
-            loginShown = state["login"] as? Bool == true || (webView.url?.absoluteString.lowercased() ?? "").contains("login")
+            // FOU-121 P2 : seulement si un vrai champ de connexion est vu (l'adresse seule ne suffit pas).
+            loginShown = state["login"] as? Bool == true
             showStep()
         }
     }
@@ -2239,10 +2347,16 @@ final class MetaViewController: UIViewController {
         guard pageKnown, !lockedShown else { return }
         // Compte verrouillé, suspendu ou désactivé : on arrête tout de suite le parcours (FOU-121).
         if Date().timeIntervalSince(seenLocked) < 1.6 { showLocked(); return }
+        // Téléchargement qui ne finit pas : au bout de 90 s, le bandeau propose de l'arrêter (FOU-121 P2).
+        if downloading, !downloadStuckShown, let since = downloadSince, LoginHelp.downloadStuck(since: since, now: Date()) {
+            downloadStuckShown = true
+            showStep()
+        }
         guard !downloading, !finished else { return }
         let now = Date()
         let onLoginURL = (webView.url?.absoluteString.lowercased() ?? "").contains("login")
-        let login = now.timeIntervalSince(seenLogin) < 1.6 || onLoginURL
+        // FOU-121 P2 : « tape ton mot de passe » seulement si un vrai champ est vu, jamais d'après l'adresse.
+        let login = now.timeIntervalSince(seenLogin) < 1.6
         let createVisible = now.timeIntervalSince(seenCreate) < 1.6
         if login != loginShown { loginShown = login; showStep() }
         let code = now.timeIntervalSince(seenCode) < 1.6 ? codeKind : ""
@@ -2261,7 +2375,7 @@ final class MetaViewController: UIViewController {
         let offPath = !urlNow.isEmpty && !urlNow.contains("/dyi") && !onLoginURL
         if offPath { if offSince == nil { offSince = now } } else { offSince = nil }
         let unknownFor = now.timeIntervalSince(max(seenScreen, seenFlow, lostCheckFrom))
-        let lost = !login && code.isEmpty && sentAt == nil && !webView.isLoading && unknownFor > 2
+        let lost = !login && code.isEmpty && sentAt == nil && pageProblem.isEmpty && !webView.isLoading && unknownFor > 2
             && ((offSince.map { now.timeIntervalSince($0) > 1.5 } ?? false) || unknownFor > 6)
         if lost != lostShown { lostShown = lost; warning = nil; showStep() }
         let screenFresh = now.timeIntervalSince(seenScreen) < 1.6
@@ -2680,6 +2794,42 @@ struct ExportProof: Equatable {
         }
     }
 }
+/// FOU-121 P2 : aide à la connexion, sans jamais lire ce que l'utilisateur tape.
+struct LoginHelp: Equatable {
+    /// Nombre de fois où Instagram a affiché « mot de passe incorrect » (une apparition = un refus).
+    private(set) var badPasswords = 0
+    private var showing = false
+
+    mutating func saw(badPassword: Bool) {
+        if badPassword, !showing { badPasswords += 1 }
+        showing = badPassword
+    }
+
+    /// Au 2e refus, on conseille « Mot de passe oublié ? » plutôt que de réessayer (évite un blocage du compte).
+    var manyBadPasswords: Bool { badPasswords >= 2 }
+
+    enum LoadFailure: Equatable { case none, network, other }
+
+    /// Pourquoi la page n'a pas chargé ? « network » seulement pour une vraie erreur de réseau (relecture ChatGPT) :
+    /// toute autre erreur reçoit un message neutre, sans parler de Wi-Fi.
+    static func loadFailure(domain: String, code: Int) -> LoadFailure {
+        // Navigation annulée (nouvelle page) ou remplacée par un téléchargement / un module : pas une panne.
+        if domain == NSURLErrorDomain && code == NSURLErrorCancelled { return .none }
+        if domain == "WebKitErrorDomain" && (code == 102 || code == 204) { return .none }
+        let network: Set<Int> = [NSURLErrorNotConnectedToInternet, NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost,
+                                 NSURLErrorCannotFindHost, NSURLErrorCannotConnectToHost, NSURLErrorDNSLookupFailed,
+                                 NSURLErrorInternationalRoamingOff, NSURLErrorDataNotAllowed, NSURLErrorCallIsActive]
+        if domain == NSURLErrorDomain && network.contains(code) { return .network }
+        return .other
+    }
+
+    /// Au-delà de 90 s sans fin, le téléchargement est considéré comme bloqué (un export de suivis pèse quelques Ko).
+    static let downloadLimit: TimeInterval = 90
+
+    static func downloadStuck(since: Date, now: Date) -> Bool {
+        now.timeIntervalSince(since) > downloadLimit
+    }
+}
 // EXPORT-PROOF:END
 
 /// Étiquette avec une marge intérieure (le rappel « ne donne jamais un code »).
@@ -2779,10 +2929,42 @@ extension MetaViewController: WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
         download.delegate = self
+        activeDownloads.append(download)
     }
 
     func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
         download.delegate = self
+        activeDownloads.append(download)
+    }
+
+    // FOU-121 P2 : page qui ne charge pas (pas de réseau…) ou qui se ferme : le bandeau le dit au lieu d'une page blanche.
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        if !pageProblem.isEmpty { pageProblem = ""; showStep() }
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        loadFailed(error)
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        loadFailed(error)
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        pageProblem = "crashed"
+        pageKnown = true
+        showStep()
+    }
+
+    private func loadFailed(_ error: Error) {
+        let e = error as NSError
+        switch LoginHelp.loadFailure(domain: e.domain, code: e.code) {
+        case .none: return
+        case .network: pageProblem = "offline"
+        case .other: pageProblem = "failed"
+        }
+        pageKnown = true
+        showStep()
     }
 
     // « Télécharger » ouvre parfois un nouvel onglet : on le charge ici.
@@ -2817,12 +2999,16 @@ extension MetaViewController: WKDownloadDelegate {
         downloads[ObjectIdentifier(download)] = file
         DispatchQueue.main.async {
             self.downloading = true
+            self.downloadSince = Date()
+            self.downloadStuckShown = false
             self.showStep()
         }
         completionHandler(file)
     }
 
     func downloadDidFinish(_ download: WKDownload) {
+        activeDownloads.removeAll { $0 === download }
+        downloadSince = nil
         guard let file = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         ExportWatcher.shared.downloaded()
@@ -2831,7 +3017,12 @@ extension MetaViewController: WKDownloadDelegate {
     }
 
     func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        activeDownloads.removeAll { $0 === download }
         downloads.removeValue(forKey: ObjectIdentifier(download))
+        downloadSince = nil
+        // Arrêté par l'utilisateur (bandeau « le téléchargement traîne ») : pas de deuxième message.
+        let e = error as NSError
+        if e.domain == NSURLErrorDomain, e.code == NSURLErrorCancelled { return }
         downloading = false
         showStep(animated: false)
         failed("Le téléchargement n'a pas abouti. Vérifie ta connexion et touche encore « Télécharger ».")

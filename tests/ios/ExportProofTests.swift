@@ -124,5 +124,27 @@ check(ExportProof.problem("summary:info") != nil, "toutes les informations signa
 check(ExportProof.problem("summary:start") == nil, "bons réglages : rien à signaler")
 check(ExportProof.problem("") == nil, "résumé jamais lu : rien à signaler (pas d'invention)")
 
+// 15. FOU-121 P2 : connexion. Un refus = une apparition du message, conseil « Mot de passe oublié ? » au 2e refus.
+var help = LoginHelp()
+check(!help.manyBadPasswords, "aucun refus : pas de conseil")
+help.saw(badPassword: true); help.saw(badPassword: true); help.saw(badPassword: true)
+check(help.badPasswords == 1 && !help.manyBadPasswords, "message affiché longtemps = un seul refus")
+help.saw(badPassword: false)
+check(help.badPasswords == 1, "message parti : pas de refus en plus")
+help.saw(badPassword: true)
+check(help.manyBadPasswords, "2e refus : conseil « Mot de passe oublié ? »")
+check(LoginHelp.loadFailure(domain: NSURLErrorDomain, code: NSURLErrorCancelled) == .none, "navigation annulée : pas une panne")
+check(LoginHelp.loadFailure(domain: "WebKitErrorDomain", code: 102) == .none, "page devenue téléchargement : pas une panne")
+check(LoginHelp.loadFailure(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet) == .network, "pas d'Internet : panne réseau")
+check(LoginHelp.loadFailure(domain: NSURLErrorDomain, code: NSURLErrorTimedOut) == .network, "délai dépassé : panne réseau")
+check(LoginHelp.loadFailure(domain: NSURLErrorDomain, code: NSURLErrorNetworkConnectionLost) == .network, "connexion perdue : panne réseau")
+// Relecture ChatGPT n° 3 : une autre erreur n'est jamais présentée comme un problème de Wi-Fi.
+check(LoginHelp.loadFailure(domain: NSURLErrorDomain, code: NSURLErrorServerCertificateUntrusted) == .other, "certificat refusé : message neutre, pas « Wi-Fi »")
+check(LoginHelp.loadFailure(domain: NSURLErrorDomain, code: NSURLErrorBadURL) == .other, "adresse invalide : message neutre")
+check(LoginHelp.loadFailure(domain: "WebKitErrorDomain", code: 101) == .other, "autre erreur WebKit : message neutre")
+let t0 = Date(timeIntervalSince1970: 1_000_000)
+check(!LoginHelp.downloadStuck(since: t0, now: t0.addingTimeInterval(30)), "téléchargement de 30 s : normal")
+check(LoginHelp.downloadStuck(since: t0, now: t0.addingTimeInterval(91)), "téléchargement de plus de 90 s : bloqué")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
