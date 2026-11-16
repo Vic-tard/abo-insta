@@ -1897,6 +1897,12 @@ if (!window.ZYEUTO_APP) {
   .sh-back { display: flex; flex-direction: column; gap: 3px; padding: 11px 14px; border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1.5px #ef7f6a inset; font-size: 14px; line-height: 1.4; color: var(--ink); }
   .sh-back b { font-weight: 500; color: #d9654f; }
   .sh-back svg, .sh-swap svg { width: 17px; height: 17px; vertical-align: -3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+  /* FOU-121 P6 : chemin par l'app Instagram, au-dessus de tout (même depuis le parcours guidé). */
+  .gf.va { z-index: 62; }
+  .va-x { width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--ink); font: 600 15px var(--font); cursor: pointer; flex: none; }
+  .va .gf-how .ig { display: inline-block; background: #0064e0; color: #fff; border-radius: 8px; padding: 1px 8px; margin: 1px; }
+  .va-safe { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 13.5px; line-height: 1.4; color: var(--muted); }
+  .va-safe b { color: var(--ink); font-weight: 600; }
   .sh-swap { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); }
   .sh-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .sh-grid button { border: 0; padding: 0; background: none; cursor: pointer; font: 500 12px var(--font); color: var(--muted); display: flex; flex-direction: column; gap: 4px; align-items: center; }
@@ -2236,6 +2242,7 @@ if (!window.ZYEUTO_APP) {
     <div class="wk-sos" id="wk-sos" hidden>
       <p>Normalement, le gros bouton fait tout. Sinon&nbsp;:</p>
       <button id="sos-file" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>J'ai déjà mon fichier Instagram</button>
+      <button id="sos-app" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Passer par l'app Instagram</button>
       <button id="sos-redo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>Recommencer la demande</button>
     </div>
     <button class="wk-big" id="wk-go" type="button"><svg id="wk-go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span id="wk-go-t">C'est parti</span></button>
@@ -2504,6 +2511,14 @@ if (!window.ZYEUTO_APP) {
     <div class="gf-head"><img src="icone-v5-180.png" alt=""><b>Zieuton</b><button class="help-btn" id="gf-help" type="button" aria-label="Comment ça marche">?</button></div>
     <div class="gf-prog" id="gf-prog" aria-hidden="true"></div>
     <div class="gf-body" id="gf-body"></div>
+  </div>
+</div>
+
+<!-- FOU-121 P6 : chemin de secours par l'app Instagram officielle (captures, sans bandeau) -->
+<div class="gf va" id="va" role="dialog" aria-modal="true" aria-labelledby="va-title" hidden>
+  <div class="gf-in">
+    <div class="gf-head"><img src="icone-v5-180.png" alt=""><b>Par l'app Instagram</b><button class="va-x" id="va-x" type="button" aria-label="Fermer">✕</button></div>
+    <div class="gf-body" id="va-body"></div>
   </div>
 </div>
 
@@ -4730,6 +4745,7 @@ $("wk-help").addEventListener("click", () => {
   $("wk-sos").hidden = !open; $("wk-help").setAttribute("aria-expanded", String(open)); haptic("light");
 });
 $("sos-file").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); startImport(); });
+$("sos-app").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); openViaApp(); });
 $("sos-redo").addEventListener("click", () => { $("wk-sos").hidden = true; $("wk-help").setAttribute("aria-expanded", "false"); $("wk-redo").click(); });
 $("wk-redo").addEventListener("click", () => { delete prefs.requestedAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); haptic("light"); render(); });
 // La carte se redessine (« Demandé il y a X min ») ; elle ne passe à « prêt » que si l'app a vu le fichier (FOU-121 P3).
@@ -4786,9 +4802,9 @@ const IG_CHEERS = ["Compare avec ton écran et touche ce qui est entouré 👀",
 let shDir = 1, shLost = false;
 // Dans l'app, les images sont rangées dans l'app elle-même : elles s'affichent même sans internet.
 const asset = (p) => (window.ZYEUTO_ASSETS && window.ZYEUTO_ASSETS[p]) || p;
-function shotHTML(id, cls = "") {
+function shotHTML(id, cls = "", fid = "sh-fig") {
   const [r, x, y, w, h] = SHOT[id];
-  return `<figure class="shot ${cls}" id="sh-fig" style="aspect-ratio:${r};width:min(100%, calc(38svh * ${r}));--from:${shDir * 24}px">
+  return `<figure class="shot ${cls}" id="${fid}" style="aspect-ratio:${r};width:min(100%, calc(38svh * ${r}));--from:${shDir * 24}px">
     <img src="${asset(`guide/${id}.jpg`)}" alt="" draggable="false"><i class="sh-ring" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i><i class="tapme" style="left:${w > 50 ? x + w * .9 : x + w}%;top:${w > 50 ? y + h / 2 : y + h}%"></i></figure>`;
 }
 // Vue « une étape à la fois » partagée par la demande et la récupération.
@@ -4821,6 +4837,97 @@ function shotsWire(body, list, get, set) {
   // Précharge l'image suivante pour qu'elle s'affiche tout de suite.
   const nxt = list[get() + 1]; if (nxt) new Image().src = asset(`guide/${nxt.img}.jpg`);
 }
+// ---------- FOU-121 P6 : chemin de secours par l'app Instagram officielle ----------
+// L'utilisateur y est souvent déjà connecté : moins de nouvelles connexions. Instagram peut quand même demander une vérification.
+// Moins guidé : pas de bandeau, les captures du guide à la place. Zieuton ne voit rien de ce qui se passe là-bas :
+// la demande n'est jamais notée comme faite, et le fichier arrive par « Partager → Zieuton » ou « Choisir mon fichier ».
+// Lien universel : iOS ouvre l'app Instagram si elle est installée, mais ce n'est pas garanti (Safari peut s'ouvrir).
+// L'écran dit donc toujours comment ouvrir l'app à la main (relecture P6).
+const VA_OPEN_URL = "https://www.instagram.com/";
+const VA_ROUTE = [
+  `Ouvre l'app Instagram, puis ton profil (ta photo, en bas à droite)`,
+  `Touche ${igc("☰")} en haut à droite`,
+  `Touche ${igc("Espace Comptes")}`,
+  `Touche ${igc("Vos informations et autorisations")}`,
+  `Touche ${igc("Exporter vos informations")}`,
+];
+const VA_LAST = IG_SHOTS.length + 1; // 0 = aller jusqu'à la bonne page, 1 à 11 = les captures, la fin = récupérer le fichier
+const VA_KEEP = 5 * 864e5;           // Instagram garde le fichier 4 jours : au-delà, on reprend au début
+const VA_ICON_OUT = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`;
+let vaAt = 0;
+function openViaApp() {
+  const v = prefs.viaApp;
+  vaAt = v && Date.now() - (v.at || 0) < VA_KEEP ? Math.max(0, Math.min(VA_LAST, v.step | 0)) : 0;
+  shDir = 1;
+  haptic("light");
+  $("va").hidden = false;
+  document.documentElement.style.overflow = "hidden";
+  renderViaApp();
+}
+function closeViaApp() {
+  $("va").hidden = true;
+  // Le parcours guidé (s'il est affiché dessous) garde la page bloquée.
+  document.documentElement.style.overflow = $("gf").hidden ? "" : "hidden";
+}
+function vaGo(k) {
+  k = Math.max(0, Math.min(VA_LAST, k));
+  if (k === vaAt) return;
+  shDir = k > vaAt ? 1 : -1; vaAt = k;
+  prefs.viaApp = { step: k, at: Date.now() }; savePrefs();
+  haptic("selection");
+  renderViaApp();
+  $("va").scrollTo({ top: 0 });
+}
+function renderViaApp() {
+  const body = $("va-body");
+  const open = (cls) => `<a class="btn ${cls}" id="va-open" href="${VA_OPEN_URL}" target="_blank" rel="noopener noreferrer">${VA_ICON_OUT}Ouvrir l'app Instagram</a>`;
+  const pct = Math.round((vaAt + 1) / (VA_LAST + 1) * 100), from = Math.round(vaAt / (VA_LAST + 1) * 100);
+  const bar = `<div class="sh-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Progression"><i style="width:${pct}%;--w0:${from}%"></i></div>`;
+  if (vaAt === 0) {
+    body.innerHTML = `
+      <h2 id="va-title">Fais ta demande dans l'app Instagram</h2>
+      <p class="lead">Tu y es sûrement déjà connecté&nbsp;: souvent, pas besoin de te reconnecter. Je ne peux pas te guider là-bas, alors je te montre chaque écran en images.</p>
+      <ol class="gf-how">${VA_ROUTE.map((t, k) => `<li><i>${k + 1}</i><span>${t}</span></li>`).join("")}</ol>
+      <p class="va-safe" id="va-manual"><b>Le bouton ouvre Safari&nbsp;?</b> Ferme Safari et ouvre toi-même l'app Instagram depuis l'écran d'accueil de ton iPhone (l'icône Instagram). C'est là qu'il faut faire la demande.</p>
+      <p class="va-safe"><b>Instagram demande une vérification&nbsp;?</b> Ça peut arriver, c'est Instagram qui décide. Suis ses étapes dans son app.</p>
+      <p class="va-safe"><b>Un code reçu par SMS ou e-mail&nbsp;?</b> Ne le donne jamais à personne. Zieuton ne te le demandera jamais.</p>
+      <div class="gf-foot">${open("ghost big")}<button class="btn primary big" id="va-next" type="button">J'y suis, la suite</button></div>`;
+  } else if (vaAt < VA_LAST) {
+    const x = IG_SHOTS[vaAt - 1];
+    const tip = x.tip || "";
+    body.innerHTML = `<div class="sh-head">${bar}</div>
+      ${shotHTML(x.img, "in", "va-fig")}
+      <p class="sh-say" id="va-title">${x.t}</p>${tip ? `<p class="sh-tip">${tip}</p>` : ""}${x.why ? `<p class="sh-why"><b>Pourquoi&nbsp;?</b> ${x.why}</p>` : ""}
+      <div class="gf-foot"><div class="sh-nav"><button class="btn ghost prev" id="va-prev" type="button">Précédent</button><button class="btn primary big" id="va-next" type="button">${vaAt === VA_LAST - 1 ? "C'est demandé" : "C'est fait, la suite"}</button></div></div>`;
+  } else {
+    body.innerHTML = `<div class="sh-head">${bar}</div>
+      <h2 id="va-title">Et quand c'est prêt&nbsp;?</h2>
+      <ol class="gf-how">
+        <li><i>1</i><span>Instagram te prévient par notification ou par e-mail. Ça prend de quelques minutes à quelques heures.</span></li>
+        <li><i>2</i><span>Retourne dans l'app Instagram (ouvre-la toi-même depuis l'écran d'accueil si le bouton ouvre Safari), sur «&nbsp;Exporter vos informations&nbsp;», et touche «&nbsp;Télécharger&nbsp;».</span></li>
+        <li><i>3</i><span>Touche Partager puis Zieuton. Ou reviens ici et touche «&nbsp;Choisir mon fichier&nbsp;».</span></li>
+      </ol>
+      ${shotHTML("get-2", "in", "va-fig")}
+      <p class="sh-tip" style="margin:0">Ton fichier reste disponible 4 jours chez Instagram.</p>
+      <div class="gf-foot"><button class="btn primary big" id="va-file" type="button">Choisir mon fichier</button>
+        <div class="sh-nav"><button class="btn ghost prev" id="va-prev" type="button">Précédent</button>${open("ghost")}</div>
+        <button class="alt" id="va-later" type="button">Fermer, je reviendrai plus tard</button></div>`;
+  }
+  const on = (id, f) => { const b = $(id); if (b) b.onclick = f; };
+  on("va-next", () => vaGo(vaAt + 1));
+  on("va-prev", () => vaGo(vaAt - 1));
+  on("va-later", closeViaApp);
+  on("va-file", () => { closeViaApp(); startImport(); });
+  const fig = $("va-fig");
+  if (fig && vaAt < VA_LAST) {
+    let x0 = null;
+    fig.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    fig.addEventListener("touchend", (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 45) vaGo(vaAt + (dx < 0 ? 1 : -1)); });
+  }
+  const nxt = IG_SHOTS[vaAt]; if (nxt) new Image().src = asset(`guide/${nxt.img}.jpg`);
+}
+$("va-x").addEventListener("click", closeViaApp);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("va").hidden) closeViaApp(); });
 // Comment revenir au guide depuis Instagram : ça dépend d'où l'app est ouverte (test réel : sans ça, on reste bloqué dans Instagram).
 const TABS_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="13" height="13" rx="2.5"/><path d="M16 19.5a1.5 1.5 0 0 1-1.5 1.5H5a2 2 0 0 1-2-2V9.5A1.5 1.5 0 0 1 4.5 8"/></svg>`;
 const BACK_HOW = nativeApp
@@ -4954,7 +5061,8 @@ function renderGuided() {
         <li><i>${ICON.lock}</i><span>Ton mot de passe, tu le tapes chez Instagram. Zieuton ne le voit jamais.</span></li>
         <li><i>🍪</i><span>Cookies&nbsp;? Touche « Refuser les cookies optionnels ».</span></li>
       </ul></div>
-      <div class="gf-foot pl-foot"><button class="btn cheer big gf-huge" id="gf-meta" type="button">J'ai compris, on y va</button></div>`;
+      <div class="gf-foot pl-foot"><button class="btn cheer big gf-huge" id="gf-meta" type="button">J'ai compris, on y va</button>
+        <button class="pl-restore" id="gf-via" type="button">Ça coince chez Instagram&nbsp;? Passe par son app</button></div>`;
     // On reste sur cet écran : en revenant d'Instagram sans avoir fini, une touche suffit pour y retourner.
     $("gf-meta").onclick = wkGo;
   } else if (step === "insta" && metaInApp()) {
@@ -4972,6 +5080,7 @@ function renderGuided() {
       <ol class="pl-steps">${PLAN.map((t, k) => `<li><i>${k + 1}</i><span>${t}</span></li>`).join("")}</ol></div>
       <div class="gf-foot pl-foot">
         <button class="btn cheer big gf-huge" id="gf-meta" type="button">Ouvrir Instagram</button>
+        <button class="pl-restore" id="gf-via" type="button">Passer par l'app Instagram</button>
         <button class="pl-restore" id="gf-restore" type="button">J'ai une sauvegarde</button>
       </div>`;
     $("gf-meta").onclick = () => { gfIntro = true; haptic("light"); renderGuided(); };
@@ -5128,10 +5237,12 @@ function renderGuided() {
   // « Voir la démo » : pour découvrir l'app tout de suite, sans attendre Instagram.
   const rs = $("gf-restore");
   if (rs) rs.onclick = () => $("restore").click();
+  const via = $("gf-via");
+  if (via) via.onclick = () => openViaApp();
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-1619";
+const BUILD = "2026-11-16-1720";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
