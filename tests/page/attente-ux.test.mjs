@@ -35,9 +35,10 @@ test("attente : pas d'estimation de délai ni de progression fixe", async () => 
     assert.equal(await page.textContent("#gf-title"), "Instagram prépare ta liste");
     const txt = await gfText(page);
     assert.doesNotMatch(txt, /quelques minutes|en général|1 à 3 min|devrait être prête|sûrement prête/i);
-    // La barre n'annonce aucun pourcentage.
-    assert.equal(await page.locator(".gx-track[aria-valuenow]").count(), 0);
-    assert.equal(await page.locator(".gx-track.wait").count(), 1);
+    // Aucune barre de progression ni pourcentage.
+    assert.equal(await page.locator("#gf [aria-valuenow], #gf [role=progressbar]").count(), 0);
+    // Trois petits points animés à la place d'une barre (rien qui ressemble à une progression).
+    assert.equal(await page.locator(".gw-dots i").count(), 3);
     assert.deepEqual(page.errors, []);
     await page.close();
   }
@@ -47,6 +48,8 @@ test("attente : on peut fermer l'app, sans promesse de surveillance en arrière-
   const page = await waiting(5);
   const txt = await gfText(page);
   assert.match(txt, /Tu peux fermer l'app/);
+  // C'est l'info qui avait manqué au test : elle est mise en avant, en premier.
+  assert.match(await page.textContent("#gf .gw-tips li:first-child.gw-key"), /Tu peux fermer l'app/);
   assert.match(txt, /[àÀ] chaque ouverture de Zieuton/);
   assert.match(txt, /Quand Zieuton est fermé, je ne peux pas regarder chez Instagram/);
   assert.doesNotMatch(txt, /je guette|en continu|toutes les \d+ secondes|en permanence/i);

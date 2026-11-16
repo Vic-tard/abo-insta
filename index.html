@@ -1124,15 +1124,21 @@ if (!window.ZYEUTO_APP) {
   .gx-b.plum { background: linear-gradient(135deg, #8a4560, #4a2636); }
   /* Écran d'attente (FOU-124, présentation) : épuré, centré, le zieuteur derrière son mur, 3 infos, 1 action principale. */
   .gw { margin-block: auto; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding-top: 6px; }
-  .gw-hero { position: relative; width: 132px; height: 132px; display: grid; place-items: center; margin-bottom: 6px; }
+  .gw-hero { position: relative; width: 168px; height: 168px; display: grid; place-items: center; margin-bottom: 6px; }
   .gw-halo { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgb(201 184 247 / .55) 0%, rgb(212 145 155 / .28) 48%, rgb(212 145 155 / 0) 72%); }
-  .gw-av { position: relative; width: 84px; height: 84px; border-radius: 28%; overflow: hidden; background: #d4919b; box-shadow: 0 10px 26px rgb(212 145 155 / .45); }
+  .gw-av { position: relative; width: 112px; height: 112px; border-radius: 28%; overflow: hidden; background: #d4919b; box-shadow: 0 10px 26px rgb(212 145 155 / .45); }
   .gw-av svg { width: 100%; height: 100%; display: block; }
   .gw-chip { margin: 0; display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px; background: var(--rose-soft); color: var(--rose-ink); font: 700 12.5px var(--round); letter-spacing: .02em; }
   .gw-chip i { width: 7px; height: 7px; border-radius: 50%; background: #9d86e4; }
   .gf .gw h2 { margin: 2px 0 0; font: 800 30px/1.12 var(--round); letter-spacing: -.02em; text-wrap: balance; }
   .gw-say { margin: 0; max-width: 30ch; font: 500 16px/1.4 var(--round); color: var(--muted); text-wrap: balance; }
-  .gw-bar.gx-track { width: 120px; height: 4px; margin: 8px 0 6px; background: var(--line); }
+  .gw-dots { margin: 6px 0 2px; display: flex; gap: 7px; justify-content: center; }
+  .gw-dots i { width: 8px; height: 8px; border-radius: 50%; background: #b9a5f0; opacity: .45; }
+  .gw-key { padding: 14px 16px; border-radius: 18px; background: var(--rose-soft); }
+  .gw-tips .gw-key b { font-size: 17.5px; }
+  .gw-tips .gw-key small { color: var(--ink); opacity: .8; }
+  .gw-key .gw-ic { background: linear-gradient(135deg, #c9b8f7, #9d86e4); color: #fff; }
+  .gw-tips li:not(.gw-key) { padding-inline: 16px; }
   .gw-tips { list-style: none; margin: 10px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 16px; text-align: left; }
   .gw-tips li { display: flex; align-items: flex-start; gap: 14px; }
   .gw-ic { flex: none; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); color: #8a72d6; }
@@ -1146,11 +1152,15 @@ if (!window.ZYEUTO_APP) {
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gw-ic { color: #c9b8f7; } }
   @media (prefers-reduced-motion: no-preference) {
     .gw-halo { animation: gwBreath 3.2s ease-in-out infinite; }
+    .gw-av { animation: gwAv 3.2s ease-in-out infinite; }
+    .gw-dots i { animation: gwDot 1.4s ease-in-out infinite; } .gw-dots i:nth-child(2) { animation-delay: .2s; } .gw-dots i:nth-child(3) { animation-delay: .4s; }
     .gw-chip i { animation: gxPing 1.6s ease-out infinite; }
     .gw > * { animation: rise .4s both; } .gw > :nth-child(2) { animation-delay: .05s; } .gw > :nth-child(3) { animation-delay: .1s; } .gw > :nth-child(n+4) { animation-delay: .15s; }
   }
+  @keyframes gwAv { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  @keyframes gwDot { 0%, 100% { opacity: .35; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
   @keyframes gwBreath { 0%, 100% { transform: scale(.92); opacity: .75; } 50% { transform: scale(1.06); opacity: 1; } }
-  @media (max-height: 640px) { .gw-hero { width: 100px; height: 100px; } .gw-av { width: 66px; height: 66px; } .gf .gw h2 { font-size: 26px; } .gw-tips { gap: 12px; } }
+  @media (max-height: 640px) { .gw-hero { width: 124px; height: 124px; } .gw-av { width: 84px; height: 84px; } .gf .gw h2 { font-size: 26px; } .gw-tips { gap: 12px; } }
   @media (prefers-reduced-motion: no-preference) { .gx { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; } .gx-list { animation: rise .35s .08s both; } }
   @media (prefers-reduced-motion: reduce) { .gx-steps li.now::before { animation: none; } }
   .gf-share { display: inline-flex; width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2); align-items: center; justify-content: center; vertical-align: middle; margin: 0 4px; }
@@ -5169,9 +5179,9 @@ function renderGuided() {
         <p class="gw-chip"><i></i>En cours chez Instagram</p>
         <h2 id="gf-title">Instagram prépare ta liste</h2>
         <p class="gw-say" id="guide-say">${say}</p>
-        <div class="gx-track wait gw-bar" role="progressbar" aria-label="Instagram prépare ton fichier"><i></i></div>
+        <p class="gw-dots" role="status" aria-label="Instagram prépare ton fichier"><i></i><i></i><i></i></p>
         <ul class="gw-tips">
-          ${tip(I_PHONE, "Tu peux fermer l'app", "À chaque ouverture de Zieuton, je regarde où en est Instagram.")}
+          ${tip(I_PHONE, "Tu peux fermer l'app", "À chaque ouverture de Zieuton, je regarde où en est Instagram.").replace("<li>", '<li class="gw-key">')}
           ${tip(I_BELL, "Je t'envoie un rappel", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")}
           ${tip(I_MAIL, "Pas besoin d'ouvrir le mail", "Instagram t'en envoie un, mais tout se fait ici.")}
         </ul>
@@ -5301,7 +5311,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-1944";
+const BUILD = "2026-11-16-1951";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
