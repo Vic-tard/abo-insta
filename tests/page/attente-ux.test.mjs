@@ -47,7 +47,7 @@ test("attente : on peut fermer l'app, sans promesse de surveillance en arrière-
   const page = await waiting(5);
   const txt = await gfText(page);
   assert.match(txt, /Tu peux fermer l'app/);
-  assert.match(txt, /à chaque ouverture de Zieuton/);
+  assert.match(txt, /[àÀ] chaque ouverture de Zieuton/);
   assert.match(txt, /Quand Zieuton est fermé, je ne peux pas regarder chez Instagram/);
   assert.doesNotMatch(txt, /je guette|en continu|toutes les \d+ secondes|en permanence/i);
   await page.close();
