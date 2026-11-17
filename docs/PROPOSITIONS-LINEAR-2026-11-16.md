@@ -37,9 +37,9 @@
 - Test **iCloud** (sauvegarde, restauration après réinstallation) : non confirmé sur 1.0 (7) ni 1.0 (15).
 - Test des **notifications** : non confirmé par écrit.
 - **Données gardées** lors de la mise à jour (7 → 15) : non confirmé par écrit.
-- Build 16 (FOU-124 côté coque) : pas lancé, attend l'accord de Victor.
+- Build 16 (FOU-124 côté coque) : abandonné le 17 nov. au profit du build 17 (FOU-124 + FOU-126), qui attend l'accord de Victor.
 
-**Proposition** : **ne pas fermer tout de suite.** Renommer en « Build de soumission : test complet sur iPhone » et remplacer la description par un lien vers `docs/VALIDATION-BUILD-16.md`, avec les cases non faites ci-dessus. Le fermer seulement quand toutes les cases du plan sont « Fait ». (Option plus simple : le fermer comme « remplacé par 1.0 (15) » et ouvrir un nouveau ticket avec le même contenu. Les deux gardent les vérifications ; la première évite un ticket de plus.)
+**Proposition** : **ne pas fermer tout de suite.** Renommer en « Build de soumission : test complet sur iPhone » et remplacer la description par un lien vers `docs/VALIDATION-BUILD-17.md`, avec les cases non faites ci-dessus. Le fermer seulement quand toutes les cases du plan sont « Fait ». (Option plus simple : le fermer comme « remplacé par 1.0 (15) » et ouvrir un nouveau ticket avec le même contenu. Les deux gardent les vérifications ; la première évite un ticket de plus.)
 
 ## 3. FOU-101 : « Perfectionner le build 6 » (parent)
 
@@ -47,7 +47,7 @@
 
 **Encore ouvert dessous** : FOU-105 (voir ci-dessus) et FOU-33 (plan B, voir `docs/PLAN-B-APPLE-5-2-2.md`).
 
-**Proposition** : rattacher FOU-105 et FOU-33 directement à FOU-51 (soumission), puis **fermer FOU-101** avec un commentaire : « Objectif du build 6 atteint par 1.0 (7) puis 1.0 (15). Vérifications restantes suivies dans FOU-105 (plan `docs/VALIDATION-BUILD-16.md`) ; plan B dans FOU-33. » Rien n'est perdu : chaque vérification non faite reste dans FOU-105.
+**Proposition** : rattacher FOU-105 et FOU-33 directement à FOU-51 (soumission), puis **fermer FOU-101** avec un commentaire : « Objectif du build 6 atteint par 1.0 (7) puis 1.0 (15). Vérifications restantes suivies dans FOU-105 (plan `docs/VALIDATION-BUILD-17.md`) ; plan B dans FOU-33. » Rien n'est perdu : chaque vérification non faite reste dans FOU-105.
 
 ## 4. FOU-33 : plan B
 

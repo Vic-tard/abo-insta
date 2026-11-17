@@ -15,11 +15,11 @@
 | BUG-04 | Demande partie en « Année dernière » non détectée ; bandeau resté sur « Créer une exportation » | Haute | Captures des potes | Détection de la période ; **déjà corrigé une fois le 3 nov.** → possible régression | Ouvert (FOU-121) | – | – |
 | BUG-05 | Code de sécurité raté, mais « je guette ton fichier » quand même ; fichier « En attente » mal géré | Haute | Build 1.0 (7), test de Victor | Avancée d'étape sans preuve | Corrigé, à vérifier | PR #124 (FOU-115, coque) | Pas encore dans un build testé |
 | BUG-06 | Conseils du bandeau coupés (plus de 2 lignes, ~95 caractères) | Moyenne | Textes Swift de connexion / code de sécurité | `tipLabel` limité à 2 lignes | Ouvert | – | – |
-| BUG-07 | Notifications d'export mal affichées | Moyenne | Build 5 | – | Corrigé, à vérifier | PR #116 (FOU-100) | Présent dans le build 1.0 (7) ; vérification iPhone non notée |
+| BUG-07 | Notifications d'export mal affichées | Moyenne | Build 5 | – | Corrigé, à vérifier | PR #116 (FOU-100), repris par FOU-126 (PR #142, #143) | À vérifier sur le build 1.0 (17), section 4 de `VALIDATION-BUILD-17.md` |
 | BUG-08 | Chemin « démo » de la note examinateur peut-être faux (prénom → « Continuer » → « Voir la démo ») depuis la suppression de « Faisons connaissance » | **Critique pour la soumission** | Lire `docs/note-revue-apple.md` puis suivre le parcours actuel | PR #129 a retiré l'écran prénom. **Confirmé le 16 nov.** (simulation navigateur) : à la première ouverture, ni Réglages ni démo ; il faut importer un exemple d'abord | Corrigé dans la note (PR de doc FOU-51), à revérifier sur iPhone | – | – |
 | BUG-09 | Un testeur a eu son compte Instagram verrouillé pendant l'export | Haute | Rapport d'un pote | Non prouvée ; la fenêtre de connexion compte comme « nouvel appareil » | En cours (FOU-121 P1 : arrêt propre ; P6 : chemin par l'app Instagram) | – | – |
 | BUG-22 | Le lien du questionnaire testeurs est le lien d'**édition** du Google Forms (seul Victor peut l'ouvrir) | Moyenne | Ouvrir le lien depuis un autre compte | Mauvais lien copié | Ouvert : attend le lien public `forms.gle/…` de Victor (fil vidéo com, 15 nov.) | – | – |
-| BUG-10 | Notification « prêt » rarement reçue quand l'app est fermée | Moyenne | App fermée après la demande | Limite d'iOS (BGAppRefreshTask) | Contourné | Notification « sûrement prête » à 10 min (PR #69) | Partielle |
+| BUG-10 | Notification « prêt » rarement reçue quand l'app est fermée | Moyenne | App fermée après la demande | Limite d'iOS (BGAppRefreshTask) | Correction proposée | FOU-126 (PR #142) : la notification « sûrement prête » et les « expire » sont supprimées ; rappels honnêtes à 30 min et 24 h ; « prêt » seulement sur preuve | À vérifier sur le build 1.0 (17) |
 
 ## 2. Bugs corrigés (historique)
 

@@ -1,6 +1,6 @@
 # Notes for the App Review team (Zieuton)
 
-> Pour Victor : le champ « Remarques » d'App Store Connect (ta version → « Informations pour la vérification de l'app ») accepte 4 000 caractères au plus. Colle la **version courte** ci-dessous (environ 3 650 caractères). La version complète, plus bas, sert de référence ; tu peux aussi l'envoyer en pièce jointe avec les deux fichiers `exemple/zieuton-exemple-1.zip` et `-2.zip` (tickets FOU-32, FOU-30, FOU-111).
+> Pour Victor : le champ « Remarques » d'App Store Connect (ta version → « Informations pour la vérification de l'app ») accepte 4 000 caractères au plus. Colle la **version courte** ci-dessous (environ 3 850 caractères). La version complète, plus bas, sert de référence ; tu peux aussi l'envoyer en pièce jointe avec les deux fichiers `exemple/zieuton-exemple-1.zip` et `-2.zip` (tickets FOU-32, FOU-30, FOU-111).
 >
 > **Mise à jour du 16 nov. 2026 (FOU-51)** : l'ancien chemin vers la démo (« C'est parti », taper un prénom, « Continuer », « Voir la démo ») n'existe plus depuis la suppression de l'écran prénom (PR #129). Chemin vérifié sur la page de `main` (simulation navigateur, pas encore sur iPhone) : à la première ouverture, le parcours guidé couvre tout l'écran et ne montre ni les Réglages ni la démo ; après l'import d'un fichier d'exemple, l'accueil s'affiche et Réglages → « Voir la démo » fonctionne. Section Instagram complétée avec ce que P1 à P6 et FOU-124 ont ajouté (liste des demandes, compte verrouillé, « Revenir dans Zieuton », chemin par l'app Instagram). **À revérifier sur l'iPhone avec le build de soumission avant de coller.**
 
@@ -19,7 +19,7 @@ On a fresh install, the app opens a short guided setup ("C'est parti !" then a p
 "Ouvrir Instagram" opens Meta's official page accountscenter.instagram.com in a WKWebView, address visible, with a guide banner saying which button to tap next. No Instagram API, no scraping, no automation: the user taps every button, including "Download". The app never asks for, reads or stores the password; the user logs in on Meta's own form. On the device only, the banner reads visible titles, button labels, the list of the user's export requests and their status (a request is confirmed only when a new row appears), whether a login or code field is shown (never typed values), and an explicit "account locked" message, in which case the guide stops and sends the user to the official Instagram app. Nothing is sent anywhere. Once a request is confirmed, the banner offers "Revenir dans Zieuton". Alternative path: "Passer par l'app Instagram" opens Instagram (its own app if installed) and Zieuton shows screenshots of each step; nothing is read there.
 
 2. BACKGROUND CHECK
-While an export is pending, the app may load the same page in an invisible web view only to detect that the file is ready and send a local notification. It never taps anything there.
+While an export is pending, the app may load the same page in an invisible web view only to see whether the user's own request (the row dated the day of the request) is now ready, and send a local notification. It never taps anything there. iOS decides when this can run; when it cannot, the user only gets plain local reminders (30 min and 24 h) and checks by opening the app.
 
 3. BUNDLED HTML INTERFACE (2.5.2)
 Native Swift shell + an HTML page bundled in the binary; the app works fully offline with it. To fix bugs and texts, it can download a newer signed copy of the same page from https://zieuton.com/. Same features, no native code downloaded, and it can only use the fixed native bridge compiled in the binary (file import, notifications, iCloud backup, StoreKit, haptics, photo picker). Falls back to the bundled page on failure.
@@ -72,7 +72,7 @@ To get their data, the user must request an export from Instagram. Many users ne
 
 **Alternative path without the in-app web view:** on the plan screen, **"Passer par l'app Instagram"** opens Instagram itself (its own app if installed) and Zieuton shows screenshots of each step. Zieuton reads nothing in that case; the user then shares the downloaded file to Zieuton.
 
-**Background check:** while an export is pending, the app may load the same export page in an invisible web view (same on-device session) only to count the "Download" buttons and detect a "pending" state, so it can send a local notification "Your file is ready". It never taps anything there either.
+**Background check:** while an export is pending, the app may load the same export page in an invisible web view (same on-device session) only to read the status of the user's own export request (the row dated the day of the request: "pending" or ready), so it can send a local notification "Your file is ready" only when that row is ready. If iOS does not let it run, the user gets plain local reminders after 30 minutes and 24 hours, and checks by opening the app. It never taps anything there either.
 
 When the user taps "Download", the file is saved on the device and handed to Zieuton, which reads it locally.
 

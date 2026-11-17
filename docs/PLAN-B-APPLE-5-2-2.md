@@ -47,4 +47,4 @@ Thank you for your review. Zieuton does not use any Instagram API and does not a
 
 ## 6. Ce qu'il faudra tester si l'option B est faite
 
-Le plan de validation du build (voir `VALIDATION-BUILD-16.md`, section 3.7) devient le parcours principal : demande faite dans l'app Instagram, attente, téléchargement, Partager → Zieuton, import réussi ; message clair si l'app Instagram n'est pas installée ; aucune trace de la vue intégrée dans les écrans.
+Le plan de validation du build (voir `VALIDATION-BUILD-17.md`, section 3.7) devient le parcours principal : demande faite dans l'app Instagram, attente, téléchargement, Partager → Zieuton, import réussi ; message clair si l'app Instagram n'est pas installée ; aucune trace de la vue intégrée dans les écrans.

@@ -1,6 +1,6 @@
 # Zieuton : document de transmission pour ChatGPT
 
-> Dernière mise à jour : 16 novembre 2026 au soir (FOU-51 ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
+> Dernière mise à jour : 17 novembre 2026 (FOU-126 ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
 > À mettre à jour par Claude après chaque étape importante (fin de PR, décision, build).
 
 ## 1. Le projet en 10 lignes
@@ -26,13 +26,14 @@ Architecture : une page web unique `index.html` (~8 600 lignes, HTML/CSS/JS sans
 
 Pas de scraping ni de connexion automatisée à Instagram ; jamais le mot de passe ; l'utilisateur touche lui-même « Télécharger » ; aucune donnée envoyée à un serveur (pas d'analytics, pas de SDK) sans décision écrite de Victor ; aucune mention d'IA dans l'app ; identifiants `fr.zyeuto.*` intouchables.
 
-## 5. Où en est le projet (16 nov. au soir)
+## 5. Où en est le projet (17 nov.)
 
 - **Export (FOU-121)** : P1 à P6 fusionnées (PR #132, #134 à #138). Build **1.0 (15)** envoyé sur TestFlight le 16 nov. ; Victor déclare un export et un import réels réussis sur son iPhone.
-- **FOU-124** (attente après la demande) fusionnée (PR #139). La partie page est en canal test ; la partie coque (bouton « Revenir dans Zieuton ») attend le **build 1.0 (16)**, pas encore lancé.
+- **FOU-124** (attente après la demande) fusionnée (PR #139). La partie page est en canal test ; la partie coque (bouton « Revenir dans Zieuton ») attend le **build 1.0 (17)** : Victor a décidé le 17 nov. de ne pas faire de build 16 et de viser directement un build 17 candidat à la soumission.
 - **Canal stable** encore au 10 nov. : les testeurs en canal normal ne voient pas les nouveautés de la page.
 - **Orientations de Victor (16 nov., 19h11)** : soumission visée vers le **25 novembre**, sortie manuelle possible le 3 décembre ; aucun build, aucune soumission, aucun changement de statut Linear, aucune modification du moteur Instagram sans son accord.
-- **PR de documentation en relecture** (FOU-51) : note examinateur corrigée (`note-revue-apple.md`), plan de validation du build 16 (`VALIDATION-BUILD-16.md`), plan B 5.2.2 (`PLAN-B-APPLE-5-2-2.md`), propositions Linear pour FOU-83, FOU-101, FOU-105, FOU-33 (`PROPOSITIONS-LINEAR-2026-11-16.md`).
+- **Notifications fiables (FOU-126, autorisé par Victor le 17 nov.)** : PR #142 (coque : « C'est demandé ✓ » seulement sur preuve, « Ton fichier est prêt 🎉 » seulement si la ligne de la demande est prête, rappels 30 min et 24 h, plus d'alertes « expire », pont v10, build 17) et PR #143 (page : écran « Je te préviens ? » avant Instagram, état de l'attente, demande liée au bon compte). Tests Swift écrits, à lancer sur le Mac. Aucune fusion sans Victor ; à relire par ChatGPT. Limite assumée : iOS ne laisse pas vérifier en permanence une app fermée, l'app ne le prétend jamais.
+- **PR de documentation en relecture** (FOU-51, FOU-126) : note examinateur corrigée (`note-revue-apple.md`), plan de validation du build 17 (`VALIDATION-BUILD-17.md`, remplace celui du build 16), plan B 5.2.2 (`PLAN-B-APPLE-5-2-2.md`), propositions Linear pour FOU-83, FOU-101, FOU-105, FOU-33 (`PROPOSITIONS-LINEAR-2026-11-16.md`).
 
 ## 6. Bugs non résolus (détail : `docs/ZIEUTON_BUG_TRACKER.md`)
 
@@ -47,7 +48,7 @@ Fiche App Store, captures, achats, confidentialité : prêts. Reste : export fia
 
 ## 8. Questions où un second avis serait utile
 
-1. **Build** : soumettre avec 1.0 (15) ou avec 1.0 (16) (bouton « Revenir dans Zieuton ») ? Le plan `VALIDATION-BUILD-16.md` est-il complet ?
+1. **Build** : soumission prévue avec 1.0 (17) (décision du 17 nov.). Le plan `VALIDATION-BUILD-17.md` est-il complet, en particulier la section 4 (notifications) ?
 2. **Risque Apple 5.2.2** : la vue Instagram intégrée est le risque de refus n°1. Proposition : plan B en réserve (réponse écrite d'abord, puis passage par l'app Instagram via P6), voir `PLAN-B-APPLE-5-2-2.md`. D'accord ?
 3. **Compte verrouillé** : quels signaux d'Instagram sont assez explicites pour dire « verrouillé » sans confondre avec un simple code de sécurité ?
 4. **Test utilisateur** : comment organiser un test « inconnu, sans aide » (FOU-37) utile en peu de temps ?
