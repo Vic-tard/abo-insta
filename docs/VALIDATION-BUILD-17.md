@@ -21,20 +21,20 @@ Changements de la coque entre 15 et 17 : `WebViewController.swift` (PR #139 et #
 
 | # | Vérification | Comment | Statut |
 | --- | --- | --- | --- |
-| 1.1 | Tests Node, syntaxe, copie du cœur, numéros | `npm test`, `npm run check:syntax`, `npm run check:versions` (CI GitHub, partie Linux) | Vert sur #142 et #143 le 17 nov. ; à refaire sur `main` après fusion |
-| 1.2 | Lecteur d'écrans Instagram et écrans de la page | `npm run test:lecteur` | Idem |
-| 1.3 | Tests Swift (preuve de demande, preuve « prêt », plan des notifications, textes) | Sur le Mac, la CI Mac étant bloquée jusqu'au 1er décembre : commandes A et B ci-dessous | À faire |
-| 1.4 | Compilation Xcode sans erreur | Commande C ci-dessous, puis Xcode → Product → Build | À faire |
-| 1.5 | PR #142 et #143 relues par ChatGPT, puis fusionnées par Victor | GitHub | À faire |
+| 1.1 | Tests Node, syntaxe, copie du cœur, numéros | `npm test`, `npm run check:syntax`, `npm run check:versions` (CI GitHub, partie Linux) | Fait (17 nov., Claude) : vert sur `main` a823ea5 (51 + 43 tests) |
+| 1.2 | Lecteur d'écrans Instagram et écrans de la page | `npm run test:lecteur` | Fait (17 nov., Claude) : 78 tests verts sur `main` |
+| 1.3 | Tests Swift (preuve de demande, preuve « prêt », plan des notifications, textes) | Sur le Mac, la CI Mac étant bloquée jusqu'au 1er décembre : commandes A et B ci-dessous | Fait (17 nov. 17h12, Mac de Victor) : « Tout est vert. », cas 26 multicompte compris |
+| 1.4 | Compilation Xcode sans erreur | Commande C ci-dessous, puis Xcode → Product → Build | Commande C faite (17 nov. 17h12, Mac de Victor) : `** BUILD SUCCEEDED **`, aucune ligne `error:` (seul message : avertissement d'Xcode sur l'appareil générique, sans effet) |
+| 1.5 | PR #142, #143 et #144 relues par ChatGPT, puis fusionnées avec l'accord de Victor | GitHub | Fait (17 nov.) : `main` a823ea5 ; #140 fermée, remplacée par #144 |
 | 1.6 | Aucune autre PR coque ouverte qui devrait entrer dans ce build | Liste des PR GitHub | À faire |
 | 1.7 | Décision écrite de Victor : « on fait le build 17 » | Message dans le fil 02 | À faire |
 
-Commandes à coller dans Terminal sur le Mac (une à la fois). Avant fusion, elles prennent la branche de #142 ; après fusion, remplacer `claude/project-thread-amibkk` par `main`.
+Commandes à coller dans Terminal sur le Mac (une à la fois). Depuis la fusion (17 nov.), elles prennent `main`.
 
 A. Récupérer le code :
 
 ```
-cd /tmp && rm -rf zieuton-verif && git clone --depth 1 -b claude/project-thread-amibkk https://github.com/Vic-tard/abo-insta.git zieuton-verif && cd zieuton-verif && git log --oneline -1
+cd /tmp && rm -rf zieuton-verif && git clone --depth 1 https://github.com/Vic-tard/abo-insta.git zieuton-verif && cd zieuton-verif && git log --oneline -1
 ```
 
 B. Tests Swift (la dernière ligne doit dire que tout est passé) :
