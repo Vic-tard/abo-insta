@@ -748,10 +748,10 @@ extension WebViewController: WKScriptMessageHandler {
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
         // FOU-126 : compte affiché quand la demande part (la page l'envoie depuis ZYEUTO_APP 10).
         let acct = body["acct"] as? String
-        meta.onRequested = { [weak self] existing in
-            // existing : demande déjà en cours chez Instagram (une page plus ancienne ignore ce second argument).
-            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested', { existing: \(existing) }); true")
-            ExportWatcher.shared.requested(existing: existing, acct: acct)
+        meta.onRequested = { [weak self] existing, today in
+            // existing : demande déjà en cours chez Instagram ; today : elle est datée d'aujourd'hui (une page plus ancienne ignore ces champs).
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested', { existing: \(existing), today: \(today) }); true")
+            ExportWatcher.shared.requested(existing: existing, today: today, acct: acct)
         }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
         meta.modalPresentationStyle = .fullScreen
@@ -923,7 +923,8 @@ final class MetaViewController: UIViewController {
     private var guarded: Bool { steps.contains { $0.ok != nil } && seenCreate != .distantPast }
 
     /// La demande est prouvée chez Instagram (true : elle était déjà en cours).
-    var onRequested: ((Bool) -> Void)?
+    /// (existing, today) : demande déjà en cours chez Instagram ; et, dans ce cas, datée d'aujourd'hui (sans doute la sienne).
+    var onRequested: ((Bool, Bool) -> Void)?
     var onFile: ((URL) -> Void)?
 
     private let url: URL
@@ -1010,6 +1011,8 @@ final class MetaViewController: UIViewController {
     private var badSettings: ExportProof.Problem?
     /// Une demande était déjà en cours chez Instagram : on ne la refait pas, on guette le fichier.
     private var existingRequest = false
+    /// Demande « déjà en cours » datée d'aujourd'hui (sans doute la sienne, vue en retard).
+    private var existingToday = false
     /// L'utilisateur a choisi de refaire une demande (après un mauvais réglage) : pas de blocage « déjà en cours ».
     private var allowSecond = false
     /// « Vérifier l'état de ma demande » touché : Zieuton a rouvert la liste d'Instagram.
@@ -2233,7 +2236,7 @@ final class MetaViewController: UIViewController {
             // Ouvert pour récupérer le fichier : la demande est encore « En attente » (ou à vérifier). Jamais « Touche Télécharger ».
             if !requesting { return getStep(GetBanner.of(waiting: true, proven: false, verdict: getVerdict)) }
             // Demande vérifiée (on n'arrive ici qu'après la preuve) : on dit clairement comment sortir d'Instagram.
-            return Step(verb: LeaveHint.verb(existing: existingRequest), target: LeaveHint.target, tip: LeaveHint.tip)
+            return Step(verb: LeaveHint.verb(existing: existingRequest, today: existingToday), target: LeaveHint.target, tip: LeaveHint.tip)
         }
         if cookiesShown {
             return Step(verb: "Cookies : touche", target: "Refuser les cookies optionnels",
@@ -2740,6 +2743,7 @@ final class MetaViewController: UIViewController {
         // Une demande était déjà en cours avant de commencer : inutile d'en refaire une, on guette le fichier.
         if sentAt == nil, !allowSecond, homeSettled, rowsFresh, proof.alreadyPending {
             existingRequest = true
+            existingToday = proof.pendingToday
             finishRequest()
             return
         }
@@ -2794,6 +2798,7 @@ final class MetaViewController: UIViewController {
         toCheck = false
         badSettings = nil
         existingRequest = false
+        existingToday = false
         // La demande d'avant est bien dans la liste : sans ça, Zieuton bloquerait sur « une demande est déjà en cours ».
         allowSecond = true
         proof.reset()
@@ -2963,12 +2968,13 @@ final class MetaViewController: UIViewController {
         let done = onRequested
         // Partie avec « Année dernière », HTML ou toutes les informations : on le dit, sans la refaire à sa place.
         if !existingRequest { badSettings = ExportProof.problem(lastSummary) }
-        sayLabel.attributedText = NSAttributedString(string: existingRequest ? "Une demande est déjà en cours chez Instagram."
+        sayLabel.attributedText = NSAttributedString(string: existingToday ? "Ta demande d'aujourd'hui est bien chez Instagram."
+                                                        : existingRequest ? "Une demande est déjà en cours chez Instagram."
                                                         : "C'est confirmé ! Instagram prépare ta liste.",
                                                      attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink])
         tipLabel.text = "Tu n'as plus rien à faire ici."
         // La page passe tout de suite sur « Instagram prépare ta liste », derrière : pas d'ancien écran au retour.
-        done?(existingRequest)
+        done?(existingRequest, existingToday)
         // Au lieu de fermer, on reste sur la page d'Instagram et on guette le fichier (FOU-100).
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
             self?.startGuarding()
@@ -3047,6 +3053,9 @@ struct ExportProof: Equatable {
 
     /// Une demande était déjà en cours avant de commencer (et on n'a pas encore commencé).
     var alreadyPending: Bool { !frozen && (before ?? 0) > 0 }
+    /// Tests iPhone du 17 nov. : cette demande « déjà en cours » est datée d'aujourd'hui. C'est sans doute celle que
+    /// l'utilisateur vient de faire, vue en retard : on ne lui dit jamais « une demande était déjà en cours ».
+    var pendingToday: Bool { alreadyPending && recentBefore > 0 }
 
     /// Ce que prouve la liste lue maintenant. `tapped` : la touche « Commencer l'exportation » a été vue.
     func verdict(_ rows: [String]?, tapped: Bool, now: Date, calendar: Calendar = .current) -> Verdict {
@@ -3186,8 +3195,9 @@ enum BannerTone: Equatable {
 /// FOU-124 : après une demande VÉRIFIÉE, on dit clairement que tout est fait chez Instagram et comment revenir.
 /// Test réel : l'utilisateur restait sur Instagram sans voir « ‹ Zieuton » en haut à gauche.
 enum LeaveHint {
-    static func verb(existing: Bool) -> String {
-        existing ? "✓ Une demande est déjà en cours. Tu n'as plus rien à faire ici :" : "✓ C'est demandé ! Tu n'as plus rien à faire ici :"
+    static func verb(existing: Bool, today: Bool = false) -> String {
+        if existing && today { return "✓ Ta demande d'aujourd'hui est bien là. Tu n'as plus rien à faire ici :" }
+        return existing ? "✓ Une demande est déjà en cours. Tu n'as plus rien à faire ici :" : "✓ C'est demandé ! Tu n'as plus rien à faire ici :"
     }
     static let target = "touche ‹ Zieuton en haut à gauche"
     static let tip = "Instagram prépare ton fichier. Tu peux fermer l'app : quand tu reviens dans Zieuton, je regarde où il en est."
@@ -3452,9 +3462,14 @@ enum NoticeText {
     struct Text: Equatable { let title: String; let body: String; let subtitle: String? }
 
     /// hour : heure de la demande (« 14:32 »), nil si elle est inconnue (demande déjà en cours).
-    static func of(_ id: String, existing: Bool, hour: String?) -> Text? {
+    /// today : demande « déjà en cours » datée d'aujourd'hui (sans doute la sienne, vue en retard) : ni « déjà en cours », ni heure inventée.
+    static func of(_ id: String, existing: Bool, today: Bool = false, hour: String?) -> Text? {
         switch id {
         case NoticePlan.asked:
+            if existing && today {
+                return Text(title: "Ta demande est bien enregistrée ✓",
+                            body: "Instagram prépare ton fichier. Tu pourras vérifier son état dans Zieuton.", subtitle: nil)
+            }
             return Text(title: existing ? "Une demande est déjà en cours ✓" : "C'est demandé ✓",
                         body: "Instagram prépare ton fichier. Tu pourras vérifier son état dans Zieuton.",
                         subtitle: existing ? nil : hour.map { "Demandé à \($0)" })
@@ -3706,6 +3721,8 @@ final class ExportWatcher: NSObject {
         static let requested = "zy.export.requestedAt", ready = "zy.export.readyAt"
         /// La demande était déjà en cours chez Instagram : son heure est inconnue (Key.requested = début du guet, pas la demande).
         static let existing = "zy.export.existing"
+        /// Demande déjà en cours, mais datée d'aujourd'hui (tests du 17 nov.).
+        static let today = "zy.export.today"
         /// FOU-126 : jour de la demande et référence des lignes prêtes de ce jour (ReadyProof).
         static let day = "zy.export.day", baseline = "zy.export.baseline"
         /// FOU-126 : « C'est demandé » et « prêt » déjà envoyées pour cette demande (jamais de doublon).
@@ -3716,7 +3733,7 @@ final class ExportWatcher: NSObject {
         static let acct = "zy.export.acct"
         /// Clés des builds 15 et avant (décompte des « Télécharger ») : plus utilisées.
         static let legacy = ["zy.export.downloadsBefore", "zy.export.baselineChecked"]
-        static var all: [String] { [requested, ready, existing, day, baseline, askedShown, readyShown, lastState, lastAt, acct] + legacy }
+        static var all: [String] { [requested, ready, existing, today, day, baseline, askedShown, readyShown, lastState, lastAt, acct] + legacy }
     }
     /// Notification « prêt » avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
     static let readyCategory = "zy-ready-actions"
@@ -3783,14 +3800,15 @@ final class ExportWatcher: NSObject {
 
     /// La demande est prouvée chez Instagram (FOU-121 P1). existing : elle était déjà en cours, à une heure inconnue.
     /// Rien n'est envoyé sur le seul toucher de « Commencer l'exportation » : cette fonction n'est appelée qu'après la preuve.
-    func requested(existing: Bool = false, acct: String? = nil) {
+    func requested(existing: Bool = false, today: Bool = false, acct: String? = nil) {
         let now = Date()
         for k in Key.all { store.removeObject(forKey: k) }
         store.set(now, forKey: Key.requested)
         store.set(existing, forKey: Key.existing)
+        store.set(existing && today, forKey: Key.today)
         if let acct, !acct.isEmpty { store.set(acct, forKey: Key.acct) }
         // Demande prouvée : sa ligne est datée d'aujourd'hui. Déjà en cours : le jour sera lu sur sa ligne « En attente ».
-        proof = ReadyProof(day: existing ? nil : now)
+        proof = ReadyProof(day: existing && !today ? nil : now)
         saveProof()
         apply(NoticePlan.end())
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
@@ -3886,7 +3904,7 @@ final class ExportWatcher: NSObject {
         }
         for item in plan.post {
             let hour = isExisting ? nil : requestedAt.map { Self.hour($0) }
-            guard let text = NoticeText.of(item.id, existing: isExisting, hour: hour) else { continue }
+            guard let text = NoticeText.of(item.id, existing: isExisting, today: store.bool(forKey: Key.today), hour: hour) else { continue }
             if item.id == NoticePlan.asked { store.set(true, forKey: Key.askedShown) }
             if item.id == NoticePlan.ready { store.set(true, forKey: Key.readyShown) }
             let ready = item.id == NoticePlan.ready

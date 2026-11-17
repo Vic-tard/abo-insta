@@ -207,3 +207,23 @@ test("multicompte : l'ouverture d'Instagram dit à la coque quel compte fait la 
   assert.equal(m?.acct, "a2");
   await page.close();
 });
+
+test("17 nov. : une demande « déjà en cours » datée d'aujourd'hui n'est pas présentée comme ancienne", async () => {
+  const page = await open({ status: "authorized" });
+  await page.evaluate(() => window.zyeutoMeta("requested", { existing: true, today: true }));
+  const p = await page.evaluate(() => JSON.parse(localStorage.getItem("abo-prefs")));
+  assert.equal(p.requestToday, true);
+  await page.evaluate(() => { try { renderGuided(); } catch (e) {} });
+  const txt = await page.evaluate(() => document.body.innerText);
+  assert.doesNotMatch(txt, /Une demande était déjà en cours/);
+  await page.close();
+});
+
+test("17 nov. : une vraie demande d'un autre jour reste « déjà en cours » (et une ancienne coque sans « today » aussi)", async () => {
+  const page = await open({ status: "authorized" });
+  await page.evaluate(() => window.zyeutoMeta("requested", { existing: true }));
+  const p = await page.evaluate(() => JSON.parse(localStorage.getItem("abo-prefs")));
+  assert.equal(p.requestExisting, true);
+  assert.equal(p.requestToday, undefined);
+  await page.close();
+});

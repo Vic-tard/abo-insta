@@ -382,5 +382,17 @@ check(GetBanner.of(waiting: false, proven: true, verdict: nil) == .ready, "fichi
 check(GetBanner.of(waiting: false, proven: false, verdict: nil) == .unproven, "aucune demande prouvée : consigne générale, sans cercle")
 check(GetBanner.dayText(n17, calendar: cal) == "17/11", "date courte « 17/11 »")
 
+// 29. Tests iPhone du 17 nov. (17 h 35) : une demande « déjà en cours » datée d'aujourd'hui n'est pas présentée comme ancienne.
+var p29 = ExportProof()
+p29.saw([carteAttente], now: n17, calendar: cal)
+check(p29.alreadyPending && p29.pendingToday, "carte « En attente » du 17/11 vue avant toute touche : demande du jour")
+var p29b = ExportProof()
+p29b.saw(["en attente · demandée le 15/11/2026 · vifrnt (instagram) annuler"], now: n17, calendar: cal)
+check(p29b.alreadyPending && !p29b.pendingToday, "carte du 15/11 : vraie demande déjà en cours")
+check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.title == "Ta demande est bien enregistrée ✓", "notification A : demande du jour, sans « déjà en cours »")
+check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.subtitle == nil, "demande du jour vue en retard : pas d'heure inventée")
+check(!LeaveHint.verb(existing: true, today: true).contains("déjà en cours"), "bandeau : demande du jour, sans « déjà en cours »")
+check(LeaveHint.verb(existing: true).contains("déjà en cours"), "bandeau : une demande d'un autre jour reste « déjà en cours »")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
