@@ -84,3 +84,11 @@ test("multicompte : un message d'un autre compte n'annule pas les rappels (contr
   assert.equal(endsWait("a1", "a1"), true);
   assert.equal(endsWait(undefined, "a2"), true);
 });
+
+test("17 nov. : pour récupérer le fichier, ni « Touche Télécharger » ni cercle sans preuve « prêt »", () => {
+  assert.match(web, /if !requesting \{ return getBanner == \.ready \? \["Télécharger", "Download"\] : \[\] \}/);
+  assert.match(web, /if !requesting, !downloading \{ return getStep\(getBanner\) \}/);
+  assert.match(web, /if !requesting \{ return getStep\(GetBanner\.of\(waiting: true, proven: false, verdict: getVerdict\)\) \}/);
+  // Le seul « Touche Télécharger » sans réserve du mode « récupérer » est celui de la preuve.
+  assert.match(web, /case \.ready:\s*return Step\(verb: "C'est prêt ! Touche", target: "Télécharger"/);
+});

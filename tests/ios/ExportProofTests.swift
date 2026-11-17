@@ -372,5 +372,15 @@ check(r17.verdict(pending: [], ready: [carteAncienne, carteJourPrete], login: fa
 check(ReadyProof.latestDay(of: [carteAttente], now: n17, calendar: cal).map { cal.isDate($0, inSameDayAs: n17) } == true,
       "17 nov. : le jour d'une demande vue en retard est lu sur sa carte")
 
+// 28. Tests iPhone du 17 nov. (17 h 34) : pour récupérer le fichier, le bandeau suit la preuve « prêt », jamais un bouton seul.
+check(GetBanner.of(waiting: true, proven: false, verdict: nil) == .looking, "liste pas encore lue : « je cherche ta demande », pas « Touche Télécharger »")
+check(GetBanner.of(waiting: true, proven: false, verdict: .pending) == .notYet, "ancien export prêt + demande en attente : « pas encore prêt »")
+check(GetBanner.of(waiting: true, proven: false, verdict: .toCheck) == .checkDate, "pas de preuve : l'utilisateur vérifie la date")
+check(GetBanner.of(waiting: true, proven: false, verdict: .unknown) == .checkDate, "liste illisible : vérifier la date, jamais « prêt »")
+check(GetBanner.of(waiting: true, proven: false, verdict: .ready) == .ready, "la ligne de la demande a « Télécharger » : prêt")
+check(GetBanner.of(waiting: false, proven: true, verdict: nil) == .ready, "fichier déjà prouvé prêt : prêt")
+check(GetBanner.of(waiting: false, proven: false, verdict: nil) == .unproven, "aucune demande prouvée : consigne générale, sans cercle")
+check(GetBanner.dayText(n17, calendar: cal) == "17/11", "date courte « 17/11 »")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
