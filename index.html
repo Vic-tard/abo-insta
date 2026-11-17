@@ -1164,6 +1164,20 @@ if (!window.ZYEUTO_APP) {
   @keyframes gwDot { 0%, 100% { opacity: .35; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
   @keyframes gwBreath { 0%, 100% { transform: scale(.92); opacity: .75; } 50% { transform: scale(1.06); opacity: 1; } }
   @media (max-height: 640px) { .gw-hero { width: 124px; height: 124px; } .gw-av { width: 84px; height: 84px; } .gf .gw h2 { font-size: 26px; } .gw-tips { gap: 12px; } }
+  /* FOU-126 : état réel des notifications et de la dernière vérification (coque version 10). */
+  .gw-state { margin: 2px 0 0; font: 600 14px/1.4 var(--round); color: var(--muted); }
+  .gw-state.ok { color: var(--ink); opacity: .75; }
+  .gw-tips li.gw-card { display: block; padding: 0 !important; }
+  .gw-nc { display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 13px 15px; border-radius: 18px; background: var(--rose-soft); color: var(--ink); }
+  .gw-nc.warn { background: var(--down-soft); }
+  .gw-nc .gw-ic { flex: none; }
+  .gw-nc b { display: block; font: 700 15.5px/1.25 var(--round); color: var(--ink); }
+  .gw-nc small { display: block; margin-top: 2px; font-size: 14px; line-height: 1.4; color: var(--muted); }
+  .gw-nc button { margin-top: 10px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--btn); color: var(--btn-ink); font: 700 14.5px var(--round); cursor: pointer; }
+  .nq-card { background: var(--surface); color: var(--ink); }
+  .nq-card p { color: var(--muted); }
+  .nq-card .gw-av { width: 96px; height: 96px; margin-bottom: 6px; }
+  .nq-card .asked-stay { color: var(--muted); min-height: 44px; }
   @media (prefers-reduced-motion: no-preference) { .gx { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; } .gx-list { animation: rise .35s .08s both; } }
   @media (prefers-reduced-motion: reduce) { .gx-steps li.now::before { animation: none; } }
   .gf-share { display: inline-flex; width: 34px; height: 34px; border-radius: 9px; background: var(--surface-2); align-items: center; justify-content: center; vertical-align: middle; margin: 0 4px; }
@@ -2787,7 +2801,7 @@ if (!window.ZYEUTO_APP) {
   <div class="asked-card">
     <span class="zy-av asked-av" id="asked-av" aria-hidden="true"></span>
     <h2 id="asked-t">C'est demandé&nbsp;!</h2>
-    <p>Instagram prépare ta liste. Je regarde chez Instagram et je te dis dès que je la vois prête.</p>
+    <p>Instagram prépare ta liste. Tu pourras vérifier son état ici, à chaque ouverture de Zieuton.</p>
     <p class="asked-sub">En attendant&nbsp;?</p>
     <button class="asked-go games" id="asked-games" type="button">Jouer aux mini-jeux</button>
     <button class="asked-go stats" id="asked-stats" type="button">Explorer mes graphiques</button>
@@ -3992,7 +4006,7 @@ function lastYearOnly(followers) {
 // Erreur d'import : on repart sur le guide de l'export, au début.
 $("pv-redo").addEventListener("click", () => {
   closeSheet();
-  delete prefs.requestedAt; delete prefs.readyAt;
+  delete prefs.requestedAt; delete prefs.readyAt; delete prefs.requestAcct; delete prefs.watch;
   prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0;
   savePrefs(); haptic("light");
   if (!state.snapshots.length) return render();
@@ -4340,7 +4354,7 @@ $("reset-no").addEventListener("click", () => { $("reset-row").hidden = false; $
 $("reset-yes").addEventListener("click", async () => {
   state = emptyState();
   // Une ancienne demande d'export ne doit pas survivre : sinon le guide dit « Ta liste est sûrement prête » tout de suite.
-  delete prefs.requestedAt; delete prefs.readyAt; delete prefs.lastImportAt;
+  delete prefs.requestedAt; delete prefs.readyAt; delete prefs.requestAcct; delete prefs.watch; delete prefs.lastImportAt;
   prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0;
   savePrefs();
   $("reset-row").hidden = false; $("reset-confirm").hidden = true;
@@ -4419,6 +4433,9 @@ function savePrefs() { if (DEMO) return; prefs.v = PREFS_V; try { localStorage.s
 // le début du guet, et les textes ne disent jamais « demandé à l'instant » ni « demandé le … » pour elle.
 function markRequested(existing) {
   prefs.requestedAt = new Date().toISOString();
+  // FOU-126 : la demande appartient au compte affiché. Passer sur un autre compte ne l'annule pas.
+  if (prefs.acctCur) prefs.requestAcct = prefs.acctCur; else delete prefs.requestAcct;
+  delete prefs.watch;
   if (existing === true) prefs.requestExisting = true; else delete prefs.requestExisting;
   delete prefs.readyAt;
   prefs.getStep = 0; prefs.igStep = 0;
@@ -4431,6 +4448,8 @@ $("start-export").addEventListener("click", markRequested);
 // Bandeau « installer » : seulement sur iPhone/iPad dans Safari, hors app installée.
 // Dans l'app iPhone Zieuton, la page est affichée par l'app (pas de Safari, pas d'écran d'accueil).
 const nativeApp = !!window.ZYEUTO_APP;
+// FOU-126 : la coque version 10 dit tout de suite si les notifications sont autorisées (réponse : window.zyeutoNotif).
+if (nativeApp && (window.ZYEUTO_APP.version || 1) >= 10) { try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "notif", action: "status" }); } catch (e) { logError("bridge-notif", e); } }
 const standalone = nativeApp || window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const needsInstall = !standalone && isIOS;
@@ -4461,7 +4480,8 @@ function renderWeekly() {
   // Dans l'app iPhone (version 3), Zieuton regarde lui-même la page d'Instagram et dit quand le fichier est là.
   const ready = pend && exportSeenReady();
   // L'app arrête de guetter (et retire ses rappels) dès qu'il n'y a plus d'export en attente.
-  if (nativeApp && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend }); } catch (e) { logError("bridge-exportState", e); } }
+  // FOU-126 : jamais pour un autre compte que celui de la demande (sinon l'app annulerait ses rappels à tort).
+  if (nativeApp && !reqOtherAcct() && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend, acct: prefs.requestAcct || prefs.acctCur || "" }); } catch (e) { logError("bridge-exportState", e); } }
   const at = !pend ? 0 : ready ? 2 : 1;
   $("wk-steps").querySelectorAll("li").forEach((li, i) => {
     li.className = i < at ? "done" : i === at ? "on" : "";
@@ -4714,6 +4734,65 @@ function guardOf(img) {
   return { screen: META_SCREEN[img] || "", ok: (g.ok || []).concat(g.pick ? [] : META_ALWAYS_OK), bad: g.bad || [], free: !!g.free, pick: !!g.pick, oops: g.oops || "", redoOops: g.redoOops || "",
     redo: g.redo ? IG_SHOTS.findIndex((s) => s.img === g.redo) : -1 };
 }
+// FOU-126 : notifications de l'export (coque version 10). La coque dit l'autorisation (window.zyeutoNotif) et le résultat
+// de sa dernière vérification chez Instagram (window.zyeutoWatch). Une coque plus ancienne ne dit rien : textes de repli.
+const notifApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 10;
+let notifStatus = null; // "authorized", "denied", "notDetermined", ou null (pas encore connu)
+let notifWaiting = null;
+const NOTIF_LATER_DAYS = 7;
+window.zyeutoNotif = (info) => {
+  notifStatus = info && info.status || null;
+  if (notifWaiting) { const go = notifWaiting; notifWaiting = null; go(); }
+  if (!DEMO && gfOn() && gfStep() === "get") renderGuided();
+};
+window.zyeutoWatch = (info) => {
+  if (!info || !info.state || DEMO) return;
+  // Un résultat plus ancien que la demande ne dit rien d'elle.
+  if (prefs.requestedAt && info.at && Date.parse(info.at) < Date.parse(prefs.requestedAt) - 5000) return;
+  prefs.watch = { state: info.state, at: info.at || new Date().toISOString() }; savePrefs();
+  if (gfOn() && gfStep() === "get" && !$("gf-redo")) renderGuided();
+};
+// Écran « Je te préviens ? » : seulement si l'autorisation n'a jamais été demandée, et pas dans les 7 jours après « Plus tard ».
+function askNotifThen(go) {
+  const later = prefs.notifLaterAt && Date.now() - Date.parse(prefs.notifLaterAt) < NOTIF_LATER_DAYS * 864e5;
+  if (!notifApp() || notifStatus !== "notDetermined" || later || $("nq")) return go();
+  haptic("light");
+  const o = document.createElement("div");
+  o.className = "asked"; o.id = "nq"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "nq-h");
+  o.innerHTML = `<div class="asked-card nq-card">
+    <span class="gw-av" aria-hidden="true">${MASCOT}</span>
+    <h2 id="nq-h">Je te préviens&nbsp;?</h2>
+    <p>Je t'envoie une notification quand ta demande est confirmée par Instagram, puis un rappel pour revenir voir. Rien d'autre.</p>
+    <button class="btn cheer big" id="nq-yes" type="button">Activer les notifications</button>
+    <button class="asked-stay" id="nq-later" type="button">Plus tard</button></div>`;
+  document.body.appendChild(o);
+  // Quelle que soit la réponse à iOS, Instagram s'ouvre ensuite : le parcours n'est jamais bloqué.
+  $("nq-yes").onclick = () => {
+    o.remove();
+    let done = false;
+    const once = () => { if (!done) { done = true; go(); } };
+    notifWaiting = once;
+    nativePost({ type: "notif", action: "ask" });
+    setTimeout(() => { if (notifWaiting === once) notifWaiting = null; once(); }, 30000);
+  };
+  $("nq-later").onclick = () => { o.remove(); prefs.notifLaterAt = new Date().toISOString(); savePrefs(); go(); };
+  $("nq-yes").focus();
+}
+// Ligne d'état de l'écran d'attente : le résultat de la dernière vérification de l'app (jamais « prêt » ici : l'écran « prête » s'en charge).
+function watchLine() {
+  const w = prefs.watch;
+  if (!notifApp() || !w || !w.state) return "";
+  const t = new Date(w.at);
+  const hh = isNaN(t) ? "" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  switch (w.state) {
+    case "pending": return hh ? `✓ Vérifié à ${hh}&nbsp;: pas encore prêt` : "";
+    case "toCheck": return "Un fichier est peut-être prêt&nbsp;: touche « Regarder si c'est prêt » et vérifie sa date.";
+    case "offline": return "Pas de connexion internet&nbsp;: je regarderai quand elle reviendra.";
+    case "login": return "Reconnecte-toi à Instagram pour que je puisse regarder&nbsp;: touche « Regarder si c'est prêt ».";
+    case "unknown": return "Je n'ai pas pu regarder chez Instagram. Touche « Regarder si c'est prêt ».";
+    default: return "";
+  }
+}
 // mode : "get" = aller tout de suite au téléchargement (pastille « 3 Télécharger »), "request" = refaire une demande.
 function wkGo(mode) {
   if (typeof mode !== "string") mode = "";
@@ -4722,7 +4801,8 @@ function wkGo(mode) {
   if (!metaInApp()) return openRepeat();
   haptic("light");
   if (mode === "request" || (mode !== "get" && !reqPending())) {
-    nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep) });
+    // FOU-126 : avant Instagram, une seule fois, on demande si Zieuton peut prévenir (jamais au milieu d'Instagram).
+    askNotifThen(() => nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep) }));
   } else {
     const dl = metaStep(GET_SHOTS[1]);
     // Le bandeau ne peut pas savoir si le fichier est prêt : il dit quoi faire dans les deux cas.
@@ -4757,7 +4837,7 @@ window.zyeutoMeta = (ev, info) => {
     // Premier export : l'écran d'attente du parcours prend le relais (pas de jeux ni de graphiques encore vides).
     if (gfOn()) return;
     // Demande déjà en cours (FOU-121) : pas de « C'est demandé » comme si elle venait de partir.
-    if (existing) { toast("Une demande était déjà en cours chez Instagram : je guette ton fichier.", false); return; }
+    if (existing) { toast("Une demande était déjà en cours chez Instagram ✓ Tu peux vérifier son état ici.", false); return; }
     $("asked-av").innerHTML = $("wk-av").innerHTML;
     $("asked").hidden = false;
   }
@@ -4782,7 +4862,7 @@ $("first-notback").addEventListener("click", () => {
 // FOU-124 : seul chemin qui efface une demande en cours. Tous les « Refaire / Recommencer la demande » passent ici :
 // une confirmation dans l'écran (pas de fenêtre du navigateur), et rien n'est effacé sans « Refaire quand même ».
 function confirmRedo(then) {
-  const clear = () => { delete prefs.requestedAt; delete prefs.readyAt; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); then(); };
+  const clear = () => { delete prefs.requestedAt; delete prefs.readyAt; delete prefs.requestAcct; delete prefs.watch; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); then(); };
   if (!prefs.requestedAt) return clear();
   if ($("gf-redo")) return;
   haptic("light");
@@ -5060,7 +5140,14 @@ function setRepeat(on) {
 }
 const gfOn = () => !loading && !DEMO && (gfRepeat || (!state.snapshots.length && !prefs.manualStart));
 // Une demande est « en cours » si elle est plus récente que le dernier import.
+// FOU-126 : la demande en cours a été faite pour un autre compte que celui affiché (plusieurs comptes sur le téléphone).
+function reqOtherAcct() {
+  return !!(prefs.requestedAt && prefs.requestAcct && prefs.acctCur && prefs.requestAcct !== prefs.acctCur
+    && accts().some((a) => a.id === prefs.requestAcct));
+}
 function reqPending() {
+  // FOU-126 : la demande d'un autre compte n'est pas « en cours » pour celui-ci (et elle n'est pas annulée).
+  if (reqOtherAcct()) return false;
   // Instagram garde le fichier 4 jours : une demande plus vieille que 5 jours n'attend plus rien.
   if (prefs.requestedAt && Date.now() - Date.parse(prefs.requestedAt) > 5 * 864e5) return false;
   const last = state.snapshots[state.snapshots.length - 1];
@@ -5144,7 +5231,7 @@ function renderGuided() {
     const PLAN = [
       "Instagram s'ouvre ici, sans quitter Zieuton.",
       "Mon bandeau te guide, bouton par bouton.",
-      "Je te préviens dès que ton fichier arrive 🎉",
+      "Quand ton fichier est prêt, tu le récupères ici 🎉",
     ];
     body.innerHTML = `<div class="gf-mid pl">
       <div class="pl-av" aria-hidden="true">${MASCOT}</div>
@@ -5165,6 +5252,8 @@ function renderGuided() {
     const say = ready ? "Ta liste est prête&nbsp;! On va la chercher 🏃"
       : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: inutile d'en refaire une."
       : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Tu n'as plus rien à faire."
+      // FOU-126 : avec la coque version 10, la ligne d'état dit déjà ce que l'app a vu chez Instagram.
+      : since >= WAIT_LONG_MIN && notifApp() && prefs.watch ? `Demandé il y a ${ago}.`
       : since >= WAIT_LONG_MIN ? `Demandé il y a ${ago}. Je ne l'ai pas encore vue prête&nbsp;: touche « Regarder si c'est prêt ».`
       : `Demandé il y a ${ago}. Instagram y travaille encore…`;
     // Attente puis « prête » : même carte prune et or que l'accueil, puis des lignes façon Réglages.
@@ -5183,16 +5272,24 @@ function renderGuided() {
       // quand Zieuton est fermé. La barre ne mesure rien : une lueur passe, sans pourcentage.
       // Présentation épurée : le zieuteur derrière son mur, un titre fort, l'état en une ligne, 3 infos, 1 action principale.
       const tip = (ic, t, d) => `<li><span class="gw-ic">${ic}</span><span><b>${t}</b><small>${d}</small></span></li>`;
+      // FOU-126 : l'état réel des rappels (coque version 10). Sinon (build 15), un texte sans promesse.
+      const card = (cls, t, d, btn, id) => `<li class="gw-card"><div class="gw-nc${cls}"><span class="gw-ic">${I_BELL}</span><span><b>${t}</b><small>${d}</small>${btn ? `<button type="button" id="${id}">${btn}</button>` : ""}</span></div></li>`;
+      const notifTip = !notifApp() || !notifStatus ? tip(I_BELL, "Ouvre Zieuton pour vérifier", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")
+        : notifStatus === "authorized" ? tip(I_BELL, "Rappel activé", "Un rappel 30 min après ta demande, puis le lendemain si c'est encore en cours.")
+        : notifStatus === "denied" ? card(" warn", "Tes notifications sont coupées", "Je ne pourrai pas te prévenir.", "Ouvrir les Réglages", "gw-notif-set")
+        : card("", "Recevoir les nouvelles de ton export", "Une notification quand ta demande est confirmée, puis un rappel.", "Activer les notifications", "gw-notif-ask");
+      const wline = watchLine();
       body.innerHTML = `<div class="gw">
         <div class="gw-hero" aria-hidden="true"><span class="gw-halo"></span><span class="gw-av">${MASCOT}</span></div>
         <p class="gw-chip"><i></i>En cours chez Instagram</p>
         <h2 id="gf-title">Instagram prépare ta liste</h2>
         <p class="gw-say" id="guide-say">${say}</p>
+        ${wline ? `<p class="gw-state${prefs.watch && prefs.watch.state === "pending" ? " ok" : ""}" id="gw-state" role="status">${wline}</p>` : ""}
         <p class="gw-dots" role="status" aria-label="Instagram prépare ton fichier"><i></i><i></i><i></i></p>
         <ul class="gw-tips">
           ${tip(I_PHONE, "Tu peux fermer l'app", "À chaque ouverture de Zieuton, je regarde où en est Instagram.").replace("<li>", '<li class="gw-key">')}
-          ${tip(I_BELL, "Je t'envoie un rappel", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")}
-          ${tip(I_MAIL, "Pas besoin d'ouvrir le mail", "Instagram t'en envoie un, mais tout se fait ici.")}
+          ${notifTip}
+          ${tip(I_MAIL, "Instagram t'envoie aussi un e-mail", "Quand ton fichier est prêt. Reviens alors dans Zieuton pour le récupérer.")}
         </ul>
       </div>
       <div class="gf-foot gw-foot">
@@ -5201,6 +5298,8 @@ function renderGuided() {
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
       $("gf-wait-demo").onclick = () => enterDemo();
+      if ($("gw-notif-ask")) $("gw-notif-ask").onclick = () => { haptic("light"); nativePost({ type: "notif", action: "ask" }); };
+      if ($("gw-notif-set")) $("gw-notif-set").onclick = () => { haptic("light"); nativePost({ type: "notif", action: "settings" }); };
       // Le texte (« Demandé il y a X min ») se met à jour chaque minute tant qu'on attend.
       clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get" && !$("gf-redo")) renderGuided(); }, 60000);
     } else {
@@ -5320,7 +5419,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-17-1523";
+const BUILD = "2026-11-17-1643";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
