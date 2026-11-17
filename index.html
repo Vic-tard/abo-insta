@@ -4802,7 +4802,7 @@ function wkGo(mode) {
   haptic("light");
   if (mode === "request" || (mode !== "get" && !reqPending())) {
     // FOU-126 : avant Instagram, une seule fois, on demande si Zieuton peut prévenir (jamais au milieu d'Instagram).
-    askNotifThen(() => nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep) }));
+    askNotifThen(() => nativePost({ type: "meta", mode: "request", url: IG_EXPORT_URL, steps: IG_SHOTS.map(metaStep), acct: prefs.acctCur || "" }));
   } else {
     const dl = metaStep(GET_SHOTS[1]);
     // Le bandeau ne peut pas savoir si le fichier est prêt : il dit quoi faire dans les deux cas.
@@ -5419,7 +5419,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-17-1650";
+const BUILD = "2026-11-17-1702";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

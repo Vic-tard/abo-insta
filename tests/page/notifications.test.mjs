@@ -198,3 +198,12 @@ test("aucune promesse de surveillance dans le texte de la page", async () => {
   const src = readFileSync(root + "index.html", "utf8");
   assert.doesNotMatch(src, /je guette|je te dis dès que|dès que je (le|la) vois|je regarderai quand/i);
 });
+
+test("multicompte : l'ouverture d'Instagram dit à la coque quel compte fait la demande", async () => {
+  const accts = [{ id: "a1", slot: 1, h: [], n: 0 }, { id: "a2", slot: 2, h: [], n: 0 }];
+  const page = await open({ status: "authorized", prefs: { accts, acctCur: "a2" } });
+  await page.evaluate(() => wkGo("request"));
+  const m = (await sent(page)).find((x) => x.type === "meta" && x.mode === "request");
+  assert.equal(m?.acct, "a2");
+  await page.close();
+});
