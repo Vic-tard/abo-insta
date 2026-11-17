@@ -136,3 +136,34 @@ test("un vrai fichier reçu pendant la démo : on sort de la démo et l'import s
   assert.deepEqual(page.errors, []);
   await page.close();
 });
+
+test("démo : prénoms inventés au hasard (jamais Victor), deux comptes différents", async () => {
+  const page = await firstLaunch();
+  const seen = new Set();
+  for (let i = 0; i < 6; i++) {
+    await page.evaluate(() => enterDemo());
+    const names = await page.evaluate(() => [prefs.me.name, prefs.accts.find((a) => a.slot === 2).p.me.name, prefs.me.ig]);
+    assert.notEqual(names[0], names[1], "les deux comptes de la démo n'ont pas le même prénom");
+    for (const n of names.slice(0, 2)) { assert.doesNotMatch(n, /victor|mathéo/i); seen.add(n); }
+    assert.match(names[2], /^[a-z]+\.demo$/, "pseudo inventé, reconnu comme démo");
+    assert.equal(await page.textContent("#acct-pill") .then((t) => t.includes(names[0])), true, "le prénom affiché en haut est celui de la démo");
+    await page.evaluate(() => leaveDemo());
+  }
+  assert.ok(seen.size > 2, "les prénoms changent d'une démo à l'autre");
+  assert.deepEqual(page.errors, []);
+  await page.close();
+});
+
+test("démo : la barre « Quitter la démo » est grande et bien visible", async () => {
+  const page = await firstLaunch();
+  await page.click("#gf-demo");
+  await page.waitForFunction(() => DEMO === true);
+  const q = await page.locator("#demo-quit").boundingBox();
+  assert.ok(q.height >= 44, "bouton d'au moins 44 px");
+  assert.ok(await page.$eval("#demo-quit", (el) => parseFloat(getComputedStyle(el).fontSize)) >= 15);
+  // Rien de la page ne passe sous la barre : le contenu commence en dessous.
+  const bar = await page.locator("#demo-bar").boundingBox();
+  const top = await page.evaluate(() => document.querySelector(".wrap > *:not([hidden])").getBoundingClientRect().top);
+  assert.ok(top >= bar.y + bar.height, "le haut de l'accueil n'est pas caché par la barre");
+  await page.close();
+});
