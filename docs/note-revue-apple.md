@@ -1,6 +1,6 @@
 # Notes for the App Review team (Zieuton)
 
-> Pour Victor : le champ « Remarques » d'App Store Connect (ta version → « Informations pour la vérification de l'app ») accepte 4 000 caractères au plus. Colle la **version courte** ci-dessous (environ 3 850 caractères). La version complète, plus bas, sert de référence ; tu peux aussi l'envoyer en pièce jointe avec les deux fichiers `exemple/zieuton-exemple-1.zip` et `-2.zip` (tickets FOU-32, FOU-30, FOU-111).
+> Pour Victor : le champ « Remarques » d'App Store Connect (ta version → « Informations pour la vérification de l'app ») accepte 4 000 caractères au plus. Colle la **version courte** ci-dessous (3 767 caractères au 17 nov.). La version complète, plus bas, sert de référence ; tu peux aussi l'envoyer en pièce jointe avec les deux fichiers `exemple/zieuton-exemple-1.zip` et `-2.zip` (tickets FOU-32, FOU-30, FOU-111).
 >
 > **Mise à jour du 16 nov. 2026 (FOU-51)** : l'ancien chemin vers la démo (« C'est parti », taper un prénom, « Continuer », « Voir la démo ») n'existe plus depuis la suppression de l'écran prénom (PR #129). Chemin vérifié sur la page de `main` (simulation navigateur, pas encore sur iPhone) : à la première ouverture, le parcours guidé couvre tout l'écran et ne montre ni les Réglages ni la démo ; après l'import d'un fichier d'exemple, l'accueil s'affiche et Réglages → « Voir la démo » fonctionne. Section Instagram complétée avec ce que P1 à P6 et FOU-124 ont ajouté (liste des demandes, compte verrouillé, « Revenir dans Zieuton », chemin par l'app Instagram). **À revérifier sur l'iPhone avec le build de soumission avant de coller.**
 
@@ -10,10 +10,10 @@
 Zieuton shows a person who unfollowed their Instagram account and who started following it, only by comparing the official data export they request from Instagram themselves (JSON, "Followers and following"). No Zieuton server, no account, no sign-in, no analytics, no ads, no third-party SDK. Data stays on the device, plus an automatic backup in the user's own iCloud.
 
 HOW TO TEST WITHOUT INSTAGRAM
-On a fresh install, the app opens a short guided setup ("C'est parti !" then a plan screen). Settings are not shown until a first export is imported, so please start with the sample files:
-1) Open https://zieuton.com/exemple/zieuton-exemple-1.zip in Safari and download it. In Files, long-press it > Share > Zieuton. It is imported as the starting point (the guided setup closes).
-2) Same with https://zieuton.com/exemple/zieuton-exemple-2.zip (also attached). The app now shows 4 unfollowers and 3 new followers.
-3) Demo with richer invented data: Settings (gear, top right) > "Voir la démo". Leave with "Quitter la démo" in the top bar.
+A) Demo (fastest): install, then on the welcome screen tap "Voir la démo d'abord". The whole app is filled with invented data (lists, charts, games). Tap "Quitter la démo" (top bar) to return to the welcome screen. Nothing is saved.
+B) Real import with sample exports (tests import and comparison):
+1) Open https://zieuton.com/exemple/zieuton-exemple-1.zip in Safari, download it. In Files, long-press it > Share > Zieuton: it is the starting point.
+2) Same with https://zieuton.com/exemple/zieuton-exemple-2.zip (also attached): the app shows 4 unfollowers and 3 new followers.
 
 1. IN-APP WEB VIEW (5.2.2)
 "Ouvrir Instagram" opens Meta's official page accountscenter.instagram.com in a WKWebView, address visible, with a guide banner saying which button to tap next. No Instagram API, no scraping, no automation: the user taps every button, including "Download". The app never asks for, reads or stores the password; the user logs in on Meta's own form. On the device only, the banner reads visible titles, button labels, the list of the user's export requests and their status (a request is confirmed only when a new row appears), whether a login or code field is shown (never typed values), and an explicit "account locked" message, in which case the guide stops and sends the user to the official Instagram app. Nothing is sent anywhere. Once a request is confirmed, the banner offers "Revenir dans Zieuton". Alternative path: "Passer par l'app Instagram" opens Instagram (its own app if installed) and Zieuton shows screenshots of each step; nothing is read there.
@@ -89,9 +89,11 @@ To fix bugs and adjust texts quickly, the app can download a newer copy of **the
 
 ## 3. How to test without an Instagram account
 
-On a fresh install the app opens a short guided setup: a welcome screen (**"C'est parti !"**), then a plan screen with **"Ouvrir Instagram"**, **"Passer par l'app Instagram"** and **"J'ai une sauvegarde"**. This setup covers the whole screen, so Settings and the demo are only reachable after a first import. The fastest way is Option A below, then Option B.
+On a fresh install the app opens a short guided setup: a welcome screen with **"C'est parti !"** and **"Voir la démo d'abord"**, then a plan screen with **"Ouvrir Instagram"**, **"Passer par l'app Instagram"** and **"J'ai une sauvegarde"**. The fastest way is Option A (demo), then Option B (real import of sample files).
 
-**Option A: real import with our sample exports (start here).** Two sample Instagram exports (invented accounts, all ending in ".sample") are attached to this submission and also available here:
+**Option A: demo mode (start here).** On the welcome screen, tap **"Voir la démo d'abord"**. The whole app is filled with invented followers (all names end with "demo"): home, lists, charts, games. Tap **"Quitter la démo"** in the top banner to return to the welcome screen. Nothing is saved during the demo. The demo is also available later in Settings (gear icon, top right) → **"Voir la démo"**.
+
+**Option B: real import with our sample exports (tests import and comparison).** Two sample Instagram exports (invented accounts, all ending in ".sample") are attached to this submission and also available here:
 
 - https://zieuton.com/exemple/zieuton-exemple-1.zip (40 followers, dated October 1)
 - https://zieuton.com/exemple/zieuton-exemple-2.zip (39 followers, dated November 1)
@@ -100,8 +102,6 @@ Steps:
 1. On the test device, open the first link in Safari and tap "Download".
 2. Open the Files app → Downloads, **long-press** `zieuton-exemple-1.zip` → Share → **Zieuton**. The app imports it (first import = starting point).
 3. Do the same with `zieuton-exemple-2.zip`. The app now shows **4 unfollowers**, **3 new followers**, and the "not following back" list.
-
-**Option B: demo mode.** Once the home screen is shown (after the first sample import), open Settings (gear icon, top right) → **"Voir la démo"**. The whole app is filled with invented followers (all names end with "demo"): home, lists, charts, games. Leave it with **"Quitter la démo"** in the top banner. Nothing is saved during the demo, and the imported sample data is kept.
 
 Importing the same file twice is detected and adds nothing. An older export, a partial export or an export of another account is refused with an explanation.
 

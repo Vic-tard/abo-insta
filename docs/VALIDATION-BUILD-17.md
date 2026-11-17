@@ -91,7 +91,7 @@ Règle : iOS ne laisse pas une app vérifier en permanence quand elle est fermé
 | 4.10 | Notifications **refusées** puis réactivées dans Réglages d'iOS | Refus : l'écran le dit et propose « Ouvrir les réglages », aucun rappel promis. Après réactivation : « Rappel activé » au retour dans Zieuton | À faire |
 | 4.11 | Un **ancien export encore téléchargeable** dans la liste d'Instagram | Pas de faux « prêt » : seule une nouvelle ligne prête du jour de la demande compte | À faire (si la situation se présente) |
 | 4.12 | Demande déjà en cours chez Instagram | « Une demande était déjà en cours chez Instagram ✓ » ; on suit cette demande-là | À faire (si la situation se présente) |
-| 4.13 | **Deux comptes** : demande sur le compte 1, puis passage au compte 2 | L'attente du compte 1 n'est ni annulée ni affichée sur le compte 2 ; retour au compte 1 : l'attente est toujours là | À faire |
+| 4.13 | **Deux comptes** : demande sur le compte 1, puis passage au compte 2 | L'attente du compte 1 n'est ni annulée ni affichée sur le compte 2, et ses rappels 30 min / 24 h arrivent quand même (double protection : page et coque) ; retour au compte 1 : l'attente est toujours là | À faire |
 | 4.14 | Bout en bout : fichier vraiment prêt → « Télécharger » touché par l'utilisateur → import | Import automatique, bilan affiché, plus aucun rappel ensuite | À faire |
 | 4.15 | Aucune notification « expire bientôt » ou « dernier jour » | Jamais vue, même avec un ancien rappel programmé par le build 15 (il est effacé au premier lancement du build 17) | À faire |
 | 4.16 | Page ancienne (canal stable) + coque 17 | Les notifications marchent quand même (l'autorisation est demandée au moment de la preuve) | À faire |
@@ -123,10 +123,13 @@ Dernier test complet des achats : **build 3** seulement. À refaire en entier su
 
 | # | Vérification | Résultat attendu | Statut |
 | --- | --- | --- | --- |
-| 7.1 | Installation neuve, sans Instagram : télécharger `zieuton-exemple-1.zip`, Fichiers → Partager → Zieuton | Import accepté, le parcours guidé se ferme, l'accueil s'affiche | À faire sur iPhone (vérifié en simulation navigateur le 16 nov.) |
-| 7.2 | Puis `zieuton-exemple-2.zip` | 4 désabonnés, 3 nouveaux abonnés | À faire |
-| 7.3 | Réglages → « Voir la démo », puis « Quitter la démo » | Démo remplie, sortie propre, données d'exemple gardées | À faire sur iPhone (vérifié en simulation le 16 nov.) |
-| 7.4 | Version courte de la note collée dans App Store Connect | Moins de 4 000 caractères, chemin identique à ce qu'on voit | À faire |
+| 7.1 | Installation neuve : sur la bienvenue, toucher « Voir la démo d'abord » (PR #141) | La démo s'ouvre, remplie de données inventées, bandeau « Démo » en haut | À faire sur iPhone (vérifié en simulation navigateur le 17 nov.) |
+| 7.2 | Explorer la démo : accueil, listes, graphiques, jeux | Tout s'affiche, aucune erreur, rien n'est enregistré | À faire |
+| 7.3 | Toucher « Quitter la démo » | Retour à la bienvenue (« C'est parti ! », « Voir la démo d'abord ») | À faire sur iPhone (vérifié en simulation navigateur le 17 nov.) |
+| 7.4 | Deuxième méthode : télécharger `zieuton-exemple-1.zip`, Fichiers → Partager → Zieuton | Import accepté, le parcours guidé se ferme, l'accueil s'affiche | À faire sur iPhone (vérifié en simulation navigateur le 16 nov.) |
+| 7.5 | Puis `zieuton-exemple-2.zip` | 4 désabonnés, 3 nouveaux abonnés | À faire |
+| 7.6 | Réglages → « Voir la démo », puis « Quitter la démo », avec les données d'exemple importées | Démo remplie, sortie propre, données d'exemple gardées | À faire |
+| 7.7 | Version courte de la note collée dans App Store Connect | Moins de 4 000 caractères (3 767 au 17 nov.), chemin identique à ce qu'on voit | À faire |
 
 ## 8. Divers
 
