@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><body><h2>Exporter vos informations</h2><p>Créez une exportation de vos informations.</p><button>Créer une exportation</button>
+<div role="list" id="liste"></div>
+<script>
+// FOU-126 : la liste se charge en retard. Tant qu'elle est vide, aucune ligne prête n'est lue (jamais « prêt » sur une page vide).
+setTimeout(function () {
+  document.getElementById("liste").innerHTML = '<div role="listitem"><div><span>Instagram · moi</span></div><div><span>Demandée le 16 novembre 2026</span></div><button>Télécharger</button></div>';
+}, 1200);
+</script></body>

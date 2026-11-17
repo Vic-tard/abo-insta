@@ -20,19 +20,22 @@ final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationC
         return config
     }
 
-    // Zieuton ouvert : la notification s'affiche quand même en haut de l'écran.
+    // Zieuton ouvert : « C'est demandé » et « prêt » s'affichent quand même en haut de l'écran.
+    // Les rappels (30 min, 24 h) non : Zieuton ouvert vérifie déjà lui-même (FOU-126, pas de doublon).
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .list, .sound])
+        let id = notification.request.identifier
+        completionHandler(NoticePlan.showsInForeground(id) ? [.banner, .list, .sound] : [])
     }
 
-    // Notification touchée : « prêt », « rappel » ou « dernier jour » ouvrent Instagram sur « Télécharger ».
+    // Notification touchée : « prêt » ouvre Instagram sur « Télécharger » ; « C'est demandé » et les rappels ouvrent
+    // l'écran d'attente, qui vérifie tout de suite où en est Instagram.
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let id = response.notification.request.identifier
         DispatchQueue.main.async {
-            if id == "zy-asked" { WebViewController.current?.showHome() }
-            else { WebViewController.current?.openExport() }
+            if id == NoticePlan.ready { WebViewController.current?.openExport() }
+            else { WebViewController.current?.showHome() }
             completionHandler()
         }
     }
