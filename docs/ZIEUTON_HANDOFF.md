@@ -1,6 +1,6 @@
 # Zieuton : document de transmission pour ChatGPT
 
-> Dernière mise à jour : 16 novembre 2026 (FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
+> Dernière mise à jour : 17 novembre 2026 (FOU-126 ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
 > À mettre à jour par Claude après chaque étape importante (fin de PR, décision, build).
 
 ## 1. Le projet en 10 lignes
@@ -26,19 +26,20 @@ Architecture : une page web unique `index.html` (~8 600 lignes, HTML/CSS/JS sans
 
 Pas de scraping ni de connexion automatisée à Instagram ; jamais le mot de passe ; l'utilisateur touche lui-même « Télécharger » ; aucune donnée envoyée à un serveur (pas d'analytics, pas de SDK) sans décision écrite de Victor ; aucune mention d'IA dans l'app ; identifiants `fr.zyeuto.*` intouchables.
 
-## 5. Priorité actuelle : l'export Instagram (ticket FOU-121)
+## 5. Où en est le projet (17 nov.)
 
-Récupérer l'export doit être simple et fiable. Plan validé par Victor et ChatGPT le 16 nov. :
-- **P1 (PR #132 ouverte, à relire)** : une étape n'avance que sur une preuve visible ; « C'est bon » seulement après vérification fiable ; une demande n'est confirmée que par une nouvelle ligne « En attente » dans la liste d'Instagram ; jamais de nouvelle demande à la place de l'utilisateur (après 20 s, proposer « Vérifier l'état de ma demande ») ; **compte verrouillé** seulement sur un signal explicite → arrêt et renvoi vers l'app Instagram officielle, texte neutre.
-- **P2 à P6** : à faire ensuite (présentation du bandeau, 4 phases, erreurs douces, petits iPhone et clavier ouvert, chemin de secours par l'app Instagram).
-- Une PR à la fois. Aucun build Xcode ni fusion sans l'accord de Victor.
-- **Après P1** (liste de Victor) : vérifier le parcours de démo pour Apple ; aligner les statuts Linear sur le travail réel ; fixer le minimum avant soumission ; tester le canal stable et les parcours sur les iPhone des testeurs ; revoir le calendrier. Pas de changement de statut Linear ni de nouvelle PR technique sans l'accord de Victor.
+- **Export (FOU-121)** : P1 à P6 fusionnées (PR #132, #134 à #138). Build **1.0 (15)** envoyé sur TestFlight le 16 nov. ; Victor déclare un export et un import réels réussis sur son iPhone.
+- **FOU-124** (attente après la demande) fusionnée (PR #139). La partie page est en canal test ; la partie coque (bouton « Revenir dans Zieuton ») attend le **build 1.0 (17)** : Victor a décidé le 17 nov. de ne pas faire de build 16 et de viser directement un build 17 candidat à la soumission.
+- **Canal stable** encore au 10 nov. : les testeurs en canal normal ne voient pas les nouveautés de la page.
+- **Orientations de Victor (16 nov., 19h11)** : soumission visée vers le **25 novembre**, sortie manuelle possible le 3 décembre ; aucun build, aucune soumission, aucun changement de statut Linear, aucune modification du moteur Instagram sans son accord.
+- **Notifications fiables (FOU-126, autorisé par Victor le 17 nov.)** : PR #142 (coque : « C'est demandé ✓ » seulement sur preuve, « Ton fichier est prêt 🎉 » seulement si la ligne de la demande est prête, rappels 30 min et 24 h, plus d'alertes « expire », pont v10, build 17) et PR #143 (page : écran « Je te préviens ? » avant Instagram, état de l'attente, demande liée au bon compte). Tests Swift écrits, à lancer sur le Mac. Aucune fusion sans Victor ; à relire par ChatGPT. Limite assumée : iOS ne laisse pas vérifier en permanence une app fermée, l'app ne le prétend jamais.
+- **PR de documentation en relecture** (FOU-51, FOU-126) : note examinateur corrigée (`note-revue-apple.md`), plan de validation du build 17 (`VALIDATION-BUILD-17.md`, remplace celui du build 16), plan B 5.2.2 (`PLAN-B-APPLE-5-2-2.md`), propositions Linear pour FOU-83, FOU-101, FOU-105, FOU-33 (`PROPOSITIONS-LINEAR-2026-11-16.md`).
 
 ## 6. Bugs non résolus (détail : `docs/ZIEUTON_BUG_TRACKER.md`)
 
 - Bandeau qui demande le mot de passe à tort ; « récupère ton fichier » sur une fenêtre blanche ; « touche Télécharger » hors écran ; demande en « Année dernière » non détectée (régression) ; conseils coupés après 2 lignes.
 - Un testeur a eu son compte verrouillé (cause non prouvée).
-- La note pour l'examinateur Apple décrit peut-être un chemin de démo qui n'existe plus (à vérifier).
+- Note examinateur Apple : l'ancien chemin de démo n'existait plus (confirmé). Corrigée dans la PR de documentation du 16 nov. : à la première ouverture, il faut d'abord importer un fichier d'exemple, puis Réglages → « Voir la démo ». Vérifié en simulation navigateur, **pas encore sur iPhone**.
 - Le lien du questionnaire testeurs est un lien d'édition (lien public à récupérer).
 
 ## 7. État du lancement
@@ -47,8 +48,8 @@ Fiche App Store, captures, achats, confidentialité : prêts. Reste : export fia
 
 ## 8. Questions où un second avis serait utile
 
-1. **Date** : faut-il décaler la soumission ou la sortie du 3 décembre pour finir P1 à P6 ? Quel minimum avant soumission ?
-2. **Risque Apple 5.2.2** : la vue Instagram intégrée est le risque de refus n°1. Faut-il préparer le plan B (FOU-33, ex. ouvrir Instagram hors de l'app) avant de soumettre ?
+1. **Build** : soumission prévue avec 1.0 (17) (décision du 17 nov.). Le plan `VALIDATION-BUILD-17.md` est-il complet, en particulier la section 4 (notifications) ?
+2. **Risque Apple 5.2.2** : la vue Instagram intégrée est le risque de refus n°1. Proposition : plan B en réserve (réponse écrite d'abord, puis passage par l'app Instagram via P6), voir `PLAN-B-APPLE-5-2-2.md`. D'accord ?
 3. **Compte verrouillé** : quels signaux d'Instagram sont assez explicites pour dire « verrouillé » sans confondre avec un simple code de sécurité ?
 4. **Test utilisateur** : comment organiser un test « inconnu, sans aide » (FOU-37) utile en peu de temps ?
 5. **Lancement** : la com gelée peut-elle encore tenir le 3 décembre ? Quel minimum (comptes, 3 vidéos, 10 créateurs) ?

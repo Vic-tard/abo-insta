@@ -1,6 +1,6 @@
 # Zieuton : roadmap
 
-> Dernière mise à jour : 16 novembre 2026 (FOU-123). Les statuts ci-dessous recopient Linear au 16 nov. ; deux écarts connus (FOU-121 « Done », FOU-119 « In Progress ») ne sont pas encore corrigés, à la demande de Victor. Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). Ce document donne l'ordre et les dépendances ; en cas d'écart, Linear gagne, puis on corrige ce fichier.
+> Dernière mise à jour : 17 novembre 2026 (FOU-126 ; base FOU-123). Les statuts ci-dessous recopient Linear au 16 nov. ; deux écarts connus (FOU-121 « Done », FOU-119 « In Progress ») ne sont pas encore corrigés, à la demande de Victor. Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). Ce document donne l'ordre et les dépendances ; en cas d'écart, Linear gagne, puis on corrige ce fichier.
 > Statuts : **À faire** / **En cours** / **Bloqué** / **Terminé**. Une ligne = un ticket Linear quand il existe.
 
 ## 1. Priorités actuelles (dans l'ordre)
@@ -12,10 +12,11 @@ Règle de Victor : **un seul sujet à la fois**, clôturé à 100 % avant le sui
 | 1 | Export fiable, P1 : détection fiable des étapes et des demandes, compte verrouillé | FOU-121 | En cours : PR #132 ouverte (coque) | – |
 | 2 | Export, P2 à P6 (voir le diagnostic) | FOU-121 | À faire | P1 relu par ChatGPT et validé par Victor |
 | 3 | Valider en canal stable la page actuelle (`npm run canal -- valider`) | pas encore de ticket | À faire | Test de Victor en canal test |
-| 4 | Build final unique (coque ≥ version 11) + test iPhone complet, achats compris | FOU-105 (parent FOU-101) | En cours | 1, 2 |
+| 4 | Build final unique **1.0 (17)** (décision de Victor du 17 nov. : pas de build 16) + test iPhone complet, achats compris | FOU-105 (parent FOU-101) | En cours | 1, 2, 4 bis ; plan `VALIDATION-BUILD-17.md` |
+| 4 bis | Notifications fiables pendant l'attente de l'export (N1 coque PR #142, N2 page PR #143, N3 plan de validation) | FOU-126 | En cours : PR ouvertes, relecture ChatGPT, aucune fusion sans Victor | – |
 | 5 | Premier export réussi par un inconnu, sans aide | FOU-37 | À faire | 4 |
 | 6 | Retours des potes TestFlight | FOU-113 | À faire | 4 |
-| 7 | Soumission à Apple, publication manuelle | FOU-51 | En cours | 4, 5 ; coller la note examinateur à jour |
+| 7 | Soumission à Apple, publication manuelle (visée vers le 25 nov., orientation de Victor du 16 nov.) | FOU-51 | En cours | 4, 5 ; note examinateur corrigée le 16 nov. (à revérifier sur iPhone) ; plan `VALIDATION-BUILD-17.md` |
 | 8 | Sortie le 3 décembre 2026 | FOU-51 | À faire | 7 |
 
 **Après P1, à faire (liste de Victor, 16 nov.)** : vérifier le parcours de démonstration destiné à Apple ; corriger l'écart entre les statuts Linear et le travail réel ; fixer le minimum indispensable avant soumission ; tester le canal stable et les parcours sur les iPhone des testeurs ; revoir le calendrier de soumission. D'ici là : aucun statut Linear changé et aucune nouvelle PR technique sans l'accord de Victor.
@@ -26,7 +27,7 @@ Règle de Victor : **un seul sujet à la fois**, clôturé à 100 % avant le sui
 
 | Tâche | Ticket | Statut | Note |
 | --- | --- | --- | --- |
-| ACRE à l'URSSAF | FOU-83 | Bloqué | Attend le numéro de compte URSSAF (courrier). Limite : 18 décembre 2026 |
+| ACRE à l'URSSAF | FOU-83 | Bloqué | Attend le numéro de compte URSSAF (courrier). Objectif de dépôt : 18 décembre 2026 ; limite probable 2 janvier 2027 (60 jours après le début d'activité du 3 nov., à confirmer auprès de l'Urssaf). Voir `PROPOSITIONS-LINEAR-2026-11-16.md` |
 | Médiateur de la consommation | FOU-82 | À faire (Backlog) | Obligatoire pour vendre à des particuliers **[Déduit]**, à faire avant la sortie |
 | Small Business Program Apple (15 %) | – | En cours | Demande envoyée le 4 nov., réponse non reçue à notre connaissance |
 | Essai Higgsfield (vidéos) + résiliation immédiate | FOU-116 | À faire (gelé) | Ne pas lancer sans Victor |
@@ -35,7 +36,7 @@ Règle de Victor : **un seul sujet à la fois**, clôturé à 100 % avant le sui
 
 | Tâche | Ticket | Priorité Linear |
 | --- | --- | --- |
-| Plan B si Apple refuse la vue Instagram intégrée | FOU-33 | Haute (à préparer **avant** la soumission, recommandé) |
+| Plan B si Apple refuse la vue Instagram intégrée | FOU-33 | Haute. Proposition du 16 nov. : plan en réserve, sans code avant la soumission (`PLAN-B-APPLE-5-2-2.md`) |
 | Découper `index.html` en modules | FOU-41 | Haute |
 | Découper `WebViewController.swift` | FOU-42 | Moyenne |
 | Surveiller les changements d'Instagram | FOU-46 | Moyenne |
