@@ -629,7 +629,8 @@ extension WebViewController: WKScriptMessageHandler {
         case "exportState":
             // La page n'attend plus d'export (fichier importé, demande annulée) : on arrête de guetter.
             // FOU-126 : la page n'envoie « plus en attente » que pour le compte de la demande (champ acct).
-            if body["pending"] as? Bool == false { ExportWatcher.shared.clear() }
+            // Protection en plus côté coque : un message d'un autre compte n'annule pas les rappels de la demande.
+            if body["pending"] as? Bool == false { ExportWatcher.shared.pageEndedWait(acct: body["acct"] as? String) }
         case "notif":
             handleNotif(body)
         default:
@@ -745,10 +746,12 @@ extension WebViewController: WKScriptMessageHandler {
                 screen: d["screen"] as? String ?? "")
         }
         let meta = MetaViewController(url: url, requesting: (body["mode"] as? String) != "get", steps: steps)
+        // FOU-126 : compte affiché quand la demande part (la page l'envoie depuis ZYEUTO_APP 10).
+        let acct = body["acct"] as? String
         meta.onRequested = { [weak self] existing in
             // existing : demande déjà en cours chez Instagram (une page plus ancienne ignore ce second argument).
             self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested', { existing: \(existing) }); true")
-            ExportWatcher.shared.requested(existing: existing)
+            ExportWatcher.shared.requested(existing: existing, acct: acct)
         }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
         meta.modalPresentationStyle = .fullScreen
@@ -3316,6 +3319,15 @@ struct NoticePlan: Equatable {
     /// Zieuton au premier plan : il vérifie déjà lui-même toutes les 30 s, les rappels B1 et B2 ne s'affichent pas.
     /// A et C s'affichent toujours.
     static func showsInForeground(_ id: String) -> Bool { !reminderIds.contains(id) }
+
+    /// Multicompte : la page dit « plus en attente » (exportState) pour le compte `sender`. L'attente ne s'arrête que si
+    /// c'est le compte de la demande. Demande sans compte connu (page ancienne, premier import) : comme avant, elle s'arrête.
+    /// Demande d'un compte connu et message sans compte : elle continue (un autre compte ne peut pas annuler les rappels).
+    static func endsWait(requestAcct: String?, sender: String?) -> Bool {
+        let owner = requestAcct ?? "", from = sender ?? ""
+        if owner.isEmpty { return true }
+        return from == owner
+    }
 }
 
 /// Textes des notifications décidés avec Victor (FOU-126). Aucune promesse de surveillance, jamais « prêt » sans preuve.
@@ -3583,9 +3595,11 @@ final class ExportWatcher: NSObject {
         static let askedShown = "zy.export.askedShown", readyShown = "zy.export.readyShown"
         /// Dernier résultat de vérification, pour la page.
         static let lastState = "zy.export.lastState", lastAt = "zy.export.lastAt"
+        /// Compte de la demande (multicompte) : seul ce compte peut dire que l'attente est finie.
+        static let acct = "zy.export.acct"
         /// Clés des builds 15 et avant (décompte des « Télécharger ») : plus utilisées.
         static let legacy = ["zy.export.downloadsBefore", "zy.export.baselineChecked"]
-        static var all: [String] { [requested, ready, existing, day, baseline, askedShown, readyShown, lastState, lastAt] + legacy }
+        static var all: [String] { [requested, ready, existing, day, baseline, askedShown, readyShown, lastState, lastAt, acct] + legacy }
     }
     /// Notification « prêt » avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
     static let readyCategory = "zy-ready-actions"
@@ -3650,11 +3664,12 @@ final class ExportWatcher: NSObject {
 
     /// La demande est prouvée chez Instagram (FOU-121 P1). existing : elle était déjà en cours, à une heure inconnue.
     /// Rien n'est envoyé sur le seul toucher de « Commencer l'exportation » : cette fonction n'est appelée qu'après la preuve.
-    func requested(existing: Bool = false) {
+    func requested(existing: Bool = false, acct: String? = nil) {
         let now = Date()
         for k in Key.all { store.removeObject(forKey: k) }
         store.set(now, forKey: Key.requested)
         store.set(existing, forKey: Key.existing)
+        if let acct, !acct.isEmpty { store.set(acct, forKey: Key.acct) }
         // Demande prouvée : sa ligne est datée d'aujourd'hui. Déjà en cours : le jour sera lu sur sa ligne « En attente ».
         proof = ReadyProof(day: existing ? nil : now)
         saveProof()
@@ -3680,6 +3695,13 @@ final class ExportWatcher: NSObject {
 
     /// La page d'Instagram ouverte dans Zieuton vient de montrer le fichier prêt (preuve ReadyProof).
     func seenReady() { markReady() }
+
+    /// La page dit que l'attente est finie pour le compte `acct` (exportState pending: false).
+    /// Ignoré si la demande appartient à un autre compte (NoticePlan.endsWait).
+    func pageEndedWait(acct: String?) {
+        guard NoticePlan.endsWait(requestAcct: store.string(forKey: Key.acct), sender: acct) else { return }
+        clear()
+    }
 
     /// Fin de l'attente (téléchargement, import réussi, demande refaite ou annulée) : tout est retiré.
     func clear() {

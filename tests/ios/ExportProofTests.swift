@@ -343,5 +343,13 @@ for id in NoticePlan.all {
     }
 }
 
+// 26. FOU-126 : multicompte. Seul le compte de la demande peut dire que l'attente est finie.
+check(!NoticePlan.endsWait(requestAcct: "a1", sender: "a2"), "un autre compte n'annule pas les rappels de la demande")
+check(!NoticePlan.endsWait(requestAcct: "a1", sender: nil), "message sans compte : la demande d'un compte connu continue")
+check(!NoticePlan.endsWait(requestAcct: "a1", sender: ""), "compte vide : la demande d'un compte connu continue")
+check(NoticePlan.endsWait(requestAcct: "a1", sender: "a1"), "le compte de la demande arrête l'attente")
+check(NoticePlan.endsWait(requestAcct: nil, sender: "a2"), "demande sans compte connu (page ancienne) : l'attente s'arrête comme avant")
+check(NoticePlan.endsWait(requestAcct: "", sender: nil), "demande sans compte, message sans compte : l'attente s'arrête comme avant")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
