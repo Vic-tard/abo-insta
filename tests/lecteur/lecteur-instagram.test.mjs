@@ -80,6 +80,60 @@ test("deux demandes en attente le même jour : deux lignes (même texte)", async
   assert.equal(s.rows.length, 2);
 });
 
+// FOU-126 : lignes prêtes (vrai « Télécharger » visible) avec leur date, pour la preuve « prêt » (ReadyProof).
+test("ancien export prêt + nouvelle demande en attente : la ligne prête garde SA date", async () => {
+  const s = await stateOf("accueil-en-attente.html");
+  assert.equal(s.ready.length, 1);
+  assert.match(s.ready[0], /2 novembre 2026/);
+  assert.match(s.ready[0], /télécharger/);
+  assert.doesNotMatch(s.ready[0], /16 novembre/, "la ligne prête n'englobe pas la ligne en attente");
+});
+
+test("deux exports prêts le même jour + un ancien : trois lignes prêtes, chacune avec sa date", async () => {
+  const s = await stateOf("accueil-deux-prets-meme-jour.html");
+  assert.equal(s.ready.length, 3);
+  assert.equal(s.ready.filter((r) => /16 novembre 2026/.test(r)).length, 2);
+  assert.equal(s.ready.filter((r) => /2 novembre 2026/.test(r)).length, 1);
+});
+
+test("liste en cours de chargement : d'abord aucune ligne prête, puis la ligne avec sa date", async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.addInitScript(() => {
+    window.__sent = [];
+    const h = (n) => ({ postMessage: (b) => window.__sent.push({ n, b }) });
+    window.webkit = { messageHandlers: { zyeutoState: h("state"), zyeutoTap: h("tap"), zyeutoRing: h("ring") } };
+  });
+  await page.goto("file://" + root + "tests/lecteur/pages/accueil-pret-en-chargement.html");
+  await page.evaluate(READER);
+  await page.waitForFunction(() => window.__sent.some((x) => x.n === "state"), null, { timeout: 3000 });
+  const first = await page.evaluate(() => window.__sent.filter((x) => x.n === "state")[0].b);
+  assert.deepEqual(first.ready, []);
+  await page.waitForFunction(() => window.__sent.some((x) => x.n === "state" && x.b.ready && x.b.ready.length === 1), null, { timeout: 4000 });
+  const late = await page.evaluate(() => window.__sent.filter((x) => x.n === "state").pop().b);
+  await page.close();
+  assert.match(late.ready[0], /16 novembre 2026/);
+});
+
+test("bouton « Télécharger » caché ou réduit à rien : pas une ligne prête", async () => {
+  const s = await stateOf("accueil-telecharger-cache.html");
+  assert.deepEqual(s.ready, []);
+  assert.equal(s.rows.length, 1);
+});
+
+test("page en anglais : « Download » lu comme une ligne prête, « Pending » comme en attente", async () => {
+  const s = await stateOf("accueil-anglais.html");
+  assert.equal(s.create, true);
+  assert.equal(s.rows.length, 1);
+  assert.match(s.rows[0], /nov 16, 2026/);
+  assert.equal(s.ready.length, 1);
+  assert.match(s.ready[0], /nov 14, 2026/);
+});
+
+test("hors de l'accueil de l'export : aucune ligne prête lue", async () => {
+  const s = await stateOf("resume-bon.html");
+  assert.equal(s.ready, null);
+});
+
 test("résumé : la liste n'est lue que sur l'accueil", async () => {
   const s = await stateOf("resume-bon.html");
   assert.equal(s.rows, null);
