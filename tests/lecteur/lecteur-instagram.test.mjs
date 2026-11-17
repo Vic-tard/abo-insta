@@ -276,3 +276,43 @@ test("résumé : « Followers et suivi(e)s » nommée, « 1 élément » seul, o
   assert.equal((await stateOf("resume-quatre-elements.html")).info, "");
   assert.equal((await stateOf("resume-followers-plus.html")).info, "");
 });
+
+// Tests iPhone du 17 nov. (build 17) : la vraie liste a des sections (« En attente » est un titre) et des cartes datées
+// « Demandée le 17/11/2026 », dans une fenêtre par-dessus la page. Page reconstituée d'après la capture (textes et boutons seulement).
+test("17 nov. : liste dans une fenêtre, « Créer une exportation » caché dessous : la liste est quand même lue", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html");
+  assert.equal(s.create, false, "le bouton est sous la fenêtre");
+  assert.ok(Array.isArray(s.rows), "la liste est lue malgré tout");
+  assert.equal(s.screen, "home");
+});
+
+test("17 nov. : la demande « En attente » est lue avec SA date (titre de section + carte)", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html");
+  assert.equal(s.rows.length, 1, "une seule demande en attente (le titre de section n'est pas une ligne)");
+  assert.match(s.rows[0], /^en attente/);
+  assert.match(s.rows[0], /demandée le 17\/11\/2026/);
+  assert.doesNotMatch(s.rows[0], /télécharger/);
+});
+
+test("17 nov. : l'ancien export (Télécharger + Annuler) est une ligne prête à part, jamais la nouvelle demande", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html");
+  assert.equal(s.ready.length, 1);
+  assert.match(s.ready[0], /demandée le 16\/11\/2026/);
+  assert.match(s.ready[0], /télécharger/);
+  assert.doesNotMatch(s.ready[0], /17\/11/, "la carte prête n'englobe pas la carte en attente");
+});
+
+test("17 nov. : ancien export prêt du MÊME jour : deux cartes séparées, une prête, une en attente", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html?ancien=17/11/2026");
+  assert.equal(s.ready.length, 1);
+  assert.equal(s.rows.length, 1);
+  assert.match(s.ready[0], /télécharger/);
+  assert.doesNotMatch(s.rows[0], /télécharger/);
+});
+
+test("17 nov. : fenêtre marquée comme dialogue : seule la fenêtre est lue, pas la page dessous", async () => {
+  const s = await stateOf("liste-fenetre-dialogue.html");
+  assert.equal(s.rows.length, 1);
+  assert.equal(s.ready.length, 1, "la ligne prête de la page dessous (2/11) n'est pas comptée");
+  assert.match(s.ready[0], /16\/11\/2026/);
+});

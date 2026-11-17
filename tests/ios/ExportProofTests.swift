@@ -351,5 +351,26 @@ check(NoticePlan.endsWait(requestAcct: "a1", sender: "a1"), "le compte de la dem
 check(NoticePlan.endsWait(requestAcct: nil, sender: "a2"), "demande sans compte connu (page ancienne) : l'attente s'arrête comme avant")
 check(NoticePlan.endsWait(requestAcct: "", sender: nil), "demande sans compte, message sans compte : l'attente s'arrête comme avant")
 
+// 27. Tests iPhone du 17 nov. : textes tels que le lecteur les envoie pour la vraie liste (cartes « Demandée le 17/11/2026 »).
+let n17 = cal.date(from: DateComponents(year: 2026, month: 11, day: 17, hour: 17, minute: 32))!
+let carteAttente = "en attente · demandée le 17/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 17/11/2026 annuler"
+let carteAncienne = "demandée le 16/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 16/11/2026 télécharger annuler"
+let carteJourPrete = "demandée le 17/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 17/11/2026 télécharger annuler"
+check(ExportProof.isDated(carteAttente, day: n17, now: n17, calendar: cal), "17 nov. : « Demandée le 17/11/2026 » est bien du jour")
+check(!ExportProof.isDated(carteAncienne, day: n17, now: n17, calendar: cal), "17 nov. : l'ancien export du 16/11 n'est pas du jour")
+var p17 = ExportProof()
+p17.saw([], now: n17, calendar: cal)
+p17.freeze()
+check(p17.verdict([carteAttente], tapped: true, now: n17, calendar: cal) == .confirmed, "17 nov. : la nouvelle carte « En attente » datée du jour confirme la demande")
+var r17 = ReadyProof(day: n17)
+for t in [0.0, 1.0, 2.5] { r17.read(pending: [carteAttente], ready: [carteAncienne], now: n17.addingTimeInterval(t), calendar: cal) }
+check(r17.baseline == 0, "17 nov. : référence = 0 ligne prête du jour (l'ancien export est du 16/11)")
+check(r17.verdict(pending: [carteAttente], ready: [carteAncienne], login: false, offline: false, now: n17.addingTimeInterval(60), calendar: cal) == .pending,
+      "17 nov. : ancien export prêt + nouvelle demande en attente : « pas encore prêt », jamais « prêt »")
+check(r17.verdict(pending: [], ready: [carteAncienne, carteJourPrete], login: false, offline: false, now: n17.addingTimeInterval(300), calendar: cal) == .ready,
+      "17 nov. : la carte du 17/11 a maintenant « Télécharger » : prêt")
+check(ReadyProof.latestDay(of: [carteAttente], now: n17, calendar: cal).map { cal.isDate($0, inSameDayAs: n17) } == true,
+      "17 nov. : le jour d'une demande vue en retard est lu sur sa carte")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

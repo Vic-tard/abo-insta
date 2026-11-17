@@ -1245,7 +1245,7 @@ final class MetaViewController: UIViewController {
             // Page des cases défilée (les « Tout effacer » sont plus haut) : beaucoup de cases à cocher, c'est elle.
             var ps = pickState();
             if (ps && ps.t >= 6) return 'pick';
-            if (has(CREATE)) return 'home';
+            if (has(CREATE) || listShown()) return 'home';
             // Un cran trop haut : « Vos informations et autorisations », avec la ligne « Exporter vos informations ».
             if (seeAny(['vos informations et autorisations', 'your information and permissions']) && seeAny(['exporter vos informations', 'export your information'])) return 'up';
             return '';
@@ -1305,9 +1305,51 @@ final class MetaViewController: UIViewController {
           // FOU-121 : lignes de la liste des exports dont le statut dit « en attente » ou « en cours ».
           // Zieuton compare ces lignes avant et après « Commencer l'exportation » : seule une ligne nouvelle confirme la demande.
           var STATUS = /^(en attente|en cours|en préparation|pending|in progress|preparing)\b/;
+          // Tests iPhone du 17 nov. (FOU-126) : chez Instagram, « En attente » est le TITRE d'une section ; chaque demande est une
+          // carte en dessous (nom du compte, « Followers et suivi(e)s », « Exporter vers Appareil · Une fois · JSON »,
+          // « Demandée le 17/11/2026 », bouton « Annuler »). Une carte prête a en plus « Télécharger ». La liste peut s'afficher dans une
+          // fenêtre par-dessus la page (croix en haut) : on lit alors cette fenêtre, sans exiger que « Créer une exportation » soit visible.
+          var DATED = /^(demandée le|demandé le|requested on)\b/;
+          var DLNAME = /^(télécharger|download)$/;
+          var BTN = 'button,a,[role=button]';
+          var lit = function (el) { var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+          var dateLines = function (root) {
+            var all = Array.prototype.filter.call(root.querySelectorAll('span,div,p,li'), function (el) {
+              return el.childElementCount <= 2 && DATED.test(low(el)) && low(el).length <= 60 && lit(el);
+            });
+            // Une même ligne enveloppée dans plusieurs blocs ne compte qu'une fois : on garde le bloc le plus intérieur.
+            return all.filter(function (el) { return !all.some(function (o) { return o !== el && el.contains(o); }); });
+          };
+          // La fenêtre du dessus, si elle montre la liste ; sinon la page.
+          var listRoot = function () {
+            var dlg = Array.prototype.filter.call(document.querySelectorAll('[role=dialog],[aria-modal=true]'), function (d) {
+              return lit(d) && dateLines(d).length > 0;
+            });
+            return dlg.length ? dlg[dlg.length - 1] : document;
+          };
+          // Une carte = le plus petit bloc autour d'une ligne « Demandée le … » qui contient un bouton, sans autre ligne datée.
+          var exportCards = function () {
+            var root = listRoot(), lines = dateLines(root), cards = [];
+            for (var i = 0; i < lines.length; i++) {
+              var card = null;
+              for (var el = lines[i].parentElement, up = 0; el && el !== root && up < 8; el = el.parentElement, up++) {
+                if (dateLines(el).length > 1) break;
+                if (Array.prototype.some.call(el.querySelectorAll(BTN), lit)) { card = el; break; }
+              }
+              if (!card || cards.some(function (c) { return c.el === card; })) continue;
+              var ready = Array.prototype.some.call(card.querySelectorAll(BTN), function (b) { return DLNAME.test(low(b)) && lit(b); });
+              // La date d'abord : le texte est coupé à 160 caractères, elle ne doit jamais tomber.
+              cards.push({ el: card, ready: ready, text: (low(lines[i]) + ' · ' + low(card)).replace(/\s+/g, ' ').slice(0, 160) });
+            }
+            return cards;
+          };
+          var inCard = function (el, cards) { return cards.some(function (c) { return c.el.contains(el) || el.contains(c.el); }); };
+          var listShown = function () { return dateLines(listRoot()).length > 0; };
           var pendingRows = function () {
-            var rows = [], out = [];
-            var els = document.querySelectorAll('span,div,p,a,li,[role=button],[role=link]');
+            var cards = exportCards();
+            // Carte sans « Télécharger » : demande en attente. Le mot « en attente » est ajouté : la section le dit, pas la carte.
+            var rows = [], out = cards.filter(function (c) { return !c.ready; }).map(function (c) { return 'en attente · ' + c.text; });
+            var els = listRoot().querySelectorAll('span,div,p,a,li,[role=button],[role=link]');
             for (var i = 0; i < els.length; i++) {
               var el = els[i];
               if (el.childElementCount > 2) continue;
@@ -1317,6 +1359,8 @@ final class MetaViewController: UIViewController {
               var row = el;
               for (var up = 0; up < 5 && row.parentElement && low(row).length <= t.length + 3; up++) row = row.parentElement;
               if (low(row).length > 200 || row.getClientRects().length === 0 || rows.indexOf(row) >= 0) continue;
+              // Déjà lu comme carte, ou simple titre de section (« En attente », sans date) au-dessus des cartes.
+              if (inCard(row, cards) || (cards.length && !/[0-9]/.test(low(row)))) continue;
               // Un bloc qui contient déjà une ligne trouvée (ou qui est dans l'une d'elles) : c'est la même ligne.
               if (rows.some(function (r) { return r.contains(row) || row.contains(r); })) continue;
               rows.push(row);
@@ -1335,9 +1379,12 @@ final class MetaViewController: UIViewController {
             });
           };
           var readyRows = function () {
-            var rows = [], out = [];
-            var btns = dlButtons(document);
+            var cards = exportCards();
+            var rows = [], out = cards.filter(function (c) { return c.ready; }).map(function (c) { return c.text; });
+            // Fenêtre ouverte par-dessus : seule elle compte (la page dessous est cachée).
+            var btns = dlButtons(listRoot());
             for (var i = 0; i < btns.length; i++) {
+              if (inCard(btns[i], cards)) continue;
               // Comme pour les lignes « En attente » : on remonte les enveloppes du bouton jusqu'au premier bloc qui a plus de texte
               // (la ligne : nom, date, bouton), sans jamais englober une autre ligne prête. 6 niveaux au plus.
               var row = btns[i], own = low(row).length;
@@ -1426,7 +1473,9 @@ final class MetaViewController: UIViewController {
             // Fenêtre des cookies d'Instagram (FOU-121) : reconnue à ses deux boutons.
             var cookies = seeAny(['refuser les cookies optionnels', 'autoriser tous les cookies', 'decline optional cookies', 'allow all cookies']);
             var create = has(CREATE);
-            window.webkit.messageHandlers.zyeutoState.postMessage({ locked: locked(), rows: create ? pendingRows() : null, ready: create ? readyRows() : null, cookies: cookies, login: login, badpw: badpw, nouser: nouser, codebad: codebad, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), info: login || code ? '' : summaryInfo(), start: has(START), create: create, dl: __DL__ });
+            // La liste des exports est lue sur l'accueil, ou dans la fenêtre qui la montre par-dessus (17 nov.).
+            var list = create || listShown();
+            window.webkit.messageHandlers.zyeutoState.postMessage({ locked: locked(), rows: list ? pendingRows() : null, ready: list ? readyRows() : null, cookies: cookies, login: login, badpw: badpw, nouser: nouser, codebad: codebad, code: code, pending: pending, screen: login || code ? '' : screen(), flow: inFlow(), pick: login || code ? null : pickState(), info: login || code ? '' : summaryInfo(), start: has(START), create: create, dl: __DL__ });
           }, 700);
         })();
         """#
