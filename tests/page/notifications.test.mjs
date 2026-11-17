@@ -192,3 +192,9 @@ test("demande prouvée : elle note le compte affiché", async () => {
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("abo-prefs")).requestAcct), "a2");
   await page.close();
 });
+
+test("aucune promesse de surveillance dans le texte de la page", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(root + "index.html", "utf8");
+  assert.doesNotMatch(src, /je guette|je te dis dès que|dès que je (le|la) vois|je regarderai quand/i);
+});

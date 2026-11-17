@@ -4787,7 +4787,7 @@ function watchLine() {
   switch (w.state) {
     case "pending": return hh ? `✓ Vérifié à ${hh}&nbsp;: pas encore prêt` : "";
     case "toCheck": return "Un fichier est peut-être prêt&nbsp;: touche « Regarder si c'est prêt » et vérifie sa date.";
-    case "offline": return "Pas de connexion internet&nbsp;: je regarderai quand elle reviendra.";
+    case "offline": return "Pas de connexion internet&nbsp;: je n'ai pas pu regarder. Touche « Regarder si c'est prêt » une fois connecté.";
     case "login": return "Reconnecte-toi à Instagram pour que je puisse regarder&nbsp;: touche « Regarder si c'est prêt ».";
     case "unknown": return "Je n'ai pas pu regarder chez Instagram. Touche « Regarder si c'est prêt ».";
     default: return "";
@@ -4885,7 +4885,7 @@ $("wk-steps").addEventListener("click", (e) => {
   if (li.dataset.step === "get") return wkGo("get");
   if (li.dataset.step === "request") { if (reqPending()) return confirmRedo(() => { render(); wkGo("request"); }); return wkGo("request"); }
   haptic("light");
-  toast(reqPending() ? "Instagram prépare ton fichier. Je te dis dès que je le vois prêt, ou touche le gros bouton pour aller voir." : "Commence par « Demander » : Instagram prépare ensuite ton fichier.", false);
+  toast(reqPending() ? "Instagram prépare ton fichier. Touche le gros bouton pour voir s'il est prêt." : "Commence par « Demander » : Instagram prépare ensuite ton fichier.", false);
 });
 $("wk-help").addEventListener("click", () => {
   const open = $("wk-sos").hidden;
@@ -5419,7 +5419,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-17-1643";
+const BUILD = "2026-11-17-1650";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
