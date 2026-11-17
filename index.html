@@ -525,15 +525,18 @@ if (!window.ZYEUTO_APP) {
   body[data-mode="data"] .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   /* Mode démo : bandeau fixe en haut, sur l'accueil, les jeux et les graphiques */
   .demo-bar { position: fixed; z-index: 16; left: 50%; translate: -50% 0; top: max(8px, env(safe-area-inset-top, 0px)); width: min(568px, calc(100% - 32px));
-    display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 999px; color: #fff; font: 600 13px var(--round);
+    display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; border-radius: 999px; color: #fff; font: 700 15px var(--round);
     background: linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%); box-shadow: 0 8px 22px rgb(58 29 44 / .3), inset 0 0 0 1px rgb(185 165 240 / .35); }
   .demo-bar[hidden] { display: none; }
   .demo-bar.go button { background: linear-gradient(135deg, #ef7f6a, #f2a04a); color: #fff; box-shadow: 0 4px 12px rgb(239 127 106 / .4); }
-  .demo-bar .demo-tag { flex: none; background: linear-gradient(135deg, #c9b8f7, #9d86e4); color: #fff; box-shadow: inset 0 1px 0 rgb(255 255 255 / .4); font: 800 11px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; }
+  .demo-bar .demo-tag { flex: none; background: linear-gradient(135deg, #c9b8f7, #9d86e4); color: #fff; box-shadow: inset 0 1px 0 rgb(255 255 255 / .4); font: 800 13px/1 var(--round); letter-spacing: .06em; text-transform: uppercase; padding: 8px 11px; border-radius: 999px; }
   .demo-bar span:not(.demo-tag) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .demo-bar button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; background: rgb(255 255 255 / .14); color: #fff; font: 700 13px var(--round); cursor: pointer; }
-  .demo-bar button:active { background: rgb(255 255 255 / .24); }
-  body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 54px); }
+  /* FOU-51 : « Quitter la démo » bien visible : bouton blanc, gros, facile à toucher. */
+  .demo-bar button { flex: none; border: 0; border-radius: 999px; min-height: 44px; padding: 11px 18px; background: #fff; color: #3a1d2c; font: 800 15px var(--round); cursor: pointer; box-shadow: 0 3px 10px rgb(0 0 0 / .25); }
+  .demo-bar button:active { background: #f3e6ea; }
+  /* Petit écran : le texte du milieu serait coupé (« Données i… ») ; l'étiquette DÉMO suffit. */
+  @media (max-width: 400px) { .demo-bar span:not(.demo-tag) { visibility: hidden; } }
+  body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 70px); }
   /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
   /* Plan avant Instagram (FOU-121) */
   .pl { text-align: center; gap: 18px; }
@@ -1865,6 +1868,8 @@ if (!window.ZYEUTO_APP) {
   /* « C'est parti ! » en gros : le bouton prend tout le bas de l'écran (FOU-121). */
   .wl .gf-foot { flex: 1; min-height: 84px; max-height: 240px; }
   .wl #gf-go { flex: 1; font: 800 30px var(--round); border-radius: 28px; }
+  /* FOU-51 : lien discret sous « C'est parti ! », assez grand pour le doigt (44 px). */
+  .wl .wl-demo { flex: none; min-height: 44px; padding: 10px 16px; font-size: 14px; }
   .wl-pts { list-style: none; margin: 10px auto 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 340px; width: 100%; }
   .wl-pts li { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 4px 11px; border-radius: 18px; font: 800 13px/1.15 var(--round); color: #fff; box-shadow: 0 8px 18px rgb(46 35 40 / .14); }
   .wl-pts li:nth-child(1) { background: linear-gradient(150deg, #ef7f6a, #e2685a); transform: rotate(-4deg); }
@@ -5100,9 +5105,13 @@ function renderGuided() {
           <li><i><svg viewBox="0 0 24 24"><path d="M5 12h12M13 7l5 5-5 5"/></svg></i>Je te guide<br>pas à pas</li>
           <li><i><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></i>Tout reste<br>chez toi</li>
         </ul>
-        <div class="gf-foot"><button class="btn primary big" id="gf-go" type="button">C'est parti&nbsp;!</button></div>
+        <div class="gf-foot"><button class="btn primary big" id="gf-go" type="button">C'est parti&nbsp;!</button>
+          <button class="pl-restore wl-demo" id="gf-demo" type="button">Voir la démo d'abord</button></div>
       </div>`;
     $("gf-go").onclick = () => { prefs.welcomed = true; savePrefs(); render(); };
+    // FOU-51 : la démo dès le premier écran, sans Instagram ni import (pour les curieux et l'examinateur Apple).
+    // Rien n'est noté : en quittant la démo, on retombe sur cette même bienvenue.
+    $("gf-demo").onclick = () => { haptic("light"); enterDemo(); };
     wlPlay();
   } else if (step === "install") {
     body.innerHTML = `
@@ -5311,7 +5320,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-16-1951";
+const BUILD = "2026-11-17-1523";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -8646,22 +8655,34 @@ function demoData(o = {}) {
     welcomed: true, onboarded: true, stayInSafari: true, installDismissed: true,
     lastImportAt: last, backupAt: last, backupCount: at.length,
     zy: { xp: 640, look: { hat: "cap" }, anni: {} }, games: { gone: { best: 4, wins: 6 } },
-    me: { name: "Victor", ig: "victor.demo" },
+    me: demoMe(o.seed === 77 ? 2 : 1),
   };
   return { state, prefs };
+}
+// FOU-51 : prénoms inventés pour les comptes de la démo (jamais un vrai prénom de l'équipe), tirés au hasard.
+const DEMO_ME_NAMES = ["Léa", "Hugo", "Inès", "Lucas", "Chloé", "Nathan", "Manon", "Théo", "Jade", "Louis", "Camille", "Noah", "Sarah", "Adam", "Zoé", "Enzo", "Lina", "Gabriel", "Emma", "Raphaël"];
+let demoPick = [];
+function demoMe(seed) {
+  if (!demoPick.length) {
+    const a = Math.floor(Math.random() * DEMO_ME_NAMES.length);
+    demoPick = [DEMO_ME_NAMES[a], DEMO_ME_NAMES[(a + 1 + Math.floor(Math.random() * (DEMO_ME_NAMES.length - 1))) % DEMO_ME_NAMES.length]];
+  }
+  const name = demoPick[seed === 2 ? 1 : 0];
+  return { name, ig: name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() + ".demo" };
 }
 const isDemoName = (u) => /(^|[._])demo([._\d]|$)/.test(u);
 let demoAvatar = null;
 function enterDemo() {
   if (DEMO) return;
+  demoPick = []; // de nouveaux prénoms à chaque démo
   const d = demoData();
-  // Deux comptes sur le même téléphone : Victor (avec Plus) et son ami Mathéo (sans Plus), à changer dans Réglages → Mon compte.
+  // Deux comptes sur le même téléphone, avec des prénoms tirés au hasard : l'un avec Plus, l'autre sans, à changer dans Réglages → Mon compte.
   const m = demoData({ seed: 77, size: 412, ups: [0, 11, 8, 14, 6, 9, 12], downs: [0, 4, 7, 3, 5, 6, 2] });
   m.state.snapshots = m.state.snapshots.slice(-3);
   demoParked = { a2: m.state };
   d.prefs.accts = [
     { id: "a1", slot: 1, h: [], n: d.state.snapshots.at(-1).count },
-    { id: "a2", slot: 2, h: [], n: m.state.snapshots.at(-1).count, p: { me: { name: "Mathéo", ig: "matheo.demo" }, zy: { xp: 90, look: {}, anni: {} }, games: {} } },
+    { id: "a2", slot: 2, h: [], n: m.state.snapshots.at(-1).count, p: { me: m.prefs.me, zy: { xp: 90, look: {}, anni: {} }, games: {} } },
   ];
   d.prefs.acctCur = "a1";
   realState = state; realPrefs = prefs;
