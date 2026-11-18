@@ -73,8 +73,8 @@ Le bandeau doit se comprendre sans tout lire. Un titre court dit la situation, e
 
 | Situation | Titre | Phrase |
 |---|---|---|
-| Demande prouvée | ✓ C'est demandé : rien d'autre à faire | Instagram prépare ton fichier. Tu peux revenir dans Zieuton. (+ bouton) |
-| Demande du jour déjà là | ✓ Demande du jour en cours : rien d'autre à faire | idem |
+| Demande prouvée | **C'est demandé** (au-dessus, en petit : ✓ Rien d'autre à faire ici) | Instagram prépare ton fichier. Tu peux revenir dans Zieuton. (+ bouton) |
+| Demande du jour déjà là | **Demande du jour en cours** (au-dessus : ✓ Rien d'autre à faire ici) | idem |
 | On la reconnaît | Un instant : une demande est déjà là | N'en crée pas d'autre, je vérifie. |
 | Ligne du jour sans preuve | Demande du jour trouvée : ne refais rien | C'est la tienne ? Touche ce bandeau pour la suivre. (+ bouton) |
 | Ligne nouvelle à vérifier | À vérifier : ta ligne « En attente » | Datée d'aujourd'hui ? Touche ce bandeau. Sinon, ne refais rien. |
@@ -82,3 +82,7 @@ Le bandeau doit se comprendre sans tout lire. Un titre court dit la situation, e
 | Récupérer, pas prêt | Pas encore prêt : en attente | Ta demande du 18/11 est en préparation. Tu peux revenir plus tard. |
 | Récupérer, prêt | C'est prêt ! Touche Télécharger | Sur la ligne de ta demande du 18/11. |
 | Récupérer, sans preuve | Vérifie la date de ton export | « En attente » : pas prêt. Le plus récent a la date la plus lointaine. |
+
+### Bandeau centré (Victor, 18 nov. 15 h 03)
+
+Tout est centré. En haut, les 4 étapes, avec le zieuteur à droite. Au milieu, en gros, la situation. Dessous, le bouton (« Revenir dans Zieuton » ou le bouton à toucher). En bas, en petit, la consigne. Le fond du bandeau garde sa couleur selon la situation : lilas quand tout est bon, rose quand il y a une action, corail quand il y a une alerte.

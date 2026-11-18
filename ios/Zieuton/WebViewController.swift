@@ -1933,13 +1933,17 @@ final class MetaViewController: UIViewController {
         avatar.layer.cornerCurve = .continuous
         avatar.clipsToBounds = true
         avatar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 50), avatar.heightAnchor.constraint(equalToConstant: 50)])
+        // 18 nov. (Victor) : bandeau centré. Le zieuteur passe en haut à droite, à côté des étapes.
+        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 38), avatar.heightAnchor.constraint(equalToConstant: 38)])
 
         sayLabel.numberOfLines = 3
+        sayLabel.textAlignment = .center
         sayLabel.adjustsFontSizeToFitWidth = true
         sayLabel.minimumScaleFactor = 0.8
-        tipLabel.font = Self.rounded(15, .semibold)
-        tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
+        // La consigne, en petit sous le titre : le titre dit la situation, la consigne dit quoi faire.
+        tipLabel.font = Self.rounded(13.5, .semibold)
+        tipLabel.textColor = Self.ink.withAlphaComponent(0.7)
+        tipLabel.textAlignment = .center
         tipLabel.numberOfLines = 0
 
         // Précédent / Suivant en petites pastilles : le bandeau avance tout seul, elles servent seulement en secours.
@@ -1958,7 +1962,7 @@ final class MetaViewController: UIViewController {
         nextButton.accessibilityLabel = "Étape suivante"
 
         // FOU-121 : le zieuteur passe en bas à droite du bandeau ; le texte prend toute la largeur en haut.
-        let head = UIStackView(arrangedSubviews: [sayLabel, prevButton, nextButton])
+        let head = UIStackView(arrangedSubviews: [prevButton, sayLabel, nextButton])
         head.spacing = 8
         head.alignment = .center
         sayLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -2024,26 +2028,25 @@ final class MetaViewController: UIViewController {
         let lower = UIStackView(arrangedSubviews: [replicaBox, tipLabel, homeButton])
         lower.axis = .vertical
         lower.spacing = 8
-        let room = UIView()
-        room.translatesAutoresizingMaskIntoConstraints = false
-        room.widthAnchor.constraint(equalToConstant: 54).isActive = true
-        room.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-        let lowerRow = UIStackView(arrangedSubviews: [lower, room])
-        lowerRow.alignment = .top
-        lowerRow.spacing = 4
-        let all = UIStackView(arrangedSubviews: [phaseRow, head, lowerRow])
+        // En haut : les étapes et le zieuteur. Au milieu, en gros : la situation. Dessous : le bouton, puis la consigne en petit.
+        // L'espace libre va entre les étapes et le zieuteur (même quand les étapes sont cachées : le zieuteur garde sa taille).
+        let gap = UIView()
+        gap.setContentHuggingPriority(UILayoutPriority(1), for: .horizontal)
+        avatar.setContentHuggingPriority(.required, for: .horizontal)
+        avatar.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let top = UIStackView(arrangedSubviews: [phaseRow, gap, avatar])
+        top.alignment = .center
+        top.spacing = 8
+        let all = UIStackView(arrangedSubviews: [top, head, lower])
         all.axis = .vertical
-        all.spacing = 8
+        all.spacing = 10
         all.translatesAutoresizingMaskIntoConstraints = false
         banner.addSubview(all)
-        banner.addSubview(avatar)
         NSLayoutConstraint.activate([
             all.topAnchor.constraint(equalTo: banner.topAnchor, constant: 12),
-            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -12),
+            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -14),
             all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 14),
-            all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
-            avatar.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
-            avatar.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
+            all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
         ])
         // Toucher le bandeau ferme l'alerte.
         // Relecture ChatGPT (FOU-124) : le geste du bandeau ne prend jamais une touche destinée à un bouton
@@ -2257,7 +2260,8 @@ final class MetaViewController: UIViewController {
             // Ouvert pour récupérer le fichier : la demande est encore « En attente » (ou à vérifier). Jamais « Touche Télécharger ».
             if !requesting { return getStep(GetBanner.of(waiting: true, proven: false, verdict: getVerdict)) }
             // Demande vérifiée (on n'arrive ici qu'après la preuve) : on dit clairement comment sortir d'Instagram.
-            return Step(verb: LeaveHint.verb(existing: existingRequest, today: existingToday), target: LeaveHint.target, tip: LeaveHint.tip)
+            return Step(verb: LeaveHint.verb(existing: existingRequest, today: existingToday),
+                        target: LeaveHint.title(existing: existingRequest, today: existingToday), tip: LeaveHint.tip)
         }
         if cookiesShown {
             return Step(verb: "Cookies : touche", target: "Refuser les cookies optionnels",
@@ -2400,12 +2404,15 @@ final class MetaViewController: UIViewController {
             // FOU-121 P4 : texte toujours foncé ; c'est la couleur du bandeau qui dit s'il faut corriger quelque chose.
             let fg: UIColor = Self.ink
             let say = NSMutableAttributedString()
+            // 18 nov. (Victor) : centré ; la situation en gros, sur sa propre ligne.
+            let centered = NSMutableParagraphStyle()
+            centered.alignment = .center
             if !step.verb.isEmpty {
-                say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(17, .medium), .foregroundColor: fg.withAlphaComponent(0.75)]))
+                say.append(NSAttributedString(string: step.verb + "\n", attributes: [.font: Self.rounded(16, .semibold), .foregroundColor: fg.withAlphaComponent(0.75), .paragraphStyle: centered]))
             }
-            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(23, .heavy), .foregroundColor: fg]))
+            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(26, .heavy), .foregroundColor: fg, .paragraphStyle: centered]))
             if !step.after.isEmpty {
-                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(17, .semibold), .foregroundColor: fg]))
+                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(17, .semibold), .foregroundColor: fg, .paragraphStyle: centered]))
             }
             self.sayLabel.attributedText = say
             self.tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
@@ -3262,10 +3269,14 @@ enum BannerTone: Equatable {
 enum LeaveHint {
     static func verb(existing: Bool, today: Bool = false) -> String {
         // 18 nov. (Victor) : bandeau court, compris d'un coup d'œil. Le bouton « Revenir dans Zieuton » est juste dessous.
-        if existing && today { return "✓ Demande du jour en cours :" }
-        return existing ? "✓ Demande déjà en cours :" : "✓ C'est demandé :"
+        // Bandeau centré : la situation est le titre en gros (title), cette petite ligne au-dessus dit qu'il n'y a plus rien à faire.
+        "✓ Rien d'autre à faire ici"
     }
-    static let target = "rien d'autre à faire"
+    /// La situation, en gros au milieu du bandeau.
+    static func title(existing: Bool, today: Bool = false) -> String {
+        if existing && today { return "Demande du jour en cours" }
+        return existing ? "Demande déjà en cours" : "C'est demandé"
+    }
     static let tip = "Instagram prépare ton fichier. Tu peux revenir dans Zieuton."
 
     /// Le bouton « Revenir dans Zieuton » : seulement pendant le guet d'une demande vérifiée, fichier pas encore prêt,

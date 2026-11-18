@@ -393,8 +393,8 @@ p29b.saw(["en attente · demandée le 15/11/2026 · vifrnt (instagram) annuler"]
 check(p29b.alreadyPending && !p29b.pendingToday, "carte du 15/11 : vraie demande déjà en cours")
 check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.title == "Une demande d'aujourd'hui est en cours ✓", "notification A : demande du jour, sans « déjà en cours »")
 check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.subtitle == nil, "demande du jour vue en retard : pas d'heure inventée")
-check(!LeaveHint.verb(existing: true, today: true).contains("déjà en cours"), "bandeau : demande du jour, sans « déjà en cours »")
-check(LeaveHint.verb(existing: true).contains("déjà en cours"), "bandeau : une demande d'un autre jour reste « déjà en cours »")
+check(!LeaveHint.title(existing: true, today: true).contains("déjà en cours"), "bandeau : demande du jour, sans « déjà en cours »")
+check(LeaveHint.title(existing: true).contains("déjà en cours"), "bandeau : une demande d'un autre jour reste « déjà en cours »")
 
 // 30. Relecture ChatGPT (18 nov.) : deux exports du même jour, dont un ancien déjà prêt.
 // Une date d'aujourd'hui ne prouve pas que la demande est la sienne : jamais « prêt » à cause de l'ancien fichier.
@@ -403,7 +403,7 @@ let carteAttenteSoir = carteAttente                                           //
 var p30 = ExportProof()
 p30.saw([carteAttenteSoir], now: n30, calendar: cal)
 check(p30.alreadyPending && p30.pendingToday, "une demande d'aujourd'hui en cours, même avec un export prêt du matin")
-check(!LeaveHint.verb(existing: true, today: true).contains("Ta demande"), "bandeau : « une demande d'aujourd'hui », jamais « ta demande »")
+check(!LeaveHint.title(existing: true, today: true).contains("Ta demande"), "bandeau : « une demande d'aujourd'hui », jamais « ta demande »")
 check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.title.contains("Ta demande") == false, "notification A : jamais « ta demande » sur une simple date")
 // Cas A : Zieuton a vu la demande du soir (prouvée). Le fichier prêt du matin entre dans la référence.
 var r30 = ReadyProof(day: n30)
