@@ -164,3 +164,12 @@ test("relecture ChatGPT (18 nov., 14 h 09) : le fichier prêt n'est reconnu que 
   // Sans « prêt », jamais de notification C : markReady n'est appelé que sur un verdict « prêt ».
   assert.match(web, /if verdict == \.ready \{ self\.markReady\(\) \} else \{ self\.report\(verdict\) \}/);
 });
+
+test("relecture ChatGPT (18 nov., 14 h 09) : Instagram fermé sans preuve, la page passe sur « Demande à vérifier »", () => {
+  // Seulement à la vraie fermeture d'Instagram (pas quand une fenêtre passe par-dessus).
+  assert.match(web, /if isBeingDismissed, LeaveHint\.leftUnsure\(requesting: requesting, finished: finished, tapped: sentAt != nil, toCheck: toCheck,\s*todayShown: todayPendingShown, pendingSeen: pendingSeen\) \{\s*onLeftUnsure\?\(todayPendingShown \|\| proof\.pendingToday\)/);
+  assert.match(web, /meta\.onLeftUnsure = \{ \[weak self\] today in\s*self\?\.webView\.evaluateJavaScript\("window\.zyeutoMeta && window\.zyeutoMeta\('unsure', \{ today: \\\(today\) \}\); true"\)/);
+  // « à vérifier » ne lance ni le guet ni les notifications : seul « requested » appelle ExportWatcher.requested.
+  const unsure = web.slice(web.indexOf("meta.onLeftUnsure ="), web.indexOf("meta.onFile ="));
+  assert.doesNotMatch(unsure, /ExportWatcher/);
+});

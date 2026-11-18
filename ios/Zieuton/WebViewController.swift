@@ -753,6 +753,11 @@ extension WebViewController: WKScriptMessageHandler {
             self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested', { existing: \(existing), today: \(today) }); true")
             ExportWatcher.shared.requested(existing: existing, today: today, acct: acct)
         }
+        // Relecture ChatGPT (18 nov.) : demande possible mais pas prouvée. La page passe sur « Demande à vérifier » (une page plus
+        // ancienne ignore cet évènement). Pas de « C'est demandé », pas de guet ni de notification tant que ce n'est pas vérifié.
+        meta.onLeftUnsure = { [weak self] today in
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('unsure', { today: \(today) }); true")
+        }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
         meta.modalPresentationStyle = .fullScreen
         present(meta, animated: true)
@@ -933,6 +938,8 @@ final class MetaViewController: UIViewController {
     /// La demande est prouvée chez Instagram (true : elle était déjà en cours).
     /// (existing, today) : demande déjà en cours chez Instagram ; et, dans ce cas, datée d'aujourd'hui (peut-être la sienne, sans preuve).
     var onRequested: ((Bool, Bool) -> Void)?
+    /// Instagram fermé avec une demande possible mais pas prouvée (true : une ligne « En attente » d'aujourd'hui était visible).
+    var onLeftUnsure: ((Bool) -> Void)?
     var onFile: ((URL) -> Void)?
 
     private let url: URL
@@ -1905,6 +1912,10 @@ final class MetaViewController: UIViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        if isBeingDismissed, LeaveHint.leftUnsure(requesting: requesting, finished: finished, tapped: sentAt != nil, toCheck: toCheck,
+                                                  todayShown: todayPendingShown, pendingSeen: pendingSeen) {
+            onLeftUnsure?(todayPendingShown || proof.pendingToday)
+        }
         watchTimer?.invalidate()
         guardTimer?.invalidate()
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoTap")
@@ -3284,6 +3295,14 @@ enum LeaveHint {
     /// unsure (vidéo du 18 nov.) : liste visible, preuve incertaine. On peut sortir, rien n'est confirmé pour autant.
     static func showsButton(guarding: Bool, ready: Bool, badSettings: Bool, pageProblem: Bool, downloading: Bool, unsure: Bool = false) -> Bool {
         (guarding || unsure) && !ready && !badSettings && !pageProblem && !downloading
+    }
+
+    /// Relecture ChatGPT (18 nov., 14 h 09) : Instagram est fermé sans preuve automatique, mais avec un signe de demande
+    /// (« Commencer » touché, ligne à vérifier, ligne « En attente » du jour vue). La page de Zieuton passe alors directement
+    /// sur l'attente « Demande à vérifier », jamais sur « Zieuton en haut, Instagram en bas » (plus de boucle).
+    /// Sans aucun signe de demande, rien n'est noté : rien n'a été demandé.
+    static func leftUnsure(requesting: Bool, finished: Bool, tapped: Bool, toCheck: Bool, todayShown: Bool, pendingSeen: Bool) -> Bool {
+        requesting && !finished && (tapped || toCheck || todayShown || pendingSeen)
     }
 }
 

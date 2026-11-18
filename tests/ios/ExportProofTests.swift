@@ -545,5 +545,20 @@ for v in [ReadyProof.Verdict.toCheck, .unknown, .pending] {
     check(GetBanner.of(waiting: true, proven: false, verdict: v) != .ready, "g. verdict \(v.rawValue) : jamais « Touche Télécharger »")
 }
 
+// 33. Relecture ChatGPT (18 nov., 14 h 09) : plus de boucle. Instagram fermé sans preuve mais avec un signe de demande :
+// la page passe sur « Demande à vérifier ». Sans aucun signe, rien n'est noté.
+check(LeaveHint.leftUnsure(requesting: true, finished: false, tapped: true, toCheck: false, todayShown: false, pendingSeen: false),
+      "« Commencer » touché, pas de preuve : demande à vérifier")
+check(LeaveHint.leftUnsure(requesting: true, finished: false, tapped: false, toCheck: true, todayShown: false, pendingSeen: false),
+      "ligne à vérifier : demande à vérifier")
+check(LeaveHint.leftUnsure(requesting: true, finished: false, tapped: false, toCheck: false, todayShown: false, pendingSeen: true),
+      "demande « En attente » vue avant d'être reconnue (vidéo du 18 nov.) : demande à vérifier")
+check(!LeaveHint.leftUnsure(requesting: true, finished: true, tapped: true, toCheck: false, todayShown: false, pendingSeen: false),
+      "demande prouvée : rien de plus (la page a déjà reçu « requested »)")
+check(!LeaveHint.leftUnsure(requesting: true, finished: false, tapped: false, toCheck: false, todayShown: false, pendingSeen: false),
+      "Instagram fermé sans aucun signe de demande : rien n'est noté")
+check(!LeaveHint.leftUnsure(requesting: false, finished: false, tapped: true, toCheck: true, todayShown: true, pendingSeen: true),
+      "ouvert pour récupérer le fichier : jamais « à vérifier »")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
