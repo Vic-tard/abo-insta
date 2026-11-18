@@ -1002,6 +1002,8 @@ final class MetaViewController: UIViewController {
     /// FOU-126 (tests iPhone du 17 nov.) : ouvert pour récupérer le fichier : dernier verdict de la preuve « prêt » (ReadyProof).
     /// Le bandeau et le cercle suivent ce verdict, jamais la seule présence d'un bouton « Télécharger ».
     private var getVerdict: ReadyProof.Verdict?
+    /// Dernières cartes prêtes lues (pour dire la date « Expire le » de la bonne ligne, si elle est sûre).
+    private var lastReady: [String]?
     private var guardSince = Date.distantPast
     private var guardTimer: Timer?
     /// On arrête de recharger au bout de 20 min : la notification prend le relais.
@@ -2230,7 +2232,8 @@ final class MetaViewController: UIViewController {
                         tip: "« En attente » : pas prêt. Le plus récent a la date la plus lointaine.")
         case .ready:
             return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                        tip: GetBanner.readyTip(ExportWatcher.shared.requestDay), look: "button")
+                        tip: GetBanner.readyTip(expiry: ExportWatcher.shared.identifiedExpiry(ready: lastReady),
+                                                day: ExportWatcher.shared.requestDay), look: "button")
         }
     }
 
@@ -2278,7 +2281,8 @@ final class MetaViewController: UIViewController {
         if guarding {
             if guardReady {
                 return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                            tip: GetBanner.readyTip(ExportWatcher.shared.requestDay), look: "button")
+                            tip: GetBanner.readyTip(expiry: ExportWatcher.shared.identifiedExpiry(ready: lastReady),
+                                                day: ExportWatcher.shared.requestDay), look: "button")
             }
             if Date().timeIntervalSince(guardSince) > Self.guardFor {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
@@ -2713,6 +2717,7 @@ final class MetaViewController: UIViewController {
         if state["create"] as? Bool == true { seenCreate = now }
         // FOU-126 : la liste des exports est lue pour la preuve « prêt » (ligne de la demande, jamais un simple décompte).
         let watcher = ExportWatcher.shared
+        if mainFrame, let ready = state["ready"] as? [String] { lastReady = ready }
         if mainFrame, watcher.isWaiting, !downloading {
             let verdict = watcher.observe(pending: state["rows"] as? [String], ready: state["ready"] as? [String],
                                           login: state["login"] as? Bool == true, now: now)
@@ -3517,6 +3522,18 @@ struct ReadyProof: Equatable {
         return r > 0 ? .toCheck : .unknown
     }
 
+    /// Relecture ChatGPT (18 nov., 16 h 10) : la date « Expire le » du fichier de la demande, seulement si elle est vraiment lue.
+    /// Il faut une preuve nette (empreinte, pas d'ambiguïté, exactement un fichier de plus que la référence) et que tous les fichiers
+    /// possibles portent la MÊME date : alors celle du nouveau est forcément celle-là. Sinon nil : consigne neutre, sans date.
+    func identifiedExpiry(ready: [String], now: Date, calendar: Calendar = .current) -> Date? {
+        guard let day, let baseline, signature != nil, !ambiguous else { return nil }
+        let mine = ready.filter { Self.matches($0, day: day, signature: signature, now: now, calendar: calendar) }
+        guard mine.count == baseline + 1 else { return nil }
+        let dates = mine.map { Self.expiry($0, calendar: calendar).map { calendar.startOfDay(for: $0) } }
+        guard let first = dates.first ?? nil, dates.allSatisfy({ $0 == first }) else { return nil }
+        return first
+    }
+
     /// Mots qui ne disent ni le compte, ni la catégorie, ni le format : dates, statuts, boutons, tailles.
     private static let noise: Set<String> = [
         "en", "attente", "demandée", "demandé", "demande", "le", "la", "requested", "on", "expire", "expires", "moins", "de", "mo", "ko", "go",
@@ -3625,11 +3642,12 @@ enum GetBanner: Equatable {
 
     /// Relecture ChatGPT (18 nov., 15 h 55) : quelle ligne toucher. Une carte prête affiche « Expire le … » (jour de la demande
     /// + 4 jours chez Instagram), jamais « Demandée le … » : le bandeau donne cette date-là, pour la reconnaître parmi plusieurs.
-    static func readyTip(_ day: Date?, calendar: Calendar = .current) -> String {
-        guard let day, let exp = calendar.date(byAdding: .day, value: ReadyProof.keepDays, to: day) else {
-            return "Sur la ligne de ta demande. Le plus récent a la date la plus lointaine."
-        }
-        return "Sur la ligne « Expire le \(dayText(exp, calendar: calendar)) » (ta demande du \(dayText(day, calendar: calendar)))."
+    /// Relecture ChatGPT (18 nov., 16 h 10) : la date n'est jamais calculée (Instagram peut préparer le fichier un jour plus tard) :
+    /// seulement celle lue sur la carte (ReadyProof.identifiedExpiry). Sinon, consigne neutre.
+    static func readyTip(expiry: Date?, day: Date?, calendar: Calendar = .current) -> String {
+        guard let expiry else { return "Sur la ligne de ta demande. Le plus récent a la date la plus lointaine." }
+        let asked = day.map { " (ta demande du \(dayText($0, calendar: calendar)))" } ?? ""
+        return "Sur la ligne « Expire le \(dayText(expiry, calendar: calendar)) »\(asked)."
     }
 
     /// « 17/11 »
@@ -4034,6 +4052,11 @@ final class ExportWatcher: NSObject {
     private var proof = ReadyProof(day: nil)
     /// Jour de la demande guettée (nil : inconnu, par exemple demande déjà en cours pas encore lue).
     var requestDay: Date? { isWaiting || isReady ? proof.day : nil }
+    /// La date « Expire le » du fichier de la demande, seulement si elle est lue sur la carte (nil sinon).
+    func identifiedExpiry(ready: [String]?, now: Date = Date()) -> Date? {
+        guard let ready, isWaiting || isReady else { return nil }
+        return proof.identifiedExpiry(ready: ready, now: now)
+    }
     private var timer: Timer?
     private var checker: WKWebView?
     private var checkHandler: CheckHandler?

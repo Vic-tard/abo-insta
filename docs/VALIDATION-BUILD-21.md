@@ -16,7 +16,7 @@ Statut : ✅ vu, ❌ échec (joindre capture), ➖ situation pas rencontrée.
 | V6 | Retour | Depuis « Demande à vérifier », toucher « Vérifier dans Instagram » | « Un instant : une demande est déjà là », puis « Demande du jour en cours ». Retour : attente normale | |
 | V7 | Attente | Rouvrir Instagram depuis l'attente tant que la carte est « En attente » | « Pas encore prêt : en attente ». Aucun cercle | |
 | V8 | Ancien export prêt | Avec un export plus ancien prêt dans la liste, pendant l'attente | Jamais « prêt », jamais « Touche Télécharger » vers l'ancien | |
-| V9 | Nouveau fichier | La carte quitte « En attente », une carte « Expire le » (jour + 4) arrive | « C'est prêt ! Touche Télécharger », consigne « Sur la ligne « Expire le JJ/MM » » | |
+| V9 | Nouveau fichier | La carte quitte « En attente », une carte « Expire le » (jour + 4) arrive | « C'est prêt ! Touche Télécharger », consigne « Sur la ligne « Expire le JJ/MM » » avec la date lue sur la carte (sinon consigne neutre, sans date) | |
 | V10 | Cercle | V9 avec un ancien export encore dans la liste, puis faire défiler pour ne voir que l'ancien | **Aucun** cercle (il y a deux « Télécharger » dans la liste). La consigne dit quelle date chercher | |
 | V11 | Cercle | V9 sans aucun autre export dans la liste | Cercle sur l'unique « Télécharger » | |
 | V12 | Téléchargement | Toucher soi-même « Télécharger » sur la ligne indiquée | Téléchargement puis import comme au build 15 | |

@@ -197,6 +197,9 @@ test("relecture ChatGPT (18 nov., 15 h 55) : cercle sur la seule carte possible,
   // Une demande en attente d'un autre compte ne compte pas ; une carte sans empreinte lisible compte toujours.
   assert.match(web, /guard let signature, let sig = Self\.signature\(of: row\) else \{ return true \}\s*return sig == signature/);
   // Le bandeau « prêt » donne la date « Expire le » de la bonne ligne, dans les deux cas (récupération et guet).
-  assert.equal((web.match(/tip: GetBanner\.readyTip\(ExportWatcher\.shared\.requestDay\)/g) || []).length, 2);
+  // Relecture ChatGPT (16 h 10) : la date vient de la carte lue (identifiedExpiry), jamais d'un calcul « jour + 4 ».
+  assert.equal((web.match(/tip: GetBanner\.readyTip\(expiry: ExportWatcher\.shared\.identifiedExpiry\(ready: lastReady\),/g) || []).length, 2);
+  const tipFn = web.slice(web.indexOf("static func readyTip("), web.indexOf("static func dayText("));
+  assert.doesNotMatch(tipFn, /keepDays|byAdding/, "aucune date calculée dans la consigne");
   assert.doesNotMatch(web, /tip: "Juste en dessous\."/);
 });

@@ -654,10 +654,38 @@ check(settle(&r37c, [attenteB], [pret("22/11/2026").replacingOccurrences(of: "vi
       "seul le fichier de B arrive : jamais « prêt » pour A")
 check(settle(&r37c, ["en attente · demandée le 18/11/2026 annuler"], [pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .pending,
       "une carte en attente du jour sans empreinte lisible : prudence, on la compte, pas encore prêt")
-// Plusieurs « Télécharger » : le bandeau donne la date « Expire le » de la bonne ligne (jour de la demande + 4).
-check(GetBanner.readyTip(n18, calendar: cal) == "Sur la ligne « Expire le 22/11 » (ta demande du 18/11).", "bandeau prêt : « Expire le 22/11 », la date écrite sur la carte")
-check(GetBanner.readyTip(n18, calendar: cal).count <= 75 && GetBanner.readyTip(nil, calendar: cal).count <= 75, "consigne courte")
-check(!GetBanner.readyTip(nil, calendar: cal).contains("Expire"), "jour inconnu : pas de date inventée")
+// Plusieurs « Télécharger » : le bandeau donne la date « Expire le » de la bonne ligne, seulement si elle a été lue.
+let d22 = cal.date(from: DateComponents(year: 2026, month: 11, day: 22))!
+check(GetBanner.readyTip(expiry: d22, day: n18, calendar: cal) == "Sur la ligne « Expire le 22/11 » (ta demande du 18/11).", "date lue : « Expire le 22/11 »")
+check(GetBanner.readyTip(expiry: d22, day: n18, calendar: cal).count <= 75 && GetBanner.readyTip(expiry: nil, day: n18, calendar: cal).count <= 75, "consigne courte")
+check(!GetBanner.readyTip(expiry: nil, day: n18, calendar: cal).contains("Expire"), "date pas lue : consigne neutre, aucune date inventée")
 
+// 38. Relecture ChatGPT (18 nov., 16 h 10) : demande le 18/11, fichier préparé plus tard, qui expire le 23/11.
+// La date du bandeau est celle écrite sur la carte, jamais « jour de la demande + 4 ».
+var r38 = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r38.read(pending: [attente18], ready: [pret("21/11/2026")], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r38.baseline == 0, "38. référence 0 (l'ancien export du 21/11 ne compte pas)")
+let liste38 = [pret("23/11/2026"), pret("21/11/2026")]
+let n19 = n18.addingTimeInterval(86400)
+check(settle(&r38, [], liste38, at: n19) == .ready, "38. le fichier qui expire le 23/11 est bien celui de la demande du 18/11 : prêt")
+let e38 = r38.identifiedExpiry(ready: liste38, now: n19, calendar: cal)
+check(e38.map { GetBanner.dayText($0, calendar: cal) } == "23/11", "38. date lue sur la carte : 23/11")
+check(GetBanner.readyTip(expiry: e38, day: r38.day, calendar: cal) == "Sur la ligne « Expire le 23/11 » (ta demande du 18/11).",
+      "38. bandeau : « Expire le 23/11 », jamais « 22/11 » calculé")
+// Un fichier du même jour déjà prêt (expire le 22/11) + le nouveau (expire le 23/11) : on ne sait pas lequel est nouveau.
+var r38b = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r38b.read(pending: [attente18], ready: [pret("22/11/2026")], now: n18.addingTimeInterval(t), calendar: cal) }
+let liste38b = [pret("23/11/2026"), pret("22/11/2026")]
+check(settle(&r38b, [], liste38b, at: n19) == .ready, "38. un fichier de plus que la référence : prêt")
+check(r38b.identifiedExpiry(ready: liste38b, now: n19, calendar: cal) == nil, "38. deux dates possibles (22/11 et 23/11) : aucune date affichée")
+// Même date sur les deux : quelle que soit la ligne nouvelle, sa date est sûre.
+var r38c = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r38c.read(pending: [attente18], ready: [pret("22/11/2026")], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r38c.identifiedExpiry(ready: [pret("22/11/2026"), pret("22/11/2026")], now: n18.addingTimeInterval(600), calendar: cal)
+        .map { GetBanner.dayText($0, calendar: cal) } == "22/11", "38. deux fichiers du même jour à la même date : date sûre")
+// Ambiguïté, empreinte inconnue ou ancien format sans « Expire le » : aucune date.
+check(r36.identifiedExpiry(ready: [pret("22/11/2026")], now: n18.addingTimeInterval(600), calendar: cal) == nil, "38. demandes indiscernables : aucune date")
+check(ReadyProof(day: n18, baseline: 0).identifiedExpiry(ready: [pret("22/11/2026")], now: n18, calendar: cal) == nil, "38. sans empreinte : aucune date")
+check(r1.identifiedExpiry(ready: [pretJour, pretAncien], now: s(30), calendar: cal) == nil, "38. carte sans « Expire le » : aucune date")
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
