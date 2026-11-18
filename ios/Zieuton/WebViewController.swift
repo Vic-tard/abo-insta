@@ -2172,11 +2172,12 @@ final class MetaViewController: UIViewController {
             return Step(verb: "Pas encore prêt :", target: "ta demande\(day) est en attente",
                         tip: "Instagram la prépare encore. Tu peux revenir dans Zieuton (‹ Zieuton, en haut à gauche) : je regarde à nouveau à chaque ouverture. Instagram t'envoie aussi un e-mail.")
         case .checkDate:
-            return Step(verb: "À vérifier :", target: "la date de la ligne",
-                        tip: "Seule la ligne de ta demande\(day) compte. Si elle a « Télécharger », touche-le. Les autres lignes sont d'anciens exports.")
+            return Step(verb: "Vérifie la date", target: "de ton export",
+                        tip: "Je n'arrive pas à lire la ligne de ta demande\(day). Regarde la date de chaque ligne avant de toucher quoi que ce soit : une autre date est un ancien export.")
         case .unproven:
-            return Step(verb: "Touche", target: "Télécharger",
-                        tip: "Sur la ligne datée du jour de ta demande. Une ligne « En attente » n'est pas encore prête, et une autre date est un ancien export.")
+            // Relecture ChatGPT : sans demande prouvée, aucune consigne directe vers un bouton (il peut être celui d'un ancien export).
+            return Step(verb: "Vérifie la date", target: "de ton export",
+                        tip: "Je ne sais pas encore quelle ligne est la tienne. Regarde la date de chaque ligne : une ligne « En attente » n'est pas prête, une autre date est un ancien export.")
         case .ready:
             return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
                         tip: "Sur la ligne de ta demande\(day). Zieuton se met à jour tout seul.", look: "button")

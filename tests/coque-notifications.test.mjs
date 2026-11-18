@@ -92,3 +92,14 @@ test("17 nov. : pour récupérer le fichier, ni « Touche Télécharger » ni ce
   // Le seul « Touche Télécharger » sans réserve du mode « récupérer » est celui de la preuve.
   assert.match(web, /case \.ready:\s*return Step\(verb: "C'est prêt ! Touche", target: "Télécharger"/);
 });
+
+test("relecture ChatGPT : sans preuve, aucune consigne directe « Touche Télécharger »", () => {
+  const block = web.slice(web.indexOf("private func getStep("), web.indexOf("private var currentStep: Step {"));
+  const cases = block.split(/case \./).slice(1);
+  for (const c of cases) {
+    if (c.startsWith("ready:")) continue;
+    assert.doesNotMatch(c, /target: "Télécharger"/, "seul le cas « prêt » dit « Touche Télécharger »");
+    assert.doesNotMatch(c, /touche-le/i);
+  }
+  assert.match(block, /case \.unproven:[\s\S]*?verb: "Vérifie la date", target: "de ton export"/);
+});
