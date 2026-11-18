@@ -601,5 +601,40 @@ check(settle(&r35b, [attente18], [pret("22/11/2026")], at: n18.addingTimeInterva
 check(settle(&r35b, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
       "deux fichiers identiques prêts : à vérifier, jamais « prêt »")
 
+// 36. Relecture ChatGPT (18 nov., 15 h 44) : le scénario exact du faux « prêt ».
+// 1. demande suivie seule (référence 0) ; 2-3. une 2e demande identique du même jour, les deux « En attente » ;
+// 4. l'une devient prête ; 5. l'autre est annulée ou disparaît ; 6. une carte prête, zéro en attente.
+var r36 = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r36.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r36.baseline == 0 && !r36.ambiguous, "36.1 demande suivie seule : référence 0, pas d'ambiguïté")
+for t in [60.0, 62.5] { r36.read(pending: [attente18, attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r36.ambiguous, "36.3 deux cartes « En attente » indiscernables : ambiguïté notée")
+check(settle(&r36, [attente18], [pret("22/11/2026")], at: n18.addingTimeInterval(300)) == .pending, "36.4 l'une prête, l'autre en attente : pas encore prêt")
+check(settle(&r36, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .toCheck,
+      "36.6 l'autre annulée : une carte prête, zéro en attente, relue 2 s plus tard : à vérifier, jamais « prêt »")
+check(settle(&r36, [], [pret("22/11/2026")], at: n18.addingTimeInterval(3600)) == .toCheck, "36.6 et toujours pas « prêt » une heure plus tard")
+check(r36.ambiguous, "l'ambiguïté ne s'efface jamais toute seule")
+// Fermeture puis réouverture de l'app : la coque recrée le suivi avec ce qu'elle a gardé (jour, référence, empreinte, ambiguïté).
+var r36b = ReadyProof(day: r36.day, baseline: r36.baseline, signature: r36.signature, ambiguous: r36.ambiguous)
+check(r36b.ambiguous && r36b.baseline == 0, "réouverture : ambiguïté et référence retrouvées")
+check(settle(&r36b, [], [pret("22/11/2026")], at: n18.addingTimeInterval(7200)) == .toCheck, "réouverture : toujours jamais « prêt »")
+// Sans l'ambiguïté (régression) : la même liste finale donnerait bien « prêt ».
+var r36c = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r36c.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(settle(&r36c, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .ready, "une seule demande vue : « prêt » reste possible")
+// Deux cartes « En attente » de comptes différents ne sont pas ambiguës (empreintes différentes).
+var r36d = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r36d.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+r36d.read(pending: [attente18, attente18.replacingOccurrences(of: "vifrnt", with: "compte2")], ready: [], now: n18.addingTimeInterval(60), calendar: cal)
+check(!r36d.ambiguous, "une demande d'un autre compte n'est pas une ambiguïté")
+check(settle(&r36d, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .ready, "et le fichier du bon compte reste « prêt »")
+// Ambiguïté vue avant même la référence (deux demandes identiques dès la première lecture).
+var r36e = ReadyProof(day: n18)
+r36e.read(pending: [attente18, attente18], ready: [], now: n18, calendar: cal)
+check(r36e.ambiguous, "deux demandes identiques dès le début : ambiguïté notée")
+for t in [60.0, 62.5] { r36e.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r36e.baseline == 0, "une seule reste : la référence se fixe")
+check(settle(&r36e, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .toCheck, "mais jamais « prêt » : on ne sait pas laquelle était la sienne")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

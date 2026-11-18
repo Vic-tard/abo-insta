@@ -3405,14 +3405,19 @@ struct ReadyProof: Equatable {
     /// un instant de la lecture ne suffit jamais.
     private var readySeenAt: Date?
     private(set) var readyStable = false
+    /// Relecture ChatGPT (18 nov., 15 h 44) : deux cartes « En attente » indiscernables (même jour, même empreinte) ont été vues.
+    /// On ne sait plus quel fichier est le sien : jamais « prêt » automatique pour cette demande, même si l'une est annulée
+    /// ou disparaît ensuite. Gardé avec la référence (l'app peut être fermée puis rouverte).
+    private(set) var ambiguous = false
 
     /// Deux lectures identiques à au moins 2 s d'écart fixent la référence (et confirment « prêt »).
     static let stableFor: TimeInterval = 2
     /// Une demande d'export vit quelques jours chez Instagram : on ne date pas une demande déjà en cours au-delà.
     static let maxAgeDays = 4
 
-    init(day: Date?, baseline: Int? = nil, signature: String? = nil) {
+    init(day: Date?, baseline: Int? = nil, signature: String? = nil, ambiguous: Bool = false) {
         self.day = day
+        self.ambiguous = ambiguous
         // Relecture ChatGPT (18 nov., 15 h 33) : une référence sans empreinte (enregistrée par le build 17 ou avant) n'est pas
         // gardée. Elle est refaite seulement si la carte « En attente » de la demande est encore là ; sinon, jamais « prêt »
         // automatique : l'utilisateur vérifie lui-même.
@@ -3425,6 +3430,10 @@ struct ReadyProof: Equatable {
         // Demande déjà en cours chez Instagram : son jour est celui de la ligne « En attente » la plus récente.
         if day == nil { day = Self.latestDay(of: pending, now: now, calendar: calendar) }
         guard let day else { return }
+        // Deux cartes « En attente » du jour avec la même empreinte (la nôtre si elle est connue) : ambiguïté, gardée pour toujours.
+        let sigs = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.compactMap { Self.signature(of: $0) }
+        if let signature { if sigs.filter({ $0 == signature }).count > 1 { ambiguous = true } }
+        else if Set(sigs).count < sigs.count { ambiguous = true }
         guard let baseline else {
             // La demande doit encore être « En attente », et être la SEULE ligne en attente de ce jour : sinon on ne sait pas
             // laquelle suivre, et on ne fixe aucune référence (donc jamais « prêt » automatique).
@@ -3479,7 +3488,8 @@ struct ReadyProof: Equatable {
         // Relecture ChatGPT (18 nov.) : « prêt » seulement s'il y a EXACTEMENT un fichier de plus que la référence, revu 2 s plus tard.
         // Deux fichiers nouveaux ou plus (un autre export devenu prêt), ou un seul encore pas revu : à vérifier, jamais « prêt ».
         // Empreinte inconnue : jamais « prêt » (on ne sait pas quel fichier est le sien).
-        if let baseline, signature != nil, r == baseline + 1, readyStable { return .ready }
+        // Deux demandes indiscernables vues : jamais « prêt » automatique (relecture ChatGPT, 15 h 44).
+        if let baseline, signature != nil, !ambiguous, r == baseline + 1, readyStable { return .ready }
         // Plus de ligne « En attente » de ce jour, sans preuve nette (référence absente, ancien fichier expiré ou supprimé,
         // plusieurs fichiers nouveaux) : l'utilisateur vérifie la date lui-même.
         return r > 0 ? .toCheck : .unknown
@@ -3925,6 +3935,8 @@ final class ExportWatcher: NSObject {
         static let day = "zy.export.day", baseline = "zy.export.baseline"
         /// Relecture ChatGPT (18 nov.) : empreinte de la carte de la demande (compte, catégorie, format).
         static let signature = "zy.export.signature"
+        /// Relecture ChatGPT (18 nov., 15 h 44) : deux demandes indiscernables ont été vues (jamais « prêt » automatique).
+        static let ambiguous = "zy.export.ambiguous"
         /// FOU-126 : « C'est demandé » et « prêt » déjà envoyées pour cette demande (jamais de doublon).
         static let askedShown = "zy.export.askedShown", readyShown = "zy.export.readyShown"
         /// Dernier résultat de vérification, pour la page.
@@ -3933,7 +3945,7 @@ final class ExportWatcher: NSObject {
         static let acct = "zy.export.acct"
         /// Clés des builds 15 et avant (décompte des « Télécharger ») : plus utilisées.
         static let legacy = ["zy.export.downloadsBefore", "zy.export.baselineChecked"]
-        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, askedShown, readyShown, lastState, lastAt, acct] + legacy }
+        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, ambiguous, askedShown, readyShown, lastState, lastAt, acct] + legacy }
     }
     /// Notification « prêt » avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
     static let readyCategory = "zy-ready-actions"
@@ -3947,7 +3959,7 @@ final class ExportWatcher: NSObject {
         ])
         let day = store.object(forKey: Key.day) as? Date
         proof = ReadyProof(day: day, baseline: day == nil ? nil : store.object(forKey: Key.baseline) as? Int,
-                           signature: store.string(forKey: Key.signature))
+                           signature: store.string(forKey: Key.signature), ambiguous: store.bool(forKey: Key.ambiguous))
     }
 
     /// « 14:47 »
@@ -4151,6 +4163,7 @@ final class ExportWatcher: NSObject {
         if let d = proof.day { store.set(d, forKey: Key.day) } else { store.removeObject(forKey: Key.day) }
         if let b = proof.baseline { store.set(b, forKey: Key.baseline) } else { store.removeObject(forKey: Key.baseline) }
         if let sig = proof.signature { store.set(sig, forKey: Key.signature) } else { store.removeObject(forKey: Key.signature) }
+        if proof.ambiguous { store.set(true, forKey: Key.ambiguous) } else { store.removeObject(forKey: Key.ambiguous) }
     }
 
     /// Une lecture de la liste des exports d'Instagram (fenêtre Instagram de Zieuton ou vérification cachée).
@@ -4161,7 +4174,7 @@ final class ExportWatcher: NSObject {
         if let pending, let ready {
             let before = proof
             proof.read(pending: pending, ready: ready, now: now)
-            if proof.day != before.day || proof.baseline != before.baseline { saveProof() }
+            if proof.day != before.day || proof.baseline != before.baseline || proof.ambiguous != before.ambiguous { saveProof() }
         }
         return proof.verdict(pending: pending, ready: ready, login: login, offline: false, now: now)
     }

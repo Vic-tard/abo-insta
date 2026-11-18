@@ -112,7 +112,7 @@ test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présent
   assert.match(web, /if existing && today \{ return "Demande du jour en cours" \}/);
   assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
   // « prêt » exige EXACTEMENT une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour), revue 2 s plus tard.
-  assert.match(web, /if let baseline, signature != nil, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+  assert.match(web, /if let baseline, signature != nil, !ambiguous, r == baseline \+ 1, readyStable \{ return \.ready \}/);
 });
 
 test("vidéo du 18 nov. : une demande en attente visible n'encourage jamais une nouvelle demande", () => {
@@ -137,7 +137,7 @@ test("vidéo du 18 nov. : une carte prête dit « Expire le », jamais prise pou
   assert.match(web, /var DATED = \/\^\(demandée le\|demandé le\|requested on\|expire le\|expires on\|expires\)\\b\//);
   assert.match(web, /if \(!ready && EXPIRES\.test\(low\(lines\[i\]\)\)\) continue;/);
   // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver.
-  assert.match(web, /if p > 0 \{ return \.pending \}[\s\S]{0,400}?if let baseline, signature != nil, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+  assert.match(web, /if p > 0 \{ return \.pending \}[\s\S]{0,700}?if let baseline, signature != nil, !ambiguous, r == baseline \+ 1, readyStable \{ return \.ready \}/);
 });
 
 test("18 nov. (Victor) : bandeau court, compris sans tout lire", () => {
@@ -177,4 +177,14 @@ test("relecture ChatGPT (18 nov., 14 h 09) : Instagram fermé sans preuve, la pa
   // « à vérifier » ne lance ni le guet ni les notifications : seul « requested » appelle ExportWatcher.requested.
   const unsure = web.slice(web.indexOf("meta.onLeftUnsure ="), web.indexOf("meta.onFile ="));
   assert.doesNotMatch(unsure, /ExportWatcher/);
+});
+
+test("relecture ChatGPT (18 nov., 15 h 44) : deux demandes indiscernables, jamais « prêt », même après réouverture", () => {
+  assert.match(web, /if let baseline, signature != nil, !ambiguous, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+  assert.match(web, /static let ambiguous = "zy\.export\.ambiguous"/);
+  assert.match(web, /ambiguous: store\.bool\(forKey: Key\.ambiguous\)/);
+  assert.match(web, /if proof\.ambiguous \{ store\.set\(true, forKey: Key\.ambiguous\) \}/);
+  assert.match(web, /proof\.ambiguous != before\.ambiguous \{ saveProof\(\) \}/);
+  // Effacée avec le reste quand la demande se termine ou est refaite.
+  assert.match(web, /static var all: \[String\] \{ \[[^\]]*\bambiguous\b[^\]]*\] \+ legacy \}/);
 });
