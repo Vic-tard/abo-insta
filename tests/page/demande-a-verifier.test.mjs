@@ -147,7 +147,8 @@ test("page du build 17 (plus ancienne) : l'évènement « unsure » est ignoré 
   // (origin/main contient désormais la nouvelle page : elle ne peut plus servir de « page ancienne ».)
   let old;
   try { old = execSync("git show 40edbe4:index.html", { cwd: root, encoding: "utf8", maxBuffer: 64 << 20 }); }
-  catch (e) { console.log("main introuvable (copie sans historique) : test sauté", e.message); return; }
+  // Relecture ChatGPT (18 nov., 16 h 24) : test obligatoire. Sans l'historique git, il échoue au lieu de se sauter.
+  catch (e) { assert.fail(`page du build 17 introuvable (commit 40edbe4) : il faut l'historique complet (git fetch --unshallow). ${e.message}`); }
   const dir = mkdtempSync(join(tmpdir(), "zieuton-main-"));
   writeFileSync(join(dir, "index.html"), old);
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR" });
