@@ -73,7 +73,7 @@ test("multicompte : un message d'un autre compte n'annule pas les rappels (contr
   assert.match(branch, /ExportWatcher\.shared\.pageEndedWait\(acct: body\["acct"\] as\? String\)/);
   assert.doesNotMatch(branch, /\.clear\(\)/, "exportState ne doit jamais appeler clear() directement");
   assert.match(web, /guard NoticePlan\.endsWait\(requestAcct: store\.string\(forKey: Key\.acct\), sender: acct\) else \{ return \}/);
-  assert.match(web, /ExportWatcher\.shared\.requested\(existing: existing, acct: acct\)/);
+  assert.match(web, /ExportWatcher\.shared\.requested\(existing: existing, today: today, acct: acct\)/);
   assert.match(web, /let acct = body\["acct"\] as\? String/);
   // La règle elle-même, recopiée ici pour la faire tourner sans Mac (les tests Swift, cas 26, la vérifient aussi).
   const rule = web.match(/static func endsWait\(requestAcct: String\?, sender: String\?\) -> Bool \{\s*let owner = requestAcct \?\? "", from = sender \?\? ""\s*if owner\.isEmpty \{ return true \}\s*return from == owner\s*\}/);
@@ -102,4 +102,13 @@ test("relecture ChatGPT : sans preuve, aucune consigne directe « Touche Téléc
     assert.doesNotMatch(c, /touche-le/i);
   }
   assert.match(block, /case \.unproven:[\s\S]*?verb: "Vérifie la date", target: "de ton export"/);
+});
+
+test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présentée comme « ta demande »", () => {
+  const strings = visibleStrings(web);
+  for (const s of strings) assert.doesNotMatch(s, /Ta demande d'aujourd'hui|Ta demande est bien enregistrée/, `texte trop affirmatif : ${s}`);
+  assert.match(web, /"✓ Une demande d'aujourd'hui est en cours\. Tu n'as plus rien à faire ici :"/);
+  assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
+  // « prêt » exige une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour).
+  assert.match(web, /if let baseline, r > baseline \{ return \.ready \}/);
 });
