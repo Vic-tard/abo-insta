@@ -1,6 +1,10 @@
 // FOU-121 : teste le script qui lit les écrans d'Instagram (bloc LECTEUR-INSTAGRAM de WebViewController.swift)
 // sur des pages reconstituées (tests/lecteur/pages). Il faut Playwright et Chromium : npm run test:lecteur.
 // Ces pages imitent les textes d'Instagram ; elles ne prouvent pas que les vrais écrans sont reconnus (test sur iPhone obligatoire).
+// Limites (relecture ChatGPT, 18 nov.) : la vraie structure HTML d'Instagram n'a jamais été observée, seulement des captures.
+// Les pages « liste-fenetre-* » reprennent les textes et boutons visibles le 17 nov. ; les pages « liste-structure-inconnue » et
+// « liste-date-autrement » vérifient le repli : sans carte reconnue, aucune date n'est rattachée à un bouton qui n'est pas le sien,
+// et une ligne sans date lisible ne peut jamais prouver une demande ni un fichier prêt (ExportProof, ReadyProof).
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -275,4 +279,58 @@ test("résumé : « Followers et suivi(e)s » nommée, « 1 élément » seul, o
   assert.equal((await stateOf("resume-bon.html")).info, "one");
   assert.equal((await stateOf("resume-quatre-elements.html")).info, "");
   assert.equal((await stateOf("resume-followers-plus.html")).info, "");
+});
+
+// Tests iPhone du 17 nov. (build 17) : la vraie liste a des sections (« En attente » est un titre) et des cartes datées
+// « Demandée le 17/11/2026 », dans une fenêtre par-dessus la page. Page reconstituée d'après la capture (textes et boutons seulement).
+test("17 nov. : liste dans une fenêtre, « Créer une exportation » caché dessous : la liste est quand même lue", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html");
+  assert.equal(s.create, false, "le bouton est sous la fenêtre");
+  assert.ok(Array.isArray(s.rows), "la liste est lue malgré tout");
+  assert.equal(s.screen, "home");
+});
+
+test("17 nov. : la demande « En attente » est lue avec SA date (titre de section + carte)", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html");
+  assert.equal(s.rows.length, 1, "une seule demande en attente (le titre de section n'est pas une ligne)");
+  assert.match(s.rows[0], /^en attente/);
+  assert.match(s.rows[0], /demandée le 17\/11\/2026/);
+  assert.doesNotMatch(s.rows[0], /télécharger/);
+});
+
+test("17 nov. : l'ancien export (Télécharger + Annuler) est une ligne prête à part, jamais la nouvelle demande", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html");
+  assert.equal(s.ready.length, 1);
+  assert.match(s.ready[0], /demandée le 16\/11\/2026/);
+  assert.match(s.ready[0], /télécharger/);
+  assert.doesNotMatch(s.ready[0], /17\/11/, "la carte prête n'englobe pas la carte en attente");
+});
+
+test("17 nov. : ancien export prêt du MÊME jour : deux cartes séparées, une prête, une en attente", async () => {
+  const s = await stateOf("liste-fenetre-17nov.html?ancien=17/11/2026");
+  assert.equal(s.ready.length, 1);
+  assert.equal(s.rows.length, 1);
+  assert.match(s.ready[0], /télécharger/);
+  assert.doesNotMatch(s.rows[0], /télécharger/);
+});
+
+test("17 nov. : fenêtre marquée comme dialogue : seule la fenêtre est lue, pas la page dessous", async () => {
+  const s = await stateOf("liste-fenetre-dialogue.html");
+  assert.equal(s.rows.length, 1);
+  assert.equal(s.ready.length, 1, "la ligne prête de la page dessous (2/11) n'est pas comptée");
+  assert.match(s.ready[0], /16\/11\/2026/);
+});
+
+// Relecture ChatGPT (18 nov.) : les pages ci-dessus sont reconstituées ; si la vraie structure diffère, la lecture doit rester prudente.
+test("structure inconnue (dates et boutons séparés) : aucune date n'est rattachée à « Télécharger »", async () => {
+  const s = await stateOf("liste-structure-inconnue.html");
+  for (const r of s.ready) assert.doesNotMatch(r, /1[67]\/11/, "un bouton sans carte n'emporte jamais une date");
+  for (const r of s.rows) assert.doesNotMatch(r, /télécharger/);
+});
+
+test("date écrite autrement que « Demandée le » : pas de carte, l'ancienne lecture garde la date de SON bloc, sans inventer d'attente", async () => {
+  const s = await stateOf("liste-date-autrement.html");
+  assert.equal(s.ready.length, 1);
+  assert.match(s.ready[0], /17 nov/, "un seul bouton dans le bloc : sa date part avec lui (la référence ReadyProof protège d'un ancien export du même jour)");
+  assert.deepEqual(s.rows, [], "aucune demande « en attente » inventée");
 });
