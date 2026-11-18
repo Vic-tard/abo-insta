@@ -108,7 +108,7 @@ test("relecture ChatGPT : sans preuve, aucune consigne directe « Touche Téléc
 test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présentée comme « ta demande »", () => {
   const strings = visibleStrings(web);
   for (const s of strings) assert.doesNotMatch(s, /Ta demande d'aujourd'hui|Ta demande est bien enregistrée/, `texte trop affirmatif : ${s}`);
-  assert.match(web, /"✓ Une demande d'aujourd'hui est en cours\. Tu n'as plus rien à faire ici :"/);
+  assert.match(web, /if existing && today \{ return "✓ Demande du jour en cours :" \}/);
   assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
   // « prêt » exige une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour).
   assert.match(web, /if let baseline, r > baseline \{ return \.ready \}/);
@@ -125,7 +125,7 @@ test("vidéo du 18 nov. : une demande en attente visible n'encourage jamais une 
 });
 
 test("vidéo du 18 nov. : ligne d'aujourd'hui sans preuve : texte rassurant, confirmation à la main, jamais « C'est demandé »", () => {
-  assert.match(web, /if todayPendingShown, Date\(\)\.timeIntervalSince\(sent\) > 6 \{\s*return Step\(verb: "Une demande d'aujourd'hui est là :", target: "ne refais rien"/);
+  assert.match(web, /if todayPendingShown, Date\(\)\.timeIntervalSince\(sent\) > 6 \{\s*return Step\(verb: "Demande du jour trouvée :", target: "ne refais rien"/);
   const alert = web.slice(web.indexOf("private func askConfirmRequest()"), web.indexOf("private func warnDuplicate()"));
   assert.match(alert, /self\.manualConfirm = true\s*self\.existingRequest = true\s*self\.existingToday = true/);
   assert.match(web, /if !existingRequest \|\| manualConfirm \{ badSettings = ExportProof\.problem\(lastSummary\) \}/);
@@ -137,4 +137,14 @@ test("vidéo du 18 nov. : une carte prête dit « Expire le », jamais prise pou
   assert.match(web, /if \(!ready && EXPIRES\.test\(low\(lines\[i\]\)\)\) continue;/);
   // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver.
   assert.match(web, /if p > 0 \{ return \.pending \}\s*if let baseline, r > baseline \{ return \.ready \}/);
+});
+
+test("18 nov. (Victor) : bandeau court, compris sans tout lire", () => {
+  // Chaque consigne des étapes de demande et de récupération tient en une phrase courte.
+  const zone = web.slice(web.indexOf("if pendingSeen, requesting, !finished {"), web.indexOf("if !requesting, !downloading { return getStep(getBanner) }"))
+    + web.slice(web.indexOf("private func getStep("), web.indexOf("private var currentStep: Step {"));
+  const tips = [...zone.matchAll(/tip: "((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]);
+  assert.ok(tips.length >= 8);
+  for (const t of tips) assert.ok(t.length <= 75, `consigne trop longue (${t.length}) : ${t}`);
+  assert.match(web, /static let tip = "Instagram prépare ton fichier\. Tu peux revenir dans Zieuton\."/);
 });

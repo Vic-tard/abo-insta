@@ -2187,20 +2187,20 @@ final class MetaViewController: UIViewController {
         switch b {
         case .looking:
             return Step(verb: "Un instant :", target: "je cherche ta demande\(day)",
-                        tip: "Je lis la liste de tes exports chez Instagram. Ne touche rien pour l'instant : je te dis quoi faire.")
+                        tip: "Ne touche rien pour l'instant.")
         case .notYet:
-            return Step(verb: "Pas encore prêt :", target: "ta demande\(day) est en attente",
-                        tip: "Instagram la prépare encore. Tu peux revenir dans Zieuton (‹ Zieuton, en haut à gauche) : je regarde à nouveau à chaque ouverture. Instagram t'envoie aussi un e-mail.")
+            return Step(verb: "Pas encore prêt :", target: "en attente",
+                        tip: "Ta demande\(day) est en préparation. Tu peux revenir plus tard.")
         case .checkDate:
             return Step(verb: "Vérifie la date", target: "de ton export",
-                        tip: "Je n'arrive pas à lire la ligne de ta demande\(day). Une ligne « En attente » n'est pas prête. Parmi les lignes prêtes, la date la plus lointaine est la plus récente.")
+                        tip: "Le fichier le plus récent est celui dont la date est la plus lointaine.")
         case .unproven:
             // Relecture ChatGPT : sans demande prouvée, aucune consigne directe vers un bouton (il peut être celui d'un ancien export).
             return Step(verb: "Vérifie la date", target: "de ton export",
-                        tip: "Je ne sais pas encore quelle ligne est la tienne. Une ligne « En attente » n'est pas prête. Parmi les lignes prêtes, la date la plus lointaine est la plus récente.")
+                        tip: "« En attente » : pas prêt. Le plus récent a la date la plus lointaine.")
         case .ready:
             return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                        tip: "Sur la ligne de ta demande\(day). Zieuton se met à jour tout seul.", look: "button")
+                        tip: "Sur la ligne de ta demande\(day).", look: "button")
         }
     }
 
@@ -2248,11 +2248,11 @@ final class MetaViewController: UIViewController {
         if guarding {
             if guardReady {
                 return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                            tip: "Juste en dessous, sur la page d'Instagram. Zieuton se met à jour tout seul.", look: "button")
+                            tip: "Juste en dessous.", look: "button")
             }
             if Date().timeIntervalSince(guardSince) > Self.guardFor {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
-                            tip: "Je regarde à nouveau quand tu rouvres Zieuton. Instagram t'envoie aussi un e-mail.")
+                            tip: "Je regarde à nouveau quand tu rouvres Zieuton.")
             }
             // Ouvert pour récupérer le fichier : la demande est encore « En attente » (ou à vérifier). Jamais « Touche Télécharger ».
             if !requesting { return getStep(GetBanner.of(waiting: true, proven: false, verdict: getVerdict)) }
@@ -2301,30 +2301,30 @@ final class MetaViewController: UIViewController {
         }
         if pendingSeen, requesting, !finished {
             return Step(verb: "Un instant :", target: "une demande est déjà là",
-                        tip: "Je lis la liste de tes exports chez Instagram. Ne crée pas de nouvelle demande : je te dis quoi faire tout de suite.")
+                        tip: "N'en crée pas d'autre, je vérifie.")
         }
         if toCheck, requesting, !finished {
             // FOU-121 : une ligne de plus, mais sans preuve que c'est la nouvelle demande. Zieuton ne conclut pas à sa place.
-            return Step(verb: "Demande à vérifier :", target: "regarde la liste",
-                        tip: "Une nouvelle ligne « En attente » est apparue. Si elle est datée d'aujourd'hui, touche ce bandeau pour la suivre dans Zieuton. Sinon, ne refais rien tout de suite, je continue de regarder.")
+            return Step(verb: "À vérifier :", target: "ta ligne « En attente »",
+                        tip: "Datée d'aujourd'hui ? Touche ce bandeau. Sinon, ne refais rien.")
         }
         if let sent = sentAt {
             // FOU-121 : une demande pas encore vue n'est jamais un échec. On propose de vérifier, jamais de recommencer.
             // Vidéo du 18 nov. : une ligne « En attente » d'aujourd'hui est à l'écran : on ne dit pas « je ne vois pas de demande ».
             if todayPendingShown, Date().timeIntervalSince(sent) > 6 {
-                return Step(verb: "Une demande d'aujourd'hui est là :", target: "ne refais rien",
-                            tip: "Je n'ai pas pu confirmer seul que c'est la tienne. Si elle est datée d'aujourd'hui, touche ce bandeau pour la suivre dans Zieuton.")
+                return Step(verb: "Demande du jour trouvée :", target: "ne refais rien",
+                            tip: "C'est la tienne ? Touche ce bandeau pour la suivre.")
             }
             if let v = verifiedAt, Date().timeIntervalSince(v) > 6 {
-                return Step(verb: "Je ne vois pas encore", target: "de nouvelle demande",
-                            tip: "Regarde la liste : une ligne « En attente » d'aujourd'hui, c'est bon, ne refais rien. Si tu n'en vois aucune, tu peux toucher « Créer une exportation ».")
+                return Step(verb: "Pas encore vue :", target: "regarde la liste",
+                            tip: "Aucune ligne « En attente » d'aujourd'hui ? Tu peux recréer.")
             }
             if Date().timeIntervalSince(sent) > 20 {
-                return Step(verb: "Je n'ai pas encore vu ta demande :", target: "Vérifier son état",
-                            tip: "Ça ne veut pas dire qu'elle a raté : ne la refais pas. Touche ce bandeau, j'ouvre la liste de tes exports chez Instagram (je n'envoie rien).")
+                return Step(verb: "Pas encore vue :", target: "vérifie son état",
+                            tip: "Ne la refais pas : touche ce bandeau, j'ouvre la liste.")
             }
-            return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…",
-                        tip: "Je vérifie qu'elle apparaît dans la liste d'Instagram.")
+            return Step(verb: "Bien joué !", target: "Instagram enregistre…",
+                        tip: "Je vérifie qu'elle est dans la liste.")
         }
         if !requesting, !downloading { return getStep(getBanner) }
         if lostShown {
@@ -3261,11 +3261,12 @@ enum BannerTone: Equatable {
 /// Test réel : l'utilisateur restait sur Instagram sans voir « ‹ Zieuton » en haut à gauche.
 enum LeaveHint {
     static func verb(existing: Bool, today: Bool = false) -> String {
-        if existing && today { return "✓ Une demande d'aujourd'hui est en cours. Tu n'as plus rien à faire ici :" }
-        return existing ? "✓ Une demande est déjà en cours. Tu n'as plus rien à faire ici :" : "✓ C'est demandé ! Tu n'as plus rien à faire ici :"
+        // 18 nov. (Victor) : bandeau court, compris d'un coup d'œil. Le bouton « Revenir dans Zieuton » est juste dessous.
+        if existing && today { return "✓ Demande du jour en cours :" }
+        return existing ? "✓ Demande déjà en cours :" : "✓ C'est demandé :"
     }
-    static let target = "touche ‹ Zieuton en haut à gauche"
-    static let tip = "Instagram prépare ton fichier. Tu peux fermer l'app : quand tu reviens dans Zieuton, je regarde où il en est."
+    static let target = "rien d'autre à faire"
+    static let tip = "Instagram prépare ton fichier. Tu peux revenir dans Zieuton."
 
     /// Le bouton « Revenir dans Zieuton » : seulement pendant le guet d'une demande vérifiée, fichier pas encore prêt,
     /// sans réglage à corriger, sans page en panne, sans téléchargement en cours.

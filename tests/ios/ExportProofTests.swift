@@ -225,7 +225,7 @@ check(!LeaveHint.showsButton(guarding: true, ready: false, badSettings: false, p
       "téléchargement en cours : on ne propose pas de fermer")
 check(LeaveHint.verb(existing: false).hasPrefix("✓") && LeaveHint.verb(existing: true).hasPrefix("✓"), "message de sortie en lilas (réussite vérifiée)")
 check(BannerTone.of(verb: LeaveHint.verb(existing: false), isWarning: false) == .success, "couleur : réussite")
-check(LeaveHint.target.contains("‹ Zieuton") && LeaveHint.target.contains("en haut à gauche"), "le message dit où toucher")
+check(LeaveHint.tip.contains("revenir dans Zieuton") && LeaveHint.tip.count <= 75, "18 nov. : message court, qui dit comment revenir (le bouton est juste dessous)")
 check(!LeaveHint.tip.contains("toutes les") && !LeaveHint.tip.contains("en continu"), "pas de promesse de surveillance continue")
 
 // 22. FOU-126 : une ligne est-elle datée du jour de la demande ?
