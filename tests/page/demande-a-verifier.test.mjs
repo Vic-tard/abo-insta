@@ -142,10 +142,11 @@ test("ancienne coque (aucun évènement « unsure ») : comportement inchangé, 
   }
 });
 
-test("page de main (plus ancienne) : l'évènement « unsure » est ignoré sans erreur, la coque peut l'envoyer sans risque", async () => {
-  // La page en ligne sur le canal stable ne connaît pas « unsure ». On la reprend telle quelle depuis main.
+test("page du build 17 (plus ancienne) : l'évènement « unsure » est ignoré sans erreur, la coque peut l'envoyer sans risque", async () => {
+  // Une page qui ne connaît pas « unsure » : celle du build 17 (main au 17 nov., commit 40edbe4), reprise telle quelle.
+  // (origin/main contient désormais la nouvelle page : elle ne peut plus servir de « page ancienne ».)
   let old;
-  try { old = execSync("git show origin/main:index.html", { cwd: root, encoding: "utf8", maxBuffer: 64 << 20 }); }
+  try { old = execSync("git show 40edbe4:index.html", { cwd: root, encoding: "utf8", maxBuffer: 64 << 20 }); }
   catch (e) { console.log("main introuvable (copie sans historique) : test sauté", e.message); return; }
   const dir = mkdtempSync(join(tmpdir(), "zieuton-main-"));
   writeFileSync(join(dir, "index.html"), old);
