@@ -109,13 +109,19 @@ Règle : iOS ne laisse pas une app vérifier en permanence quand elle est fermé
 | 4.14 | Bout en bout : fichier vraiment prêt → « Télécharger » touché par l'utilisateur → import | Import automatique, bilan affiché, plus aucun rappel ensuite | À faire |
 | 4.15 | Aucune notification « expire bientôt » ou « dernier jour » | Jamais vue, même avec un ancien rappel programmé par le build 15 (il est effacé au premier lancement du build 17) | À faire |
 | 4.16 | Page ancienne (canal stable) + coque 17 | Les notifications marchent quand même (l'autorisation est demandée au moment de la preuve) | À faire |
-| 4.17 | **Liste dans la fenêtre par-dessus la page** (croix en haut), juste après « Commencer l'exportation » (cas du 17 nov., 17 h 32) | La carte « En attente », « Demandée le » du jour, est reconnue : « C'est demandé ✓ » dans le bandeau et la notification, sans « Vérifier son état » | À faire (build 20) |
-| 4.18 | **Ancien export prêt + nouvelle demande en attente**, ouverture pour récupérer le fichier (cas du 17 nov., 17 h 34) | Bandeau « Pas encore prêt : ta demande du JJ/MM est en attente ». Aucun cercle, aucun « Touche Télécharger » | À faire (build 20) |
-| 4.19 | Même liste, quand la carte du jour reçoit « Télécharger » | « C'est prêt ! Touche Télécharger ». Cercle seulement s'il n'y a qu'un bouton « Télécharger » à l'écran. « Ton fichier est prêt 🎉 » une seule fois | À faire (build 20) |
-| 4.20 | Demande du jour vue en retard (cas du 17 nov., 17 h 35) | « Une demande d'aujourd'hui est en cours », jamais « Une demande était déjà en cours » ni « Ta demande » (une date ne prouve pas que c'est la tienne) | À faire (build 20) |
+| 4.17 | **Liste dans la fenêtre par-dessus la page** (croix en haut), juste après « Commencer l'exportation » (cas du 17 nov., 17 h 32) | La carte « En attente », « Demandée le » du jour, est reconnue : « C'est demandé ✓ » dans le bandeau et la notification, sans « Vérifier son état » | À faire (build 21) |
+| 4.18 | **Ancien export prêt + nouvelle demande en attente**, ouverture pour récupérer le fichier (cas du 17 nov., 17 h 34) | Bandeau « Pas encore prêt : ta demande du JJ/MM est en attente ». Aucun cercle, aucun « Touche Télécharger » | À faire (build 21) |
+| 4.19 | Même liste, quand la demande quitte « En attente » et qu'une carte prête « Expire le » (jour de la demande + 4) arrive | « C'est prêt ! Touche Télécharger ». Cercle seulement s'il n'y a qu'un bouton « Télécharger » à l'écran. « Ton fichier est prêt 🎉 » une seule fois | À faire (build 21) |
+| 4.20 | Demande du jour vue en retard (cas du 17 nov., 17 h 35) | « Une demande d'aujourd'hui est en cours », jamais « Une demande était déjà en cours » ni « Ta demande » (une date ne prouve pas que c'est la tienne) | À faire (build 21) |
 | 4.21 | Vraie demande d'un autre jour encore en attente | « Une demande est déjà en cours » (texte inchangé) | À faire (si la situation se présente) |
-| 4.22 | **Deux exports le même jour** : un premier demandé le matin et déjà prêt, puis une nouvelle demande (relecture ChatGPT du 18 nov.) | Tant que la nouvelle est « En attente » : « Pas encore prêt », aucun cercle, aucune notification « prêt ». « Prêt » seulement quand une deuxième ligne du jour a « Télécharger » | À faire (si possible) |
-| 4.23 | Ouvrir Instagram pour récupérer un fichier **sans demande faite dans Zieuton** (par exemple faite dans l'app Instagram) | « Vérifie la date de ton export », jamais « Touche Télécharger », aucun cercle | À faire (build 20) |
+| 4.22 | **Deux exports le même jour** : un premier demandé le matin et déjà prêt, puis une nouvelle demande (relecture ChatGPT du 18 nov.) | Tant que la nouvelle est « En attente » : « Pas encore prêt », aucun cercle, aucune notification « prêt ». « Prêt » seulement quand une deuxième carte « Expire le » (jour + 4) arrive | À faire (si possible) |
+| 4.23 | Ouvrir Instagram pour récupérer un fichier **sans demande faite dans Zieuton** (par exemple faite dans l'app Instagram) | « Vérifie la date de ton export », jamais « Touche Télécharger », aucun cercle | À faire (build 21) |
+| 4.24 | **Retour dans Zieuton avant la preuve** (vidéo du 18 nov.) | Écran « Demande à vérifier », jamais « Zieuton en haut, Instagram en bas ». « Vérifier dans Instagram » reconnaît la demande déjà là, sans rien refaire | À faire (build 21) |
+| 4.25 | Sur la liste des exports : faire défiler, changer d'onglet, toucher une carte | Jamais « Oups, pas le bon bouton ! », jamais « Touche Créer une exportation » | À faire (build 21) |
+| 4.26 | Un autre export devient prêt pendant que la demande est « En attente » | « Pas encore prêt ». Si deux fichiers nouveaux arrivent : « Vérifie la date », jamais « prêt » automatique | À faire (si la situation se présente) |
+| 4.27 | Fichier prêt pour un **autre compte** Instagram | Jamais « C'est prêt » pour ce compte-ci | À faire (si la situation se présente) |
+
+Le scénario pas à pas (S1 à S15) est dans `docs/DIAGNOSTIC-VIDEO-18NOV.md` (correctif 4, PR #150).
 
 ## 5. Achats (sandbox ou TestFlight, aucun vrai paiement)
 
