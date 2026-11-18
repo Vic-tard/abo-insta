@@ -753,6 +753,11 @@ extension WebViewController: WKScriptMessageHandler {
             self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('requested', { existing: \(existing), today: \(today) }); true")
             ExportWatcher.shared.requested(existing: existing, today: today, acct: acct)
         }
+        // Relecture ChatGPT (18 nov.) : demande possible mais pas prouvée. La page passe sur « Demande à vérifier » (une page plus
+        // ancienne ignore cet évènement). Pas de « C'est demandé », pas de guet ni de notification tant que ce n'est pas vérifié.
+        meta.onLeftUnsure = { [weak self] today in
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('unsure', { today: \(today) }); true")
+        }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
         meta.modalPresentationStyle = .fullScreen
         present(meta, animated: true)
@@ -919,12 +924,22 @@ final class MetaViewController: UIViewController {
     private var pickedAt = -1
     private var lastTapAt = Date.distantPast
     private var createSince: Date?
+    /// Vidéo du 18 nov. : depuis quand la liste des exports est lue (fenêtre par-dessus, « Créer une exportation » caché ou pas).
+    private var listSince: Date?
+    /// Vidéo du 18 nov. : avant toute touche, la liste montre déjà une demande « En attente » : on ne dit jamais « Touche Créer ».
+    private var pendingSeen = false
+    /// Vidéo du 18 nov. : « Commencer » touché, pas de preuve, mais une ligne « En attente » datée d'aujourd'hui est à l'écran.
+    private var todayPendingShown = false
+    /// L'utilisateur a confirmé lui-même la ligne : jamais « C'est demandé » (pas de preuve automatique), mais « une demande d'aujourd'hui ».
+    private var manualConfirm = false
     /// Les alertes ne s'allument que si la page est bien en français ou en anglais (bouton « Créer une exportation » reconnu).
     private var guarded: Bool { steps.contains { $0.ok != nil } && seenCreate != .distantPast }
 
     /// La demande est prouvée chez Instagram (true : elle était déjà en cours).
     /// (existing, today) : demande déjà en cours chez Instagram ; et, dans ce cas, datée d'aujourd'hui (peut-être la sienne, sans preuve).
     var onRequested: ((Bool, Bool) -> Void)?
+    /// Instagram fermé avec une demande possible mais pas prouvée (true : une ligne « En attente » d'aujourd'hui était visible).
+    var onLeftUnsure: ((Bool) -> Void)?
     var onFile: ((URL) -> Void)?
 
     private let url: URL
@@ -987,6 +1002,8 @@ final class MetaViewController: UIViewController {
     /// FOU-126 (tests iPhone du 17 nov.) : ouvert pour récupérer le fichier : dernier verdict de la preuve « prêt » (ReadyProof).
     /// Le bandeau et le cercle suivent ce verdict, jamais la seule présence d'un bouton « Télécharger ».
     private var getVerdict: ReadyProof.Verdict?
+    /// Dernières cartes prêtes lues (pour dire la date « Expire le » de la bonne ligne, si elle est sûre).
+    private var lastReady: [String]?
     private var guardSince = Date.distantPast
     private var guardTimer: Timer?
     /// On arrête de recharger au bout de 20 min : la notification prend le relais.
@@ -1284,6 +1301,22 @@ final class MetaViewController: UIViewController {
               if (r.height < 14 || r.height > 140 || r.width > innerWidth + 4) return null;
               return { x: r.left, y: r.top, w: r.width, h: r.height, at: at };
             };
+            // Relecture ChatGPT (18 nov., 15 h 55) : « Télécharger » ne dit pas à quelle carte il appartient. On ne l'entoure que
+            // s'il n'y en a qu'UN dans toute la liste (même caché par le défilement) : il est alors forcément celui du fichier prouvé.
+            // Un ancien export encore disponible = deux boutons = aucun cercle ; le bandeau dit quelle ligne vérifier.
+            if (RING.indexOf('télécharger') >= 0 || RING.indexOf('download') >= 0) {
+              var every = [];
+              for (var k = 0; k < els.length; k++) {
+                var e = els[k];
+                if (e.childElementCount > 3) continue;
+                var tt = low(e);
+                if (tt.length > 60 || RING.indexOf(tt) < 0) continue;
+                var bx = e.closest('button,a,label,[role=button],[role=radio],[role=checkbox],[role=link]') || e;
+                var rr = bx.getBoundingClientRect();
+                if ((rr.width > 0 || rr.height > 0) && every.indexOf(bx) < 0) every.push(bx);
+              }
+              if (inner(every).length !== 1) return null;
+            }
             if (hits.length === 1) return pack(hits[0], 0);
             if (hits.length > 1) return null;
             if (far.length === 1) return pack(far[0], far[0].getBoundingClientRect().top >= innerHeight ? 1 : -1);
@@ -1315,7 +1348,10 @@ final class MetaViewController: UIViewController {
           // carte en dessous (nom du compte, « Followers et suivi(e)s », « Exporter vers Appareil · Une fois · JSON »,
           // « Demandée le 17/11/2026 », bouton « Annuler »). Une carte prête a en plus « Télécharger ». La liste peut s'afficher dans une
           // fenêtre par-dessus la page (croix en haut) : on lit alors cette fenêtre, sans exiger que « Créer une exportation » soit visible.
-          var DATED = /^(demandée le|demandé le|requested on)\b/;
+          // Vidéo iPhone du 18 nov. : une carte PRÊTE (section « Téléchargements disponibles ») ne dit pas « Demandée le » mais
+          // « Expire le 22/11/2026 · Moins de 1 Mo » (Instagram garde le fichier 4 jours). Sa date est donc une date d'expiration.
+          var DATED = /^(demandée le|demandé le|requested on|expire le|expires on|expires)\b/;
+          var EXPIRES = /^(expire le|expires on|expires)\b/;
           var DLNAME = /^(télécharger|download)$/;
           var BTN = 'button,a,[role=button]';
           var lit = function (el) { var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
@@ -1344,8 +1380,10 @@ final class MetaViewController: UIViewController {
               }
               if (!card || cards.some(function (c) { return c.el === card; })) continue;
               var ready = Array.prototype.some.call(card.querySelectorAll(BTN), function (b) { return DLNAME.test(low(b)) && lit(b); });
-              // La date d'abord : le texte est coupé à 160 caractères, elle ne doit jamais tomber.
-              cards.push({ el: card, ready: ready, text: (low(lines[i]) + ' · ' + low(card)).replace(/\s+/g, ' ').slice(0, 160) });
+              // Une carte « Expire le … » sans « Télécharger » visible n'est jamais une demande en attente : on l'ignore.
+              if (!ready && EXPIRES.test(low(lines[i]))) continue;
+              // La date d'abord : le texte est coupé à 220 caractères, elle ne doit jamais tomber (ni « Télécharger », vidéo du 18 nov.).
+              cards.push({ el: card, ready: ready, text: (low(lines[i]) + ' · ' + low(card)).replace(/\s+/g, ' ').slice(0, 220) });
             }
             return cards;
           };
@@ -1647,6 +1685,8 @@ final class MetaViewController: UIViewController {
         if guarding { return guardReady ? ["Télécharger", "Download"] : [] }
         // FOU-126 : pour récupérer le fichier, on n'entoure « Télécharger » que si la preuve dit « prêt ».
         if !requesting { return getBanner == .ready ? ["Télécharger", "Download"] : [] }
+        // Une demande est déjà dans la liste : jamais de cercle sur « Créer une exportation ».
+        if pendingSeen { return [] }
         // Lecture sûre seulement : l'écran d'Instagram reconnu est bien celui de l'étape, depuis un moment, sans touche récente
         // ni page qui charge. Au moindre doute, pas de cercle : le bandeau suffit.
         let now = Date()
@@ -1890,6 +1930,10 @@ final class MetaViewController: UIViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        if isBeingDismissed, LeaveHint.leftUnsure(requesting: requesting, finished: finished, tapped: sentAt != nil, toCheck: toCheck,
+                                                  todayShown: todayPendingShown, pendingSeen: pendingSeen) {
+            onLeftUnsure?(todayPendingShown || proof.pendingToday)
+        }
         watchTimer?.invalidate()
         guardTimer?.invalidate()
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "zyeutoTap")
@@ -1918,13 +1962,17 @@ final class MetaViewController: UIViewController {
         avatar.layer.cornerCurve = .continuous
         avatar.clipsToBounds = true
         avatar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 50), avatar.heightAnchor.constraint(equalToConstant: 50)])
+        // 18 nov. (Victor) : bandeau centré. Le zieuteur passe en haut à droite, à côté des étapes.
+        NSLayoutConstraint.activate([avatar.widthAnchor.constraint(equalToConstant: 38), avatar.heightAnchor.constraint(equalToConstant: 38)])
 
         sayLabel.numberOfLines = 3
+        sayLabel.textAlignment = .center
         sayLabel.adjustsFontSizeToFitWidth = true
         sayLabel.minimumScaleFactor = 0.8
-        tipLabel.font = Self.rounded(15, .semibold)
-        tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
+        // La consigne, en petit sous le titre : le titre dit la situation, la consigne dit quoi faire.
+        tipLabel.font = Self.rounded(13.5, .semibold)
+        tipLabel.textColor = Self.ink.withAlphaComponent(0.7)
+        tipLabel.textAlignment = .center
         tipLabel.numberOfLines = 0
 
         // Précédent / Suivant en petites pastilles : le bandeau avance tout seul, elles servent seulement en secours.
@@ -1943,7 +1991,7 @@ final class MetaViewController: UIViewController {
         nextButton.accessibilityLabel = "Étape suivante"
 
         // FOU-121 : le zieuteur passe en bas à droite du bandeau ; le texte prend toute la largeur en haut.
-        let head = UIStackView(arrangedSubviews: [sayLabel, prevButton, nextButton])
+        let head = UIStackView(arrangedSubviews: [prevButton, sayLabel, nextButton])
         head.spacing = 8
         head.alignment = .center
         sayLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -2009,26 +2057,25 @@ final class MetaViewController: UIViewController {
         let lower = UIStackView(arrangedSubviews: [replicaBox, tipLabel, homeButton])
         lower.axis = .vertical
         lower.spacing = 8
-        let room = UIView()
-        room.translatesAutoresizingMaskIntoConstraints = false
-        room.widthAnchor.constraint(equalToConstant: 54).isActive = true
-        room.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-        let lowerRow = UIStackView(arrangedSubviews: [lower, room])
-        lowerRow.alignment = .top
-        lowerRow.spacing = 4
-        let all = UIStackView(arrangedSubviews: [phaseRow, head, lowerRow])
+        // En haut : les étapes et le zieuteur. Au milieu, en gros : la situation. Dessous : le bouton, puis la consigne en petit.
+        // L'espace libre va entre les étapes et le zieuteur (même quand les étapes sont cachées : le zieuteur garde sa taille).
+        let gap = UIView()
+        gap.setContentHuggingPriority(UILayoutPriority(1), for: .horizontal)
+        avatar.setContentHuggingPriority(.required, for: .horizontal)
+        avatar.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let top = UIStackView(arrangedSubviews: [phaseRow, gap, avatar])
+        top.alignment = .center
+        top.spacing = 8
+        let all = UIStackView(arrangedSubviews: [top, head, lower])
         all.axis = .vertical
-        all.spacing = 8
+        all.spacing = 10
         all.translatesAutoresizingMaskIntoConstraints = false
         banner.addSubview(all)
-        banner.addSubview(avatar)
         NSLayoutConstraint.activate([
             all.topAnchor.constraint(equalTo: banner.topAnchor, constant: 12),
-            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -12),
+            all.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -14),
             all.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 14),
-            all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
-            avatar.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -12),
-            avatar.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -10),
+            all.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
         ])
         // Toucher le bandeau ferme l'alerte.
         // Relecture ChatGPT (FOU-124) : le geste du bandeau ne prend jamais une touche destinée à un bouton
@@ -2062,6 +2109,11 @@ final class MetaViewController: UIViewController {
         }
         // « À vérifier » : une simple touche ne valide rien, on demande une confirmation explicite (relecture ChatGPT).
         if ExportProof.bannerTap(requesting: requesting, finished: finished, toCheck: toCheck) == .askConfirm {
+            askConfirmRequest()
+            return
+        }
+        // Une ligne d'aujourd'hui sans preuve : l'utilisateur confirme lui-même, explicitement (jamais sur une simple touche).
+        if requesting, !finished, todayPendingShown, let sent = sentAt, Date().timeIntervalSince(sent) > 6 {
             askConfirmRequest()
             return
         }
@@ -2167,20 +2219,21 @@ final class MetaViewController: UIViewController {
         switch b {
         case .looking:
             return Step(verb: "Un instant :", target: "je cherche ta demande\(day)",
-                        tip: "Je lis la liste de tes exports chez Instagram. Ne touche rien pour l'instant : je te dis quoi faire.")
+                        tip: "Ne touche rien pour l'instant.")
         case .notYet:
-            return Step(verb: "Pas encore prêt :", target: "ta demande\(day) est en attente",
-                        tip: "Instagram la prépare encore. Tu peux revenir dans Zieuton (‹ Zieuton, en haut à gauche) : je regarde à nouveau à chaque ouverture. Instagram t'envoie aussi un e-mail.")
+            return Step(verb: "Pas encore prêt :", target: "en attente",
+                        tip: "Ta demande\(day) est en préparation. Tu peux revenir plus tard.")
         case .checkDate:
             return Step(verb: "Vérifie la date", target: "de ton export",
-                        tip: "Je n'arrive pas à lire la ligne de ta demande\(day). Regarde la date de chaque ligne avant de toucher quoi que ce soit : une autre date est un ancien export.")
+                        tip: "Le fichier le plus récent est celui dont la date est la plus lointaine.")
         case .unproven:
             // Relecture ChatGPT : sans demande prouvée, aucune consigne directe vers un bouton (il peut être celui d'un ancien export).
             return Step(verb: "Vérifie la date", target: "de ton export",
-                        tip: "Je ne sais pas encore quelle ligne est la tienne. Regarde la date de chaque ligne : une ligne « En attente » n'est pas prête, une autre date est un ancien export.")
+                        tip: "« En attente » : pas prêt. Le plus récent a la date la plus lointaine.")
         case .ready:
             return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                        tip: "Sur la ligne de ta demande\(day). Zieuton se met à jour tout seul.", look: "button")
+                        tip: GetBanner.readyTip(expiry: ExportWatcher.shared.identifiedExpiry(ready: lastReady),
+                                                day: ExportWatcher.shared.requestDay), look: "button")
         }
     }
 
@@ -2228,16 +2281,18 @@ final class MetaViewController: UIViewController {
         if guarding {
             if guardReady {
                 return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                            tip: "Juste en dessous, sur la page d'Instagram. Zieuton se met à jour tout seul.", look: "button")
+                            tip: GetBanner.readyTip(expiry: ExportWatcher.shared.identifiedExpiry(ready: lastReady),
+                                                day: ExportWatcher.shared.requestDay), look: "button")
             }
             if Date().timeIntervalSince(guardSince) > Self.guardFor {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
-                            tip: "Je regarde à nouveau quand tu rouvres Zieuton. Instagram t'envoie aussi un e-mail.")
+                            tip: "Je regarde à nouveau quand tu rouvres Zieuton.")
             }
             // Ouvert pour récupérer le fichier : la demande est encore « En attente » (ou à vérifier). Jamais « Touche Télécharger ».
             if !requesting { return getStep(GetBanner.of(waiting: true, proven: false, verdict: getVerdict)) }
             // Demande vérifiée (on n'arrive ici qu'après la preuve) : on dit clairement comment sortir d'Instagram.
-            return Step(verb: LeaveHint.verb(existing: existingRequest, today: existingToday), target: LeaveHint.target, tip: LeaveHint.tip)
+            return Step(verb: LeaveHint.verb(existing: existingRequest, today: existingToday),
+                        target: LeaveHint.title(existing: existingRequest, today: existingToday), tip: LeaveHint.tip)
         }
         if cookiesShown {
             return Step(verb: "Cookies : touche", target: "Refuser les cookies optionnels",
@@ -2279,23 +2334,32 @@ final class MetaViewController: UIViewController {
                 : Step(verb: "Instagram vérifie que c'est toi :", target: "tape ton mot de passe",
                        tip: "Puis touche « Continuer ». Chez Instagram, comme d'habitude : Zieuton ne le voit jamais.")
         }
+        if pendingSeen, requesting, !finished {
+            return Step(verb: "Un instant :", target: "une demande est déjà là",
+                        tip: "N'en crée pas d'autre, je vérifie.")
+        }
         if toCheck, requesting, !finished {
             // FOU-121 : une ligne de plus, mais sans preuve que c'est la nouvelle demande. Zieuton ne conclut pas à sa place.
-            return Step(verb: "Demande à vérifier :", target: "regarde la liste",
-                        tip: "Une nouvelle ligne « En attente » est apparue. Si elle est datée d'aujourd'hui, c'est ta demande : touche ce bandeau. Sinon, ne refais rien tout de suite, je continue de regarder.")
+            return Step(verb: "À vérifier :", target: "ta ligne « En attente »",
+                        tip: "Datée d'aujourd'hui ? Touche ce bandeau. Sinon, ne refais rien.")
         }
         if let sent = sentAt {
             // FOU-121 : une demande pas encore vue n'est jamais un échec. On propose de vérifier, jamais de recommencer.
+            // Vidéo du 18 nov. : une ligne « En attente » d'aujourd'hui est à l'écran : on ne dit pas « je ne vois pas de demande ».
+            if todayPendingShown, Date().timeIntervalSince(sent) > 6 {
+                return Step(verb: "Demande du jour trouvée :", target: "ne refais rien",
+                            tip: "C'est la tienne ? Touche ce bandeau pour la suivre.")
+            }
             if let v = verifiedAt, Date().timeIntervalSince(v) > 6 {
-                return Step(verb: "Je ne vois pas encore", target: "de nouvelle demande",
-                            tip: "Regarde la liste : une ligne « En attente » d'aujourd'hui, c'est bon, ne refais rien. Si tu n'en vois aucune, tu peux toucher « Créer une exportation ».")
+                return Step(verb: "Pas encore vue :", target: "regarde la liste",
+                            tip: "Aucune ligne « En attente » d'aujourd'hui ? Tu peux recréer.")
             }
             if Date().timeIntervalSince(sent) > 20 {
-                return Step(verb: "Je n'ai pas encore vu ta demande :", target: "Vérifier son état",
-                            tip: "Ça ne veut pas dire qu'elle a raté : ne la refais pas. Touche ce bandeau, j'ouvre la liste de tes exports chez Instagram (je n'envoie rien).")
+                return Step(verb: "Pas encore vue :", target: "vérifie son état",
+                            tip: "Ne la refais pas : touche ce bandeau, j'ouvre la liste.")
             }
-            return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…",
-                        tip: "Je vérifie qu'elle apparaît dans la liste d'Instagram.")
+            return Step(verb: "Bien joué !", target: "Instagram enregistre…",
+                        tip: "Je vérifie qu'elle est dans la liste.")
         }
         if !requesting, !downloading { return getStep(getBanner) }
         if lostShown {
@@ -2347,6 +2411,15 @@ final class MetaViewController: UIViewController {
     /// Ce que le bandeau affiche en ce moment : on ne le redessine que si ça change vraiment.
     private var shownKey = ""
 
+    /// Vidéo du 18 nov. : la liste est visible mais la preuve est incertaine (« Demande à vérifier », ou une ligne d'aujourd'hui
+    /// sans preuve) : « Revenir dans Zieuton » est proposé aussi, pour sortir d'Instagram sans rien refaire.
+    private var unsureShown: Bool {
+        guard requesting, !finished else { return false }
+        if toCheck { return true }
+        if todayPendingShown, let sent = sentAt { return Date().timeIntervalSince(sent) > 6 }
+        return false
+    }
+
     private func showStep(animated: Bool = true) {
         let step = currentStep
         let normal = pageKnown && codeShown.isEmpty && !(loginShown || downloading || sentAt != nil)
@@ -2354,7 +2427,7 @@ final class MetaViewController: UIViewController {
                                          requested: sentAt != nil || toCheck, file: !requesting || guarding || finished || downloading)
         let reduced = keyboardUp && step.tone == .consigne
         let home = LeaveHint.showsButton(guarding: guarding, ready: guardReady, badSettings: badSettings != nil,
-                                         pageProblem: !pageProblem.isEmpty, downloading: downloading)
+                                         pageProblem: !pageProblem.isEmpty, downloading: downloading, unsure: unsureShown)
         let key = [home ? "H" : "", step.verb, step.target, step.after, step.tip, step.look, normal ? "1" : "0", String(index), warning == nil ? "" : "!", lostShown ? "L" : "", upShown ? "U" : "", cookiesShown ? "C" : "", "\(step.tone)", String(phase), reduced ? "K" : ""].joined(separator: "|")
         guard key != shownKey else { return }
         shownKey = key
@@ -2362,12 +2435,15 @@ final class MetaViewController: UIViewController {
             // FOU-121 P4 : texte toujours foncé ; c'est la couleur du bandeau qui dit s'il faut corriger quelque chose.
             let fg: UIColor = Self.ink
             let say = NSMutableAttributedString()
+            // 18 nov. (Victor) : centré ; la situation en gros, sur sa propre ligne.
+            let centered = NSMutableParagraphStyle()
+            centered.alignment = .center
             if !step.verb.isEmpty {
-                say.append(NSAttributedString(string: step.verb + " ", attributes: [.font: Self.rounded(17, .medium), .foregroundColor: fg.withAlphaComponent(0.75)]))
+                say.append(NSAttributedString(string: step.verb + "\n", attributes: [.font: Self.rounded(16, .semibold), .foregroundColor: fg.withAlphaComponent(0.75), .paragraphStyle: centered]))
             }
-            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(23, .heavy), .foregroundColor: fg]))
+            say.append(NSAttributedString(string: step.target, attributes: [.font: Self.rounded(26, .heavy), .foregroundColor: fg, .paragraphStyle: centered]))
             if !step.after.isEmpty {
-                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(17, .semibold), .foregroundColor: fg]))
+                say.append(NSAttributedString(string: ", " + step.after, attributes: [.font: Self.rounded(17, .semibold), .foregroundColor: fg, .paragraphStyle: centered]))
             }
             self.sayLabel.attributedText = say
             self.tipLabel.textColor = Self.ink.withAlphaComponent(0.8)
@@ -2561,6 +2637,8 @@ final class MetaViewController: UIViewController {
         }
         // Cases à cocher libres, ou grand bloc de texte (une zone vide de la page) : rien à dire.
         if loose || steps[index].free || t.count > 120 { return }
+        // Vidéo du 18 nov. : sur la liste des exports, on regarde, on change d'onglet, on fait défiler : jamais « mauvais bouton ».
+        if ExportProof.listIsCalm(screen: screenKey, rowsShown: Date().timeIntervalSince(seenRows) < 1.6) { return }
         warn("Oups, pas le bon bouton !", Self.backHint)
     }
 
@@ -2639,6 +2717,7 @@ final class MetaViewController: UIViewController {
         if state["create"] as? Bool == true { seenCreate = now }
         // FOU-126 : la liste des exports est lue pour la preuve « prêt » (ligne de la demande, jamais un simple décompte).
         let watcher = ExportWatcher.shared
+        if mainFrame, let ready = state["ready"] as? [String] { lastReady = ready }
         if mainFrame, watcher.isWaiting, !downloading {
             let verdict = watcher.observe(pending: state["rows"] as? [String], ready: state["ready"] as? [String],
                                           login: state["login"] as? Bool == true, now: now)
@@ -2727,7 +2806,10 @@ final class MetaViewController: UIViewController {
         guard requesting, !login, code.isEmpty else { return }
         let rowsFresh = now.timeIntervalSince(seenRows) < 1.6
         if createVisible { if createSince == nil { createSince = now } } else { createSince = nil }
-        let homeSettled = createSince.map { now.timeIntervalSince($0) > 1.5 } ?? false
+        // Vidéo du 18 nov. : la liste peut être lue sans que « Créer une exportation » soit visible (fenêtre par-dessus, liste
+        // défilée jusqu'à « En attente »). Une liste lue depuis 1,5 s suffit aussi pour reconnaître une demande déjà en cours.
+        if rowsFresh { if listSince == nil { listSince = now } } else { listSince = nil }
+        let homeSettled = [createSince, listSince].contains { d in d.map { now.timeIntervalSince($0) > 1.5 } ?? false }
         // FOU-121 : la demande n'est confirmée que par une preuve vue chez Instagram : la touche « Commencer l'exportation »
         // vue, puis une ligne « En attente » de plus qu'avant, datée d'aujourd'hui. Ni le bouton qui disparaît, ni un délai,
         // ni un retour en arrière ne suffisent. Une ligne de plus sans cette preuve (ancienne ligne arrivée en retard,
@@ -2741,6 +2823,13 @@ final class MetaViewController: UIViewController {
         // Hors de la liste depuis un moment (il est reparti dans le parcours, par exemple) : on ne lui demande plus de vérifier.
         if toCheck, now.timeIntervalSince(seenRows) > 4 { toCheck = false; showStep() }
         if toCheck { return }
+        // Une demande est déjà dans la liste, avant toute touche : le bandeau ne dit pas « Touche Créer une exportation »
+        // le temps de la reconnaître (principe : une demande en attente visible n'encourage jamais une nouvelle demande).
+        let seen = sentAt == nil && !allowSecond && rowsFresh && proof.alreadyPending
+        if seen != pendingSeen { pendingSeen = seen; showStep() }
+        // « Commencer » touché, sans preuve : une ligne « En attente » datée d'aujourd'hui à l'écran rassure, sans rien conclure.
+        let todayRow = sentAt != nil && rowsFresh && (lastRows ?? []).contains { ExportProof.isDated($0, day: now, now: now) }
+        if todayRow != todayPendingShown { todayPendingShown = todayRow; showStep() }
         // Une demande était déjà en cours avant de commencer : inutile d'en refaire une, on guette le fichier.
         if sentAt == nil, !allowSecond, homeSettled, rowsFresh, proof.alreadyPending {
             existingRequest = true
@@ -2800,6 +2889,10 @@ final class MetaViewController: UIViewController {
         badSettings = nil
         existingRequest = false
         existingToday = false
+        manualConfirm = false
+        pendingSeen = false
+        todayPendingShown = false
+        listSince = nil
         // La demande d'avant est bien dans la liste : sans ça, Zieuton bloquerait sur « une demande est déjà en cours ».
         allowSecond = true
         proof.reset()
@@ -2933,9 +3026,14 @@ final class MetaViewController: UIViewController {
                                       preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Pas sûr, je regarde encore", style: .cancel))
         alert.addAction(UIAlertAction(title: "Oui, c'est ma demande", style: .default) { [weak self] _ in
-            guard let self, self.requesting, !self.finished, self.toCheck else { return }
+            guard let self, self.requesting, !self.finished, self.toCheck || self.todayPendingShown else { return }
             if self.sentAt == nil { self.sentAt = Date() }
             self.toCheck = false
+            // Vidéo du 18 nov. (principe 2) : confirmée à la main, pas par une preuve. Textes « une demande d'aujourd'hui est en cours »,
+            // jamais « C'est demandé ». Le réglage de la demande est quand même vérifié.
+            self.manualConfirm = true
+            self.existingRequest = true
+            self.existingToday = true
             self.finishRequest()
         })
         present(alert, animated: true)
@@ -2968,7 +3066,7 @@ final class MetaViewController: UIViewController {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         let done = onRequested
         // Partie avec « Année dernière », HTML ou toutes les informations : on le dit, sans la refaire à sa place.
-        if !existingRequest { badSettings = ExportProof.problem(lastSummary) }
+        if !existingRequest || manualConfirm { badSettings = ExportProof.problem(lastSummary) }
         sayLabel.attributedText = NSAttributedString(string: existingToday ? "Une demande d'aujourd'hui est en cours chez Instagram."
                                                         : existingRequest ? "Une demande est déjà en cours chez Instagram."
                                                         : "C'est confirmé ! Instagram prépare ta liste.",
@@ -3058,6 +3156,10 @@ struct ExportProof: Equatable {
     /// l'utilisateur vient de faire, vue en retard, mais une date ne le prouve pas (relecture ChatGPT du 18 nov.) :
     /// on dit « une demande d'aujourd'hui est en cours », jamais « ta demande » ni « une demande était déjà en cours ».
     var pendingToday: Bool { alreadyPending && recentBefore > 0 }
+
+    /// Vidéo du 18 nov. : sur la liste des exports (« home », ou lignes lues à l'instant), une touche qui n'est pas celle de l'étape
+    /// (onglet « Activité passée », une carte, faire défiler) n'est jamais un « mauvais bouton » : on y vient pour regarder.
+    static func listIsCalm(screen: String, rowsShown: Bool) -> Bool { screen == "home" || rowsShown }
 
     /// Ce que prouve la liste lue maintenant. `tapped` : la touche « Commencer l'exportation » a été vue.
     func verdict(_ rows: [String]?, tapped: Bool, now: Date, calendar: Calendar = .current) -> Verdict {
@@ -3198,16 +3300,30 @@ enum BannerTone: Equatable {
 /// Test réel : l'utilisateur restait sur Instagram sans voir « ‹ Zieuton » en haut à gauche.
 enum LeaveHint {
     static func verb(existing: Bool, today: Bool = false) -> String {
-        if existing && today { return "✓ Une demande d'aujourd'hui est en cours. Tu n'as plus rien à faire ici :" }
-        return existing ? "✓ Une demande est déjà en cours. Tu n'as plus rien à faire ici :" : "✓ C'est demandé ! Tu n'as plus rien à faire ici :"
+        // 18 nov. (Victor) : bandeau court, compris d'un coup d'œil. Le bouton « Revenir dans Zieuton » est juste dessous.
+        // Bandeau centré : la situation est le titre en gros (title), cette petite ligne au-dessus dit qu'il n'y a plus rien à faire.
+        "✓ Rien d'autre à faire ici"
     }
-    static let target = "touche ‹ Zieuton en haut à gauche"
-    static let tip = "Instagram prépare ton fichier. Tu peux fermer l'app : quand tu reviens dans Zieuton, je regarde où il en est."
+    /// La situation, en gros au milieu du bandeau.
+    static func title(existing: Bool, today: Bool = false) -> String {
+        if existing && today { return "Demande du jour en cours" }
+        return existing ? "Demande déjà en cours" : "C'est demandé"
+    }
+    static let tip = "Instagram prépare ton fichier. Tu peux revenir dans Zieuton."
 
     /// Le bouton « Revenir dans Zieuton » : seulement pendant le guet d'une demande vérifiée, fichier pas encore prêt,
     /// sans réglage à corriger, sans page en panne, sans téléchargement en cours.
-    static func showsButton(guarding: Bool, ready: Bool, badSettings: Bool, pageProblem: Bool, downloading: Bool) -> Bool {
-        guarding && !ready && !badSettings && !pageProblem && !downloading
+    /// unsure (vidéo du 18 nov.) : liste visible, preuve incertaine. On peut sortir, rien n'est confirmé pour autant.
+    static func showsButton(guarding: Bool, ready: Bool, badSettings: Bool, pageProblem: Bool, downloading: Bool, unsure: Bool = false) -> Bool {
+        (guarding || unsure) && !ready && !badSettings && !pageProblem && !downloading
+    }
+
+    /// Relecture ChatGPT (18 nov., 14 h 09) : Instagram est fermé sans preuve automatique, mais avec un signe de demande
+    /// (« Commencer » touché, ligne à vérifier, ligne « En attente » du jour vue). La page de Zieuton passe alors directement
+    /// sur l'attente « Demande à vérifier », jamais sur « Zieuton en haut, Instagram en bas » (plus de boucle).
+    /// Sans aucun signe de demande, rien n'est noté : rien n'a été demandé.
+    static func leftUnsure(requesting: Bool, finished: Bool, tapped: Bool, toCheck: Bool, todayShown: Bool, pendingSeen: Bool) -> Bool {
+        requesting && !finished && (tapped || toCheck || todayShown || pendingSeen)
     }
 }
 
@@ -3297,38 +3413,90 @@ struct ReadyProof: Equatable {
 
     /// Un jour de la demande (n'importe quelle heure de ce jour). nil : pas encore connu (demande déjà en cours, pas encore lue).
     private(set) var day: Date?
-    /// Lignes prêtes datées du jour de la demande, vues au moment de la preuve. nil : référence pas (encore) vérifiée.
+    /// Lignes prêtes qui ressemblent à la demande (même jour possible, même empreinte), vues au moment de la preuve.
+    /// nil : référence pas (encore) vérifiée.
     private(set) var baseline: Int?
+    /// Relecture ChatGPT (18 nov.) : empreinte de la carte de la demande (compte, catégorie, format), sans dates ni boutons.
+    /// Un fichier d'un autre compte ou d'une autre catégorie n'est jamais compté. nil : référence d'un ancien build (pas d'empreinte).
+    private(set) var signature: String?
     private var candidate: Int?
     private var candidateAt: Date?
+    private var candidateSig: String?
+    /// Relecture ChatGPT (18 nov.) : « prêt » doit être revu au moins 2 s plus tard. Une carte « En attente » qui disparaît
+    /// un instant de la lecture ne suffit jamais.
+    private var readySeenAt: Date?
+    private(set) var readyStable = false
+    /// Relecture ChatGPT (18 nov., 15 h 44) : deux cartes « En attente » indiscernables (même jour, même empreinte) ont été vues.
+    /// On ne sait plus quel fichier est le sien : jamais « prêt » automatique pour cette demande, même si l'une est annulée
+    /// ou disparaît ensuite. Gardé avec la référence (l'app peut être fermée puis rouverte).
+    private(set) var ambiguous = false
 
-    /// Deux lectures identiques à au moins 2 s d'écart fixent la référence.
+    /// Deux lectures identiques à au moins 2 s d'écart fixent la référence (et confirment « prêt »).
     static let stableFor: TimeInterval = 2
     /// Une demande d'export vit quelques jours chez Instagram : on ne date pas une demande déjà en cours au-delà.
     static let maxAgeDays = 4
 
-    init(day: Date?, baseline: Int? = nil) {
+    init(day: Date?, baseline: Int? = nil, signature: String? = nil, ambiguous: Bool = false) {
         self.day = day
-        self.baseline = baseline
+        self.ambiguous = ambiguous
+        // Relecture ChatGPT (18 nov., 15 h 33) : une référence sans empreinte (enregistrée par le build 17 ou avant) n'est pas
+        // gardée. Elle est refaite seulement si la carte « En attente » de la demande est encore là ; sinon, jamais « prêt »
+        // automatique : l'utilisateur vérifie lui-même.
+        self.baseline = signature == nil ? nil : baseline
+        self.signature = self.baseline == nil ? nil : signature
     }
 
     /// Une lecture de la liste des exports (lignes « En attente » et lignes avec un vrai « Télécharger », texte en minuscules).
     mutating func read(pending: [String], ready: [String], now: Date, calendar: Calendar = .current) {
         // Demande déjà en cours chez Instagram : son jour est celui de la ligne « En attente » la plus récente.
         if day == nil { day = Self.latestDay(of: pending, now: now, calendar: calendar) }
-        guard baseline == nil, let day else { return }
-        // La demande doit encore être « En attente » : sinon son fichier est peut-être déjà dans les lignes prêtes.
-        guard pending.contains(where: { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }) else {
-            candidate = nil; candidateAt = nil
+        guard let day else { return }
+        // Deux cartes « En attente » du jour avec la même empreinte (la nôtre si elle est connue) : ambiguïté, gardée pour toujours.
+        let sigs = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.compactMap { Self.signature(of: $0) }
+        if let signature { if sigs.filter({ $0 == signature }).count > 1 { ambiguous = true } }
+        else if Set(sigs).count < sigs.count { ambiguous = true }
+        guard let baseline else {
+            // La demande doit encore être « En attente », et être la SEULE ligne en attente de ce jour : sinon on ne sait pas
+            // laquelle suivre, et on ne fixe aucune référence (donc jamais « prêt » automatique).
+            let mine = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }
+            guard mine.count == 1, let sig = Self.signature(of: mine[0]) else {
+                candidate = nil; candidateAt = nil; candidateSig = nil
+                return
+            }
+            let n = ready.filter { Self.matches($0, day: day, signature: sig, now: now, calendar: calendar) }.count
+            if let c = candidate, let at = candidateAt, c == n, candidateSig == sig {
+                if now.timeIntervalSince(at) >= Self.stableFor { self.baseline = n; signature = sig }
+            } else {
+                candidate = n
+                candidateAt = now
+                candidateSig = sig
+            }
             return
         }
-        let n = ready.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.count
-        if let c = candidate, let at = candidateAt, c == n {
-            if now.timeIntervalSince(at) >= Self.stableFor { baseline = n }
+        // Référence fixée : « prêt » seulement s'il est revu, identique, au moins 2 s plus tard.
+        if count(pending: pending, ready: ready, day: day, now: now, calendar: calendar) == (0, baseline + 1) {
+            if let at = readySeenAt {
+                if now.timeIntervalSince(at) >= Self.stableFor { readyStable = true }
+            } else {
+                readySeenAt = now
+            }
         } else {
-            candidate = n
-            candidateAt = now
+            readySeenAt = nil
+            readyStable = false
         }
+    }
+
+    /// Lignes « En attente » du jour, et lignes prêtes qui peuvent être le fichier de la demande.
+    private func count(pending: [String], ready: [String], day: Date, now: Date, calendar: Calendar) -> (Int, Int) {
+        // Relecture ChatGPT (18 nov., 15 h 55) : une demande en attente d'un AUTRE compte ou d'une autre catégorie (empreinte
+        // différente) ne nous bloque pas sur « en attente ». Prudence : une carte sans empreinte lisible compte toujours.
+        let p = pending.filter { row in
+            guard ExportProof.isDated(row, day: day, now: now, calendar: calendar) else { return false }
+            guard let signature, let sig = Self.signature(of: row) else { return true }
+            return sig == signature
+        }.count
+        let r = ready.filter { Self.matches($0, day: day, signature: signature, now: now, calendar: calendar) }.count
+        return (p, r)
     }
 
     /// Ce que dit la liste lue maintenant. `pending` et `ready` valent nil si la liste n'a pas été lue (pas l'accueil de l'export).
@@ -3337,15 +3505,92 @@ struct ReadyProof: Equatable {
         guard let pending, let ready else { return login ? .login : .unknown }
         guard let day else {
             // Jour de la demande inconnu : une ligne prête récente peut être la bonne, mais on ne conclut pas à sa place.
-            return Self.latestDay(of: ready, now: now, calendar: calendar) == nil ? .unknown : .toCheck
+            // Une ligne « Expire le … » est un fichier encore disponible : à vérifier aussi.
+            let recent = Self.latestDay(of: ready, now: now, calendar: calendar) != nil || ready.contains { Self.expiry($0, calendar: calendar) != nil }
+            return recent ? .toCheck : .unknown
         }
-        let p = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.count
-        let r = ready.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.count
-        if let baseline, r > baseline { return .ready }
+        let (p, r) = count(pending: pending, ready: ready, day: day, now: now, calendar: calendar)
+        // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver (deux demandes le même jour).
         if p > 0 { return .pending }
-        // Plus de ligne « En attente » de ce jour, mais pas de preuve d'une ligne prête nouvelle (référence absente,
-        // ou un ancien export du même jour a expiré entre-temps) : l'utilisateur vérifie la date lui-même.
+        // Relecture ChatGPT (18 nov.) : « prêt » seulement s'il y a EXACTEMENT un fichier de plus que la référence, revu 2 s plus tard.
+        // Deux fichiers nouveaux ou plus (un autre export devenu prêt), ou un seul encore pas revu : à vérifier, jamais « prêt ».
+        // Empreinte inconnue : jamais « prêt » (on ne sait pas quel fichier est le sien).
+        // Deux demandes indiscernables vues : jamais « prêt » automatique (relecture ChatGPT, 15 h 44).
+        if let baseline, signature != nil, !ambiguous, r == baseline + 1, readyStable { return .ready }
+        // Plus de ligne « En attente » de ce jour, sans preuve nette (référence absente, ancien fichier expiré ou supprimé,
+        // plusieurs fichiers nouveaux) : l'utilisateur vérifie la date lui-même.
         return r > 0 ? .toCheck : .unknown
+    }
+
+    /// Relecture ChatGPT (18 nov., 16 h 10) : la date « Expire le » du fichier de la demande, seulement si elle est vraiment lue.
+    /// Il faut une preuve nette (empreinte, pas d'ambiguïté, exactement un fichier de plus que la référence) et que tous les fichiers
+    /// possibles portent la MÊME date : alors celle du nouveau est forcément celle-là. Sinon nil : consigne neutre, sans date.
+    func identifiedExpiry(ready: [String], now: Date, calendar: Calendar = .current) -> Date? {
+        guard let day, let baseline, signature != nil, !ambiguous else { return nil }
+        let mine = ready.filter { Self.matches($0, day: day, signature: signature, now: now, calendar: calendar) }
+        guard mine.count == baseline + 1 else { return nil }
+        let dates = mine.map { Self.expiry($0, calendar: calendar).map { calendar.startOfDay(for: $0) } }
+        guard let first = dates.first ?? nil, dates.allSatisfy({ $0 == first }) else { return nil }
+        return first
+    }
+
+    /// Mots qui ne disent ni le compte, ni la catégorie, ni le format : dates, statuts, boutons, tailles.
+    private static let noise: Set<String> = [
+        "en", "attente", "demandée", "demandé", "demande", "le", "la", "requested", "on", "expire", "expires", "moins", "de", "mo", "ko", "go",
+        "kb", "mb", "gb", "télécharger", "download", "annuler", "cancel", "pending", "in", "progress", "less", "than", "préparation",
+        "preparing", "prête", "prêt", "ready", "aujourd", "hui", "hier", "today", "yesterday", "il", "y", "a", "à", "l", "instant", "just",
+        "now", "min", "minutes", "minute", "s", "sec", "secondes", "ago", "er", "aujourd'hui", "aujourd’hui", "d'aujourd'hui", "l'instant",
+        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+        "janv", "févr", "avr", "juil", "sept", "oct", "nov", "déc", "january", "february", "march", "april", "may", "june", "july",
+        "august", "september", "october", "november", "december", "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "dec",
+    ]
+
+    /// Empreinte d'une carte : ses mots (compte, catégorie, format), sans dates, statuts ni boutons. nil si trop peu de mots.
+    /// Relecture ChatGPT (18 nov., 15 h 33) : les mots sont gardés tels qu'écrits, chiffres et « . _ » compris
+    /// (« compte1 » et « compte2 », « vic.frnt » et « vic_frnt » restent distincts), dans l'ordre de la carte.
+    /// Seuls les dates, tailles et nombres seuls (« 18/11/2026 », « 1 ») et les mots de `noise` sont retirés.
+    static func signature(of row: String) -> String? {
+        let edges = CharacterSet.punctuationCharacters.union(.symbols).subtracting(CharacterSet(charactersIn: "._"))
+        let numeric = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: "/:.,-"))
+        let words = row.lowercased()
+            .components(separatedBy: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "·•|")))
+            .map { $0.trimmingCharacters(in: edges) }
+            .filter { w in !w.isEmpty && !noise.contains(w) && !w.unicodeScalars.allSatisfy { numeric.contains($0) } }
+        guard words.count >= 2 else { return nil }
+        return words.joined(separator: " ")
+    }
+
+    /// Une ligne prête qui peut être le fichier de la demande : bon jour possible ET même empreinte (si elle est connue).
+    static func matches(_ row: String, day: Date, signature: String?, now: Date, calendar: Calendar = .current) -> Bool {
+        guard readyFor(row, day: day, now: now, calendar: calendar) else { return false }
+        guard let signature else { return true }
+        return Self.signature(of: row) == signature
+    }
+
+    /// Instagram garde un fichier prêt 4 jours (« Vous disposerez de 4 jours pour télécharger les fichiers »).
+    static let keepDays = 4
+
+    /// Vidéo iPhone du 18 nov. : une ligne prête dit « Expire le 22/11/2026 », jamais le jour de la demande.
+    /// La date d'expiration écrite sur la ligne (jour/mois/année en chiffres seulement), nil sinon.
+    static func expiry(_ row: String, calendar: Calendar = .current) -> Date? {
+        let t = row.lowercased()
+        guard let r = t.range(of: "(?:expire le|expires on|expires)\\s+([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})", options: .regularExpression) else { return nil }
+        let nums = t[r].split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
+        guard nums.count == 3 else { return nil }
+        return calendar.date(from: DateComponents(year: nums[2], month: nums[1], day: nums[0], hour: 12))
+    }
+
+    /// Une ligne prête qui PEUT être le fichier de la demande du jour `day` :
+    /// - ligne « Expire le … » : le fichier est devenu prêt ce jour-là ou après, donc il expire au plus tôt `day` + 4 jours.
+    ///   Un fichier qui expire plus tôt est forcément un ancien export ;
+    /// - autre ligne : sa date écrite est celle du jour de la demande (ancienne lecture).
+    /// Un ancien fichier du même jour passe aussi ce filtre : c'est la référence (baseline) qui le met de côté.
+    static func readyFor(_ row: String, day: Date, now: Date, calendar: Calendar = .current) -> Bool {
+        if let exp = expiry(row, calendar: calendar) {
+            guard let earliest = calendar.date(byAdding: .day, value: keepDays, to: calendar.startOfDay(for: day)) else { return false }
+            return calendar.startOfDay(for: exp) >= earliest
+        }
+        return ExportProof.isDated(row, day: day, now: now, calendar: calendar)
     }
 
     /// Le jour le plus récent (aujourd'hui, hier… jusqu'à 4 jours) dont une ligne porte la date.
@@ -3393,6 +3638,16 @@ enum GetBanner: Equatable {
         case .ready?: return .ready
         case .toCheck?, .unknown?, .offline?, .login?: return .checkDate
         }
+    }
+
+    /// Relecture ChatGPT (18 nov., 15 h 55) : quelle ligne toucher. Une carte prête affiche « Expire le … » (jour de la demande
+    /// + 4 jours chez Instagram), jamais « Demandée le … » : le bandeau donne cette date-là, pour la reconnaître parmi plusieurs.
+    /// Relecture ChatGPT (18 nov., 16 h 10) : la date n'est jamais calculée (Instagram peut préparer le fichier un jour plus tard) :
+    /// seulement celle lue sur la carte (ReadyProof.identifiedExpiry). Sinon, consigne neutre.
+    static func readyTip(expiry: Date?, day: Date?, calendar: Calendar = .current) -> String {
+        guard let expiry else { return "Sur la ligne de ta demande. Le plus récent a la date la plus lointaine." }
+        let asked = day.map { " (ta demande du \(dayText($0, calendar: calendar)))" } ?? ""
+        return "Sur la ligne « Expire le \(dayText(expiry, calendar: calendar)) »\(asked)."
     }
 
     /// « 17/11 »
@@ -3727,6 +3982,10 @@ final class ExportWatcher: NSObject {
         static let today = "zy.export.today"
         /// FOU-126 : jour de la demande et référence des lignes prêtes de ce jour (ReadyProof).
         static let day = "zy.export.day", baseline = "zy.export.baseline"
+        /// Relecture ChatGPT (18 nov.) : empreinte de la carte de la demande (compte, catégorie, format).
+        static let signature = "zy.export.signature"
+        /// Relecture ChatGPT (18 nov., 15 h 44) : deux demandes indiscernables ont été vues (jamais « prêt » automatique).
+        static let ambiguous = "zy.export.ambiguous"
         /// FOU-126 : « C'est demandé » et « prêt » déjà envoyées pour cette demande (jamais de doublon).
         static let askedShown = "zy.export.askedShown", readyShown = "zy.export.readyShown"
         /// Dernier résultat de vérification, pour la page.
@@ -3735,7 +3994,7 @@ final class ExportWatcher: NSObject {
         static let acct = "zy.export.acct"
         /// Clés des builds 15 et avant (décompte des « Télécharger ») : plus utilisées.
         static let legacy = ["zy.export.downloadsBefore", "zy.export.baselineChecked"]
-        static var all: [String] { [requested, ready, existing, today, day, baseline, askedShown, readyShown, lastState, lastAt, acct] + legacy }
+        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, ambiguous, askedShown, readyShown, lastState, lastAt, acct] + legacy }
     }
     /// Notification « prêt » avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
     static let readyCategory = "zy-ready-actions"
@@ -3748,7 +4007,8 @@ final class ExportWatcher: NSObject {
             UNNotificationCategory(identifier: Self.readyCategory, actions: [update], intentIdentifiers: [], options: []),
         ])
         let day = store.object(forKey: Key.day) as? Date
-        proof = ReadyProof(day: day, baseline: day == nil ? nil : store.object(forKey: Key.baseline) as? Int)
+        proof = ReadyProof(day: day, baseline: day == nil ? nil : store.object(forKey: Key.baseline) as? Int,
+                           signature: store.string(forKey: Key.signature), ambiguous: store.bool(forKey: Key.ambiguous))
     }
 
     /// « 14:47 »
@@ -3792,6 +4052,11 @@ final class ExportWatcher: NSObject {
     private var proof = ReadyProof(day: nil)
     /// Jour de la demande guettée (nil : inconnu, par exemple demande déjà en cours pas encore lue).
     var requestDay: Date? { isWaiting || isReady ? proof.day : nil }
+    /// La date « Expire le » du fichier de la demande, seulement si elle est lue sur la carte (nil sinon).
+    func identifiedExpiry(ready: [String]?, now: Date = Date()) -> Date? {
+        guard let ready, isWaiting || isReady else { return nil }
+        return proof.identifiedExpiry(ready: ready, now: now)
+    }
     private var timer: Timer?
     private var checker: WKWebView?
     private var checkHandler: CheckHandler?
@@ -3951,6 +4216,8 @@ final class ExportWatcher: NSObject {
     private func saveProof() {
         if let d = proof.day { store.set(d, forKey: Key.day) } else { store.removeObject(forKey: Key.day) }
         if let b = proof.baseline { store.set(b, forKey: Key.baseline) } else { store.removeObject(forKey: Key.baseline) }
+        if let sig = proof.signature { store.set(sig, forKey: Key.signature) } else { store.removeObject(forKey: Key.signature) }
+        if proof.ambiguous { store.set(true, forKey: Key.ambiguous) } else { store.removeObject(forKey: Key.ambiguous) }
     }
 
     /// Une lecture de la liste des exports d'Instagram (fenêtre Instagram de Zieuton ou vérification cachée).
@@ -3961,7 +4228,7 @@ final class ExportWatcher: NSObject {
         if let pending, let ready {
             let before = proof
             proof.read(pending: pending, ready: ready, now: now)
-            if proof.day != before.day || proof.baseline != before.baseline { saveProof() }
+            if proof.day != before.day || proof.baseline != before.baseline || proof.ambiguous != before.ambiguous { saveProof() }
         }
         return proof.verdict(pending: pending, ready: ready, login: login, offline: false, now: now)
     }

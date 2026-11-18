@@ -1,7 +1,7 @@
 <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <!-- Reconstituée d'après la capture iPhone du 17 nov. 2026 à 17 h 32 (build 17) : seuls les TEXTES et les BOUTONS visibles sont repris.
-     Les balises et l'imbrication sont inconnues : ce sont des blocs neutres. Le haut de la carte prête n'était pas visible :
-     on suppose la même présentation que la carte « En attente » (le seul point qui compte : elle a « Télécharger » et « Annuler »). -->
+     Les balises et l'imbrication sont inconnues : ce sont des blocs neutres. Le haut de la carte prête n'était pas visible le 17 nov. : la vidéo du 18 nov. a montré
+     qu'une carte prête dit « Expire le JJ/MM/AAAA · Moins de 1 Mo » (et non « Demandée le »), corrigé ici. -->
 <style>
   body { margin: 0; font: 16px system-ui; }
   .fond { padding: 16px; }
@@ -21,7 +21,7 @@
     <div class="carte">
       <div><div><img alt="" width="40" height="40"></div><div>
         <div><span>vifrnt (Instagram)</span></div><div><span>Followers et suivi(e)s</span></div>
-        <div><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Demandée le __ANCIEN__</span></div>
+        <div><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Expire le __ANCIEN__ · Moins de 1 Mo</span></div>
       </div></div>
       <div><div><button>Télécharger</button></div><div><button>Annuler</button></div></div>
     </div>
@@ -39,5 +39,5 @@
   </div>
   <div><span>Votre exportation ne comprendra pas d'informations partagées par d'autres personnes, comme les photos de quelqu'un d'autre sur lesquelles votre nom est mentionné.</span> <a href="#">En savoir plus sur l'exportation de vos informations</a></div>
 </div>
-<script>document.body.innerHTML = document.body.innerHTML.replace("__ANCIEN__", new URLSearchParams(location.search).get("ancien") || "16/11/2026");</script>
+<script>document.body.innerHTML = document.body.innerHTML.replace("__ANCIEN__", new URLSearchParams(location.search).get("ancien") || "20/11/2026");</script>
 </body>

@@ -12,14 +12,18 @@ const app = read("ios/Zieuton/AppDelegate.swift");
 
 // Les textes visibles : chaînes Swift hors commentaires (le script d'Instagram, en chaîne brute, est retiré).
 function visibleStrings(src) {
-  const noReader = src.replace(/static let readerJS = #"""[\s\S]*?"""#/, "");
+  // Les mots ignorés par l'empreinte d'une carte (ReadyProof.noise) servent à comparer, ils ne sont jamais affichés.
+  const noReader = src.replace(/static let readerJS = #"""[\s\S]*?"""#/, "").replace(/static let noise: Set<String> = \[[\s\S]*?\n\s*\]/, "");
   const lines = noReader.split("\n").filter((l) => !/^\s*\/\//.test(l)).map((l) => l.replace(/\s\/\/ .*$/, ""));
-  return lines.join("\n").match(/"(?:[^"\\\n]|\\.)*"/g) || [];
+  // Les motifs de recherche (« (?:expire le|…)\\s+… », lecture de la date d'expiration écrite par Instagram) ne sont pas des textes.
+  return (lines.join("\n").match(/"(?:[^"\\\n]|\\.)*"/g) || []).filter((t) => !t.startsWith('"(?:'));
 }
 
 test("aucune promesse de surveillance ni d'expiration dans les textes de la coque", () => {
   const banned = [/dès que je le vois/i, /je guette/i, /expire/i, /sûrement prêt/i, /plus long que d'habitude/i, /zieuton fermé/i];
-  const strings = [...visibleStrings(web), ...visibleStrings(app)];
+  // Seule exception (relecture ChatGPT, 15 h 55) : la consigne « Sur la ligne « Expire le JJ/MM » » recopie la date écrite sur la carte
+  // prête d'Instagram pour la reconnaître ; ce n'est pas une alerte d'expiration.
+  const strings = [...visibleStrings(web), ...visibleStrings(app)].filter((s) => !s.startsWith('"Sur la ligne « Expire le '));
   for (const s of strings) for (const b of banned) assert.doesNotMatch(s, b, `texte interdit : ${s}`);
 });
 
@@ -107,8 +111,95 @@ test("relecture ChatGPT : sans preuve, aucune consigne directe « Touche Téléc
 test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présentée comme « ta demande »", () => {
   const strings = visibleStrings(web);
   for (const s of strings) assert.doesNotMatch(s, /Ta demande d'aujourd'hui|Ta demande est bien enregistrée/, `texte trop affirmatif : ${s}`);
-  assert.match(web, /"✓ Une demande d'aujourd'hui est en cours\. Tu n'as plus rien à faire ici :"/);
+  assert.match(web, /if existing && today \{ return "Demande du jour en cours" \}/);
   assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
-  // « prêt » exige une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour).
-  assert.match(web, /if let baseline, r > baseline \{ return \.ready \}/);
+  // « prêt » exige EXACTEMENT une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour), revue 2 s plus tard.
+  assert.match(web, /if let baseline, signature != nil, !ambiguous, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+});
+
+test("vidéo du 18 nov. : une demande en attente visible n'encourage jamais une nouvelle demande", () => {
+  // Liste lue sans « Créer une exportation » visible : une demande déjà en cours est reconnue quand même.
+  assert.match(web, /let homeSettled = \[createSince, listSince\]\.contains/);
+  // Le temps de la reconnaître : pas de « Touche Créer une exportation », pas de cercle.
+  assert.match(web, /if pendingSeen, requesting, !finished \{\s*return Step\(verb: "Un instant :", target: "une demande est déjà là"/);
+  assert.match(web, /if pendingSeen \{ return \[\] \}/);
+  // Sur la liste, jamais « Oups, pas le bon bouton ».
+  assert.match(web, /if ExportProof\.listIsCalm\(screen: screenKey, rowsShown: .*?\) \{ return \}\s*warn\("Oups, pas le bon bouton !"/);
+});
+
+test("vidéo du 18 nov. : ligne d'aujourd'hui sans preuve : texte rassurant, confirmation à la main, jamais « C'est demandé »", () => {
+  assert.match(web, /if todayPendingShown, Date\(\)\.timeIntervalSince\(sent\) > 6 \{\s*return Step\(verb: "Demande du jour trouvée :", target: "ne refais rien"/);
+  const alert = web.slice(web.indexOf("private func askConfirmRequest()"), web.indexOf("private func warnDuplicate()"));
+  assert.match(alert, /self\.manualConfirm = true\s*self\.existingRequest = true\s*self\.existingToday = true/);
+  assert.match(web, /if !existingRequest \|\| manualConfirm \{ badSettings = ExportProof\.problem\(lastSummary\) \}/);
+  assert.match(web, /unsure: unsureShown\)/);
+});
+
+test("vidéo du 18 nov. : une carte prête dit « Expire le », jamais prise pour une demande en attente", () => {
+  assert.match(web, /var DATED = \/\^\(demandée le\|demandé le\|requested on\|expire le\|expires on\|expires\)\\b\//);
+  assert.match(web, /if \(!ready && EXPIRES\.test\(low\(lines\[i\]\)\)\) continue;/);
+  // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver.
+  assert.match(web, /if p > 0 \{ return \.pending \}[\s\S]{0,700}?if let baseline, signature != nil, !ambiguous, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+});
+
+test("18 nov. (Victor) : bandeau court, compris sans tout lire", () => {
+  // Chaque consigne des étapes de demande et de récupération tient en une phrase courte.
+  const zone = web.slice(web.indexOf("if pendingSeen, requesting, !finished {"), web.indexOf("if !requesting, !downloading { return getStep(getBanner) }"))
+    + web.slice(web.indexOf("private func getStep("), web.indexOf("private var currentStep: Step {"));
+  const tips = [...zone.matchAll(/tip: "((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]);
+  assert.ok(tips.length >= 8);
+  for (const t of tips) assert.ok(t.length <= 75, `consigne trop longue (${t.length}) : ${t}`);
+  assert.match(web, /static let tip = "Instagram prépare ton fichier\. Tu peux revenir dans Zieuton\."/);
+});
+
+test("relecture ChatGPT (18 nov., 14 h 09) : le fichier prêt n'est reconnu que si la correspondance est sûre", () => {
+  // Référence fixée seulement avec UNE seule carte « En attente » du jour, qui a une empreinte (compte, catégorie, format).
+  assert.match(web, /guard mine\.count == 1, let sig = Self\.signature\(of: mine\[0\]\) else \{/);
+  // Un fichier ne compte que s'il a la même empreinte que la demande suivie.
+  assert.match(web, /return Self\.signature\(of: row\) == signature/);
+  // Relecture ChatGPT (15 h 33) : identifiants exacts (chiffres, « . », « _ » gardés), jamais « prêt » sans empreinte,
+  // et une référence sans empreinte (build 17) est oubliée.
+  assert.doesNotMatch(web, /CharacterSet\.letters\.inverted/);
+  assert.match(web, /subtracting\(CharacterSet\(charactersIn: "\._"\)\)/);
+  assert.match(web, /self\.baseline = signature == nil \? nil : baseline/);
+  // « prêt » doit être revu au moins 2 s plus tard, sinon il retombe.
+  assert.match(web, /if now\.timeIntervalSince\(at\) >= Self\.stableFor \{ readyStable = true \}/);
+  assert.match(web, /readySeenAt = nil\s*readyStable = false/);
+  // L'empreinte est gardée avec la référence (l'app peut être fermée pendant l'attente).
+  assert.match(web, /static let signature = "zy\.export\.signature"/);
+  assert.match(web, /if let sig = proof\.signature \{ store\.set\(sig, forKey: Key\.signature\) \}/);
+  // Sans « prêt », jamais de notification C : markReady n'est appelé que sur un verdict « prêt ».
+  assert.match(web, /if verdict == \.ready \{ self\.markReady\(\) \} else \{ self\.report\(verdict\) \}/);
+});
+
+test("relecture ChatGPT (18 nov., 14 h 09) : Instagram fermé sans preuve, la page passe sur « Demande à vérifier »", () => {
+  // Seulement à la vraie fermeture d'Instagram (pas quand une fenêtre passe par-dessus).
+  assert.match(web, /if isBeingDismissed, LeaveHint\.leftUnsure\(requesting: requesting, finished: finished, tapped: sentAt != nil, toCheck: toCheck,\s*todayShown: todayPendingShown, pendingSeen: pendingSeen\) \{\s*onLeftUnsure\?\(todayPendingShown \|\| proof\.pendingToday\)/);
+  assert.match(web, /meta\.onLeftUnsure = \{ \[weak self\] today in\s*self\?\.webView\.evaluateJavaScript\("window\.zyeutoMeta && window\.zyeutoMeta\('unsure', \{ today: \\\(today\) \}\); true"\)/);
+  // « à vérifier » ne lance ni le guet ni les notifications : seul « requested » appelle ExportWatcher.requested.
+  const unsure = web.slice(web.indexOf("meta.onLeftUnsure ="), web.indexOf("meta.onFile ="));
+  assert.doesNotMatch(unsure, /ExportWatcher/);
+});
+
+test("relecture ChatGPT (18 nov., 15 h 44) : deux demandes indiscernables, jamais « prêt », même après réouverture", () => {
+  assert.match(web, /if let baseline, signature != nil, !ambiguous, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+  assert.match(web, /static let ambiguous = "zy\.export\.ambiguous"/);
+  assert.match(web, /ambiguous: store\.bool\(forKey: Key\.ambiguous\)/);
+  assert.match(web, /if proof\.ambiguous \{ store\.set\(true, forKey: Key\.ambiguous\) \}/);
+  assert.match(web, /proof\.ambiguous != before\.ambiguous \{ saveProof\(\) \}/);
+  // Effacée avec le reste quand la demande se termine ou est refaite.
+  assert.match(web, /static var all: \[String\] \{ \[[^\]]*\bambiguous\b[^\]]*\] \+ legacy \}/);
+});
+
+test("relecture ChatGPT (18 nov., 15 h 55) : cercle sur la seule carte possible, autre compte, ligne à vérifier", () => {
+  // « Télécharger » n'est entouré que s'il n'y en a qu'un dans toute la liste (testé aussi sur page : tests/lecteur/cercle-telecharger).
+  assert.match(web, /if \(inner\(every\)\.length !== 1\) return null;/);
+  // Une demande en attente d'un autre compte ne compte pas ; une carte sans empreinte lisible compte toujours.
+  assert.match(web, /guard let signature, let sig = Self\.signature\(of: row\) else \{ return true \}\s*return sig == signature/);
+  // Le bandeau « prêt » donne la date « Expire le » de la bonne ligne, dans les deux cas (récupération et guet).
+  // Relecture ChatGPT (16 h 10) : la date vient de la carte lue (identifiedExpiry), jamais d'un calcul « jour + 4 ».
+  assert.equal((web.match(/tip: GetBanner\.readyTip\(expiry: ExportWatcher\.shared\.identifiedExpiry\(ready: lastReady\),/g) || []).length, 2);
+  const tipFn = web.slice(web.indexOf("static func readyTip("), web.indexOf("static func dayText("));
+  assert.doesNotMatch(tipFn, /keepDays|byAdding/, "aucune date calculée dans la consigne");
+  assert.doesNotMatch(web, /tip: "Juste en dessous\."/);
 });
