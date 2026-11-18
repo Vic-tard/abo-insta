@@ -5312,7 +5312,7 @@ function renderGuided() {
       body.innerHTML = `<div class="gw">
         <div class="gw-hero" aria-hidden="true"><span class="gw-halo"></span><span class="gw-av">${MASCOT}</span></div>
         <p class="gw-chip${unsure ? " warn" : ""}" id="gw-chip"><i></i>${unsure ? "Demande à vérifier" : "En cours chez Instagram"}</p>
-        <h2 id="gf-title">${unsure ? "Demande à vérifier" : "Instagram prépare ta liste"}</h2>
+        <h2 id="gf-title">${unsure ? "Vérifie la demande, sans la refaire" : "Instagram prépare ta liste"}</h2>
         <p class="gw-say" id="guide-say">${say}</p>
         ${wline ? `<p class="gw-state${prefs.watch && prefs.watch.state === "pending" ? " ok" : ""}" id="gw-state" role="status">${wline}</p>` : ""}
         ${unsure ? "" : `<p class="gw-dots" role="status" aria-label="Instagram prépare ton fichier"><i></i><i></i><i></i></p>`}
@@ -5323,9 +5323,11 @@ function renderGuided() {
           ${tip(I_MAIL, "Instagram t'envoie aussi un e-mail", "Quand ton fichier est prêt. Reviens alors dans Zieuton pour le récupérer.")}
         </ul>
       </div>
-      <div class="gf-foot gw-foot">
+      <div class="gf-foot gw-foot">${unsure ? `
+        <button class="btn cheer big" id="gf-get" type="button">Vérifier dans Instagram</button>
+        <button class="gw-check" id="gf-wait-demo" type="button">Découvrir Zieuton en attendant</button>` : `
         <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Découvrir Zieuton en attendant</button>
-        <button class="gw-check" id="gf-get" type="button">${unsure ? "Vérifier dans Instagram" : "Regarder si c'est prêt"}</button>
+        <button class="gw-check" id="gf-get" type="button">Regarder si c'est prêt</button>`}
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
       $("gf-wait-demo").onclick = () => enterDemo();
@@ -5450,7 +5452,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-18-1518";
+const BUILD = "2026-11-18-1525";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

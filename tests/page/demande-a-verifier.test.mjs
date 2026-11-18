@@ -53,6 +53,7 @@ test("retour d'Instagram sans preuve, ligne du jour vue : attente « Demande à 
   const txt = await gfText(page);
   assert.doesNotMatch(txt, /Zieuton en haut|J'ai compris, on y va/, "plus de boucle vers l'écran d'avant Instagram");
   assert.match(txt, /Demande à vérifier/);
+  assert.match(txt, /Vérifie la demande, sans la refaire/);
   assert.match(txt, /demande d'aujourd'hui chez Instagram, sans pouvoir confirmer que c'est la tienne/);
   assert.match(txt, /Ne refais rien/);
   assert.doesNotMatch(txt, /C'est demandé|Bravo|Instagram prépare ta liste|Rappel activé|Ta liste est prête/, "aucune preuve inventée, aucune promesse");
