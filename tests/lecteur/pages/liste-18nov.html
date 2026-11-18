@@ -1,0 +1,62 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<!-- Reconstituée d'après la vidéo iPhone du 18 nov. 2026 à 14 h 30 (build 17) : seuls les TEXTES et les BOUTONS visibles sont repris,
+     dans l'ordre vu en faisant défiler la fenêtre. Les balises et l'imbrication restent inconnues : ce sont des blocs neutres.
+     Vu dans la vidéo : une carte PRÊTE ne dit pas « Demandée le », mais « Expire le 22/11/2026 · Moins de 1 Mo ».
+     ?attente=0 : la demande du 18/11 n'est plus « En attente » et une 4e carte prête (expire le 22/11) est arrivée. -->
+<style>
+  body { margin: 0; font: 16px system-ui; }
+  .fenetre { position: fixed; inset: 40px 0 0 0; background: #fff; overflow: auto; padding: 16px; border-radius: 24px 24px 0 0; }
+  .carte { border: 1px solid #ddd; border-radius: 16px; padding: 12px; margin: 8px 0; }
+  button { padding: 10px 24px; border-radius: 20px; border: 0; background: #eee; }
+  .bleu { background: #0064e0; color: #fff; width: 100%; }
+</style>
+<body>
+<div class="fenetre">
+  <div><div role="button" aria-label="Fermer"><svg width="20" height="20"></svg></div></div>
+  <div><span>Exporter vos informations</span></div>
+  <div><span>Vous pouvez exporter une copie de vos informations vers un service externe ou sur votre appareil. Les données disponibles incluent les contenus et les informations que vous avez partagés, votre activité et les informations que nous recueillons.</span></div>
+  <div><button class="bleu">Créer une exportation</button></div>
+  <div><div role="tab">Activité en cours</div><div role="tab">Activité passée</div></div>
+  <div>
+    <div><span>Téléchargements disponibles</span></div>
+    <div><span>Vous disposerez de 4 jours pour télécharger les fichiers sur votre appareil. Nous vous recommandons de télécharger vos fichiers sur ordinateur pour une expérience optimale.</span></div>
+    __NOUVELLE__
+    <div class="carte">
+      <div><div><img alt="" width="40" height="40"></div><div>
+        <div><span>vifrnt (Instagram)</span></div><div><span>Followers et suivi(e)s</span></div>
+        <div><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Expire le 22/11/2026 · Moins de 1 Mo</span></div>
+      </div></div>
+      <div><div><button>Télécharger</button></div><div><button>Annuler</button></div></div>
+    </div>
+    <div class="carte">
+      <div><div><img alt="" width="40" height="40"></div><div>
+        <div><span>vifrnt (Instagram)</span></div><div><span>Followers et suivi(e)s</span></div>
+        <div><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Expire le 21/11/2026 · Moins de 1 Mo</span></div>
+      </div></div>
+      <div><div><button>Télécharger</button></div><div><button>Annuler</button></div></div>
+    </div>
+    <div class="carte">
+      <div><div><img alt="" width="40" height="40"></div><div>
+        <div><span>vifrnt (Instagram)</span></div><div><span>Followers et suivi(e)s</span></div>
+        <div><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Expire le 21/11/2026 · Moins de 1 Mo</span></div>
+      </div></div>
+      <div><div><button>Télécharger</button></div><div><button>Annuler</button></div></div>
+    </div>
+  </div>
+  __ATTENTE__
+  <div><span>Votre exportation ne comprendra pas d'informations partagées par d'autres personnes, comme les photos de quelqu'un d'autre sur lesquelles votre nom est mentionné.</span> <a href="#">En savoir plus sur l'exportation de vos informations</a></div>
+</div>
+<script>
+  var q = new URLSearchParams(location.search), done = q.get("attente") === "0";
+  var attente = '<div><div><span>En attente</span></div><div><span>Vos informations sont en préparation pour l\'exportation.</span></div>'
+    + '<div class="carte"><div><div><img alt="" width="40" height="40"></div><div>'
+    + '<div><span>vifrnt (Instagram)</span></div><div><span>Followers et suivi(e)s</span></div>'
+    + '<div><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Demandée le 18/11/2026</span></div>'
+    + '</div></div><div><button>Annuler</button></div></div></div>';
+  var nouvelle = '<div class="carte"><div><div><img alt="" width="40" height="40"></div><div>'
+    + '<div><span>vifrnt (Instagram)</span></div><div><span>Followers et suivi(e)s</span></div>'
+    + '<div><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Expire le 22/11/2026 · Moins de 1 Mo</span></div>'
+    + '</div></div><div><div><button>Télécharger</button></div><div><button>Annuler</button></div></div></div>';
+  document.body.innerHTML = document.body.innerHTML.replace("__ATTENTE__", done ? "" : attente).replace("__NOUVELLE__", done ? nouvelle : "");
+</script>
+</body>

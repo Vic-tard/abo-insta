@@ -14,7 +14,8 @@ const app = read("ios/Zieuton/AppDelegate.swift");
 function visibleStrings(src) {
   const noReader = src.replace(/static let readerJS = #"""[\s\S]*?"""#/, "");
   const lines = noReader.split("\n").filter((l) => !/^\s*\/\//.test(l)).map((l) => l.replace(/\s\/\/ .*$/, ""));
-  return lines.join("\n").match(/"(?:[^"\\\n]|\\.)*"/g) || [];
+  // Les motifs de recherche (« (?:expire le|…)\\s+… », lecture de la date d'expiration écrite par Instagram) ne sont pas des textes.
+  return (lines.join("\n").match(/"(?:[^"\\\n]|\\.)*"/g) || []).filter((t) => !t.startsWith('"(?:'));
 }
 
 test("aucune promesse de surveillance ni d'expiration dans les textes de la coque", () => {
@@ -111,4 +112,29 @@ test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présent
   assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
   // « prêt » exige une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour).
   assert.match(web, /if let baseline, r > baseline \{ return \.ready \}/);
+});
+
+test("vidéo du 18 nov. : une demande en attente visible n'encourage jamais une nouvelle demande", () => {
+  // Liste lue sans « Créer une exportation » visible : une demande déjà en cours est reconnue quand même.
+  assert.match(web, /let homeSettled = \[createSince, listSince\]\.contains/);
+  // Le temps de la reconnaître : pas de « Touche Créer une exportation », pas de cercle.
+  assert.match(web, /if pendingSeen, requesting, !finished \{\s*return Step\(verb: "Un instant :", target: "une demande est déjà là"/);
+  assert.match(web, /if pendingSeen \{ return \[\] \}/);
+  // Sur la liste, jamais « Oups, pas le bon bouton ».
+  assert.match(web, /if ExportProof\.listIsCalm\(screen: screenKey, rowsShown: .*?\) \{ return \}\s*warn\("Oups, pas le bon bouton !"/);
+});
+
+test("vidéo du 18 nov. : ligne d'aujourd'hui sans preuve : texte rassurant, confirmation à la main, jamais « C'est demandé »", () => {
+  assert.match(web, /if todayPendingShown, Date\(\)\.timeIntervalSince\(sent\) > 6 \{\s*return Step\(verb: "Une demande d'aujourd'hui est là :", target: "ne refais rien"/);
+  const alert = web.slice(web.indexOf("private func askConfirmRequest()"), web.indexOf("private func warnDuplicate()"));
+  assert.match(alert, /self\.manualConfirm = true\s*self\.existingRequest = true\s*self\.existingToday = true/);
+  assert.match(web, /if !existingRequest \|\| manualConfirm \{ badSettings = ExportProof\.problem\(lastSummary\) \}/);
+  assert.match(web, /unsure: unsureShown\)/);
+});
+
+test("vidéo du 18 nov. : une carte prête dit « Expire le », jamais prise pour une demande en attente", () => {
+  assert.match(web, /var DATED = \/\^\(demandée le\|demandé le\|requested on\|expire le\|expires on\|expires\)\\b\//);
+  assert.match(web, /if \(!ready && EXPIRES\.test\(low\(lines\[i\]\)\)\) continue;/);
+  // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver.
+  assert.match(web, /if p > 0 \{ return \.pending \}\s*if let baseline, r > baseline \{ return \.ready \}/);
 });

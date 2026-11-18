@@ -354,17 +354,19 @@ check(NoticePlan.endsWait(requestAcct: "", sender: nil), "demande sans compte, m
 // 27. Tests iPhone du 17 nov. : textes tels que le lecteur les envoie pour la vraie liste (cartes « Demandée le 17/11/2026 »).
 let n17 = cal.date(from: DateComponents(year: 2026, month: 11, day: 17, hour: 17, minute: 32))!
 let carteAttente = "en attente · demandée le 17/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 17/11/2026 annuler"
-let carteAncienne = "demandée le 16/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 16/11/2026 télécharger annuler"
-let carteJourPrete = "demandée le 17/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 17/11/2026 télécharger annuler"
+// Vidéo du 18 nov. : une carte prête ne dit pas « Demandée le » mais « Expire le … · Moins de 1 Mo » (fichier gardé 4 jours).
+// Prêt le 16/11 : expire le 20/11. Prêt le 17/11 : expire le 21/11.
+let carteAncienne = "expire le 20/11/2026 · moins de 1 mo · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json expire le 20/11/2026 · moins de 1 mo télécharger annuler"
+let carteJourPrete = "expire le 21/11/2026 · moins de 1 mo · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json expire le 21/11/2026 · moins de 1 mo télécharger annuler"
 check(ExportProof.isDated(carteAttente, day: n17, now: n17, calendar: cal), "17 nov. : « Demandée le 17/11/2026 » est bien du jour")
-check(!ExportProof.isDated(carteAncienne, day: n17, now: n17, calendar: cal), "17 nov. : l'ancien export du 16/11 n'est pas du jour")
+check(!ExportProof.isDated(carteAncienne, day: n17, now: n17, calendar: cal), "17 nov. : l'ancien export (expire le 20/11) n'est pas daté du jour")
 var p17 = ExportProof()
 p17.saw([], now: n17, calendar: cal)
 p17.freeze()
 check(p17.verdict([carteAttente], tapped: true, now: n17, calendar: cal) == .confirmed, "17 nov. : la nouvelle carte « En attente » datée du jour confirme la demande")
 var r17 = ReadyProof(day: n17)
 for t in [0.0, 1.0, 2.5] { r17.read(pending: [carteAttente], ready: [carteAncienne], now: n17.addingTimeInterval(t), calendar: cal) }
-check(r17.baseline == 0, "17 nov. : référence = 0 ligne prête du jour (l'ancien export est du 16/11)")
+check(r17.baseline == 0, "17 nov. : référence = 0 (l'ancien export expire le 20/11 : prêt avant le 17/11)")
 check(r17.verdict(pending: [carteAttente], ready: [carteAncienne], login: false, offline: false, now: n17.addingTimeInterval(60), calendar: cal) == .pending,
       "17 nov. : ancien export prêt + nouvelle demande en attente : « pas encore prêt », jamais « prêt »")
 check(r17.verdict(pending: [], ready: [carteAncienne, carteJourPrete], login: false, offline: false, now: n17.addingTimeInterval(300), calendar: cal) == .ready,
@@ -433,6 +435,42 @@ r30c.read(pending: [], ready: [carteJourPrete], now: n30.addingTimeInterval(3), 
 check(r30c.baseline == nil, "sans ligne « En attente » du jour, aucune référence")
 check(r30c.verdict(pending: [], ready: [carteJourPrete, carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(60), calendar: cal) == .toCheck,
       "sans référence, même deux fichiers du jour : « vérifie la date », jamais « prêt »")
+
+// 31. Vidéo iPhone du 18 nov. (14 h 30) : textes tels que le lecteur les envoie pour la vraie liste.
+// Trois fichiers prêts (« Expire le 22/11 », « 21/11 », « 21/11 ») et une demande « En attente » du 18/11.
+let n18 = cal.date(from: DateComponents(year: 2026, month: 11, day: 18, hour: 14, minute: 30))!
+func pret(_ exp: String) -> String { "expire le \(exp) · moins de 1 mo · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json expire le \(exp) · moins de 1 mo télécharger annuler" }
+let attente18 = "en attente · demandée le 18/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 18/11/2026 annuler"
+let prets18 = [pret("22/11/2026"), pret("21/11/2026"), pret("21/11/2026")]
+check(ReadyProof.expiry(pret("22/11/2026"), calendar: cal).map { cal.component(.day, from: $0) } == 22, "18 nov. : « Expire le 22/11/2026 » est lu")
+check(ReadyProof.expiry(attente18, calendar: cal) == nil, "18 nov. : une demande en attente n'a pas de date d'expiration")
+check(ReadyProof.readyFor(pret("22/11/2026"), day: n18, now: n18, calendar: cal), "18 nov. : expire le 22/11 = devenu prêt le 18/11 ou après : peut être le fichier du jour")
+check(!ReadyProof.readyFor(pret("21/11/2026"), day: n18, now: n18, calendar: cal), "18 nov. : expire le 21/11 = prêt avant le 18/11 : ancien export, jamais le fichier du jour")
+check(!ReadyProof.readyFor(pret("18/11/2026"), day: n18, now: n18, calendar: cal), "un fichier qui expire le jour même n'est jamais celui de la demande du jour")
+// Demande vue en retard (cas de la vidéo) : le fichier du matin (expire le 22/11) entre dans la référence.
+var r31 = ReadyProof(day: nil)
+for t in [0.0, 2.5] { r31.read(pending: [attente18], ready: prets18, now: n18.addingTimeInterval(t), calendar: cal) }
+check(r31.day.map { cal.isDate($0, inSameDayAs: n18) } == true, "18 nov. : jour lu sur la carte « Demandée le 18/11/2026 »")
+check(r31.baseline == 1, "18 nov. : référence = 1 (le fichier du matin, expire le 22/11) ; les deux du 21/11 ne comptent pas")
+check(r31.verdict(pending: [attente18], ready: prets18, login: false, offline: false, now: n18.addingTimeInterval(60), calendar: cal) == .pending,
+      "18 nov. : demande en attente + trois fichiers prêts : « pas encore prêt », jamais « prêt »")
+check(r31.verdict(pending: [], ready: [pret("22/11/2026")] + prets18, login: false, offline: false, now: n18.addingTimeInterval(600), calendar: cal) == .ready,
+      "18 nov. : la demande quitte « En attente » et un 2e fichier « expire le 22/11 » arrive : prêt")
+check(r31.verdict(pending: [], ready: prets18, login: false, offline: false, now: n18.addingTimeInterval(600), calendar: cal) == .toCheck,
+      "18 nov. : la demande disparaît sans nouveau fichier : « vérifie », jamais « prêt »")
+check(r31.verdict(pending: [attente18], ready: [pret("22/11/2026")] + prets18, login: false, offline: false, now: n18.addingTimeInterval(600), calendar: cal) == .pending,
+      "un nouveau fichier arrive mais la demande est encore « En attente » : ce n'est pas le sien, « pas encore prêt »")
+check(ReadyProof(day: nil).verdict(pending: [], ready: prets18, login: false, offline: false, now: n18, calendar: cal) == .toCheck,
+      "jour inconnu + fichiers « Expire le » : « vérifie la date », jamais « prêt »")
+// La demande en attente du 18/11, vue avant toute touche : demande d'aujourd'hui en cours, pas « Touche Créer une exportation ».
+var p31 = ExportProof()
+p31.saw([attente18], now: n18, calendar: cal)
+check(p31.alreadyPending && p31.pendingToday, "18 nov. : la carte du 18/11 vue en revenant : demande d'aujourd'hui déjà en cours")
+check(ExportProof.listIsCalm(screen: "home", rowsShown: false) && ExportProof.listIsCalm(screen: "", rowsShown: true),
+      "18 nov. : sur la liste des exports, jamais « Oups, pas le bon bouton »")
+check(!ExportProof.listIsCalm(screen: "summary:info", rowsShown: false), "ailleurs dans le parcours, l'alerte reste")
+check(LeaveHint.showsButton(guarding: false, ready: false, badSettings: false, pageProblem: false, downloading: false, unsure: true),
+      "18 nov. : preuve incertaine, liste visible : « Revenir dans Zieuton » est proposé")
 
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

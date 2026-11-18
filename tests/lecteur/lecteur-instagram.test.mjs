@@ -301,13 +301,13 @@ test("17 nov. : la demande « En attente » est lue avec SA date (titre de secti
 test("17 nov. : l'ancien export (Télécharger + Annuler) est une ligne prête à part, jamais la nouvelle demande", async () => {
   const s = await stateOf("liste-fenetre-17nov.html");
   assert.equal(s.ready.length, 1);
-  assert.match(s.ready[0], /demandée le 16\/11\/2026/);
+  assert.match(s.ready[0], /^expire le 20\/11\/2026/, "la carte prête porte sa date d'expiration (format vu le 18 nov.)");
   assert.match(s.ready[0], /télécharger/);
   assert.doesNotMatch(s.ready[0], /17\/11/, "la carte prête n'englobe pas la carte en attente");
 });
 
 test("17 nov. : ancien export prêt du MÊME jour : deux cartes séparées, une prête, une en attente", async () => {
-  const s = await stateOf("liste-fenetre-17nov.html?ancien=17/11/2026");
+  const s = await stateOf("liste-fenetre-17nov.html?ancien=21/11/2026");
   assert.equal(s.ready.length, 1);
   assert.equal(s.rows.length, 1);
   assert.match(s.ready[0], /télécharger/);
@@ -318,7 +318,7 @@ test("17 nov. : fenêtre marquée comme dialogue : seule la fenêtre est lue, pa
   const s = await stateOf("liste-fenetre-dialogue.html");
   assert.equal(s.rows.length, 1);
   assert.equal(s.ready.length, 1, "la ligne prête de la page dessous (2/11) n'est pas comptée");
-  assert.match(s.ready[0], /16\/11\/2026/);
+  assert.match(s.ready[0], /expire le 20\/11\/2026/);
 });
 
 // Relecture ChatGPT (18 nov.) : les pages ci-dessus sont reconstituées ; si la vraie structure diffère, la lecture doit rester prudente.
@@ -333,4 +333,26 @@ test("date écrite autrement que « Demandée le » : pas de carte, l'ancienne l
   assert.equal(s.ready.length, 1);
   assert.match(s.ready[0], /17 nov/, "un seul bouton dans le bloc : sa date part avec lui (la référence ReadyProof protège d'un ancien export du même jour)");
   assert.deepEqual(s.rows, [], "aucune demande « en attente » inventée");
+});
+
+// Vidéo iPhone du 18 nov. (14 h 30) : la vraie liste montre « Téléchargements disponibles » (cartes « Expire le … · Moins de 1 Mo »,
+// Télécharger + Annuler) puis « En attente » (carte « Demandée le 18/11/2026 », Annuler). Page reconstituée : textes et boutons seulement.
+test("18 nov. : trois fichiers prêts et une demande en attente, chacun sa carte, avec SA date", async () => {
+  const s = await stateOf("liste-18nov.html");
+  assert.equal(s.screen, "home");
+  assert.equal(s.rows.length, 1, "une seule demande en attente");
+  assert.match(s.rows[0], /^en attente · demandée le 18\/11\/2026/);
+  assert.equal(s.ready.length, 3, "trois cartes prêtes");
+  for (const r of s.ready) {
+    assert.match(r, /^expire le 2[12]\/11\/2026/, "chaque carte prête commence par sa date d'expiration");
+    assert.match(r, /télécharger/);
+    assert.doesNotMatch(r, /demandée le 18/, "une carte prête n'englobe jamais la demande en attente");
+  }
+});
+
+test("18 nov. : une carte « Expire le » n'est jamais comptée comme une demande en attente", async () => {
+  const s = await stateOf("liste-18nov.html?attente=0");
+  assert.deepEqual(s.rows, [], "plus de demande en attente");
+  assert.equal(s.ready.length, 4, "la nouvelle carte prête s'ajoute aux trois autres");
+  assert.equal(s.ready.filter((r) => /^expire le 22\/11\/2026/.test(r)).length, 2, "deux fichiers prêts le même jour, deux cartes");
 });
