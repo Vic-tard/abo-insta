@@ -983,6 +983,9 @@ final class MetaViewController: UIViewController {
     /// et prévient dès que le fichier de la demande est prêt (FOU-100, preuve FOU-126). L'utilisateur touche « Télécharger » lui-même.
     private var guarding = false
     private var guardReady = false
+    /// FOU-126 (tests iPhone du 17 nov.) : ouvert pour récupérer le fichier : dernier verdict de la preuve « prêt » (ReadyProof).
+    /// Le bandeau et le cercle suivent ce verdict, jamais la seule présence d'un bouton « Télécharger ».
+    private var getVerdict: ReadyProof.Verdict?
     private var guardSince = Date.distantPast
     private var guardTimer: Timer?
     /// On arrête de recharger au bout de 20 min : la notification prend le relais.
@@ -1639,6 +1642,8 @@ final class MetaViewController: UIViewController {
     private func ringNames() -> [String] {
         guard pageKnown, !lockedShown, !downloading, codeShown.isEmpty, !loginShown, sentAt == nil, !lostShown, !finished || guarding else { return [] }
         if guarding { return guardReady ? ["Télécharger", "Download"] : [] }
+        // FOU-126 : pour récupérer le fichier, on n'entoure « Télécharger » que si la preuve dit « prêt ».
+        if !requesting { return getBanner == .ready ? ["Télécharger", "Download"] : [] }
         // Lecture sûre seulement : l'écran d'Instagram reconnu est bien celui de l'étape, depuis un moment, sans touche récente
         // ni page qui charge. Au moindre doute, pas de cercle : le bandeau suffit.
         let now = Date()
@@ -2148,6 +2153,34 @@ final class MetaViewController: UIViewController {
     // MARK: Étapes
 
     /// FOU-121 P4 : l'étape à afficher, avec sa couleur (consigne, réussite, réglage à corriger, petit souci, pause).
+    /// Ce que le bandeau dit quand on vient récupérer le fichier (voir GetBanner).
+    private var getBanner: GetBanner {
+        let w = ExportWatcher.shared
+        return GetBanner.of(waiting: w.isWaiting, proven: w.isReady || guardReady, verdict: getVerdict)
+    }
+
+    private func getStep(_ b: GetBanner) -> Step {
+        let day = ExportWatcher.shared.requestDay.map { " du " + GetBanner.dayText($0) } ?? ""
+        switch b {
+        case .looking:
+            return Step(verb: "Un instant :", target: "je cherche ta demande\(day)",
+                        tip: "Je lis la liste de tes exports chez Instagram. Ne touche rien pour l'instant : je te dis quoi faire.")
+        case .notYet:
+            return Step(verb: "Pas encore prêt :", target: "ta demande\(day) est en attente",
+                        tip: "Instagram la prépare encore. Tu peux revenir dans Zieuton (‹ Zieuton, en haut à gauche) : je regarde à nouveau à chaque ouverture. Instagram t'envoie aussi un e-mail.")
+        case .checkDate:
+            return Step(verb: "Vérifie la date", target: "de ton export",
+                        tip: "Je n'arrive pas à lire la ligne de ta demande\(day). Regarde la date de chaque ligne avant de toucher quoi que ce soit : une autre date est un ancien export.")
+        case .unproven:
+            // Relecture ChatGPT : sans demande prouvée, aucune consigne directe vers un bouton (il peut être celui d'un ancien export).
+            return Step(verb: "Vérifie la date", target: "de ton export",
+                        tip: "Je ne sais pas encore quelle ligne est la tienne. Regarde la date de chaque ligne : une ligne « En attente » n'est pas prête, une autre date est un ancien export.")
+        case .ready:
+            return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
+                        tip: "Sur la ligne de ta demande\(day). Zieuton se met à jour tout seul.", look: "button")
+        }
+    }
+
     private var currentStep: Step {
         var step = baseStep
         step.tone = BannerTone.of(verb: step.verb, isWarning: warning != nil && step.verb.isEmpty)
@@ -2198,6 +2231,8 @@ final class MetaViewController: UIViewController {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
                             tip: "Je regarde à nouveau quand tu rouvres Zieuton. Instagram t'envoie aussi un e-mail.")
             }
+            // Ouvert pour récupérer le fichier : la demande est encore « En attente » (ou à vérifier). Jamais « Touche Télécharger ».
+            if !requesting { return getStep(GetBanner.of(waiting: true, proven: false, verdict: getVerdict)) }
             // Demande vérifiée (on n'arrive ici qu'après la preuve) : on dit clairement comment sortir d'Instagram.
             return Step(verb: LeaveHint.verb(existing: existingRequest), target: LeaveHint.target, tip: LeaveHint.tip)
         }
@@ -2259,6 +2294,7 @@ final class MetaViewController: UIViewController {
             return Step(verb: "Bien joué !", target: "Instagram enregistre ta demande…",
                         tip: "Je vérifie qu'elle apparaît dans la liste d'Instagram.")
         }
+        if !requesting, !downloading { return getStep(getBanner) }
         if lostShown {
             // FOU-121 : écran inconnu = pas forcément une erreur (vérification, chargement, nouvelle interface). Rien ne se recharge tout seul.
             return Step(verb: "Je ne reconnais pas encore", target: "cet écran",
@@ -2603,6 +2639,7 @@ final class MetaViewController: UIViewController {
         if mainFrame, watcher.isWaiting, !downloading {
             let verdict = watcher.observe(pending: state["rows"] as? [String], ready: state["ready"] as? [String],
                                           login: state["login"] as? Bool == true, now: now)
+            if !requesting, verdict != getVerdict { getVerdict = verdict; showStep() }
             // Ouvert pour récupérer le fichier, mais Instagram le prépare encore : on guette ici (FOU-115).
             if !requesting, !guarding, verdict == .pending { startGuarding() }
             // La ligne de la demande a un « Télécharger » de plus qu'au moment de la preuve : le fichier est prêt.
@@ -3322,6 +3359,38 @@ struct ReadyProof: Equatable {
     }
 }
 
+/// FOU-126 (tests iPhone du 17 nov.) : ce que dit le bandeau quand on ouvre Instagram pour récupérer le fichier.
+/// Un bouton « Télécharger » visible ne suffit jamais : seul le verdict de ReadyProof (la ligne de la demande) compte.
+enum GetBanner: Equatable {
+    /// Demande prouvée, liste pas encore lue.
+    case looking
+    /// La ligne de la demande est encore « En attente ».
+    case notYet
+    /// Pas de preuve dans un sens ou dans l'autre (jour inconnu, liste illisible) : l'utilisateur regarde la date.
+    case checkDate
+    /// Aucune demande prouvée par Zieuton (par exemple faite dans l'app Instagram) : consigne générale, sans cercle.
+    case unproven
+    /// La preuve dit « prêt » : « Touche Télécharger », avec le cercle.
+    case ready
+
+    static func of(waiting: Bool, proven: Bool, verdict: ReadyProof.Verdict?) -> GetBanner {
+        if proven || verdict == .ready { return .ready }
+        guard waiting else { return .unproven }
+        switch verdict {
+        case nil: return .looking
+        case .pending?: return .notYet
+        case .ready?: return .ready
+        case .toCheck?, .unknown?, .offline?, .login?: return .checkDate
+        }
+    }
+
+    /// « 17/11 »
+    static func dayText(_ d: Date, calendar: Calendar = .current) -> String {
+        let c = calendar.dateComponents([.day, .month], from: d)
+        return String(format: "%02d/%02d", c.day ?? 0, c.month ?? 0)
+    }
+}
+
 /// Autorisation des notifications, telle que la page la connaît.
 enum NotifAuth: String, Equatable { case authorized, denied, notDetermined }
 
@@ -3703,6 +3772,8 @@ final class ExportWatcher: NSObject {
     private var isExisting: Bool { store.bool(forKey: Key.existing) }
 
     private var proof = ReadyProof(day: nil)
+    /// Jour de la demande guettée (nil : inconnu, par exemple demande déjà en cours pas encore lue).
+    var requestDay: Date? { isWaiting || isReady ? proof.day : nil }
     private var timer: Timer?
     private var checker: WKWebView?
     private var checkHandler: CheckHandler?
