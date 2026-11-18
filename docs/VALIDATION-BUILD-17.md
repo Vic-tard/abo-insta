@@ -3,6 +3,20 @@
 > Préparé le 16 novembre 2026 pour le build 16 (FOU-51, FOU-105), repris le 17 novembre pour le **build 17** (FOU-126) : Victor a décidé de ne pas faire de build 16 intermédiaire et de viser directement un build 17 candidat à la soumission. **Ce plan ne lance rien** : aucun build TestFlight, aucune soumission sans l'accord écrit de Victor.
 > Chaque case porte un statut : **À faire** / **Fait (date, par qui)** / **Échec (note)**. Une case non faite reste écrite « À faire » : on ne la coche jamais par déduction.
 
+## Résultat du build 17 sur iPhone (17 nov. 2026) : NON VALIDÉ
+
+Build 1.0 (17) envoyé sur TestFlight et installé par Victor le 17 nov. vers 17 h 25. Premier test réel d'une demande (captures dans `notifications-build17/tests-iphone-17nov/` du dossier du projet) :
+
+| Heure | Constat | Cause trouvée | Correctif |
+| --- | --- | --- | --- |
+| 17 h 32 | Instagram montre la nouvelle demande « En attente », datée du 17/11/2026, mais le bandeau dit « Je n'ai pas encore vu ta demande » | La liste est dans une fenêtre par-dessus la page : Zieuton ne la lisait que si « Créer une exportation » était visible. Et « En attente » est un titre de section : la date est dans la carte en dessous, jamais lue | #146 (lecteur) |
+| 17 h 34 | Étape « Fichier » : « Touche Télécharger », avec le cercle sur le bouton d'un **ancien** export, alors que la demande est encore en attente | Pour récupérer le fichier, le bandeau avait un texte fixe et entourait tout bouton « Télécharger » visible, sans consulter la preuve « prêt ». Aucune notification « prêt » n'est partie | #147 (bandeau) |
+| 17 h 35 | Écran d'attente : « Une demande était déjà en cours chez Instagram » | C'était la demande de 17 h 32, vue en retard, présentée comme ancienne | #148 (textes) |
+
+Conséquence : les sections 3 et 4 sont à refaire avec le build suivant (numéro 20 après fusion de #146 à #148). Les cases ci-dessous restent « À faire ». Les cas 4.17 à 4.23 sont nouveaux (4.22 et 4.23 : relecture ChatGPT du 18 nov.).
+
+**Limites des tests automatiques (relecture ChatGPT du 18 nov.).** Les pages Instagram des tests sont reconstituées à partir des captures du 17 nov. : elles reprennent les textes vus, pas le vrai code d'Instagram, qui peut être différent et changer sans prévenir. Elles prouvent que Zieuton lit ces textes, pas qu'il lira toujours la vraie page. C'est pourquoi le lecteur reste prudent : s'il ne trouve pas de date lisible sur une ligne, Zieuton ne dit jamais « c'est demandé » ni « c'est prêt » ; il affiche « Vérifie la date de ton export ». Seul le test sur iPhone (cas 4.17 à 4.23) valide le vrai comportement.
+
 ## 0. Ce que contient le build 17
 
 | Élément | Source | Vérifié où aujourd'hui |
@@ -95,6 +109,19 @@ Règle : iOS ne laisse pas une app vérifier en permanence quand elle est fermé
 | 4.14 | Bout en bout : fichier vraiment prêt → « Télécharger » touché par l'utilisateur → import | Import automatique, bilan affiché, plus aucun rappel ensuite | À faire |
 | 4.15 | Aucune notification « expire bientôt » ou « dernier jour » | Jamais vue, même avec un ancien rappel programmé par le build 15 (il est effacé au premier lancement du build 17) | À faire |
 | 4.16 | Page ancienne (canal stable) + coque 17 | Les notifications marchent quand même (l'autorisation est demandée au moment de la preuve) | À faire |
+| 4.17 | **Liste dans la fenêtre par-dessus la page** (croix en haut), juste après « Commencer l'exportation » (cas du 17 nov., 17 h 32) | La carte « En attente », « Demandée le » du jour, est reconnue : « C'est demandé ✓ » dans le bandeau et la notification, sans « Vérifier son état » | À faire (build 21) |
+| 4.18 | **Ancien export prêt + nouvelle demande en attente**, ouverture pour récupérer le fichier (cas du 17 nov., 17 h 34) | Bandeau « Pas encore prêt : ta demande du JJ/MM est en attente ». Aucun cercle, aucun « Touche Télécharger » | À faire (build 21) |
+| 4.19 | Même liste, quand la demande quitte « En attente » et qu'une carte prête « Expire le » (jour de la demande + 4) arrive | « C'est prêt ! Touche Télécharger ». Cercle seulement s'il n'y a qu'un bouton « Télécharger » à l'écran. « Ton fichier est prêt 🎉 » une seule fois | À faire (build 21) |
+| 4.20 | Demande du jour vue en retard (cas du 17 nov., 17 h 35) | « Une demande d'aujourd'hui est en cours », jamais « Une demande était déjà en cours » ni « Ta demande » (une date ne prouve pas que c'est la tienne) | À faire (build 21) |
+| 4.21 | Vraie demande d'un autre jour encore en attente | « Une demande est déjà en cours » (texte inchangé) | À faire (si la situation se présente) |
+| 4.22 | **Deux exports le même jour** : un premier demandé le matin et déjà prêt, puis une nouvelle demande (relecture ChatGPT du 18 nov.) | Tant que la nouvelle est « En attente » : « Pas encore prêt », aucun cercle, aucune notification « prêt ». « Prêt » seulement quand une deuxième carte « Expire le » (jour + 4) arrive | À faire (si possible) |
+| 4.23 | Ouvrir Instagram pour récupérer un fichier **sans demande faite dans Zieuton** (par exemple faite dans l'app Instagram) | « Vérifie la date de ton export », jamais « Touche Télécharger », aucun cercle | À faire (build 21) |
+| 4.24 | **Retour dans Zieuton avant la preuve** (vidéo du 18 nov.) | Écran « Demande à vérifier », jamais « Zieuton en haut, Instagram en bas ». « Vérifier dans Instagram » reconnaît la demande déjà là, sans rien refaire | À faire (build 21) |
+| 4.25 | Sur la liste des exports : faire défiler, changer d'onglet, toucher une carte | Jamais « Oups, pas le bon bouton ! », jamais « Touche Créer une exportation » | À faire (build 21) |
+| 4.26 | Un autre export devient prêt pendant que la demande est « En attente » | « Pas encore prêt ». Si deux fichiers nouveaux arrivent : « Vérifie la date », jamais « prêt » automatique | À faire (si la situation se présente) |
+| 4.27 | Fichier prêt pour un **autre compte** Instagram | Jamais « C'est prêt » pour ce compte-ci | À faire (si la situation se présente) |
+
+Le scénario pas à pas (S1 à S15) est dans `docs/DIAGNOSTIC-VIDEO-18NOV.md` (correctif 4, PR #150).
 
 ## 5. Achats (sandbox ou TestFlight, aucun vrai paiement)
 
