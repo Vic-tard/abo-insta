@@ -4431,8 +4431,8 @@ let prefs = {};
 function savePrefs() { if (DEMO) return; prefs.v = PREFS_V; try { localStorage.setItem("abo-prefs", JSON.stringify(prefs)); } catch (e) { logError("prefs-save", e); } }
 // existing : la demande était déjà en cours chez Instagram (FOU-121). Son heure est inconnue : requestedAt note
 // le début du guet, et les textes ne disent jamais « demandé à l'instant » ni « demandé le … » pour elle.
-// today (FOU-126, tests du 17 nov.) : cette demande « déjà en cours » est datée d'aujourd'hui chez Instagram : c'est sans doute
-// la sienne, vue en retard. On ne dit donc jamais « une demande était déjà en cours ».
+// today (FOU-126, tests du 17 nov.) : cette demande « déjà en cours » est datée d'aujourd'hui chez Instagram : c'est peut-être
+// la sienne, mais une date ne le prouve pas : on dit « une demande d'aujourd'hui est en cours », jamais « ta demande ».
 function markRequested(existing, today) {
   prefs.requestedAt = new Date().toISOString();
   // FOU-126 : la demande appartient au compte affiché. Passer sur un autre compte ne l'annule pas.
@@ -4491,7 +4491,7 @@ function renderWeekly() {
     li.querySelector("i").textContent = i < at ? "✓" : String(i + 1);
   });
   $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : "En préparation";
-  if (pend) { due.textContent = prefs.requestToday ? "Ta demande d'aujourd'hui est chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
+  if (pend) { due.textContent = prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
   // App iPhone : le gros bouton fait tout (Instagram dans Zieuton, téléchargement, import). Le reste est rangé dans « Un souci ? ».
   const simple = metaInApp();
   $("wk-redo").hidden = !pend || simple;
@@ -4531,7 +4531,7 @@ function renderJourney() {
   setStep("j-export", req ? "done" : needsInstall ? "todo" : "current", 1 + off);
   setStep("j-import", req ? "current" : "todo", 2 + off);
   $("j-export-sub").textContent = req
-    ? (prefs.requestToday ? "Demandé aujourd'hui. Pas reçu ? Tu peux le redemander." : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram. Pas reçu ? Tu peux le redemander." : `Demandé le ${fmtDate(req)}. Pas reçu ? Tu peux le redemander.`)
+    ? (prefs.requestToday ? "Une demande d'aujourd'hui est en cours. Pas reçu ? Tu peux le redemander." : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram. Pas reçu ? Tu peux le redemander." : `Demandé le ${fmtDate(req)}. Pas reçu ? Tu peux le redemander.`)
     : "Instagram prépare un fichier avec la liste de tes abonnés. C'est officiel et gratuit, sans donner ton mot de passe.";
   $("start-export").className = "btn " + (req || needsInstall ? "ghost" : "primary");
   $("start-import").className = "btn " + (req && !needsInstall ? "primary" : "ghost");
@@ -4841,7 +4841,7 @@ window.zyeutoMeta = (ev, info) => {
     // Premier export : l'écran d'attente du parcours prend le relais (pas de jeux ni de graphiques encore vides).
     if (gfOn()) return;
     // Demande déjà en cours (FOU-121) : pas de « C'est demandé » comme si elle venait de partir.
-    if (existing) { toast(today ? "Ta demande d'aujourd'hui est bien chez Instagram ✓ Tu peux vérifier son état ici." : "Une demande était déjà en cours chez Instagram ✓ Tu peux vérifier son état ici.", false); return; }
+    if (existing) { toast(today ? "Une demande d'aujourd'hui est en cours chez Instagram ✓ Tu peux vérifier son état ici." : "Une demande était déjà en cours chez Instagram ✓ Tu peux vérifier son état ici.", false); return; }
     $("asked-av").innerHTML = $("wk-av").innerHTML;
     $("asked").hidden = false;
   }
@@ -5254,7 +5254,7 @@ function renderGuided() {
     const ready = exportSeenReady();
     const ago = since < 60 ? since + " min" : Math.round(since / 60) + " h";
     const say = ready ? "Ta liste est prête&nbsp;! On va la chercher 🏃"
-      : prefs.requestToday ? "Ta demande d'aujourd'hui est bien enregistrée chez Instagram&nbsp;: inutile d'en refaire une."
+      : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram&nbsp;: inutile d'en refaire une."
       : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: inutile d'en refaire une."
       : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Tu n'as plus rien à faire."
       // FOU-126 : avec la coque version 10, la ligne d'état dit déjà ce que l'app a vu chez Instagram.
@@ -5424,7 +5424,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-17-1952";
+const BUILD = "2026-11-18-1431";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

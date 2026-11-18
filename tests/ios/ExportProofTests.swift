@@ -389,10 +389,50 @@ check(p29.alreadyPending && p29.pendingToday, "carte « En attente » du 17/11 v
 var p29b = ExportProof()
 p29b.saw(["en attente · demandée le 15/11/2026 · vifrnt (instagram) annuler"], now: n17, calendar: cal)
 check(p29b.alreadyPending && !p29b.pendingToday, "carte du 15/11 : vraie demande déjà en cours")
-check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.title == "Ta demande est bien enregistrée ✓", "notification A : demande du jour, sans « déjà en cours »")
+check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.title == "Une demande d'aujourd'hui est en cours ✓", "notification A : demande du jour, sans « déjà en cours »")
 check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.subtitle == nil, "demande du jour vue en retard : pas d'heure inventée")
 check(!LeaveHint.verb(existing: true, today: true).contains("déjà en cours"), "bandeau : demande du jour, sans « déjà en cours »")
 check(LeaveHint.verb(existing: true).contains("déjà en cours"), "bandeau : une demande d'un autre jour reste « déjà en cours »")
+
+// 30. Relecture ChatGPT (18 nov.) : deux exports du même jour, dont un ancien déjà prêt.
+// Une date d'aujourd'hui ne prouve pas que la demande est la sienne : jamais « prêt » à cause de l'ancien fichier.
+let n30 = n17.addingTimeInterval(4 * 3600)                                   // 17/11, 21 h 32
+let carteAttenteSoir = carteAttente                                           // la demande du soir, « En attente »
+var p30 = ExportProof()
+p30.saw([carteAttenteSoir], now: n30, calendar: cal)
+check(p30.alreadyPending && p30.pendingToday, "une demande d'aujourd'hui en cours, même avec un export prêt du matin")
+check(!LeaveHint.verb(existing: true, today: true).contains("Ta demande"), "bandeau : « une demande d'aujourd'hui », jamais « ta demande »")
+check(NoticeText.of("zy-asked", existing: true, today: true, hour: nil)?.title.contains("Ta demande") == false, "notification A : jamais « ta demande » sur une simple date")
+// Cas A : Zieuton a vu la demande du soir (prouvée). Le fichier prêt du matin entre dans la référence.
+var r30 = ReadyProof(day: n30)
+r30.read(pending: [carteAttenteSoir], ready: [carteJourPrete], now: n30, calendar: cal)
+r30.read(pending: [carteAttenteSoir], ready: [carteJourPrete], now: n30.addingTimeInterval(3), calendar: cal)
+check(r30.baseline == 1, "le fichier prêt du matin est compté dans la référence")
+check(r30.verdict(pending: [carteAttenteSoir], ready: [carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(60), calendar: cal) == .pending,
+      "demande du soir en attente + fichier du matin prêt : « pas encore », jamais « prêt »")
+check(r30.verdict(pending: [], ready: [carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(600), calendar: cal) == .toCheck,
+      "ligne du soir disparue, seul le fichier du matin reste : « vérifie la date », jamais « prêt »")
+check(r30.verdict(pending: [], ready: [carteJourPrete, carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(900), calendar: cal) == .ready,
+      "un deuxième fichier prêt du même jour : c'est le nouveau, « prêt »")
+// L'ancien fichier du matin expire ou est supprimé, puis le nouveau est prêt : il n'y en a qu'un, pas « plus qu'avant ».
+check(r30.verdict(pending: [], ready: [carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(1200), calendar: cal) != .ready,
+      "un seul fichier prêt du jour (sans savoir lequel) : jamais « prêt » automatique")
+// Cas B : la demande « en cours » vue en retard. Le jour vient de sa ligne ; le fichier du matin reste dans la référence.
+var r30b = ReadyProof(day: nil)
+r30b.read(pending: [carteAttenteSoir], ready: [carteJourPrete], now: n30, calendar: cal)
+r30b.read(pending: [carteAttenteSoir], ready: [carteJourPrete], now: n30.addingTimeInterval(3), calendar: cal)
+check(r30b.baseline == 1, "demande vue en retard : le fichier du matin est aussi dans la référence")
+check(r30b.verdict(pending: [carteAttenteSoir], ready: [carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(60), calendar: cal) == .pending,
+      "demande vue en retard + fichier du matin prêt : jamais « prêt »")
+check(GetBanner.of(waiting: true, proven: false, verdict: .pending) == .notYet && GetBanner.of(waiting: true, proven: false, verdict: .toCheck) == .checkDate,
+      "bandeau : « pas encore » ou « vérifie la date », jamais « Touche Télécharger »")
+// Le fichier prêt n'est jamais lu avant que la demande soit vue « En attente » : pas de référence, donc pas de « prêt ».
+var r30c = ReadyProof(day: n30)
+r30c.read(pending: [], ready: [carteJourPrete], now: n30, calendar: cal)
+r30c.read(pending: [], ready: [carteJourPrete], now: n30.addingTimeInterval(3), calendar: cal)
+check(r30c.baseline == nil, "sans ligne « En attente » du jour, aucune référence")
+check(r30c.verdict(pending: [], ready: [carteJourPrete, carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(60), calendar: cal) == .toCheck,
+      "sans référence, même deux fichiers du jour : « vérifie la date », jamais « prêt »")
 
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

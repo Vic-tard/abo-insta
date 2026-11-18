@@ -923,7 +923,7 @@ final class MetaViewController: UIViewController {
     private var guarded: Bool { steps.contains { $0.ok != nil } && seenCreate != .distantPast }
 
     /// La demande est prouvée chez Instagram (true : elle était déjà en cours).
-    /// (existing, today) : demande déjà en cours chez Instagram ; et, dans ce cas, datée d'aujourd'hui (sans doute la sienne).
+    /// (existing, today) : demande déjà en cours chez Instagram ; et, dans ce cas, datée d'aujourd'hui (peut-être la sienne, sans preuve).
     var onRequested: ((Bool, Bool) -> Void)?
     var onFile: ((URL) -> Void)?
 
@@ -1011,7 +1011,7 @@ final class MetaViewController: UIViewController {
     private var badSettings: ExportProof.Problem?
     /// Une demande était déjà en cours chez Instagram : on ne la refait pas, on guette le fichier.
     private var existingRequest = false
-    /// Demande « déjà en cours » datée d'aujourd'hui (sans doute la sienne, vue en retard).
+    /// Demande « déjà en cours » datée d'aujourd'hui (peut-être la sienne, sans preuve).
     private var existingToday = false
     /// L'utilisateur a choisi de refaire une demande (après un mauvais réglage) : pas de blocage « déjà en cours ».
     private var allowSecond = false
@@ -2969,7 +2969,7 @@ final class MetaViewController: UIViewController {
         let done = onRequested
         // Partie avec « Année dernière », HTML ou toutes les informations : on le dit, sans la refaire à sa place.
         if !existingRequest { badSettings = ExportProof.problem(lastSummary) }
-        sayLabel.attributedText = NSAttributedString(string: existingToday ? "Ta demande d'aujourd'hui est bien chez Instagram."
+        sayLabel.attributedText = NSAttributedString(string: existingToday ? "Une demande d'aujourd'hui est en cours chez Instagram."
                                                         : existingRequest ? "Une demande est déjà en cours chez Instagram."
                                                         : "C'est confirmé ! Instagram prépare ta liste.",
                                                      attributes: [.font: Self.rounded(18, .heavy), .foregroundColor: Self.ink])
@@ -3054,8 +3054,9 @@ struct ExportProof: Equatable {
 
     /// Une demande était déjà en cours avant de commencer (et on n'a pas encore commencé).
     var alreadyPending: Bool { !frozen && (before ?? 0) > 0 }
-    /// Tests iPhone du 17 nov. : cette demande « déjà en cours » est datée d'aujourd'hui. C'est sans doute celle que
-    /// l'utilisateur vient de faire, vue en retard : on ne lui dit jamais « une demande était déjà en cours ».
+    /// Tests iPhone du 17 nov. : cette demande « déjà en cours » est datée d'aujourd'hui. C'est peut-être celle que
+    /// l'utilisateur vient de faire, vue en retard, mais une date ne le prouve pas (relecture ChatGPT du 18 nov.) :
+    /// on dit « une demande d'aujourd'hui est en cours », jamais « ta demande » ni « une demande était déjà en cours ».
     var pendingToday: Bool { alreadyPending && recentBefore > 0 }
 
     /// Ce que prouve la liste lue maintenant. `tapped` : la touche « Commencer l'exportation » a été vue.
@@ -3197,7 +3198,7 @@ enum BannerTone: Equatable {
 /// Test réel : l'utilisateur restait sur Instagram sans voir « ‹ Zieuton » en haut à gauche.
 enum LeaveHint {
     static func verb(existing: Bool, today: Bool = false) -> String {
-        if existing && today { return "✓ Ta demande d'aujourd'hui est bien là. Tu n'as plus rien à faire ici :" }
+        if existing && today { return "✓ Une demande d'aujourd'hui est en cours. Tu n'as plus rien à faire ici :" }
         return existing ? "✓ Une demande est déjà en cours. Tu n'as plus rien à faire ici :" : "✓ C'est demandé ! Tu n'as plus rien à faire ici :"
     }
     static let target = "touche ‹ Zieuton en haut à gauche"
@@ -3463,12 +3464,12 @@ enum NoticeText {
     struct Text: Equatable { let title: String; let body: String; let subtitle: String? }
 
     /// hour : heure de la demande (« 14:32 »), nil si elle est inconnue (demande déjà en cours).
-    /// today : demande « déjà en cours » datée d'aujourd'hui (sans doute la sienne, vue en retard) : ni « déjà en cours », ni heure inventée.
+    /// today : demande « déjà en cours » datée d'aujourd'hui (peut-être la sienne, sans preuve) : ni « déjà en cours », ni « ta demande », ni heure inventée.
     static func of(_ id: String, existing: Bool, today: Bool = false, hour: String?) -> Text? {
         switch id {
         case NoticePlan.asked:
             if existing && today {
-                return Text(title: "Ta demande est bien enregistrée ✓",
+                return Text(title: "Une demande d'aujourd'hui est en cours ✓",
                             body: "Instagram prépare ton fichier. Tu pourras vérifier son état dans Zieuton.", subtitle: nil)
             }
             return Text(title: existing ? "Une demande est déjà en cours ✓" : "C'est demandé ✓",

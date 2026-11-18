@@ -4,6 +4,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
@@ -216,7 +217,15 @@ test("17 nov. : une demande « déjà en cours » datée d'aujourd'hui n'est pas
   await page.evaluate(() => { try { renderGuided(); } catch (e) {} });
   const txt = await page.evaluate(() => document.body.innerText);
   assert.doesNotMatch(txt, /Une demande était déjà en cours/);
+  // Relecture ChatGPT (18 nov.) : une date d'aujourd'hui ne prouve pas que c'est la sienne.
+  assert.doesNotMatch(txt, /Ta demande d'aujourd'hui/);
   await page.close();
+});
+
+test("18 nov. : textes « demande d'aujourd'hui » neutres, jamais « ta demande » sur une simple date", () => {
+  const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+  assert.doesNotMatch(html, /Ta demande d'aujourd'hui/);
+  assert.match(html, /prefs\.requestToday \? "Une demande d'aujourd'hui est en cours chez Instagram"/);
 });
 
 test("17 nov. : une vraie demande d'un autre jour reste « déjà en cours » (et une ancienne coque sans « today » aussi)", async () => {

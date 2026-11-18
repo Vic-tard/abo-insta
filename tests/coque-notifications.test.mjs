@@ -103,3 +103,12 @@ test("relecture ChatGPT : sans preuve, aucune consigne directe « Touche Téléc
   }
   assert.match(block, /case \.unproven:[\s\S]*?verb: "Vérifie la date", target: "de ton export"/);
 });
+
+test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présentée comme « ta demande »", () => {
+  const strings = visibleStrings(web);
+  for (const s of strings) assert.doesNotMatch(s, /Ta demande d'aujourd'hui|Ta demande est bien enregistrée/, `texte trop affirmatif : ${s}`);
+  assert.match(web, /"✓ Une demande d'aujourd'hui est en cours\. Tu n'as plus rien à faire ici :"/);
+  assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
+  // « prêt » exige une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour).
+  assert.match(web, /if let baseline, r > baseline \{ return \.ready \}/);
+});
