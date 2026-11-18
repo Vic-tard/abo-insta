@@ -249,6 +249,13 @@ func s(_ t: TimeInterval) -> Date { now.addingTimeInterval(t) }
 func rv(_ r: ReadyProof, _ pending: [String]?, _ ready: [String]?, login: Bool = false, offline: Bool = false, at: Date = now) -> ReadyProof.Verdict {
     r.verdict(pending: pending, ready: ready, login: login, offline: offline, now: at, calendar: cal)
 }
+/// Relecture ChatGPT (18 nov.) : « prêt » doit être revu au moins 2 s plus tard. Lit deux fois la même liste (à `at`, puis 2,5 s après)
+/// et rend le verdict de la seconde lecture.
+func settle(_ r: inout ReadyProof, _ pending: [String], _ ready: [String], at: Date = now) -> ReadyProof.Verdict {
+    r.read(pending: pending, ready: ready, now: at, calendar: cal)
+    r.read(pending: pending, ready: ready, now: at.addingTimeInterval(2.5), calendar: cal)
+    return rv(r, pending, ready, at: at.addingTimeInterval(2.5))
+}
 // Ancien export prêt d'une autre date + nouvelle demande.
 var r1 = ReadyProof(day: now)
 r1.read(pending: [enAttente], ready: [pretAncien], now: s(0), calendar: cal)
@@ -258,14 +265,18 @@ check(r1.baseline == nil, "deux lectures à 1 s : pas encore")
 r1.read(pending: [enAttente], ready: [pretAncien], now: s(2.5), calendar: cal)
 check(r1.baseline == 0, "deux lectures identiques à 2 s d'écart : référence = 0 ligne prête du jour (vérifiée)")
 check(rv(r1, [enAttente], [pretAncien]) == .pending, "ancien export d'une autre date prêt : pas prêt, en préparation")
-check(rv(r1, [], [pretJour, pretAncien]) == .ready, "la ligne du jour devient prête : prêt")
+check(rv(r1, [], [pretJour, pretAncien]) != .ready, "la ligne du jour devient prête, pas encore relue : jamais « prêt » tout de suite")
+r1.read(pending: [], ready: [pretJour, pretAncien], now: s(10), calendar: cal)
+r1.read(pending: [], ready: [pretJour, pretAncien], now: s(11), calendar: cal)
+check(rv(r1, [], [pretJour, pretAncien], at: s(11)) != .ready, "relue 1 s plus tard seulement : pas encore « prêt »")
+check(settle(&r1, [], [pretJour, pretAncien], at: s(20)) == .ready, "la ligne du jour devient prête, revue 2 s plus tard : prêt")
 check(rv(r1, [], [pretAncien]) == .unknown, "plus rien d'en attente ni de prêt du jour : inconnu, pas prêt")
 // Ancien export prêt du même jour.
 var r2 = ReadyProof(day: now)
 for t in [0.0, 2.5] { r2.read(pending: [enAttente], ready: [pretJour], now: s(t), calendar: cal) }
 check(r2.baseline == 1, "un export du même jour déjà prêt : il est dans la référence")
 check(rv(r2, [enAttente], [pretJour]) == .pending, "même jour, pas de ligne de plus : pas prêt")
-check(rv(r2, [], [pretJour, pretJour]) == .ready, "une ligne prête de plus le même jour : prêt")
+check(settle(&r2, [], [pretJour, pretJour], at: s(10)) == .ready, "une ligne prête de plus le même jour, revue : prêt")
 check(rv(r2, [], []) == .unknown, "l'ancien du même jour expire, le nouveau pas encore là : pas de faux prêt")
 check(rv(r2, [], [pretJour]) == .toCheck, "l'ancien expire et une ligne du jour reste : à vérifier, jamais prêt")
 // Référence absente ou pas vérifiée.
@@ -296,7 +307,7 @@ check(rv(r7, [], [pretAncien]) == .unknown, "jour inconnu + seulement un vieil e
 for t in [0.0, 2.5] { r7.read(pending: [attenteHier], ready: [pretAncien], now: s(t), calendar: cal) }
 check(r7.day.map { cal.isDate($0, inSameDayAs: cal.date(byAdding: .day, value: -1, to: now)!) } == true, "demande déjà en cours d'hier : jour lu sur sa ligne")
 check(r7.baseline == 0, "puis référence vérifiée comme d'habitude")
-check(rv(r7, [], ["instagram · moi demandée le 15 novembre 2026 télécharger", pretAncien]) == .ready, "sa ligne devient prête : prêt")
+check(settle(&r7, [], ["instagram · moi demandée le 15 novembre 2026 télécharger", pretAncien], at: s(10)) == .ready, "sa ligne devient prête, revue : prêt")
 check(ReadyProof.rank(.ready) > ReadyProof.rank(.pending) && ReadyProof.rank(.pending) > ReadyProof.rank(.unknown), "pendant une vérification, « prêt » l'emporte, puis « en préparation »")
 
 // 24. FOU-126 : quelles notifications (NoticePlan).
@@ -369,7 +380,7 @@ for t in [0.0, 1.0, 2.5] { r17.read(pending: [carteAttente], ready: [carteAncien
 check(r17.baseline == 0, "17 nov. : référence = 0 (l'ancien export expire le 20/11 : prêt avant le 17/11)")
 check(r17.verdict(pending: [carteAttente], ready: [carteAncienne], login: false, offline: false, now: n17.addingTimeInterval(60), calendar: cal) == .pending,
       "17 nov. : ancien export prêt + nouvelle demande en attente : « pas encore prêt », jamais « prêt »")
-check(r17.verdict(pending: [], ready: [carteAncienne, carteJourPrete], login: false, offline: false, now: n17.addingTimeInterval(300), calendar: cal) == .ready,
+check(settle(&r17, [], [carteAncienne, carteJourPrete], at: n17.addingTimeInterval(300)) == .ready,
       "17 nov. : la carte du 17/11 a maintenant « Télécharger » : prêt")
 check(ReadyProof.latestDay(of: [carteAttente], now: n17, calendar: cal).map { cal.isDate($0, inSameDayAs: n17) } == true,
       "17 nov. : le jour d'une demande vue en retard est lu sur sa carte")
@@ -414,7 +425,7 @@ check(r30.verdict(pending: [carteAttenteSoir], ready: [carteJourPrete], login: f
       "demande du soir en attente + fichier du matin prêt : « pas encore », jamais « prêt »")
 check(r30.verdict(pending: [], ready: [carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(600), calendar: cal) == .toCheck,
       "ligne du soir disparue, seul le fichier du matin reste : « vérifie la date », jamais « prêt »")
-check(r30.verdict(pending: [], ready: [carteJourPrete, carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(900), calendar: cal) == .ready,
+check(settle(&r30, [], [carteJourPrete, carteJourPrete], at: n30.addingTimeInterval(900)) == .ready,
       "un deuxième fichier prêt du même jour : c'est le nouveau, « prêt »")
 // L'ancien fichier du matin expire ou est supprimé, puis le nouveau est prêt : il n'y en a qu'un, pas « plus qu'avant ».
 check(r30.verdict(pending: [], ready: [carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(1200), calendar: cal) != .ready,
@@ -454,7 +465,7 @@ check(r31.day.map { cal.isDate($0, inSameDayAs: n18) } == true, "18 nov. : jour 
 check(r31.baseline == 1, "18 nov. : référence = 1 (le fichier du matin, expire le 22/11) ; les deux du 21/11 ne comptent pas")
 check(r31.verdict(pending: [attente18], ready: prets18, login: false, offline: false, now: n18.addingTimeInterval(60), calendar: cal) == .pending,
       "18 nov. : demande en attente + trois fichiers prêts : « pas encore prêt », jamais « prêt »")
-check(r31.verdict(pending: [], ready: [pret("22/11/2026")] + prets18, login: false, offline: false, now: n18.addingTimeInterval(600), calendar: cal) == .ready,
+check(settle(&r31, [], [pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(600)) == .ready,
       "18 nov. : la demande quitte « En attente » et un 2e fichier « expire le 22/11 » arrive : prêt")
 check(r31.verdict(pending: [], ready: prets18, login: false, offline: false, now: n18.addingTimeInterval(600), calendar: cal) == .toCheck,
       "18 nov. : la demande disparaît sans nouveau fichier : « vérifie », jamais « prêt »")
@@ -471,6 +482,68 @@ check(ExportProof.listIsCalm(screen: "home", rowsShown: false) && ExportProof.li
 check(!ExportProof.listIsCalm(screen: "summary:info", rowsShown: false), "ailleurs dans le parcours, l'alerte reste")
 check(LeaveHint.showsButton(guarding: false, ready: false, badSettings: false, pageProblem: false, downloading: false, unsure: true),
       "18 nov. : preuve incertaine, liste visible : « Revenir dans Zieuton » est proposé")
+
+// 32. Relecture ChatGPT (18 nov., 14 h 09) : identifier le fichier prêt sans se tromper.
+// Si la correspondance n'est pas sûre : « à vérifier », sans notification « prêt » ni cercle sur Télécharger.
+func base18(_ ready: [String] = prets18) -> ReadyProof {
+    var r = ReadyProof(day: n18)
+    for t in [0.0, 2.5] { r.read(pending: [attente18], ready: ready, now: n18.addingTimeInterval(t), calendar: cal) }
+    return r
+}
+check(base18().baseline == 1 && base18().signature != nil, "référence fixée avec l'empreinte de la carte (compte, catégorie, format)")
+check(ReadyProof.signature(of: attente18) == ReadyProof.signature(of: pret("22/11/2026")),
+      "la carte « En attente » et la carte prête du même export ont la même empreinte (dates, statut, boutons, taille ignorés)")
+check(ReadyProof.signature(of: "en attente · demandée le 18/11/2026 annuler") == nil, "carte sans compte ni catégorie : pas d'empreinte")
+// a. Un autre export devient prêt AVANT le nôtre.
+var r32a = base18()
+check(settle(&r32a, [attente18], [pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(300)) == .pending,
+      "a. un autre fichier arrive, notre demande est encore « En attente » : pas encore prêt")
+check(settle(&r32a, [], [pret("22/11/2026"), pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .toCheck,
+      "a. puis la nôtre aussi : deux fichiers nouveaux, on ne sait pas lequel : à vérifier, jamais « prêt »")
+// b. La carte « En attente » manque un instant dans la lecture.
+var r32b = base18()
+r32b.read(pending: [], ready: [pret("22/11/2026")] + prets18, now: n18.addingTimeInterval(300), calendar: cal)
+r32b.read(pending: [attente18], ready: [pret("22/11/2026")] + prets18, now: n18.addingTimeInterval(300.7), calendar: cal)
+r32b.read(pending: [], ready: [pret("22/11/2026")] + prets18, now: n18.addingTimeInterval(302.5), calendar: cal)
+check(rv(r32b, [], [pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(302.5)) != .ready,
+      "b. carte « En attente » absente d'une lecture puis revenue : jamais « prêt »")
+check(rv(r32b, [attente18], [pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(303)) == .pending, "b. tant qu'elle revient : pas encore prêt")
+// c. Un ancien fichier expire ou est supprimé.
+var r32c = base18()
+check(settle(&r32c, [], [pret("22/11/2026"), pret("21/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
+      "c. le fichier du matin supprimé, le nôtre prêt : autant qu'avant, à vérifier, jamais « prêt »")
+var r32c2 = base18()
+check(settle(&r32c2, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .ready,
+      "c. les fichiers du 21/11 expirent (anciens, hors référence) et le nôtre arrive : prêt")
+// d. Un autre compte ou une autre catégorie.
+let autreCompte = pret("22/11/2026").replacingOccurrences(of: "vifrnt", with: "autrecompte")
+let autreCategorie = pret("22/11/2026").replacingOccurrences(of: "followers et suivi(e)s", with: "publications")
+check(base18([autreCompte] + prets18).baseline == 1, "d. le fichier prêt d'un autre compte n'entre pas dans la référence")
+var r32d = base18()
+check(settle(&r32d, [], [autreCompte] + prets18, at: n18.addingTimeInterval(900)) == .toCheck,
+      "d. seul un fichier d'un autre compte arrive : il ne compte pas, à vérifier, jamais « prêt »")
+var r32d2 = base18()
+check(settle(&r32d2, [], [autreCategorie] + prets18, at: n18.addingTimeInterval(900)) == .toCheck,
+      "d. seul un fichier d'une autre catégorie arrive : à vérifier, jamais « prêt »")
+var r32d3 = base18()
+check(settle(&r32d3, [], [autreCompte, pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .ready,
+      "d. un fichier d'un autre compte + le nôtre : seul le nôtre compte, prêt")
+// e. Deux demandes « En attente » le même jour : on ne sait pas laquelle suivre, aucune référence.
+var r32e = ReadyProof(day: n18)
+let attente18b = attente18.replacingOccurrences(of: "vifrnt", with: "autrecompte")
+for t in [0.0, 2.5] { r32e.read(pending: [attente18, attente18b], ready: prets18, now: n18.addingTimeInterval(t), calendar: cal) }
+check(r32e.baseline == nil, "e. deux cartes « En attente » du jour : pas de référence")
+check(settle(&r32e, [], [pret("22/11/2026"), pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .toCheck,
+      "e. puis des fichiers prêts : à vérifier, jamais « prêt »")
+// f. Référence d'un ancien build (sans empreinte) : tous les fichiers du bon jour comptent, et « prêt » doit être revu.
+var r32f = ReadyProof(day: n18, baseline: 1)
+check(r32f.signature == nil, "f. ancienne référence : pas d'empreinte")
+check(rv(r32f, [], [pret("22/11/2026"), pret("22/11/2026")]) != .ready, "f. sans relecture : jamais « prêt »")
+check(settle(&r32f, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .ready, "f. revu 2 s plus tard : prêt")
+// g. Sans « prêt », le bandeau ne cible jamais Télécharger.
+for v in [ReadyProof.Verdict.toCheck, .unknown, .pending] {
+    check(GetBanner.of(waiting: true, proven: false, verdict: v) != .ready, "g. verdict \(v.rawValue) : jamais « Touche Télécharger »")
+}
 
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

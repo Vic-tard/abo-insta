@@ -12,7 +12,8 @@ const app = read("ios/Zieuton/AppDelegate.swift");
 
 // Les textes visibles : chaînes Swift hors commentaires (le script d'Instagram, en chaîne brute, est retiré).
 function visibleStrings(src) {
-  const noReader = src.replace(/static let readerJS = #"""[\s\S]*?"""#/, "");
+  // Les mots ignorés par l'empreinte d'une carte (ReadyProof.noise) servent à comparer, ils ne sont jamais affichés.
+  const noReader = src.replace(/static let readerJS = #"""[\s\S]*?"""#/, "").replace(/static let noise: Set<String> = \[[\s\S]*?\n\s*\]/, "");
   const lines = noReader.split("\n").filter((l) => !/^\s*\/\//.test(l)).map((l) => l.replace(/\s\/\/ .*$/, ""));
   // Les motifs de recherche (« (?:expire le|…)\\s+… », lecture de la date d'expiration écrite par Instagram) ne sont pas des textes.
   return (lines.join("\n").match(/"(?:[^"\\\n]|\\.)*"/g) || []).filter((t) => !t.startsWith('"(?:'));
@@ -110,8 +111,8 @@ test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présent
   for (const s of strings) assert.doesNotMatch(s, /Ta demande d'aujourd'hui|Ta demande est bien enregistrée/, `texte trop affirmatif : ${s}`);
   assert.match(web, /if existing && today \{ return "Demande du jour en cours" \}/);
   assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
-  // « prêt » exige une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour).
-  assert.match(web, /if let baseline, r > baseline \{ return \.ready \}/);
+  // « prêt » exige EXACTEMENT une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour), revue 2 s plus tard.
+  assert.match(web, /if let baseline, r == baseline \+ 1, readyStable \{ return \.ready \}/);
 });
 
 test("vidéo du 18 nov. : une demande en attente visible n'encourage jamais une nouvelle demande", () => {
@@ -136,7 +137,7 @@ test("vidéo du 18 nov. : une carte prête dit « Expire le », jamais prise pou
   assert.match(web, /var DATED = \/\^\(demandée le\|demandé le\|requested on\|expire le\|expires on\|expires\)\\b\//);
   assert.match(web, /if \(!ready && EXPIRES\.test\(low\(lines\[i\]\)\)\) continue;/);
   // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver.
-  assert.match(web, /if p > 0 \{ return \.pending \}\s*if let baseline, r > baseline \{ return \.ready \}/);
+  assert.match(web, /if p > 0 \{ return \.pending \}[\s\S]{0,400}?if let baseline, r == baseline \+ 1, readyStable \{ return \.ready \}/);
 });
 
 test("18 nov. (Victor) : bandeau court, compris sans tout lire", () => {
@@ -147,4 +148,19 @@ test("18 nov. (Victor) : bandeau court, compris sans tout lire", () => {
   assert.ok(tips.length >= 8);
   for (const t of tips) assert.ok(t.length <= 75, `consigne trop longue (${t.length}) : ${t}`);
   assert.match(web, /static let tip = "Instagram prépare ton fichier\. Tu peux revenir dans Zieuton\."/);
+});
+
+test("relecture ChatGPT (18 nov., 14 h 09) : le fichier prêt n'est reconnu que si la correspondance est sûre", () => {
+  // Référence fixée seulement avec UNE seule carte « En attente » du jour, qui a une empreinte (compte, catégorie, format).
+  assert.match(web, /guard mine\.count == 1, let sig = Self\.signature\(of: mine\[0\]\) else \{/);
+  // Un fichier ne compte que s'il a la même empreinte que la demande suivie.
+  assert.match(web, /return Self\.signature\(of: row\) == signature/);
+  // « prêt » doit être revu au moins 2 s plus tard, sinon il retombe.
+  assert.match(web, /if now\.timeIntervalSince\(at\) >= Self\.stableFor \{ readyStable = true \}/);
+  assert.match(web, /readySeenAt = nil\s*readyStable = false/);
+  // L'empreinte est gardée avec la référence (l'app peut être fermée pendant l'attente).
+  assert.match(web, /static let signature = "zy\.export\.signature"/);
+  assert.match(web, /if let sig = proof\.signature \{ store\.set\(sig, forKey: Key\.signature\) \}/);
+  // Sans « prêt », jamais de notification C : markReady n'est appelé que sur un verdict « prêt ».
+  assert.match(web, /if verdict == \.ready \{ self\.markReady\(\) \} else \{ self\.report\(verdict\) \}/);
 });

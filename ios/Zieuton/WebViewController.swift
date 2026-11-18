@@ -3373,38 +3373,72 @@ struct ReadyProof: Equatable {
 
     /// Un jour de la demande (n'importe quelle heure de ce jour). nil : pas encore connu (demande déjà en cours, pas encore lue).
     private(set) var day: Date?
-    /// Lignes prêtes datées du jour de la demande, vues au moment de la preuve. nil : référence pas (encore) vérifiée.
+    /// Lignes prêtes qui ressemblent à la demande (même jour possible, même empreinte), vues au moment de la preuve.
+    /// nil : référence pas (encore) vérifiée.
     private(set) var baseline: Int?
+    /// Relecture ChatGPT (18 nov.) : empreinte de la carte de la demande (compte, catégorie, format), sans dates ni boutons.
+    /// Un fichier d'un autre compte ou d'une autre catégorie n'est jamais compté. nil : référence d'un ancien build (pas d'empreinte).
+    private(set) var signature: String?
     private var candidate: Int?
     private var candidateAt: Date?
+    private var candidateSig: String?
+    /// Relecture ChatGPT (18 nov.) : « prêt » doit être revu au moins 2 s plus tard. Une carte « En attente » qui disparaît
+    /// un instant de la lecture ne suffit jamais.
+    private var readySeenAt: Date?
+    private(set) var readyStable = false
 
-    /// Deux lectures identiques à au moins 2 s d'écart fixent la référence.
+    /// Deux lectures identiques à au moins 2 s d'écart fixent la référence (et confirment « prêt »).
     static let stableFor: TimeInterval = 2
     /// Une demande d'export vit quelques jours chez Instagram : on ne date pas une demande déjà en cours au-delà.
     static let maxAgeDays = 4
 
-    init(day: Date?, baseline: Int? = nil) {
+    init(day: Date?, baseline: Int? = nil, signature: String? = nil) {
         self.day = day
         self.baseline = baseline
+        self.signature = baseline == nil ? nil : signature
     }
 
     /// Une lecture de la liste des exports (lignes « En attente » et lignes avec un vrai « Télécharger », texte en minuscules).
     mutating func read(pending: [String], ready: [String], now: Date, calendar: Calendar = .current) {
         // Demande déjà en cours chez Instagram : son jour est celui de la ligne « En attente » la plus récente.
         if day == nil { day = Self.latestDay(of: pending, now: now, calendar: calendar) }
-        guard baseline == nil, let day else { return }
-        // La demande doit encore être « En attente » : sinon son fichier est peut-être déjà dans les lignes prêtes.
-        guard pending.contains(where: { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }) else {
-            candidate = nil; candidateAt = nil
+        guard let day else { return }
+        guard let baseline else {
+            // La demande doit encore être « En attente », et être la SEULE ligne en attente de ce jour : sinon on ne sait pas
+            // laquelle suivre, et on ne fixe aucune référence (donc jamais « prêt » automatique).
+            let mine = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }
+            guard mine.count == 1, let sig = Self.signature(of: mine[0]) else {
+                candidate = nil; candidateAt = nil; candidateSig = nil
+                return
+            }
+            let n = ready.filter { Self.matches($0, day: day, signature: sig, now: now, calendar: calendar) }.count
+            if let c = candidate, let at = candidateAt, c == n, candidateSig == sig {
+                if now.timeIntervalSince(at) >= Self.stableFor { self.baseline = n; signature = sig }
+            } else {
+                candidate = n
+                candidateAt = now
+                candidateSig = sig
+            }
             return
         }
-        let n = ready.filter { Self.readyFor($0, day: day, now: now, calendar: calendar) }.count
-        if let c = candidate, let at = candidateAt, c == n {
-            if now.timeIntervalSince(at) >= Self.stableFor { baseline = n }
+        // Référence fixée : « prêt » seulement s'il est revu, identique, au moins 2 s plus tard.
+        if count(pending: pending, ready: ready, day: day, now: now, calendar: calendar) == (0, baseline + 1) {
+            if let at = readySeenAt {
+                if now.timeIntervalSince(at) >= Self.stableFor { readyStable = true }
+            } else {
+                readySeenAt = now
+            }
         } else {
-            candidate = n
-            candidateAt = now
+            readySeenAt = nil
+            readyStable = false
         }
+    }
+
+    /// Lignes « En attente » du jour, et lignes prêtes qui peuvent être le fichier de la demande.
+    private func count(pending: [String], ready: [String], day: Date, now: Date, calendar: Calendar) -> (Int, Int) {
+        let p = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.count
+        let r = ready.filter { Self.matches($0, day: day, signature: signature, now: now, calendar: calendar) }.count
+        return (p, r)
     }
 
     /// Ce que dit la liste lue maintenant. `pending` et `ready` valent nil si la liste n'a pas été lue (pas l'accueil de l'export).
@@ -3417,14 +3451,40 @@ struct ReadyProof: Equatable {
             let recent = Self.latestDay(of: ready, now: now, calendar: calendar) != nil || ready.contains { Self.expiry($0, calendar: calendar) != nil }
             return recent ? .toCheck : .unknown
         }
-        let p = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.count
-        let r = ready.filter { Self.readyFor($0, day: day, now: now, calendar: calendar) }.count
+        let (p, r) = count(pending: pending, ready: ready, day: day, now: now, calendar: calendar)
         // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver (deux demandes le même jour).
         if p > 0 { return .pending }
-        if let baseline, r > baseline { return .ready }
-        // Plus de ligne « En attente » de ce jour, mais pas de preuve d'une ligne prête nouvelle (référence absente,
-        // ou un ancien export du même jour a expiré entre-temps) : l'utilisateur vérifie la date lui-même.
+        // Relecture ChatGPT (18 nov.) : « prêt » seulement s'il y a EXACTEMENT un fichier de plus que la référence, revu 2 s plus tard.
+        // Deux fichiers nouveaux ou plus (un autre export devenu prêt), ou un seul encore pas revu : à vérifier, jamais « prêt ».
+        if let baseline, r == baseline + 1, readyStable { return .ready }
+        // Plus de ligne « En attente » de ce jour, sans preuve nette (référence absente, ancien fichier expiré ou supprimé,
+        // plusieurs fichiers nouveaux) : l'utilisateur vérifie la date lui-même.
         return r > 0 ? .toCheck : .unknown
+    }
+
+    /// Mots qui ne disent ni le compte, ni la catégorie, ni le format : dates, statuts, boutons, tailles.
+    private static let noise: Set<String> = [
+        "en", "attente", "demandée", "demandé", "demande", "le", "la", "requested", "on", "expire", "expires", "moins", "de", "mo", "ko", "go",
+        "kb", "mb", "gb", "télécharger", "download", "annuler", "cancel", "pending", "in", "progress", "less", "than", "préparation",
+        "preparing", "prête", "prêt", "ready", "aujourd", "hui", "hier", "today", "yesterday", "il", "y", "a", "à", "l", "instant", "just",
+        "now", "min", "minutes", "minute", "s", "sec", "secondes", "ago", "er",
+        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+        "janv", "févr", "avr", "juil", "sept", "oct", "nov", "déc", "january", "february", "march", "april", "may", "june", "july",
+        "august", "september", "october", "november", "december", "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "dec",
+    ]
+
+    /// Empreinte d'une carte : ses mots (compte, catégorie, format), sans dates, statuts ni boutons. nil si trop peu de mots.
+    static func signature(of row: String) -> String? {
+        let words = Set(row.lowercased().components(separatedBy: CharacterSet.letters.inverted).filter { !$0.isEmpty && !noise.contains($0) })
+        guard words.count >= 2 else { return nil }
+        return words.sorted().joined(separator: " ")
+    }
+
+    /// Une ligne prête qui peut être le fichier de la demande : bon jour possible ET même empreinte (si elle est connue).
+    static func matches(_ row: String, day: Date, signature: String?, now: Date, calendar: Calendar = .current) -> Bool {
+        guard readyFor(row, day: day, now: now, calendar: calendar) else { return false }
+        guard let signature else { return true }
+        return Self.signature(of: row) == signature
     }
 
     /// Instagram garde un fichier prêt 4 jours (« Vous disposerez de 4 jours pour télécharger les fichiers »).
@@ -3832,6 +3892,8 @@ final class ExportWatcher: NSObject {
         static let today = "zy.export.today"
         /// FOU-126 : jour de la demande et référence des lignes prêtes de ce jour (ReadyProof).
         static let day = "zy.export.day", baseline = "zy.export.baseline"
+        /// Relecture ChatGPT (18 nov.) : empreinte de la carte de la demande (compte, catégorie, format).
+        static let signature = "zy.export.signature"
         /// FOU-126 : « C'est demandé » et « prêt » déjà envoyées pour cette demande (jamais de doublon).
         static let askedShown = "zy.export.askedShown", readyShown = "zy.export.readyShown"
         /// Dernier résultat de vérification, pour la page.
@@ -3840,7 +3902,7 @@ final class ExportWatcher: NSObject {
         static let acct = "zy.export.acct"
         /// Clés des builds 15 et avant (décompte des « Télécharger ») : plus utilisées.
         static let legacy = ["zy.export.downloadsBefore", "zy.export.baselineChecked"]
-        static var all: [String] { [requested, ready, existing, today, day, baseline, askedShown, readyShown, lastState, lastAt, acct] + legacy }
+        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, askedShown, readyShown, lastState, lastAt, acct] + legacy }
     }
     /// Notification « prêt » avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
     static let readyCategory = "zy-ready-actions"
@@ -3853,7 +3915,8 @@ final class ExportWatcher: NSObject {
             UNNotificationCategory(identifier: Self.readyCategory, actions: [update], intentIdentifiers: [], options: []),
         ])
         let day = store.object(forKey: Key.day) as? Date
-        proof = ReadyProof(day: day, baseline: day == nil ? nil : store.object(forKey: Key.baseline) as? Int)
+        proof = ReadyProof(day: day, baseline: day == nil ? nil : store.object(forKey: Key.baseline) as? Int,
+                           signature: store.string(forKey: Key.signature))
     }
 
     /// « 14:47 »
@@ -4056,6 +4119,7 @@ final class ExportWatcher: NSObject {
     private func saveProof() {
         if let d = proof.day { store.set(d, forKey: Key.day) } else { store.removeObject(forKey: Key.day) }
         if let b = proof.baseline { store.set(b, forKey: Key.baseline) } else { store.removeObject(forKey: Key.baseline) }
+        if let sig = proof.signature { store.set(sig, forKey: Key.signature) } else { store.removeObject(forKey: Key.signature) }
     }
 
     /// Une lecture de la liste des exports d'Instagram (fenêtre Instagram de Zieuton ou vérification cachée).
