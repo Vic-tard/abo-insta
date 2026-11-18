@@ -535,11 +535,17 @@ for t in [0.0, 2.5] { r32e.read(pending: [attente18, attente18b], ready: prets18
 check(r32e.baseline == nil, "e. deux cartes « En attente » du jour : pas de référence")
 check(settle(&r32e, [], [pret("22/11/2026"), pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .toCheck,
       "e. puis des fichiers prêts : à vérifier, jamais « prêt »")
-// f. Référence d'un ancien build (sans empreinte) : tous les fichiers du bon jour comptent, et « prêt » doit être revu.
+// f. Relecture ChatGPT (15 h 33) : référence enregistrée par le build 17 (sans empreinte). Elle n'est pas gardée (migration prudente).
 var r32f = ReadyProof(day: n18, baseline: 1)
-check(r32f.signature == nil, "f. ancienne référence : pas d'empreinte")
-check(rv(r32f, [], [pret("22/11/2026"), pret("22/11/2026")]) != .ready, "f. sans relecture : jamais « prêt »")
-check(settle(&r32f, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .ready, "f. revu 2 s plus tard : prêt")
+check(r32f.baseline == nil && r32f.signature == nil, "f. ancienne référence sans empreinte : oubliée")
+check(settle(&r32f, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
+      "f. la demande a déjà quitté « En attente » : on ne peut plus refaire la référence, à vérifier, jamais « prêt »")
+var r32f2 = ReadyProof(day: n18, baseline: 1)
+for t in [0.0, 2.5] { r32f2.read(pending: [attente18], ready: prets18, now: n18.addingTimeInterval(t), calendar: cal) }
+check(r32f2.baseline == 1 && r32f2.signature != nil, "f. la carte « En attente » est encore là : référence refaite, avec empreinte")
+check(settle(&r32f2, [], [pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .ready, "f. puis « prêt » comme d'habitude")
+check(ReadyProof(day: n18, baseline: 0, signature: nil).verdict(pending: [], ready: [pret("22/11/2026")], login: false, offline: false, now: n18, calendar: cal) != .ready,
+      "f. jamais « prêt » sans empreinte connue")
 // g. Sans « prêt », le bandeau ne cible jamais Télécharger.
 for v in [ReadyProof.Verdict.toCheck, .unknown, .pending] {
     check(GetBanner.of(waiting: true, proven: false, verdict: v) != .ready, "g. verdict \(v.rawValue) : jamais « Touche Télécharger »")
@@ -559,6 +565,41 @@ check(!LeaveHint.leftUnsure(requesting: true, finished: false, tapped: false, to
       "Instagram fermé sans aucun signe de demande : rien n'est noté")
 check(!LeaveHint.leftUnsure(requesting: false, finished: false, tapped: true, toCheck: true, todayShown: true, pendingSeen: true),
       "ouvert pour récupérer le fichier : jamais « à vérifier »")
+
+// 34. Relecture ChatGPT (18 nov., 15 h 33) : l'empreinte garde les identifiants exacts (chiffres, « . », « _ »).
+func carte(_ compte: String, _ statut: String) -> String { "\(statut) · \(compte) (instagram) followers et suivi(e)s exporter vers appareil · une fois · json \(statut) annuler" }
+check(ReadyProof.signature(of: carte("compte1", "demandée le 18/11/2026")) != ReadyProof.signature(of: carte("compte2", "demandée le 18/11/2026")),
+      "compte1 et compte2 : empreintes différentes")
+check(ReadyProof.signature(of: carte("vic.frnt", "demandée le 18/11/2026")) != ReadyProof.signature(of: carte("vic_frnt", "demandée le 18/11/2026")),
+      "vic.frnt et vic_frnt : empreintes différentes")
+check(ReadyProof.signature(of: carte("compte1", "demandée le 18/11/2026")) == ReadyProof.signature(of: carte("compte1", "expire le 22/11/2026 · moins de 1 mo télécharger")),
+      "même compte : la carte en attente et la carte prête ont la même empreinte")
+check(ReadyProof.signature(of: carte("compte1", "x"))?.contains("compte1") == true, "le pseudo est gardé tel quel, chiffres compris")
+var r34 = ReadyProof(day: n18)
+let attente34 = carte("compte1", "en attente · demandée le 18/11/2026")
+for t in [0.0, 2.5] { r34.read(pending: [attente34], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r34.baseline == 0, "compte1 suivi")
+check(settle(&r34, [], [carte("compte2", "expire le 22/11/2026 · moins de 1 mo télécharger")], at: n18.addingTimeInterval(900)) == .unknown,
+      "seul le fichier de compte2 arrive : il ne compte pas, jamais « prêt » pour compte1")
+check(settle(&r34, [], [carte("compte2", "expire le 22/11/2026 · moins de 1 mo télécharger"), carte("compte1", "expire le 22/11/2026 · moins de 1 mo télécharger")],
+             at: n18.addingTimeInterval(1200)) == .ready, "puis celui de compte1 : prêt")
+
+// 35. Deux exports identiques (même compte, même catégorie, même format), demandés le même jour : impossible de les distinguer.
+var r35 = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r35.read(pending: [attente18, attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r35.baseline == nil, "deux demandes identiques en attente : aucune référence")
+check(settle(&r35, [attente18], [pret("22/11/2026")], at: n18.addingTimeInterval(300)) == .pending, "l'une est prête, l'autre en attente : pas encore prêt")
+check(settle(&r35, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
+      "les deux sont prêtes : on ne sait pas laquelle est la sienne, à vérifier, jamais « prêt »")
+// Demande suivie seule, puis une 2e identique le même jour (par exemple refaite dans l'app Instagram).
+var r35b = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r35b.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r35b.baseline == 0, "la première demande est suivie")
+check(settle(&r35b, [attente18, attente18], [], at: n18.addingTimeInterval(120)) == .pending, "une 2e demande identique arrive : pas encore prêt")
+check(settle(&r35b, [attente18], [pret("22/11/2026")], at: n18.addingTimeInterval(300)) == .pending,
+      "un fichier prêt, une demande encore en attente : peut-être pas le sien, pas encore prêt")
+check(settle(&r35b, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
+      "deux fichiers identiques prêts : à vérifier, jamais « prêt »")
 
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

@@ -112,7 +112,7 @@ test("relecture ChatGPT (18 nov.) : une date d'aujourd'hui n'est jamais présent
   assert.match(web, /if existing && today \{ return "Demande du jour en cours" \}/);
   assert.match(web, /title: "Une demande d'aujourd'hui est en cours ✓"/);
   // « prêt » exige EXACTEMENT une ligne prête de plus que la référence (qui compte les anciens fichiers du même jour), revue 2 s plus tard.
-  assert.match(web, /if let baseline, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+  assert.match(web, /if let baseline, signature != nil, r == baseline \+ 1, readyStable \{ return \.ready \}/);
 });
 
 test("vidéo du 18 nov. : une demande en attente visible n'encourage jamais une nouvelle demande", () => {
@@ -137,7 +137,7 @@ test("vidéo du 18 nov. : une carte prête dit « Expire le », jamais prise pou
   assert.match(web, /var DATED = \/\^\(demandée le\|demandé le\|requested on\|expire le\|expires on\|expires\)\\b\//);
   assert.match(web, /if \(!ready && EXPIRES\.test\(low\(lines\[i\]\)\)\) continue;/);
   // La demande encore « En attente » n'est jamais prête, même si un autre fichier vient d'arriver.
-  assert.match(web, /if p > 0 \{ return \.pending \}[\s\S]{0,400}?if let baseline, r == baseline \+ 1, readyStable \{ return \.ready \}/);
+  assert.match(web, /if p > 0 \{ return \.pending \}[\s\S]{0,400}?if let baseline, signature != nil, r == baseline \+ 1, readyStable \{ return \.ready \}/);
 });
 
 test("18 nov. (Victor) : bandeau court, compris sans tout lire", () => {
@@ -155,6 +155,11 @@ test("relecture ChatGPT (18 nov., 14 h 09) : le fichier prêt n'est reconnu que 
   assert.match(web, /guard mine\.count == 1, let sig = Self\.signature\(of: mine\[0\]\) else \{/);
   // Un fichier ne compte que s'il a la même empreinte que la demande suivie.
   assert.match(web, /return Self\.signature\(of: row\) == signature/);
+  // Relecture ChatGPT (15 h 33) : identifiants exacts (chiffres, « . », « _ » gardés), jamais « prêt » sans empreinte,
+  // et une référence sans empreinte (build 17) est oubliée.
+  assert.doesNotMatch(web, /CharacterSet\.letters\.inverted/);
+  assert.match(web, /subtracting\(CharacterSet\(charactersIn: "\._"\)\)/);
+  assert.match(web, /self\.baseline = signature == nil \? nil : baseline/);
   // « prêt » doit être revu au moins 2 s plus tard, sinon il retombe.
   assert.match(web, /if now\.timeIntervalSince\(at\) >= Self\.stableFor \{ readyStable = true \}/);
   assert.match(web, /readySeenAt = nil\s*readyStable = false/);

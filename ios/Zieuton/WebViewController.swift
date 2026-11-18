@@ -3413,8 +3413,11 @@ struct ReadyProof: Equatable {
 
     init(day: Date?, baseline: Int? = nil, signature: String? = nil) {
         self.day = day
-        self.baseline = baseline
-        self.signature = baseline == nil ? nil : signature
+        // Relecture ChatGPT (18 nov., 15 h 33) : une référence sans empreinte (enregistrée par le build 17 ou avant) n'est pas
+        // gardée. Elle est refaite seulement si la carte « En attente » de la demande est encore là ; sinon, jamais « prêt »
+        // automatique : l'utilisateur vérifie lui-même.
+        self.baseline = signature == nil ? nil : baseline
+        self.signature = self.baseline == nil ? nil : signature
     }
 
     /// Une lecture de la liste des exports (lignes « En attente » et lignes avec un vrai « Télécharger », texte en minuscules).
@@ -3475,7 +3478,8 @@ struct ReadyProof: Equatable {
         if p > 0 { return .pending }
         // Relecture ChatGPT (18 nov.) : « prêt » seulement s'il y a EXACTEMENT un fichier de plus que la référence, revu 2 s plus tard.
         // Deux fichiers nouveaux ou plus (un autre export devenu prêt), ou un seul encore pas revu : à vérifier, jamais « prêt ».
-        if let baseline, r == baseline + 1, readyStable { return .ready }
+        // Empreinte inconnue : jamais « prêt » (on ne sait pas quel fichier est le sien).
+        if let baseline, signature != nil, r == baseline + 1, readyStable { return .ready }
         // Plus de ligne « En attente » de ce jour, sans preuve nette (référence absente, ancien fichier expiré ou supprimé,
         // plusieurs fichiers nouveaux) : l'utilisateur vérifie la date lui-même.
         return r > 0 ? .toCheck : .unknown
@@ -3486,17 +3490,25 @@ struct ReadyProof: Equatable {
         "en", "attente", "demandée", "demandé", "demande", "le", "la", "requested", "on", "expire", "expires", "moins", "de", "mo", "ko", "go",
         "kb", "mb", "gb", "télécharger", "download", "annuler", "cancel", "pending", "in", "progress", "less", "than", "préparation",
         "preparing", "prête", "prêt", "ready", "aujourd", "hui", "hier", "today", "yesterday", "il", "y", "a", "à", "l", "instant", "just",
-        "now", "min", "minutes", "minute", "s", "sec", "secondes", "ago", "er",
+        "now", "min", "minutes", "minute", "s", "sec", "secondes", "ago", "er", "aujourd'hui", "aujourd’hui", "d'aujourd'hui", "l'instant",
         "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre",
         "janv", "févr", "avr", "juil", "sept", "oct", "nov", "déc", "january", "february", "march", "april", "may", "june", "july",
         "august", "september", "october", "november", "december", "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "dec",
     ]
 
     /// Empreinte d'une carte : ses mots (compte, catégorie, format), sans dates, statuts ni boutons. nil si trop peu de mots.
+    /// Relecture ChatGPT (18 nov., 15 h 33) : les mots sont gardés tels qu'écrits, chiffres et « . _ » compris
+    /// (« compte1 » et « compte2 », « vic.frnt » et « vic_frnt » restent distincts), dans l'ordre de la carte.
+    /// Seuls les dates, tailles et nombres seuls (« 18/11/2026 », « 1 ») et les mots de `noise` sont retirés.
     static func signature(of row: String) -> String? {
-        let words = Set(row.lowercased().components(separatedBy: CharacterSet.letters.inverted).filter { !$0.isEmpty && !noise.contains($0) })
+        let edges = CharacterSet.punctuationCharacters.union(.symbols).subtracting(CharacterSet(charactersIn: "._"))
+        let numeric = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: "/:.,-"))
+        let words = row.lowercased()
+            .components(separatedBy: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "·•|")))
+            .map { $0.trimmingCharacters(in: edges) }
+            .filter { w in !w.isEmpty && !noise.contains(w) && !w.unicodeScalars.allSatisfy { numeric.contains($0) } }
         guard words.count >= 2 else { return nil }
-        return words.sorted().joined(separator: " ")
+        return words.joined(separator: " ")
     }
 
     /// Une ligne prête qui peut être le fichier de la demande : bon jour possible ET même empreinte (si elle est connue).
