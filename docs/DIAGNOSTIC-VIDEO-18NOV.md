@@ -41,7 +41,22 @@ Le 17 nov., le haut de cette carte était caché. Dans #146, j'avais **supposé*
 6. **« Revenir dans Zieuton » (principe 4).** Le bouton apparaît aussi quand la preuve est incertaine (« Demande à vérifier », ou une ligne du jour sans preuve). En revenant ensuite, la demande est reconnue tout de suite (point 2) et la page passe à l'attente.
 7. **Import (principe 8).** Rien ne change dans le téléchargement ni l'import du fichier.
 
-Ce qui reste volontairement hors de ce correctif : en sortant d'Instagram **sans** preuve, la page de Zieuton remontre l'écran « Zieuton en haut, Instagram en bas ». Une touche sur « J'ai compris, on y va » rouvre Instagram, qui reconnaît alors la demande (point 2). Supprimer ce passage demanderait de changer la page et le pont (nouvelle version de `ZYEUTO_APP`). C'est possible dans une PR à part, si Victor le souhaite.
+## Réserves finales de ChatGPT (18 nov., 14 h 09), traitées
+
+1. **Plus de boucle en sortant d'Instagram sans preuve.** Si Instagram est fermé avec un signe de demande (« Commencer » touché, ligne à vérifier, ou ligne « En attente » du jour vue) mais sans preuve automatique, la page de Zieuton passe **directement** sur l'écran d'attente « Demande à vérifier ». Elle ne repasse jamais par « Zieuton en haut, Instagram en bas ».
+   - Le texte de cet écran est honnête : « J'ai vu une demande d'aujourd'hui chez Instagram, sans pouvoir confirmer que c'est la tienne. Ne refais rien : vérifie-la. »
+   - L'écran ne fait aucune promesse : pas de « C'est demandé », pas de rappel, pas de guet.
+   - Le bouton « Vérifier dans Instagram » rouvre la liste. La demande déjà là y est reconnue, puis l'attente normale reprend, sans refaire le parcours.
+   - Une demande déjà prouvée n'est jamais rétrogradée.
+   - Sans aucun signe de demande (Instagram ouvert puis refermé tout de suite), rien n'est noté, puisque rien n'a été demandé.
+   - Avec une coque plus ancienne, rien ne change. La page actuellement sur `main` ignore ce nouveau message sans erreur, et c'est testé.
+2. **Fichier prêt reconnu seulement si la correspondance est sûre.**
+   - Chaque carte a une empreinte : le compte, la catégorie et le format, sans les dates ni les boutons. Un fichier d'un autre compte ou d'une autre catégorie ne compte jamais.
+   - La référence n'est fixée que s'il y a **une seule** carte « En attente » du jour. Avec deux, on ne sait pas laquelle suivre, donc jamais « prêt » automatique.
+   - « Prêt » demande **exactement un** fichier de plus que la référence, revu au moins 2 s plus tard. Si un autre export devient prêt en même temps, il y a deux fichiers nouveaux : « à vérifier ». Si la carte « En attente » manque une seule fois dans la lecture, « prêt » retombe.
+   - Si un ancien fichier du jour expire ou est supprimé, il n'y en a pas « un de plus » : « à vérifier ».
+   - Dans tous ces cas : pas de notification « prêt », et pas de cercle sur Télécharger.
+3. **Numéro de build.** Ce correctif prépare le build **21**. La doc de #149 est corrigée en conséquence.
 
 ## Limites
 
@@ -49,7 +64,7 @@ Ce qui reste volontairement hors de ce correctif : en sortant d'Instagram **sans
 - La date d'expiration est lue seulement au format vu, « Expire le JJ/MM/AAAA ». Écrite autrement, elle ne compte pas : jamais de « prêt » automatique, l'utilisateur vérifie lui-même.
 - La règle des 4 jours vient du texte d'Instagram. Si Instagram la change, Zieuton peut ne plus dire « prêt », mais il ne dira jamais « prêt » à tort.
 
-## Scénario de test complet sur iPhone (avec le build qui contiendra #146 à #148 et le correctif 4)
+## Scénario de test complet sur iPhone (build 21, qui contiendra #146 à #148 et le correctif 4)
 
 Préparation : idéalement, avoir déjà au moins un fichier prêt dans la liste (comme dans la vidéo).
 
@@ -62,10 +77,14 @@ Préparation : idéalement, avoir déjà au moins un fichier prêt dans la liste
 | S5 | Rouvrir Instagram depuis l'attente (« Vérifier ») tant que la carte est « En attente » | « Pas encore prêt : en attente ». Aucun cercle, aucun « Touche Télécharger » |
 | S6 | Attendre que la carte quitte « En attente » et qu'une carte « Expire le » (date du jour + 4) arrive | « C'est prêt ! Touche Télécharger ». Notification « Ton fichier est prêt 🎉 » une seule fois. Cercle seulement s'il n'y a qu'un « Télécharger » à l'écran |
 | S7 | Toucher soi-même « Télécharger » sur la carte la plus récente | Import comme au build 15 (inchangé) |
-| S8 | Variante de la vidéo : revenir dans Zieuton **avant** la preuve, puis « J'ai compris, on y va » | Instagram s'ouvre : « Un instant : une demande est déjà là », puis « ✓ Demande du jour en cours : rien d'autre à faire ». Jamais « Touche Créer une exportation » |
+| S8 | Variante de la vidéo : revenir dans Zieuton **avant** la preuve | Zieuton montre « Demande à vérifier » (jamais « Zieuton en haut »). « Vérifier dans Instagram » : Instagram s'ouvre : « Un instant : une demande est déjà là », puis « ✓ Demande du jour en cours : rien d'autre à faire ». Jamais « Touche Créer une exportation » |
 | S9 | Variante sans preuve : la carte du jour est visible mais Zieuton ne l'a pas confirmée | « Demande du jour trouvée : ne refais rien ». Toucher le bandeau donne « Cette ligne est-elle ta demande ? ». « Oui » donne « Une demande d'aujourd'hui est en cours ✓ », jamais « C'est demandé » |
 | S10 | Deux demandes le même jour : une première déjà prête (expire J+4), puis une nouvelle | Tant que la nouvelle est « En attente » : « pas encore prêt ». « Prêt » seulement quand une 2e carte « Expire le J+4 » arrive |
 | S11 | Mode avion pendant l'attente, puis retour du réseau | « Instagram ne répond pas » puis reprise, jamais « prêt » sans la liste |
+| S12 | Toucher « Commencer l'exportation », puis fermer Instagram tout de suite (avant « C'est demandé ») | Zieuton montre « Demande à vérifier », jamais « Zieuton en haut, Instagram en bas ». Pas de notification « C'est demandé » |
+| S13 | Depuis « Demande à vérifier », toucher « Vérifier dans Instagram » | La liste s'ouvre, « Un instant : une demande est déjà là », puis « Demande du jour en cours ». De retour dans Zieuton : attente normale |
+| S14 | Ouvrir Instagram depuis Zieuton puis le refermer sans rien toucher | Pas d'attente inventée : Zieuton reste avant la demande |
+| S15 | Deux comptes Instagram : un fichier prêt arrive pour l'autre compte | Jamais « C'est prêt » pour celui-ci |
 
 ## Bandeau plus court (demande de Victor, 18 nov. 14 h 57)
 
