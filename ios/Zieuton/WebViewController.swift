@@ -1299,6 +1299,22 @@ final class MetaViewController: UIViewController {
               if (r.height < 14 || r.height > 140 || r.width > innerWidth + 4) return null;
               return { x: r.left, y: r.top, w: r.width, h: r.height, at: at };
             };
+            // Relecture ChatGPT (18 nov., 15 h 55) : « Télécharger » ne dit pas à quelle carte il appartient. On ne l'entoure que
+            // s'il n'y en a qu'UN dans toute la liste (même caché par le défilement) : il est alors forcément celui du fichier prouvé.
+            // Un ancien export encore disponible = deux boutons = aucun cercle ; le bandeau dit quelle ligne vérifier.
+            if (RING.indexOf('télécharger') >= 0 || RING.indexOf('download') >= 0) {
+              var every = [];
+              for (var k = 0; k < els.length; k++) {
+                var e = els[k];
+                if (e.childElementCount > 3) continue;
+                var tt = low(e);
+                if (tt.length > 60 || RING.indexOf(tt) < 0) continue;
+                var bx = e.closest('button,a,label,[role=button],[role=radio],[role=checkbox],[role=link]') || e;
+                var rr = bx.getBoundingClientRect();
+                if ((rr.width > 0 || rr.height > 0) && every.indexOf(bx) < 0) every.push(bx);
+              }
+              if (inner(every).length !== 1) return null;
+            }
             if (hits.length === 1) return pack(hits[0], 0);
             if (hits.length > 1) return null;
             if (far.length === 1) return pack(far[0], far[0].getBoundingClientRect().top >= innerHeight ? 1 : -1);
@@ -2214,7 +2230,7 @@ final class MetaViewController: UIViewController {
                         tip: "« En attente » : pas prêt. Le plus récent a la date la plus lointaine.")
         case .ready:
             return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                        tip: "Sur la ligne de ta demande\(day).", look: "button")
+                        tip: GetBanner.readyTip(ExportWatcher.shared.requestDay), look: "button")
         }
     }
 
@@ -2262,7 +2278,7 @@ final class MetaViewController: UIViewController {
         if guarding {
             if guardReady {
                 return Step(verb: "C'est prêt ! Touche", target: "Télécharger",
-                            tip: "Juste en dessous.", look: "button")
+                            tip: GetBanner.readyTip(ExportWatcher.shared.requestDay), look: "button")
             }
             if Date().timeIntervalSince(guardSince) > Self.guardFor {
                 return Step(verb: "Instagram prend son temps :", target: "tu peux fermer",
@@ -3467,7 +3483,13 @@ struct ReadyProof: Equatable {
 
     /// Lignes « En attente » du jour, et lignes prêtes qui peuvent être le fichier de la demande.
     private func count(pending: [String], ready: [String], day: Date, now: Date, calendar: Calendar) -> (Int, Int) {
-        let p = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.count
+        // Relecture ChatGPT (18 nov., 15 h 55) : une demande en attente d'un AUTRE compte ou d'une autre catégorie (empreinte
+        // différente) ne nous bloque pas sur « en attente ». Prudence : une carte sans empreinte lisible compte toujours.
+        let p = pending.filter { row in
+            guard ExportProof.isDated(row, day: day, now: now, calendar: calendar) else { return false }
+            guard let signature, let sig = Self.signature(of: row) else { return true }
+            return sig == signature
+        }.count
         let r = ready.filter { Self.matches($0, day: day, signature: signature, now: now, calendar: calendar) }.count
         return (p, r)
     }
@@ -3599,6 +3621,15 @@ enum GetBanner: Equatable {
         case .ready?: return .ready
         case .toCheck?, .unknown?, .offline?, .login?: return .checkDate
         }
+    }
+
+    /// Relecture ChatGPT (18 nov., 15 h 55) : quelle ligne toucher. Une carte prête affiche « Expire le … » (jour de la demande
+    /// + 4 jours chez Instagram), jamais « Demandée le … » : le bandeau donne cette date-là, pour la reconnaître parmi plusieurs.
+    static func readyTip(_ day: Date?, calendar: Calendar = .current) -> String {
+        guard let day, let exp = calendar.date(byAdding: .day, value: ReadyProof.keepDays, to: day) else {
+            return "Sur la ligne de ta demande. Le plus récent a la date la plus lointaine."
+        }
+        return "Sur la ligne « Expire le \(dayText(exp, calendar: calendar)) » (ta demande du \(dayText(day, calendar: calendar)))."
     }
 
     /// « 17/11 »

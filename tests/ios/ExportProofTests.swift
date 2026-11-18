@@ -636,5 +636,28 @@ for t in [60.0, 62.5] { r36e.read(pending: [attente18], ready: [], now: n18.addi
 check(r36e.baseline == 0, "une seule reste : la référence se fixe")
 check(settle(&r36e, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .toCheck, "mais jamais « prêt » : on ne sait pas laquelle était la sienne")
 
+// 37. Relecture ChatGPT (18 nov., 15 h 55) : une demande en attente d'un AUTRE compte ne bloque pas le compte suivi.
+let attenteB = attente18.replacingOccurrences(of: "vifrnt", with: "compteb")
+var r37 = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r37.read(pending: [attente18, attenteB], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r37.baseline == nil, "deux comptes en attente dès le début : on ne sait pas lequel suivre, pas de référence (prudent)")
+var r37b = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r37b.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(r37b.baseline == 0, "37. le compte A est suivi")
+check(settle(&r37b, [attente18, attenteB], [], at: n18.addingTimeInterval(60)) == .pending, "A et B en attente : A pas encore prêt")
+check(settle(&r37b, [attenteB], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .ready,
+      "le fichier de A est prêt, B reste en attente : A est prêt (B ne le bloque plus)")
+check(!r37b.ambiguous, "deux comptes différents : pas d'ambiguïté")
+var r37c = ReadyProof(day: n18)
+for t in [0.0, 2.5] { r37c.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
+check(settle(&r37c, [attenteB], [pret("22/11/2026").replacingOccurrences(of: "vifrnt", with: "compteb")], at: n18.addingTimeInterval(600)) == .unknown,
+      "seul le fichier de B arrive : jamais « prêt » pour A")
+check(settle(&r37c, ["en attente · demandée le 18/11/2026 annuler"], [pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .pending,
+      "une carte en attente du jour sans empreinte lisible : prudence, on la compte, pas encore prêt")
+// Plusieurs « Télécharger » : le bandeau donne la date « Expire le » de la bonne ligne (jour de la demande + 4).
+check(GetBanner.readyTip(n18, calendar: cal) == "Sur la ligne « Expire le 22/11 » (ta demande du 18/11).", "bandeau prêt : « Expire le 22/11 », la date écrite sur la carte")
+check(GetBanner.readyTip(n18, calendar: cal).count <= 75 && GetBanner.readyTip(nil, calendar: cal).count <= 75, "consigne courte")
+check(!GetBanner.readyTip(nil, calendar: cal).contains("Expire"), "jour inconnu : pas de date inventée")
+
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

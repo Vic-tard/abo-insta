@@ -21,7 +21,9 @@ function visibleStrings(src) {
 
 test("aucune promesse de surveillance ni d'expiration dans les textes de la coque", () => {
   const banned = [/dès que je le vois/i, /je guette/i, /expire/i, /sûrement prêt/i, /plus long que d'habitude/i, /zieuton fermé/i];
-  const strings = [...visibleStrings(web), ...visibleStrings(app)];
+  // Seule exception (relecture ChatGPT, 15 h 55) : la consigne « Sur la ligne « Expire le JJ/MM » » recopie la date écrite sur la carte
+  // prête d'Instagram pour la reconnaître ; ce n'est pas une alerte d'expiration.
+  const strings = [...visibleStrings(web), ...visibleStrings(app)].filter((s) => !s.startsWith('"Sur la ligne « Expire le '));
   for (const s of strings) for (const b of banned) assert.doesNotMatch(s, b, `texte interdit : ${s}`);
 });
 
@@ -187,4 +189,14 @@ test("relecture ChatGPT (18 nov., 15 h 44) : deux demandes indiscernables, jamai
   assert.match(web, /proof\.ambiguous != before\.ambiguous \{ saveProof\(\) \}/);
   // Effacée avec le reste quand la demande se termine ou est refaite.
   assert.match(web, /static var all: \[String\] \{ \[[^\]]*\bambiguous\b[^\]]*\] \+ legacy \}/);
+});
+
+test("relecture ChatGPT (18 nov., 15 h 55) : cercle sur la seule carte possible, autre compte, ligne à vérifier", () => {
+  // « Télécharger » n'est entouré que s'il n'y en a qu'un dans toute la liste (testé aussi sur page : tests/lecteur/cercle-telecharger).
+  assert.match(web, /if \(inner\(every\)\.length !== 1\) return null;/);
+  // Une demande en attente d'un autre compte ne compte pas ; une carte sans empreinte lisible compte toujours.
+  assert.match(web, /guard let signature, let sig = Self\.signature\(of: row\) else \{ return true \}\s*return sig == signature/);
+  // Le bandeau « prêt » donne la date « Expire le » de la bonne ligne, dans les deux cas (récupération et guet).
+  assert.equal((web.match(/tip: GetBanner\.readyTip\(ExportWatcher\.shared\.requestDay\)/g) || []).length, 2);
+  assert.doesNotMatch(web, /tip: "Juste en dessous\."/);
 });
