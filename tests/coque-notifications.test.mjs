@@ -231,3 +231,12 @@ test("relecture ChatGPT (21 nov.) : un téléchargement seul n'efface jamais le 
   assert.doesNotMatch(fin, /ExportWatcher|clear\(\)/, "le fichier est d'abord analysé par la page (exportEnded)");
   assert.doesNotMatch(web, /func downloaded\(\)|\.downloaded\(\)/);
 });
+
+test("vidéo build 22 (21 nov.) : « Télécharger » vu sans changement de verdict redessine le bandeau", () => {
+  const rec = web.slice(web.indexOf("let fileWas = lastReady?.isEmpty == false"), web.indexOf("if guarding, !guardReady, verdict == .ready { guardIsReady() }"));
+  assert.ok(rec.length > 0 && rec.length < 1500, "bloc de lecture de la liste trouvé");
+  assert.match(rec, /let fileChanged = GetBanner\.fileChanged\(before: fileWas, after: lastReady\?\.isEmpty == false\)/);
+  assert.match(rec, /verdict != getVerdict \|\| fileChanged \{ getVerdict = verdict; showStep\(\) \}/, "suivi en cours : redessin aussi si le fichier vu change");
+  assert.match(rec, /!watcher\.isWaiting, !requesting, !downloading, fileChanged \{ showStep\(\) \}/, "sans suivi : redessin aussi");
+  assert.doesNotMatch(rec, /markReady|guardIsReady\(\)\s*\}?\s*$/, "aucune preuve « prêt » fabriquée ici");
+});

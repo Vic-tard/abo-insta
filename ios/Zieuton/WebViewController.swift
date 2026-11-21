@@ -2746,11 +2746,16 @@ final class MetaViewController: UIViewController {
         if state["create"] as? Bool == true { seenCreate = now }
         // FOU-126 : la liste des exports est lue pour la preuve « prêt » (ligne de la demande, jamais un simple décompte).
         let watcher = ExportWatcher.shared
+        // Vidéo build 22 (21 nov.) : « Télécharger » lu à l'écran sans date lisible, le verdict reste « inconnu » ; le bandeau
+        // doit quand même passer à « Un fichier est disponible ». Il se redessine donc aussi quand ce « fichier vu » change.
+        let fileWas = lastReady?.isEmpty == false
         if mainFrame, let ready = state["ready"] as? [String] { lastReady = ready }
+        let fileChanged = GetBanner.fileChanged(before: fileWas, after: lastReady?.isEmpty == false)
+        if mainFrame, !watcher.isWaiting, !requesting, !downloading, fileChanged { showStep() }
         if mainFrame, watcher.isWaiting, !downloading {
             let verdict = watcher.observe(pending: state["rows"] as? [String], ready: state["ready"] as? [String],
                                           login: state["login"] as? Bool == true, now: now)
-            if !requesting, verdict != getVerdict { getVerdict = verdict; showStep() }
+            if !requesting, verdict != getVerdict || fileChanged { getVerdict = verdict; showStep() }
             // Ouvert pour récupérer le fichier, mais Instagram le prépare encore : on guette ici (FOU-115).
             if !requesting, !guarding, verdict == .pending { startGuarding() }
             // La ligne de la demande a un « Télécharger » de plus qu'au moment de la preuve : le fichier est prêt.
@@ -3673,6 +3678,10 @@ enum GetBanner: Equatable {
         case .toCheck?, .unknown?, .offline?, .login?: return fileVisible ? .available : .checkDate
         }
     }
+
+    /// Vidéo build 22 (21 nov.) : le bandeau se redessinait seulement quand le verdict changeait. Si « Télécharger » apparaît
+    /// sans date lisible, le verdict reste « inconnu » : il faut aussi redessiner quand le fichier vu apparaît ou disparaît.
+    static func fileChanged(before: Bool, after: Bool) -> Bool { before != after }
 
     /// Relecture ChatGPT (18 nov., 15 h 55) : quelle ligne toucher. Une carte prête affiche « Expire le … » (jour de la demande
     /// + 4 jours chez Instagram), jamais « Demandée le … » : le bandeau donne cette date-là, pour la reconnaître parmi plusieurs.

@@ -321,6 +321,24 @@ test("17 nov. : fenêtre marquée comme dialogue : seule la fenêtre est lue, pa
   assert.match(s.ready[0], /expire le 20\/11\/2026/);
 });
 
+// Vidéo iPhone du 21 nov. (build 22) : la carte prête réellement observée, seule dans « Téléchargements disponibles ».
+for (const q of ["", "?fenetre=0"]) {
+  test(`carte prête du 21 nov. (Expire le 25/11/2026), fenêtre${q ? " sans role=dialog" : ""} : lue comme prête, jamais en attente`, async () => {
+    const s = await stateOf("liste-fenetre-21nov.html" + q);
+    assert.deepEqual(s.rows, [], "aucune demande en attente");
+    assert.equal(s.ready.length, 1, "une seule ligne prête");
+    assert.match(s.ready[0], /^expire le 25\/11\/2026/);
+    assert.match(s.ready[0], /followers et suivi\(e\)s/);
+  });
+}
+
+test("carte du 21 nov., deux lignes grises dans un seul bloc : la date n'est pas lue, mais « Télécharger » est vu (bandeau « disponible »)", async () => {
+  const s = await stateOf("liste-fenetre-21nov.html?lignes=1");
+  assert.deepEqual(s.rows, [], "jamais lue comme une demande en attente");
+  assert.equal(s.ready.length, 1, "le vrai « Télécharger » est vu : la coque peut dire « Un fichier est disponible »");
+  for (const r of s.ready) assert.doesNotMatch(r, /[0-9]{1,2}\/[0-9]{1,2}\//, "aucune date rattachée : la preuve « prêt » ne peut pas le compter");
+});
+
 // Relecture ChatGPT (18 nov.) : les pages ci-dessus sont reconstituées ; si la vraie structure diffère, la lecture doit rester prudente.
 test("structure inconnue (dates et boutons séparés) : aucune date n'est rattachée à « Télécharger »", async () => {
   const s = await stateOf("liste-structure-inconnue.html");
