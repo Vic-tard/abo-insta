@@ -80,3 +80,23 @@ Grandes polices : la page utilise des tailles fixes. Le réglage « Taille du te
 | U8 | Sur E, « Récupérer mon export », puis Télécharger toi-même | Import, puis bilan |
 | U9 | Notifications coupées dans les Réglages iPhone | B dit « Tes notifications sont coupées », bouton Réglages |
 | U10 | Mode sombre ; puis Zoom d'affichage (Réglages, Luminosité et affichage) | Tout lisible, titre, frise et deux boutons sans défiler |
+
+## Point 5 : suivi perdu après la démo (vidéo du 21 nov., 13 h 50)
+
+Ce que montre la vidéo : une demande suivie (« Demande trouvée chez Instagram »), la démo ouverte puis quittée, puis « Vérifier mon export ». Instagram montre un fichier prêt (« Expire le 25/11/2026 »), mais le bandeau dit « Vérifie la date de ton export. « En attente » : pas prêt » et Zieuton reste sur « Préparation chez Instagram ».
+
+La cause, reproduite en test :
+1. `enterDemo()` remplace les réglages par ceux de la démo : pas de demande, compte « a1 ».
+2. `renderWeekly()` voit « pas de demande » et envoie à la coque `exportState { pending: false, acct: "a1" }`.
+3. La coque (`ExportWatcher.pageEndedWait`) efface la demande suivie si elle est sur « a1 » ou sans compte noté, ce qui est le cas le plus courant. Plus de rappel, plus de preuve « prêt », et le bandeau passe en « sans demande suivie » (`GetBanner.unproven`).
+4. En quittant la démo, `pending: true` est renvoyé, mais la coque l'ignore. La demande reste perdue côté coque, même si la page la garde.
+
+Le correctif (page, sans Xcode) : la page n'envoie plus jamais `exportState` pendant la démo. Tests : `tests/page/demo-suivi.test.mjs`. Les trois cas (demande sur « a1 », sans compte, sur le 2e compte) échouent sans le correctif.
+
+Une demande déjà perdue ne peut pas être rendue à la coque par la page. Pour la demande de la vidéo : sur la liste d'Instagram, le fichier « Expire le 25/11/2026 » est celui demandé le 21/11. On le télécharge soi-même, et l'import le vérifie.
+
+ReadyProof sans référence : jamais « prêt » automatique, au mieux « vérifie la date » (déjà testé dans `tests/ios/ExportProofTests.swift`, cas r3 et r30c). Rien à changer.
+
+Pour le build 22 (coque, à décider) :
+- Défense en double : `pending: false` n'efface la demande que si la page dit pourquoi (import fait, demande refaite, effacement).
+- Bandeau `unproven` quand un « Télécharger » est visible : ne plus dire « En attente : pas prêt », mais « Un fichier est disponible. Regarde sa date « Expire le » pour savoir si c'est le tien : le plus récent a la date la plus lointaine. »

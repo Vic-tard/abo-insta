@@ -78,13 +78,14 @@ test("A : si iOS ne cache pas la page derrière Instagram, A est déjà là au r
 });
 
 test("A n'est jamais rejoué à la réouverture de l'app : on retrouve B", async () => {
-  const page = await open();
+  let page = await open();
   await page.evaluate(() => window.__setVisible(false));
   await page.evaluate(() => window.zyeutoMeta("requested", { existing: false, today: false }));
-  // App fermée avant le retour (ou rechargée) : la demande est notée, A ne l'est pas.
-  await page.reload();
-  await page.waitForFunction(() => typeof renderGuided === "function");
-  await page.evaluate(() => renderGuided());
+  // App fermée avant le retour : la demande est notée, A ne l'est pas. On relance l'app avec les réglages enregistrés
+  // (une nouvelle page plutôt que page.reload() : en file://, Chromium chargé rend parfois un stockage vide au rechargement).
+  const saved = await prefsOf(page);
+  await page.close();
+  page = await open({ prefs: saved });
   assert.equal(await askedShown(page), false);
   assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
   assert.ok((await prefsOf(page)).requestedAt);
