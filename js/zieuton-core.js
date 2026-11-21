@@ -111,6 +111,9 @@ async function readExport(files) {
   const followers = {};
   let following = null;   // comptes que TU suis, si l'export les contient
   let date = null;
+  // Sécurité du suivi (21 nov.) : vrai seulement si la date vient des fichiers du .zip d'Instagram (heure de création de l'export).
+  // La date d'un .json seul (date du fichier sur le téléphone) ou une date absente ne prouvent pas quand l'export a été fait.
+  let dated = false;
   for (const file of files) {
     const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const isZip = head[0] === 0x50 && head[1] === 0x4b;
@@ -124,6 +127,7 @@ async function readExport(files) {
       for (const e of entries) {
         Object.assign(followers, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
         if (!date || e.date > date) date = e.date;
+        dated = true;
       }
       for (const e of all.filter((e) => FOLLOWING_RE.test(e.name))) {
         following = Object.assign(following || {}, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
@@ -133,14 +137,14 @@ async function readExport(files) {
       if (listKind(data) === "following") { following = Object.assign(following || {}, parseAccounts(data)); continue; }
       Object.assign(followers, parseAccounts(data));
       const d = new Date(file.lastModified);
-      if (file.lastModified && (!date || d > date)) date = d;
+      if (file.lastModified && (!date || d > date)) { date = d; dated = false; }
     }
   }
   if (!Object.keys(followers).length) {
     if (following) throw new Error("Ce fichier liste les comptes que TU suis (following.json). Choisis-le avec followers_1.json, ou importe le .zip complet.");
     throw new Error("L'export ne contient aucun abonné.");
   }
-  return { followers, following, date: date || new Date(), source: files.map((f) => f.name).join(" + ") };
+  return { followers, following, date: date || new Date(), dated: dated && !!date, source: files.map((f) => f.name).join(" + ") };
 }
 
 async function hashNames(names) {

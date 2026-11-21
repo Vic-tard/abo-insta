@@ -694,28 +694,37 @@ let attente21 = "en attente · demandée le 21/11/2026 · vifrnt (instagram) fol
 let liste21 = [pret("25/11/2026"), pret("24/11/2026"), pret("22/11/2026")]   // le fichier du 21/11 + deux anciens exports
 // Fin du suivi : seulement avec une raison, le bon compte et la même demande.
 let w0 = n21
-check(!WatchSync.endAccepted(reason: nil, sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil),
+check(!WatchSync.endAccepted(reason: nil, sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
       "39. « plus en attente » sans raison (démo, page sans demande) : le suivi est gardé")
-check(!WatchSync.endAccepted(reason: "demo", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil),
+check(!WatchSync.endAccepted(reason: "demo", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
       "39. raison inconnue : le suivi est gardé")
-check(!WatchSync.endAccepted(reason: "cleared", sender: "a2", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil),
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a2", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
       "39. autre compte : le suivi est gardé")
-check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0.addingTimeInterval(-86400), watchedAt: w0, importedAt: nil),
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0.addingTimeInterval(-86400), watchedAt: w0, importedAt: nil, now: n21),
       "39. fin d'une autre demande (heure différente) : le suivi est gardé")
-check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: nil, watchedAt: w0, importedAt: nil),
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: nil, watchedAt: w0, importedAt: nil, now: n21),
       "39. fin sans heure de demande : le suivi est gardé")
-check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: nil, importedAt: nil),
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: nil, importedAt: nil, now: n21),
       "39. rien n'est suivi : rien à finir")
-check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0.addingTimeInterval(-3 * 86400)),
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0.addingTimeInterval(-3 * 86400), now: n21),
       "39. import plus ancien que la demande : le suivi est gardé")
-check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil),
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
       "39. import sans date : le suivi est gardé")
-check(WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0.addingTimeInterval(1), watchedAt: w0, importedAt: w0.addingTimeInterval(900)),
+check(WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0.addingTimeInterval(1), watchedAt: w0, importedAt: w0.addingTimeInterval(900), now: n21.addingTimeInterval(1200)),
       "39. import réel après la demande : fin acceptée")
-check(WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil),
+check(WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
       "39. « Refaire la demande » ou « Tout effacer » : fin acceptée")
-check(WatchSync.endAccepted(reason: "cleared", sender: "", owner: nil, pageRequestedAt: w0, watchedAt: w0, importedAt: nil),
+check(WatchSync.endAccepted(reason: "cleared", sender: "", owner: nil, pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
       "39. un seul compte (pas de compte noté) : fin acceptée")
+// Relecture ChatGPT (21 nov.) : la date de l'export, strictement après la demande ; jamais de tolérance avant.
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0.addingTimeInterval(-60), now: n21.addingTimeInterval(600)),
+      "39. export daté 1 min avant la demande (ancien fichier) : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0, now: n21.addingTimeInterval(600)),
+      "39. export daté pile à l'heure de la demande : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: n21.addingTimeInterval(3600), now: n21.addingTimeInterval(600)),
+      "39. export daté dans le futur : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a2", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0.addingTimeInterval(300), now: n21.addingTimeInterval(600)),
+      "39. bon export récent, mais importé dans l'autre compte : le suivi est gardé")
 // Reprise : jamais pour une demande « à vérifier », finie, trop vieille, ou si un suivi existe déjà.
 let later = n21.addingTimeInterval(3600)
 check(WatchSync.resumeAccepted(now: later, pageRequestedAt: n21, proven: true, hasWatch: false, endedFor: nil), "39. suivi perdu, demande prouvée : reprise")

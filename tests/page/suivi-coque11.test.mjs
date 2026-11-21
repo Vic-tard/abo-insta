@@ -48,25 +48,99 @@ test("coque 11 : plus aucun exportState (ni au démarrage, ni en démo)", async 
   }
 });
 
-test("coque 11 : fin par « Tout effacer » / « Refaire » → exportEnded cleared, avec compte et heure de la demande", async () => {
-  const req = ago(10);
-  const page = await open({ accts, acctCur: "a1", requestAcct: "a1", requestedAt: req });
-  await page.evaluate(() => { delete prefs.requestedAt; delete prefs.requestAcct; savePrefs(); renderWeekly(); renderWeekly(); });
-  const e = await of(page, "exportEnded");
-  assert.equal(e.length, 1);
-  assert.deepEqual(e[0], { type: "exportEnded", reason: "cleared", acct: "a1", requestedAt: req });
+// Relecture ChatGPT (21 nov.), point 1 : « cleared » seulement après une action confirmée, jamais sur une disparition des réglages.
+test("réglages perdus ou modifiés pendant une demande : aucune fin envoyée, le suivi natif reste intact", async () => {
+  const page = await open({ accts, acctCur: "a1", requestAcct: "a1", requestedAt: ago(10) });
+  await page.evaluate(() => { delete prefs.requestedAt; delete prefs.requestAcct; savePrefs(); renderAll(); renderWeekly(); });
+  await page.evaluate(() => { prefs.requestedAt = new Date(Date.now() - 3 * 864e5).toISOString(); renderWeekly(); delete prefs.requestedAt; renderWeekly(); });
+  assert.deepEqual(await of(page, "exportEnded"), []);
   await page.close();
 });
 
-test("coque 11 : fin par import réel → exportEnded imported avec la date d'import", async () => {
+test("« Refaire la demande » puis « Non, j'attends » : rien n'est terminé", async () => {
+  const page = await open({ requestedAt: ago(10) });
+  await page.evaluate(() => confirmRedo(() => {}));
+  await page.click("#gf-redo-no");
+  assert.deepEqual(await of(page, "exportEnded"), []);
+  await page.close();
+});
+
+test("« Refaire quand même » confirmé : exportEnded cleared, avec compte et heure de la demande", async () => {
+  const req = ago(10);
+  const page = await open({ accts, acctCur: "a1", requestAcct: "a1", requestedAt: req });
+  await page.evaluate(() => confirmRedo(() => {}));
+  await page.click("#gf-redo-yes");
+  assert.deepEqual(await of(page, "exportEnded"), [{ type: "exportEnded", reason: "cleared", acct: "a1", requestedAt: req }]);
+  await page.close();
+});
+
+test("« Oui, tout effacer » confirmé : exportEnded cleared", async () => {
   const req = ago(10);
   const page = await open({ requestedAt: req });
-  await page.evaluate(() => { prefs.lastImportAt = new Date().toISOString(); state.snapshots.push({ takenAt: new Date().toISOString(), count: 1 }); renderWeekly(); });
+  await page.evaluate(() => document.getElementById("reset-yes").click());
+  const e = await of(page, "exportEnded");
+  assert.equal(e.length, 1);
+  assert.equal(e[0].reason, "cleared");
+  assert.equal(e[0].requestedAt, req);
+  await page.close();
+});
+
+// Point 2 : seul un export d'Instagram daté après la demande la termine. On importe comme l'app (commit), avec un faux export.
+async function importExport(page, { minsAgo, dated = true, manual = false }) {
+  await page.evaluate(async ([m, d, man]) => {
+    const followers = {};
+    for (let i = 0; i < 60; i++) followers["ami" + i] = 1700000000 + i;
+    pending = { followers, following: null, date: new Date(Date.now() - m * 60000), dated: d, source: d ? "export.zip" : "followers_1.json" };
+    const takenAt = man ? new Date(Date.now() - 60000).toISOString() : pending.date.toISOString();
+    await commit(takenAt);
+  }, [minsAgo, dated, manual]);
+}
+
+test("nouvelle demande en cours + import d'un ancien export : suivi conservé", async () => {
+  const page = await open({ requestedAt: ago(30) });
+  await importExport(page, { minsAgo: 3 * 1440 });
+  assert.deepEqual(await of(page, "exportEnded"), []);
+  await page.close();
+});
+
+test("import du bon export (daté après la demande, bon compte) : suivi terminé", async () => {
+  const req = ago(30);
+  const page = await open({ accts, acctCur: "a1", requestAcct: "a1", requestedAt: req });
+  await importExport(page, { minsAgo: 10 });
   const e = await of(page, "exportEnded");
   assert.equal(e.length, 1);
   assert.equal(e[0].reason, "imported");
+  assert.equal(e[0].acct, "a1");
   assert.equal(e[0].requestedAt, req);
-  assert.ok(Date.parse(e[0].importedAt) > Date.parse(req));
+  assert.ok(Date.parse(e[0].importedAt) > Date.parse(req), "date de l'export, pas heure de l'import");
+  assert.ok(Date.parse(e[0].importedAt) < Date.now() - 5 * 60000);
+  await page.close();
+});
+
+for (const [name, opt] of [
+  ["un .json seul (date du fichier sur le téléphone, pas d'Instagram)", { minsAgo: 10, dated: false }],
+  ["date changée à la main", { minsAgo: 10, manual: true }],
+  ["export daté pile avant la demande", { minsAgo: 31 }],
+]) {
+  test(`origine ou date incertaine (${name}) : la demande suivie n'est pas supprimée`, async () => {
+    const page = await open({ requestedAt: ago(30) });
+    await importExport(page, opt);
+    assert.deepEqual(await of(page, "exportEnded"), []);
+    await page.close();
+  });
+}
+
+test("multicompte : bon export importé dans l'autre compte → la demande du compte 1 reste suivie", async () => {
+  const page = await open({ accts, acctCur: "a2", requestAcct: "a1", requestedAt: ago(30) });
+  await importExport(page, { minsAgo: 10 });
+  assert.deepEqual(await of(page, "exportEnded"), []);
+  await page.close();
+});
+
+test("coque 10 (page plus ancienne côté coque) : aucun exportEnded, même pour le bon export", async () => {
+  const page = await open({ requestedAt: ago(30) }, 10);
+  await importExport(page, { minsAgo: 10 });
+  assert.deepEqual(await of(page, "exportEnded"), []);
   await page.close();
 });
 

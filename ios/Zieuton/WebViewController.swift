@@ -3783,18 +3783,20 @@ enum WatchSync {
     /// Une demande vit 4 jours chez Instagram : pas de reprise au-delà.
     static let maxAge: TimeInterval = 4 * 86400
 
-    /// Raisons de fin acceptées : import réel après la demande, ou demande retirée par l'utilisateur (Refaire, Tout effacer).
+    /// Raisons de fin acceptées : export d'Instagram daté après la demande, ou demande retirée par l'utilisateur
+    /// (« Refaire quand même », « Tout effacer », toujours confirmés).
     enum EndReason: String { case imported, cleared }
 
     /// Fin du suivi demandée par la page. Il faut une raison connue, le compte de la demande, la même demande (heure), et pour
-    /// un import, un import fait après la demande.
+    /// un import, la date de l'export lui-même (pas l'heure de l'import) strictement après la demande, et pas dans le futur.
+    /// Relecture ChatGPT (21 nov.) : aucune tolérance avant la demande. Un ancien export importé ne termine jamais le suivi.
     static func endAccepted(reason: String?, sender: String?, owner: String?, pageRequestedAt: Date?,
-                            watchedAt: Date?, importedAt: Date?) -> Bool {
+                            watchedAt: Date?, importedAt: Date?, now: Date) -> Bool {
         guard let reason = reason.flatMap(EndReason.init(rawValue:)), let watchedAt, let pageRequestedAt else { return false }
         guard NoticePlan.endsWait(requestAcct: owner, sender: sender) else { return false }
         guard abs(pageRequestedAt.timeIntervalSince(watchedAt)) <= sameRequest else { return false }
         if reason == .imported {
-            guard let importedAt, importedAt >= watchedAt.addingTimeInterval(-sameRequest) else { return false }
+            guard let importedAt, importedAt > watchedAt, importedAt <= now.addingTimeInterval(300) else { return false }
         }
         return true
     }
@@ -4187,7 +4189,7 @@ final class ExportWatcher: NSObject {
     /// et la demande correspondent (WatchSync.endAccepted). Sinon rien ne change.
     func pageEnded(acct: String?, reason: String?, requestedAt pageAt: Date?, importedAt: Date?) {
         guard WatchSync.endAccepted(reason: reason, sender: acct, owner: store.string(forKey: Key.acct), pageRequestedAt: pageAt,
-                                    watchedAt: requestedAt, importedAt: importedAt) else {
+                                    watchedAt: requestedAt, importedAt: importedAt, now: Date()) else {
             NSLog("Zieuton : fin du suivi refusée (raison %@)", reason ?? "aucune")
             return
         }

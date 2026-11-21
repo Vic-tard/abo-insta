@@ -14,7 +14,7 @@ Origine : vidéos du 21 nov. (13 h 50 et 14 h 22). La démo faisait envoyer `exp
 | Pont | Sens | Rôle |
 | --- | --- | --- |
 | `exportState` | page → coque | Ignoré par la coque 11 (journal seulement). La page 11 ne l'envoie plus. |
-| `exportEnded { reason, acct, requestedAt, importedAt? }` | page → coque | Fin du suivi. Acceptée seulement si `WatchSync.endAccepted` : raison `imported` ou `cleared`, compte de la demande, même demande (± 2 min), import après la demande. |
+| `exportEnded { reason, acct, requestedAt, importedAt? }` | page → coque | Fin du suivi. Acceptée seulement si `WatchSync.endAccepted` : raison `imported` ou `cleared`, compte de la demande, même demande (± 2 min entre l'heure notée par la page et par la coque). Pour `imported`, `importedAt` est la date de l'export lui-même, strictement après la demande, jamais dans le futur. |
 | `exportResume { acct, requestedAt, existing, today, proven }` | page → coque | Reprise si la coque ne suit rien (`WatchSync.resumeAccepted`) : demande prouvée, moins de 4 jours, jamais terminée (`endedFor`). |
 | `watch` → `window.zyeutoWatchInfo({ waiting, ready, reminders, acct, requestedAt, resumed })` | aller-retour | Ce que la coque suit vraiment. `reminders` = rappels enregistrés chez iOS. |
 
@@ -27,6 +27,20 @@ Bandeau `available` : remplace « vérifie la date » et « sans demande suivie 
 
 Textes de la page (coque 11) : « Rappel programmé » seulement si la coque suit cette demande (compte, heure) et a au moins un rappel enregistré ; sinon « Notifications autorisées ».
 
+## Relecture ChatGPT du 21 nov. (corrigée)
+
+**Point 1. Disparition d'état et effacement volontaire.** Avant, la page envoyait `cleared` dès que `prefs.requestedAt` changeait. Une perte de réglages aurait donc terminé le suivi. Maintenant, `cleared` part seulement de deux boutons confirmés : « Refaire quand même » (`confirmRedo`) et « Oui, tout effacer ». La page 11 ne déduit plus aucune fin d'un changement d'état. L'erreur d'import (« Refaire » dans la feuille) n'envoie rien : la nouvelle demande remplace l'ancienne côté coque (`requested()`).
+
+**Point 2. Un ancien export importé.** Avant, `importedAt` valait `lastImportAt`, c'est-à-dire l'heure de l'import. Tout import après la demande terminait le suivi, même celui d'un vieux fichier, et la coque acceptait même 2 minutes avant la demande. Maintenant :
+- `readExport` dit si la date vient des fichiers du .zip d'Instagram (`dated`) ;
+- `commit()` envoie `imported` seulement si l'export est daté par le .zip et que la date n'a pas été changée à la main ;
+- l'export doit être daté strictement après la demande et pas dans le futur, et importé dans le compte de la demande, qui ne doit pas être « à vérifier » ;
+- la coque revérifie tout cela sans aucune tolérance avant la demande.
+
+Limite connue : les dates d'un .zip sont lues en heure locale. Si Instagram les écrit en UTC, un bon export peut paraître une heure plus tôt. Le suivi est alors gardé : c'est l'erreur prudente. Il se termine quand même au téléchargement dans Zieuton (`downloaded()`), au fichier vu prêt, à une nouvelle demande, ou après 4 jours.
+
+Pages plus anciennes : elles n'envoient jamais `exportEnded`. Le build 22 garde donc le suivi jusqu'à l'une de ces fins.
+
 ## Tests sur iPhone (build 22)
 
 | N° | Quoi faire | Attendu |
@@ -37,5 +51,6 @@ Textes de la page (coque 11) : « Rappel programmé » seulement si la coque sui
 | S4 | Compte 2 affiché pendant une demande du compte 1 | Rien n'est annulé ; retour sur le compte 1 : B |
 | S5 | Fichier prêt avec deux anciens exports | « C'est prêt ! Touche Télécharger » sur la bonne ligne |
 | S6 | Demande perdue (installer le build 22 pendant une attente déjà perdue) | Suivi repris sans « C'est demandé » ; fichier déjà prêt : « Un fichier est disponible chez Instagram 👀 », jamais « prêt » |
-| S7 | Import réel du fichier | Rappels retirés, plus de suivi |
+| S7 | Import réel du .zip demandé (par Fichiers ou Partager) | Rappels retirés, plus de suivi |
+| S7b | Import d'un ancien .zip pendant une demande | Suivi et rappels gardés |
 | S8 | « Refaire la demande » | Rappels de l'ancienne demande retirés, jamais repris |
