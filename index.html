@@ -4538,7 +4538,10 @@ function renderWeekly() {
   // FOU-126 : jamais pour un autre compte que celui de la demande (sinon l'app annulerait ses rappels à tort).
   // Vidéo du 21 nov. 13 h 50 : la démo remplace prefs (pas de demande, compte « a1 ») ; envoyer « plus en attente » faisait
   // oublier à la coque la vraie demande (plus de rappel, plus de « prêt »). Aucun écran de démo ne parle de l'attente à la coque.
-  if (nativeApp && !DEMO && !reqOtherAcct() && lastPendingSent !== pend) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend, acct: prefs.requestAcct || prefs.acctCur || "" }); } catch (e) { logError("bridge-exportState", e); } }
+  // Sécurité du suivi (21 nov.) : « plus en attente » seulement quand une attente vue dans cette session se termine (import,
+  // « Refaire la demande », « Tout effacer »). Jamais au démarrage : une page sans demande (réglages perdus, demande de plus
+  // de 5 jours) ne doit pas effacer le suivi de la coque, qui a sa propre limite de 4 jours.
+  if (nativeApp && !DEMO && !reqOtherAcct() && lastPendingSent !== pend && (pend || lastPendingSent === true)) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend, acct: prefs.requestAcct || prefs.acctCur || "" }); } catch (e) { logError("bridge-exportState", e); } }
   const at = !pend ? 0 : ready ? 2 : 1;
   $("wk-steps").querySelectorAll("li").forEach((li, i) => {
     li.className = i < at ? "done" : i === at ? "on" : "";
@@ -5357,7 +5360,9 @@ function renderGuided() {
       const card = (cls, t, d, btn, id) => `<li class="gw-card"><div class="gw-nc${cls}"><span class="gw-ic">${I_BELL}</span><span><b>${t}</b><small>${d}</small>${btn ? `<button type="button" id="${id}">${btn}</button>` : ""}</span></div></li>`;
       const notifTip = unsure ? tip(I_BELL, "Pas encore de rappel", "Les rappels démarrent quand ta demande est vérifiée.")
         : !notifApp() || !notifStatus ? tip(I_BELL, "Ouvre Zieuton pour vérifier", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")
-        : notifStatus === "authorized" ? tip(I_BELL, "Rappel activé", "Un rappel 30 min après ta demande, puis le lendemain si c'est encore en cours. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
+        // Sécurité du suivi (21 nov.) : l'autorisation iOS ne prouve pas qu'un rappel est programmé. Sans l'état réel des rappels
+        // (coque 11), on dit seulement « Notifications autorisées », jamais « Rappel activé ».
+        : notifStatus === "authorized" ? tip(I_BELL, "Notifications autorisées", "Zieuton peut t'envoyer un rappel pendant l'attente. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
         : notifStatus === "denied" ? card(" warn", "Tes notifications sont coupées", "Je ne pourrai pas te prévenir. Instagram t'envoie quand même un e-mail quand c'est prêt.", "Ouvrir les Réglages", "gw-notif-set")
         : card("", "Recevoir les nouvelles de ton export", "Une notification quand ta demande est confirmée, puis un rappel. Un rappel ne veut pas dire que ton fichier est prêt.", "Activer les notifications", "gw-notif-ask");
       const wline = unsure ? "" : watchLine();
@@ -5502,7 +5507,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-21-1402";
+const BUILD = "2026-11-21-1439";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

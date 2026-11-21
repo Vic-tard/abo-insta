@@ -53,11 +53,12 @@ test("coque version 10 : la page demande l'état de l'autorisation au démarrage
   await page.close();
 });
 
-test("notifications autorisées : « Rappel activé »", async () => {
+test("notifications autorisées : « Notifications autorisées », jamais « Rappel activé » sans rappel prouvé", async () => {
   const page = await open({ waitMins: 5, status: "authorized" });
   const txt = await gfText(page);
-  assert.match(txt, /Rappel activé/);
-  assert.match(txt, /30 min après ta demande/);
+  assert.match(txt, /Notifications autorisées/);
+  assert.match(txt, /Un rappel ne veut pas dire que ton fichier est prêt/);
+  assert.doesNotMatch(txt, /Rappel activé|Rappel programmé|30 min après ta demande/);
   await page.close();
 });
 
