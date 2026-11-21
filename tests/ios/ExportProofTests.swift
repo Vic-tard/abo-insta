@@ -687,5 +687,80 @@ check(r38c.identifiedExpiry(ready: [pret("22/11/2026"), pret("22/11/2026")], now
 check(r36.identifiedExpiry(ready: [pret("22/11/2026")], now: n18.addingTimeInterval(600), calendar: cal) == nil, "38. demandes indiscernables : aucune date")
 check(ReadyProof(day: n18, baseline: 0).identifiedExpiry(ready: [pret("22/11/2026")], now: n18, calendar: cal) == nil, "38. sans empreinte : aucune date")
 check(r1.identifiedExpiry(ready: [pretJour, pretAncien], now: s(30), calendar: cal) == nil, "38. carte sans « Expire le » : aucune date")
+
+// 39. Sécurité du suivi (21 nov., build 22). Vidéo de 14 h 22 : fichier « Expire le 25/11 » à l'écran, suivi perdu par la démo.
+let n21 = cal.date(from: DateComponents(year: 2026, month: 11, day: 21, hour: 13, minute: 50))!
+let attente21 = "en attente · demandée le 21/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 21/11/2026 annuler"
+let liste21 = [pret("25/11/2026"), pret("24/11/2026"), pret("22/11/2026")]   // le fichier du 21/11 + deux anciens exports
+// Fin du suivi : seulement avec une raison, le bon compte et la même demande.
+let w0 = n21
+check(!WatchSync.endAccepted(reason: nil, sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
+      "39. « plus en attente » sans raison (démo, page sans demande) : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "demo", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
+      "39. raison inconnue : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a2", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
+      "39. autre compte : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0.addingTimeInterval(-86400), watchedAt: w0, importedAt: nil, now: n21),
+      "39. fin d'une autre demande (heure différente) : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: nil, watchedAt: w0, importedAt: nil, now: n21),
+      "39. fin sans heure de demande : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: nil, importedAt: nil, now: n21),
+      "39. rien n'est suivi : rien à finir")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0.addingTimeInterval(-3 * 86400), now: n21),
+      "39. import plus ancien que la demande : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
+      "39. import sans date : le suivi est gardé")
+check(WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0.addingTimeInterval(1), watchedAt: w0, importedAt: w0.addingTimeInterval(900), now: n21.addingTimeInterval(1200)),
+      "39. import réel après la demande : fin acceptée")
+check(WatchSync.endAccepted(reason: "cleared", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
+      "39. « Refaire la demande » ou « Tout effacer » : fin acceptée")
+check(WatchSync.endAccepted(reason: "cleared", sender: "", owner: nil, pageRequestedAt: w0, watchedAt: w0, importedAt: nil, now: n21),
+      "39. un seul compte (pas de compte noté) : fin acceptée")
+// Relecture ChatGPT (21 nov.) : la date de l'export, strictement après la demande ; jamais de tolérance avant.
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0.addingTimeInterval(-60), now: n21.addingTimeInterval(600)),
+      "39. export daté 1 min avant la demande (ancien fichier) : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0, now: n21.addingTimeInterval(600)),
+      "39. export daté pile à l'heure de la demande : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a1", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: n21.addingTimeInterval(3600), now: n21.addingTimeInterval(600)),
+      "39. export daté dans le futur : le suivi est gardé")
+check(!WatchSync.endAccepted(reason: "imported", sender: "a2", owner: "a1", pageRequestedAt: w0, watchedAt: w0, importedAt: w0.addingTimeInterval(300), now: n21.addingTimeInterval(600)),
+      "39. bon export récent, mais importé dans l'autre compte : le suivi est gardé")
+// Reprise : jamais pour une demande « à vérifier », finie, trop vieille, ou si un suivi existe déjà.
+let later = n21.addingTimeInterval(3600)
+check(WatchSync.resumeAccepted(now: later, pageRequestedAt: n21, proven: true, hasWatch: false, endedFor: nil), "39. suivi perdu, demande prouvée : reprise")
+check(!WatchSync.resumeAccepted(now: later, pageRequestedAt: n21, proven: false, hasWatch: false, endedFor: nil), "39. demande « à vérifier » : pas de reprise")
+check(!WatchSync.resumeAccepted(now: later, pageRequestedAt: n21, proven: true, hasWatch: true, endedFor: nil), "39. suivi déjà là (ou fichier vu prêt) : pas de reprise")
+check(!WatchSync.resumeAccepted(now: later, pageRequestedAt: n21, proven: true, hasWatch: false, endedFor: n21.addingTimeInterval(2)),
+      "39. demande déjà finie (téléchargée, importée, retirée) : pas de reprise")
+check(WatchSync.resumeAccepted(now: later, pageRequestedAt: n21, proven: true, hasWatch: false, endedFor: n21.addingTimeInterval(-86400)),
+      "39. une ancienne demande finie n'empêche pas de reprendre la nouvelle")
+check(!WatchSync.resumeAccepted(now: n21.addingTimeInterval(4 * 86400 + 60), pageRequestedAt: n21, proven: true, hasWatch: false, endedFor: nil),
+      "39. plus de 4 jours : pas de reprise")
+check(!WatchSync.resumeAccepted(now: n21, pageRequestedAt: n21.addingTimeInterval(3600), proven: true, hasWatch: false, endedFor: nil),
+      "39. heure dans le futur : pas de reprise")
+check(!WatchSync.resumeAccepted(now: n21, pageRequestedAt: nil, proven: true, hasWatch: false, endedFor: nil), "39. sans heure : pas de reprise")
+// Heures envoyées par la page.
+check(WatchSync.date("2026-11-21T12:50:00.123Z") != nil && WatchSync.date("2026-11-21T12:50:00Z") != nil, "39. heure de la page lue (avec ou sans ms)")
+check(WatchSync.date("") == nil && WatchSync.date(42) == nil && WatchSync.date(nil) == nil, "39. heure illisible : nil")
+// Demande reprise après coup, fichier déjà prêt + anciens exports : aucune référence possible, jamais « prêt ».
+var r39 = ReadyProof(day: n21)
+for t in [0.0, 2.5, 30, 60] { r39.read(pending: [], ready: liste21, now: later.addingTimeInterval(t), calendar: cal) }
+check(r39.baseline == nil, "39. reprise sans carte « En attente » : aucune référence")
+check(rv(r39, [], liste21, at: later.addingTimeInterval(90)) != .ready, "39. reprise : jamais « prêt » sans référence, même avec le fichier du jour")
+check(GetBanner.of(waiting: true, proven: false, verdict: rv(r39, [], liste21, at: later.addingTimeInterval(90)), fileVisible: true) == .available,
+      "39. bandeau : « Un fichier est disponible chez Instagram »")
+// Demande reprise quand la carte « En attente » est encore là : référence refaite, puis « prêt » normal.
+var r39b = ReadyProof(day: n21)
+for t in [0.0, 2.5] { r39b.read(pending: [attente21], ready: [pret("24/11/2026"), pret("22/11/2026")], now: later.addingTimeInterval(t), calendar: cal) }
+check(r39b.baseline == 0, "39. reprise avec la carte « En attente » : référence refaite sur la liste réelle")
+check(settle(&r39b, [], liste21, at: later.addingTimeInterval(600)) == .ready, "39. puis le fichier du 21/11 arrive : prêt")
+// Bandeau.
+check(GetBanner.of(waiting: false, proven: false, verdict: nil, fileVisible: true) == .available, "39. sans suivi, un « Télécharger » vu : fichier disponible")
+check(GetBanner.of(waiting: false, proven: false, verdict: nil, fileVisible: false) == .unproven, "39. sans suivi, aucun fichier : consigne générale")
+check(GetBanner.of(waiting: true, proven: false, verdict: .toCheck, fileVisible: true) == .available, "39. à vérifier + fichier vu : fichier disponible")
+check(GetBanner.of(waiting: true, proven: false, verdict: .pending, fileVisible: true) == .notYet,
+      "39. la demande est encore « En attente » : un ancien export prêt ne la remplace pas")
+check(GetBanner.of(waiting: true, proven: false, verdict: .ready, fileVisible: true) == .ready && GetBanner.of(waiting: true, proven: true, verdict: nil, fileVisible: false) == .ready,
+      "39. preuve « prêt » : Touche Télécharger, comme avant")
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

@@ -68,7 +68,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 10, embedded: true, icloud: true, channels: true, signed: true };",
+            source: "window.ZYEUTO_APP = { version: 11, embedded: true, icloud: true, channels: true, signed: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
         content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -598,6 +598,7 @@ extension WebViewController: WKScriptMessageHandler {
             // FOU-126 : état de l'autorisation et dernière vérification, pour l'écran d'attente (ZYEUTO_APP 10).
             ExportWatcher.shared.syncNotices()
             ExportWatcher.shared.sendLastState()
+            sendWatchInfo()
             if openWhenReady { openExport() }
             sendPlus(nil)
         case "plus":
@@ -627,10 +628,23 @@ extension WebViewController: WKScriptMessageHandler {
         case "photo":
             pickPhoto()
         case "exportState":
-            // La page n'attend plus d'export (fichier importé, demande annulée) : on arrête de guetter.
-            // FOU-126 : la page n'envoie « plus en attente » que pour le compte de la demande (champ acct).
-            // Protection en plus côté coque : un message d'un autre compte n'annule pas les rappels de la demande.
-            if body["pending"] as? Bool == false { ExportWatcher.shared.pageEndedWait(acct: body["acct"] as? String) }
+            // Sécurité du suivi (21 nov., build 22) : « plus en attente » sans raison n'efface plus rien. Avant, la démo ou une
+            // page sans demande faisait oublier une vraie demande (vidéo du 21 nov., 13 h 50). Seul exportEnded met fin au suivi.
+            if body["pending"] as? Bool == false { NSLog("Zieuton : exportState pending:false ignoré (pas de raison)") }
+        case "exportEnded":
+            // Fin explicite : raison (import réel, demande retirée), compte et heure de la demande vérifiés (WatchSync.endAccepted).
+            ExportWatcher.shared.pageEnded(acct: body["acct"] as? String, reason: body["reason"] as? String,
+                                           requestedAt: WatchSync.date(body["requestedAt"]), importedAt: WatchSync.date(body["importedAt"]))
+            sendWatchInfo()
+        case "exportResume":
+            // La page garde une demande que la coque ne suit plus : reprise prudente, sans aucune preuve (WatchSync.resumeAccepted).
+            ExportWatcher.shared.resume(acct: body["acct"] as? String, requestedAt: WatchSync.date(body["requestedAt"]),
+                                        existing: body["existing"] as? Bool == true, today: body["today"] as? Bool == true,
+                                        proven: body["proven"] as? Bool == true)
+            // Les rappels sont programmés en arrière-plan : on redonne l'état un peu plus tard.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.sendWatchInfo() }
+        case "watch":
+            sendWatchInfo()
         case "notif":
             handleNotif(body)
         default:
@@ -660,6 +674,16 @@ extension WebViewController: WKScriptMessageHandler {
     private func sendNotif(_ auth: NotifAuth) {
         guard pageReady else { return }
         webView.evaluateJavaScript("window.zyeutoNotif && window.zyeutoNotif({ status: '\(auth.rawValue)' }); true")
+    }
+
+    /// Sécurité du suivi (ZYEUTO_APP 11) : ce que la coque suit vraiment (demande, compte, rappels enregistrés chez iOS).
+    private func sendWatchInfo() {
+        guard pageReady else { return }
+        ExportWatcher.shared.watchInfo { [weak self] info in
+            guard let self, self.pageReady,
+                  let data = try? JSONSerialization.data(withJSONObject: info), let json = String(data: data, encoding: .utf8) else { return }
+            self.webView.evaluateJavaScript("window.zyeutoWatchInfo && window.zyeutoWatchInfo(\(json)); true")
+        }
     }
 
     private func sendWatch(_ state: String, _ at: Date) {
@@ -2211,7 +2235,7 @@ final class MetaViewController: UIViewController {
     /// Ce que le bandeau dit quand on vient récupérer le fichier (voir GetBanner).
     private var getBanner: GetBanner {
         let w = ExportWatcher.shared
-        return GetBanner.of(waiting: w.isWaiting, proven: w.isReady || guardReady, verdict: getVerdict)
+        return GetBanner.of(waiting: w.isWaiting, proven: w.isReady || guardReady, verdict: getVerdict, fileVisible: lastReady?.isEmpty == false)
     }
 
     private func getStep(_ b: GetBanner) -> Step {
@@ -2226,6 +2250,11 @@ final class MetaViewController: UIViewController {
         case .checkDate:
             return Step(verb: "Vérifie la date", target: "de ton export",
                         tip: "Le fichier le plus récent est celui dont la date est la plus lointaine.")
+        case .available:
+            // Sécurité du suivi (21 nov., texte validé par Victor) : un « Télécharger » est vraiment à l'écran, mais rien ne prouve
+            // que c'est le fichier de la demande. Jamais « Touche Télécharger », jamais « En attente : pas prêt ».
+            return Step(verb: "Un fichier est disponible", target: "chez Instagram 👀",
+                        tip: "Je ne peux pas encore confirmer que c'est celui de ta demande. Vérifie sa date et ses informations avant de le télécharger.")
         case .unproven:
             // Relecture ChatGPT : sans demande prouvée, aucune consigne directe vers un bouton (il peut être celui d'un ancien export).
             return Step(verb: "Vérifie la date", target: "de ton export",
@@ -2289,7 +2318,7 @@ final class MetaViewController: UIViewController {
                             tip: "Je regarde à nouveau quand tu rouvres Zieuton.")
             }
             // Ouvert pour récupérer le fichier : la demande est encore « En attente » (ou à vérifier). Jamais « Touche Télécharger ».
-            if !requesting { return getStep(GetBanner.of(waiting: true, proven: false, verdict: getVerdict)) }
+            if !requesting { return getStep(GetBanner.of(waiting: true, proven: false, verdict: getVerdict, fileVisible: lastReady?.isEmpty == false)) }
             // Demande vérifiée (on n'arrive ici qu'après la preuve) : on dit clairement comment sortir d'Instagram.
             return Step(verb: LeaveHint.verb(existing: existingRequest, today: existingToday),
                         target: LeaveHint.title(existing: existingRequest, today: existingToday), tip: LeaveHint.tip)
@@ -3628,15 +3657,20 @@ enum GetBanner: Equatable {
     case unproven
     /// La preuve dit « prêt » : « Touche Télécharger », avec le cercle.
     case ready
+    /// Sécurité du suivi (21 nov.) : un vrai « Télécharger » est lu à l'écran, sans preuve que c'est le fichier de la demande.
+    case available
 
-    static func of(waiting: Bool, proven: Bool, verdict: ReadyProof.Verdict?) -> GetBanner {
+    /// fileVisible : le lecteur a vu au moins une ligne avec un vrai « Télécharger ». Il remplace seulement « vérifie la date »
+    /// et « sans demande suivie » : quand la ligne de la demande est encore « En attente » (notYet), un ancien export prêt ne
+    /// doit pas faire croire que c'est disponible.
+    static func of(waiting: Bool, proven: Bool, verdict: ReadyProof.Verdict?, fileVisible: Bool = false) -> GetBanner {
         if proven || verdict == .ready { return .ready }
-        guard waiting else { return .unproven }
+        guard waiting else { return fileVisible ? .available : .unproven }
         switch verdict {
-        case nil: return .looking
+        case nil: return fileVisible ? .available : .looking
         case .pending?: return .notYet
         case .ready?: return .ready
-        case .toCheck?, .unknown?, .offline?, .login?: return .checkDate
+        case .toCheck?, .unknown?, .offline?, .login?: return fileVisible ? .available : .checkDate
         }
     }
 
@@ -3738,6 +3772,52 @@ enum NoticeText {
         default:
             return nil
         }
+    }
+}
+/// Sécurité du suivi (21 nov., build 22, ZYEUTO_APP 11) : quand la page peut mettre fin au suivi de la coque, et quand elle
+/// peut le faire reprendre. Une demande gardée par la page n'est jamais une preuve Instagram : la reprise ne donne ni
+/// « C'est demandé », ni référence, ni « prêt ». Le « prêt » reste décidé par ReadyProof, sur la liste réelle d'Instagram.
+enum WatchSync {
+    /// La page et la coque notent l'heure de la même demande au même moment (preuve), à quelques secondes près.
+    static let sameRequest: TimeInterval = 120
+    /// Une demande vit 4 jours chez Instagram : pas de reprise au-delà.
+    static let maxAge: TimeInterval = 4 * 86400
+
+    /// Raisons de fin acceptées : export d'Instagram daté après la demande, ou demande retirée par l'utilisateur
+    /// (« Refaire quand même », « Tout effacer », toujours confirmés).
+    enum EndReason: String { case imported, cleared }
+
+    /// Fin du suivi demandée par la page. Il faut une raison connue, le compte de la demande, la même demande (heure), et pour
+    /// un import, la date de l'export lui-même (pas l'heure de l'import) strictement après la demande, et pas dans le futur.
+    /// Relecture ChatGPT (21 nov.) : aucune tolérance avant la demande. Un ancien export importé ne termine jamais le suivi.
+    static func endAccepted(reason: String?, sender: String?, owner: String?, pageRequestedAt: Date?,
+                            watchedAt: Date?, importedAt: Date?, now: Date) -> Bool {
+        guard let reason = reason.flatMap(EndReason.init(rawValue:)), let watchedAt, let pageRequestedAt else { return false }
+        guard NoticePlan.endsWait(requestAcct: owner, sender: sender) else { return false }
+        guard abs(pageRequestedAt.timeIntervalSince(watchedAt)) <= sameRequest else { return false }
+        if reason == .imported {
+            guard let importedAt, importedAt > watchedAt, importedAt <= now.addingTimeInterval(300) else { return false }
+        }
+        return true
+    }
+
+    /// Reprise demandée par la page : seulement pour une demande prouvée autrefois (pas « à vérifier »), si la coque ne suit
+    /// rien, si cette demande n'a pas été terminée (endedFor : téléchargée, importée, retirée), et si elle a moins de 4 jours.
+    static func resumeAccepted(now: Date, pageRequestedAt: Date?, proven: Bool, hasWatch: Bool, endedFor: Date?) -> Bool {
+        guard proven, !hasWatch, let p = pageRequestedAt else { return false }
+        guard p <= now.addingTimeInterval(60), now.timeIntervalSince(p) < maxAge else { return false }
+        if let endedFor, abs(endedFor.timeIntervalSince(p)) <= sameRequest { return false }
+        return true
+    }
+
+    /// Heure envoyée par la page (Date.toISOString(), avec ou sans millisecondes).
+    static func date(_ value: Any?) -> Date? {
+        guard let s = value as? String, !s.isEmpty else { return nil }
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: s) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: s)
     }
 }
 // EXPORT-PROOF:END
@@ -3933,7 +4013,9 @@ extension MetaViewController: WKDownloadDelegate {
         downloadSince = nil
         guard let file = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        ExportWatcher.shared.downloaded()
+        // Relecture ChatGPT (21 nov.) : un téléchargement ne prouve pas que c'est le fichier de la demande (ancien export
+        // possible). Le suivi n'est plus effacé ici : la page analyse le fichier et envoie exportEnded seulement s'il est
+        // daté après la demande (WatchSync.endAccepted).
         let deliver = onFile
         dismiss(animated: true) { deliver?(file) }
     }
@@ -3992,9 +4074,14 @@ final class ExportWatcher: NSObject {
         static let lastState = "zy.export.lastState", lastAt = "zy.export.lastAt"
         /// Compte de la demande (multicompte) : seul ce compte peut dire que l'attente est finie.
         static let acct = "zy.export.acct"
+        /// Sécurité du suivi (build 22) : suivi repris à la demande de la page, sans preuve (jamais de « C'est demandé »).
+        static let resumed = "zy.export.resumed"
+        /// Heure de la dernière demande terminée (téléchargée, importée, retirée). Pas dans `all` : elle survit à clear(),
+        /// pour qu'une demande finie ne soit jamais reprise.
+        static let endedFor = "zy.export.endedFor"
         /// Clés des builds 15 et avant (décompte des « Télécharger ») : plus utilisées.
         static let legacy = ["zy.export.downloadsBefore", "zy.export.baselineChecked"]
-        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, ambiguous, askedShown, readyShown, lastState, lastAt, acct] + legacy }
+        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, ambiguous, askedShown, readyShown, lastState, lastAt, acct, resumed] + legacy }
     }
     /// Notification « prêt » avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
     static let readyCategory = "zy-ready-actions"
@@ -4094,24 +4181,71 @@ final class ExportWatcher: NSObject {
         scheduleBackgroundCheck()
     }
 
-    /// Le fichier a été téléchargé dans Zieuton : plus rien à guetter.
-    func downloaded() { clear() }
-
     /// La page d'Instagram ouverte dans Zieuton vient de montrer le fichier prêt (preuve ReadyProof).
     func seenReady() { markReady() }
 
-    /// La page dit que l'attente est finie pour le compte `acct` (exportState pending: false).
-    /// Ignoré si la demande appartient à un autre compte (NoticePlan.endsWait).
-    func pageEndedWait(acct: String?) {
-        guard NoticePlan.endsWait(requestAcct: store.string(forKey: Key.acct), sender: acct) else { return }
+    /// Sécurité du suivi (build 22) : la page dit que l'attente est finie (exportEnded). Effacé seulement si la raison, le compte
+    /// et la demande correspondent (WatchSync.endAccepted). Sinon rien ne change.
+    func pageEnded(acct: String?, reason: String?, requestedAt pageAt: Date?, importedAt: Date?) {
+        guard WatchSync.endAccepted(reason: reason, sender: acct, owner: store.string(forKey: Key.acct), pageRequestedAt: pageAt,
+                                    watchedAt: requestedAt, importedAt: importedAt, now: Date()) else {
+            NSLog("Zieuton : fin du suivi refusée (raison %@)", reason ?? "aucune")
+            return
+        }
         clear()
+    }
+
+    /// Sécurité du suivi (build 22) : la page garde une demande que la coque ne suit plus (par exemple effacée par la démo avant
+    /// le build 22). Reprise sans aucune preuve : pas de « C'est demandé », pas de référence. ReadyProof ne refait la référence
+    /// que si la carte « En attente » de la demande est encore là ; sinon jamais « prêt » automatique (au mieux « vérifie la date »).
+    func resume(acct: String?, requestedAt pageAt: Date?, existing: Bool, today: Bool, proven: Bool) {
+        guard WatchSync.resumeAccepted(now: Date(), pageRequestedAt: pageAt, proven: proven, hasWatch: requestedAt != nil,
+                                       endedFor: store.object(forKey: Key.endedFor) as? Date), let at = pageAt else {
+            NSLog("Zieuton : reprise du suivi refusée")
+            return
+        }
+        for k in Key.all { store.removeObject(forKey: k) }
+        store.set(at, forKey: Key.requested)
+        store.set(existing, forKey: Key.existing)
+        store.set(existing && today, forKey: Key.today)
+        if let acct, !acct.isEmpty { store.set(acct, forKey: Key.acct) }
+        store.set(true, forKey: Key.resumed)
+        // « C'est demandé » a déjà été envoyée pour cette demande (ou elle est trop ancienne) : jamais de nouvelle confirmation.
+        store.set(true, forKey: Key.askedShown)
+        proof = ReadyProof(day: existing && !today ? nil : at)
+        saveProof()
+        // Rappels : seulement ceux dont l'échéance n'est pas passée (NoticePlan.sync).
+        syncNotices()
+        startTimer()
+        scheduleBackgroundCheck()
+    }
+
+    /// Ce que la coque suit vraiment, pour la page (window.zyeutoWatchInfo) : « Rappel programmé » seulement si un rappel
+    /// est enregistré chez iOS.
+    func watchInfo(_ done: @escaping ([String: Any]) -> Void) {
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            let ids = Set(requests.map { $0.identifier })
+            let reminders = NoticePlan.reminderIds.filter { ids.contains($0) }.count
+            DispatchQueue.main.async {
+                var info: [String: Any] = ["waiting": self.isWaiting, "ready": self.isReady, "reminders": reminders,
+                                           "resumed": self.store.bool(forKey: Key.resumed)]
+                if let acct = self.store.string(forKey: Key.acct) { info["acct"] = acct }
+                if let r = self.requestedAt {
+                    let f = ISO8601DateFormatter()
+                    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    info["requestedAt"] = f.string(from: r)
+                }
+                done(info)
+            }
+        }
     }
 
     /// Fin de l'attente (téléchargement, import réussi, demande refaite ou annulée) : tout est retiré.
     func clear() {
         timer?.invalidate(); timer = nil
-        guard requestedAt != nil else { return }
+        guard let ended = requestedAt else { return }
         for k in Key.all { store.removeObject(forKey: k) }
+        store.set(ended, forKey: Key.endedFor)
         proof = ReadyProof(day: nil)
         apply(NoticePlan.end())
         UNUserNotificationCenter.current().setBadgeCount(0, withCompletionHandler: nil)

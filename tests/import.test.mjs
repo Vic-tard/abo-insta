@@ -246,3 +246,18 @@ test("exports d'exemple du testeur Apple : 1er import, puis 4 départs et 3 arri
   assert.deepEqual(kinds("follow"), [...NEW].sort());
   assert.equal(core.state.snapshots.length, 2);
 });
+
+// ---------- Sécurité du suivi (21 nov.) : d'où vient la date de l'export ----------
+// Seule la date des fichiers du .zip d'Instagram dit quand l'export a été fait. Un .json seul porte la date du fichier sur le
+// téléphone : il ne peut jamais terminer le suivi d'une demande.
+test("date de l'export : .zip = date d'Instagram (dated), .json seul = date incertaine", async () => {
+  const core = loadCore();
+  const z = await core.readExport([await zipOf(names("a", 0, 20), { date: FEB })]);
+  assert.equal(z.dated, true);
+  assert.equal(z.date.getTime(), FEB.getTime());
+  const j = await core.readExport([jsonFile(followersJson(names("a", 0, 20)), "followers_1.json", FEB)]);
+  assert.equal(j.dated, false);
+  // .zip et .json mélangés, le .json plus récent : sa date est retenue, donc incertaine.
+  const m = await core.readExport([await zipOf(names("a", 0, 20), { date: JAN }), jsonFile(followersJson(names("b", 0, 5)), "followers_2.json", MAR)]);
+  assert.equal(m.dated, false);
+});
