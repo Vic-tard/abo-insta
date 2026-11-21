@@ -4517,6 +4517,51 @@ $("install-x").addEventListener("click", () => { prefs.installDismissed = true; 
 // FOU-121 P3 : « prête » seulement quand l'app a VU le fichier chez Instagram (prefs.readyAt), jamais après un délai.
 function exportSeenReady() { return !!prefs.readyAt; }
 var lastPendingSent = null;
+// Sécurité du suivi (21 nov., coque 11 = build 22). La coque ne fait plus confiance à « plus en attente » sans raison :
+// - fin : exportEnded avec la raison (import réel, demande retirée), le compte et l'heure de la demande ;
+// - reprise : si la page garde une demande prouvée que la coque ne suit plus, exportResume (une fois). Une demande gardée
+//   par la page n'est pas une preuve : la coque reprend sans « C'est demandé », sans référence, sans « prêt » ;
+// - window.zyeutoWatchInfo : ce que la coque suit vraiment, dont les rappels enregistrés chez iOS (« Rappel programmé »).
+var lastPendingReq = null, watchInfo = null, resumeSentFor = null;
+const watchApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 11;
+function askWatch() {
+  if (!watchApp()) return;
+  try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "watch" }); } catch (e) { logError("bridge-watch", e); }
+}
+function postWatch(msg) {
+  try { window.webkit.messageHandlers.zyeuto.postMessage(msg); } catch (e) { logError("bridge-" + msg.type, e); }
+}
+// Une attente vue dans cette session s'est terminée : on dit pourquoi. Demande de plus de 5 jours : rien (la coque a sa limite).
+function endWatch(req) {
+  const acct = prefs.requestAcct || prefs.acctCur || "";
+  if (prefs.requestedAt !== req) return postWatch({ type: "exportEnded", reason: "cleared", acct, requestedAt: req });
+  const last = state.snapshots[state.snapshots.length - 1];
+  const imp = prefs.lastImportAt || (last && last.takenAt);
+  if (imp && Date.parse(imp) > Date.parse(req)) postWatch({ type: "exportEnded", reason: "imported", acct, requestedAt: req, importedAt: imp });
+}
+function maybeResume() {
+  const w = watchInfo;
+  if (!watchApp() || DEMO || !w || w.waiting || w.ready) return;
+  if (!reqPending() || reqOtherAcct() || prefs.requestUnsure || exportSeenReady()) return;
+  const req = prefs.requestedAt;
+  if (!req || Date.now() - Date.parse(req) >= 4 * 864e5 || resumeSentFor === req) return;
+  resumeSentFor = req;
+  postWatch({ type: "exportResume", acct: prefs.requestAcct || prefs.acctCur || "", requestedAt: req,
+    existing: !!prefs.requestExisting, today: !!prefs.requestToday, proven: true });
+}
+// « Rappel programmé » seulement si la coque suit CETTE demande (compte, heure) et qu'un rappel est enregistré chez iOS.
+function reminderSet() {
+  const w = watchInfo;
+  if (!watchApp() || DEMO || !w || !w.waiting || !(w.reminders > 0) || !prefs.requestedAt) return false;
+  if (w.acct && w.acct !== (prefs.requestAcct || prefs.acctCur || "")) return false;
+  return !w.requestedAt || Math.abs(Date.parse(w.requestedAt) - Date.parse(prefs.requestedAt)) <= 120000;
+}
+window.zyeutoWatchInfo = (info) => {
+  watchInfo = info && typeof info === "object" ? info : null;
+  maybeResume();
+  if (gfOn()) renderGuided();
+};
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") askWatch(); });
 function daysSince(iso) { return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000); }
 function renderWeekly() {
   const last = hasRealData() ? state.snapshots[state.snapshots.length - 1] : null;
@@ -4541,7 +4586,13 @@ function renderWeekly() {
   // Sécurité du suivi (21 nov.) : « plus en attente » seulement quand une attente vue dans cette session se termine (import,
   // « Refaire la demande », « Tout effacer »). Jamais au démarrage : une page sans demande (réglages perdus, demande de plus
   // de 5 jours) ne doit pas effacer le suivi de la coque, qui a sa propre limite de 4 jours.
-  if (nativeApp && !DEMO && !reqOtherAcct() && lastPendingSent !== pend && (pend || lastPendingSent === true)) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend, acct: prefs.requestAcct || prefs.acctCur || "" }); } catch (e) { logError("bridge-exportState", e); } }
+  if (watchApp()) {
+    if (!DEMO && !reqOtherAcct()) {
+      if (pend) lastPendingReq = prefs.requestedAt;
+      else if (lastPendingSent === true && lastPendingReq) endWatch(lastPendingReq);
+      lastPendingSent = pend;
+    }
+  } else if (nativeApp && !DEMO && !reqOtherAcct() && lastPendingSent !== pend && (pend || lastPendingSent === true)) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend, acct: prefs.requestAcct || prefs.acctCur || "" }); } catch (e) { logError("bridge-exportState", e); } }
   const at = !pend ? 0 : ready ? 2 : 1;
   $("wk-steps").querySelectorAll("li").forEach((li, i) => {
     li.className = i < at ? "done" : i === at ? "on" : "";
@@ -4897,6 +4948,7 @@ window.zyeutoMeta = (ev, info) => {
     const existing = !!(info && info.existing === true);
     const today = existing && !!(info && info.today === true);
     markRequested(existing, today); haptic("success"); scrollTo({ top: 0 });
+    setTimeout(askWatch, 1500); // rappels programmés par la coque : « Rappel programmé » dès qu'ils sont enregistrés
     // Demande déjà en cours (FOU-121) : pas d'écran A comme si elle venait de partir. Le parcours (premier export) affiche
     // déjà l'attente ; ailleurs, un petit message.
     if (existing) { if (!gfOn()) toast(today ? "Une demande d'aujourd'hui est en cours chez Instagram ✓ Tu peux vérifier son état ici." : "Une demande était déjà en cours chez Instagram ✓ Tu peux vérifier son état ici.", false); return; }
@@ -5362,6 +5414,7 @@ function renderGuided() {
         : !notifApp() || !notifStatus ? tip(I_BELL, "Ouvre Zieuton pour vérifier", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")
         // Sécurité du suivi (21 nov.) : l'autorisation iOS ne prouve pas qu'un rappel est programmé. Sans l'état réel des rappels
         // (coque 11), on dit seulement « Notifications autorisées », jamais « Rappel activé ».
+        : notifStatus === "authorized" && reminderSet() ? tip(I_BELL, "Rappel programmé", "Je t'envoie un rappel si c'est encore en cours. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
         : notifStatus === "authorized" ? tip(I_BELL, "Notifications autorisées", "Zieuton peut t'envoyer un rappel pendant l'attente. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
         : notifStatus === "denied" ? card(" warn", "Tes notifications sont coupées", "Je ne pourrai pas te prévenir. Instagram t'envoie quand même un e-mail quand c'est prêt.", "Ouvrir les Réglages", "gw-notif-set")
         : card("", "Recevoir les nouvelles de ton export", "Une notification quand ta demande est confirmée, puis un rappel. Un rappel ne veut pas dire que ton fichier est prêt.", "Activer les notifications", "gw-notif-ask");
@@ -5507,7 +5560,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-21-1439";
+const BUILD = "2026-11-21-1446";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -8899,6 +8952,7 @@ function leaveDemo(quiet) {
   if (!quiet) haptic("light");
   renderAll();
   setPage("home"); window.scrollTo(0, 0);
+  askWatch();
 }
 $("demo-quit").addEventListener("click", () => { const w = realWait(); leaveDemo(); if (w && w.ready) wkGo(); });
 // Réglages → « Voir la démo » (ou « Quitter la démo ») : on referme les Réglages, puis on bascule.

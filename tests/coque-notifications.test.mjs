@@ -65,7 +65,7 @@ test("« prêt » vient de la preuve ReadyProof, plus du décompte des « Télé
 });
 
 test("pont page ⇄ coque : version 10, zyeutoNotif, zyeutoWatch, actions notif", () => {
-  assert.match(web, /window\.ZYEUTO_APP = \{ version: 10,/);
+  assert.match(web, /window\.ZYEUTO_APP = \{ version: 11,/);
   assert.match(web, /window\.zyeutoNotif && window\.zyeutoNotif\(/);
   assert.match(web, /window\.zyeutoWatch && window\.zyeutoWatch\(/);
   for (const a of ["ask", "settings", "check"]) assert.match(web, new RegExp(`case "${a}":`));
@@ -74,9 +74,14 @@ test("pont page ⇄ coque : version 10, zyeutoNotif, zyeutoWatch, actions notif"
 
 test("multicompte : un message d'un autre compte n'annule pas les rappels (contrôle dans la coque)", () => {
   const branch = web.slice(web.indexOf('case "exportState":'), web.indexOf('case "notif":'));
-  assert.match(branch, /ExportWatcher\.shared\.pageEndedWait\(acct: body\["acct"\] as\? String\)/);
-  assert.doesNotMatch(branch, /\.clear\(\)/, "exportState ne doit jamais appeler clear() directement");
-  assert.match(web, /guard NoticePlan\.endsWait\(requestAcct: store\.string\(forKey: Key\.acct\), sender: acct\) else \{ return \}/);
+  assert.doesNotMatch(branch, /\.clear\(\)/, "le pont ne doit jamais appeler clear() directement");
+  // Sécurité du suivi (build 22) : exportState sans raison n'efface plus rien ; la fin passe par WatchSync.endAccepted.
+  const st = branch.slice(0, branch.indexOf('case "exportEnded":'));
+  assert.doesNotMatch(st, /ExportWatcher/, "exportState pending:false n'agit plus sur le suivi");
+  assert.match(branch, /ExportWatcher\.shared\.pageEnded\(acct: body\["acct"\] as\? String, reason: body\["reason"\] as\? String/);
+  assert.match(web, /guard WatchSync\.endAccepted\(reason: reason, sender: acct, owner: store\.string\(forKey: Key\.acct\)/);
+  assert.match(web, /guard NoticePlan\.endsWait\(requestAcct: owner, sender: sender\) else \{ return false \}/);
+  assert.doesNotMatch(web, /pageEndedWait/);
   assert.match(web, /ExportWatcher\.shared\.requested\(existing: existing, today: today, acct: acct\)/);
   assert.match(web, /let acct = body\["acct"\] as\? String/);
   // La règle elle-même, recopiée ici pour la faire tourner sans Mac (les tests Swift, cas 26, la vérifient aussi).
@@ -92,7 +97,7 @@ test("multicompte : un message d'un autre compte n'annule pas les rappels (contr
 test("17 nov. : pour récupérer le fichier, ni « Touche Télécharger » ni cercle sans preuve « prêt »", () => {
   assert.match(web, /if !requesting \{ return getBanner == \.ready \? \["Télécharger", "Download"\] : \[\] \}/);
   assert.match(web, /if !requesting, !downloading \{ return getStep\(getBanner\) \}/);
-  assert.match(web, /if !requesting \{ return getStep\(GetBanner\.of\(waiting: true, proven: false, verdict: getVerdict\)\) \}/);
+  assert.match(web, /if !requesting \{ return getStep\(GetBanner\.of\(waiting: true, proven: false, verdict: getVerdict, fileVisible: lastReady\?\.isEmpty == false\)\) \}/);
   // Le seul « Touche Télécharger » sans réserve du mode « récupérer » est celui de la preuve.
   assert.match(web, /case \.ready:\s*return Step\(verb: "C'est prêt ! Touche", target: "Télécharger"/);
 });
@@ -148,7 +153,10 @@ test("18 nov. (Victor) : bandeau court, compris sans tout lire", () => {
     + web.slice(web.indexOf("private func getStep("), web.indexOf("private var currentStep: Step {"));
   const tips = [...zone.matchAll(/tip: "((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]);
   assert.ok(tips.length >= 8);
-  for (const t of tips) assert.ok(t.length <= 75, `consigne trop longue (${t.length}) : ${t}`);
+  // Exception : le texte « Un fichier est disponible » (21 nov.) a été validé mot pour mot par Victor et ChatGPT.
+  const validated = "Je ne peux pas encore confirmer que c'est celui de ta demande. Vérifie sa date et ses informations avant de le télécharger.";
+  for (const t of tips) if (t !== validated) assert.ok(t.length <= 75, `consigne trop longue (${t.length}) : ${t}`);
+  assert.ok(tips.includes(validated));
   assert.match(web, /static let tip = "Instagram prépare ton fichier\. Tu peux revenir dans Zieuton\."/);
 });
 
@@ -202,4 +210,17 @@ test("relecture ChatGPT (18 nov., 15 h 55) : cercle sur la seule carte possible,
   const tipFn = web.slice(web.indexOf("static func readyTip("), web.indexOf("static func dayText("));
   assert.doesNotMatch(tipFn, /keepDays|byAdding/, "aucune date calculée dans la consigne");
   assert.doesNotMatch(web, /tip: "Juste en dessous\."/);
+});
+
+test("sécurité du suivi (build 22) : reprise sans preuve, fin gardée en mémoire, rappels réels", () => {
+  const resume = web.slice(web.indexOf("func resume(acct:"), web.indexOf("func watchInfo("));
+  assert.match(resume, /guard WatchSync\.resumeAccepted\(/);
+  assert.match(resume, /store\.set\(true, forKey: Key\.askedShown\)/, "jamais de nouvelle « C'est demandé »");
+  assert.doesNotMatch(resume, /markReady|onReady|Key\.baseline|Key\.ready\b|NoticePlan\.asked/, "la reprise ne fabrique ni preuve ni « prêt »");
+  assert.match(resume, /proof = ReadyProof\(day: existing && !today \? nil : at\)/, "pas de référence : ReadyProof la refait seulement sur la liste réelle");
+  const clear = web.slice(web.indexOf("    func clear() {"), web.indexOf("    private func markReady()"));
+  assert.match(clear, /store\.set\(ended, forKey: Key\.endedFor\)/, "une demande finie n'est jamais reprise");
+  assert.doesNotMatch(web, /static var all: \[String\] \{[^}]*endedFor/, "endedFor survit à clear()");
+  assert.match(web, /getPendingNotificationRequests/, "« Rappel programmé » vient des rappels enregistrés chez iOS");
+  assert.match(web, /window\.zyeutoWatchInfo && window\.zyeutoWatchInfo\(/);
 });
