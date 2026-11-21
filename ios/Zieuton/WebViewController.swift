@@ -4013,7 +4013,9 @@ extension MetaViewController: WKDownloadDelegate {
         downloadSince = nil
         guard let file = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        ExportWatcher.shared.downloaded()
+        // Relecture ChatGPT (21 nov.) : un téléchargement ne prouve pas que c'est le fichier de la demande (ancien export
+        // possible). Le suivi n'est plus effacé ici : la page analyse le fichier et envoie exportEnded seulement s'il est
+        // daté après la demande (WatchSync.endAccepted).
         let deliver = onFile
         dismiss(animated: true) { deliver?(file) }
     }
@@ -4178,9 +4180,6 @@ final class ExportWatcher: NSObject {
         startTimer()
         scheduleBackgroundCheck()
     }
-
-    /// Le fichier a été téléchargé dans Zieuton : plus rien à guetter.
-    func downloaded() { clear() }
 
     /// La page d'Instagram ouverte dans Zieuton vient de montrer le fichier prêt (preuve ReadyProof).
     func seenReady() { markReady() }

@@ -4061,6 +4061,7 @@ let undoState = null, toastTimer = null;
 const GAIN_KEYS = ["zy", "trophies", "prono", "bet", "games"];
 async function commit(takenAt) {
   const before = JSON.stringify(state);
+  const waitingReq = reqPending() ? prefs.requestedAt : null;
   const gainsBefore = JSON.stringify(Object.fromEntries(GAIN_KEYS.map((k) => [k, prefs[k]])));
   const prev = state.snapshots[state.snapshots.length - 1];
   try {
@@ -4076,9 +4077,16 @@ async function commit(takenAt) {
     rememberAccount(Object.keys(pending.followers));
     const freeBefore = prefs.lastFreeAt;
     if (r.status === "ok" && !hasPlus()) prefs.lastFreeAt = new Date().toISOString();
-    prefs.lastImportAt = new Date().toISOString(); savePrefs();
-    // Sécurité du suivi : seul un export d'Instagram daté après la demande (date du .zip, pas changée à la main) la termine.
-    endWatchImported(takenAt, !!(pending && pending.dated && takenAt === pending.date.toISOString()));
+    prefs.lastImportAt = new Date().toISOString();
+    // Sécurité du suivi (relecture ChatGPT du 21 nov.) : un import ne termine la demande en attente que si c'est son export
+    // (.zip daté après la demande, date pas changée à la main). Un ancien export ne la termine jamais (écran d'attente gardé,
+    // suivi de la coque gardé). Date incertaine : gardée aussi avec la coque 11, pour rester d'accord avec son suivi.
+    if (waitingReq) {
+      const v = importVerdict(takenAt, !!(pending && pending.dated && takenAt === pending.date.toISOString()), waitingReq);
+      if (v === "proves") { delete prefs.requestKept; endWatchImported(takenAt); }
+      else if (v === "old" || watchApp()) prefs.requestKept = waitingReq;
+    }
+    savePrefs();
     closeSheet();
     $("asked").hidden = true;
     // Premier import : « Pas en retour » est le seul résultat disponible tout de suite.
@@ -4548,10 +4556,15 @@ function endWatchCleared(req, acct) {
   if (!watchApp() || DEMO || !req) return;
   postWatch({ type: "exportEnded", reason: "cleared", acct: acct || "", requestedAt: req });
 }
-function endWatchImported(takenAt, dated) {
-  if (!watchApp() || DEMO || !dated || !prefs.requestedAt || reqOtherAcct() || prefs.requestUnsure) return;
-  const t = Date.parse(takenAt), req = Date.parse(prefs.requestedAt);
-  if (!(t > req) || t > Date.now() + 5 * 60000) return;
+// Ce que l'import d'un fichier dit de la demande en attente : « proves » (export du .zip daté après la demande), « old » (export
+// du .zip daté avant : un ancien fichier), « unsure » (.json seul, date changée à la main, date dans le futur).
+function importVerdict(takenAt, dated, req) {
+  const t = Date.parse(takenAt), r = Date.parse(req);
+  if (!dated || !(t <= Date.now() + 5 * 60000)) return "unsure";
+  return t > r ? "proves" : "old";
+}
+function endWatchImported(takenAt) {
+  if (!watchApp() || DEMO || !prefs.requestedAt || reqOtherAcct() || prefs.requestUnsure) return;
   postWatch({ type: "exportEnded", reason: "imported", acct: prefs.requestAcct || prefs.acctCur || "", requestedAt: prefs.requestedAt, importedAt: takenAt });
 }
 function maybeResume() {
@@ -5289,6 +5302,8 @@ function reqPending() {
   if (reqOtherAcct()) return false;
   // Instagram garde le fichier 4 jours : une demande plus vieille que 5 jours n'attend plus rien.
   if (prefs.requestedAt && Date.now() - Date.parse(prefs.requestedAt) > 5 * 864e5) return false;
+  // Un import qui ne prouve pas la demande (ancien export, date incertaine) l'a laissée en attente (commit, requestKept).
+  if (prefs.requestedAt && prefs.requestKept === prefs.requestedAt) return true;
   const last = state.snapshots[state.snapshots.length - 1];
   if (!prefs.requestedAt || !last) return !!prefs.requestedAt;
   return Date.parse(prefs.requestedAt) > Date.parse(prefs.lastImportAt || last.takenAt);
@@ -5570,7 +5585,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-21-1456";
+const BUILD = "2026-11-21-1510";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

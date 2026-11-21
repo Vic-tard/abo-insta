@@ -37,9 +37,22 @@ Textes de la page (coque 11) : « Rappel programmé » seulement si la coque sui
 - l'export doit être daté strictement après la demande et pas dans le futur, et importé dans le compte de la demande, qui ne doit pas être « à vérifier » ;
 - la coque revérifie tout cela sans aucune tolérance avant la demande.
 
-Limite connue : les dates d'un .zip sont lues en heure locale. Si Instagram les écrit en UTC, un bon export peut paraître une heure plus tôt. Le suivi est alors gardé : c'est l'erreur prudente. Il se termine quand même au téléchargement dans Zieuton (`downloaded()`), au fichier vu prêt, à une nouvelle demande, ou après 4 jours.
+Limite connue : les dates d'un .zip sont lues en heure locale. Si Instagram les écrit en UTC, un bon export peut paraître une heure plus tôt. Le suivi est alors gardé : c'est l'erreur prudente. Il se termine quand même au fichier vu prêt, à « Refaire quand même » ou « Tout effacer », à une nouvelle demande, ou après 4 jours.
 
 Pages plus anciennes : elles n'envoient jamais `exportEnded`. Le build 22 garde donc le suivi jusqu'à l'une de ces fins.
+
+## 2e relecture ChatGPT du 21 nov. (corrigée)
+
+**Téléchargement natif.** Avant, `MetaViewController.downloadDidFinish()` appelait `ExportWatcher.downloaded()`, donc `clear()`, avant même que la page lise le fichier. Un ancien .zip téléchargé effaçait ainsi le suivi d'une nouvelle demande. Maintenant, le téléchargement ne touche plus au suivi : `downloaded()` est supprimé. La fin vient seulement de la page, une fois le fichier analysé (`exportEnded imported`, voir ci-dessus).
+
+**État de la page après l'import d'un ancien export.** Avant, `commit()` mettait `lastImportAt` à l'heure de l'import, et `reqPending()` le comparait à la demande. Un ancien export importé aujourd'hui faisait donc disparaître l'attente. Maintenant, `commit()` juge le fichier par rapport à la demande en attente (`importVerdict`) :
+- `proves` : le .zip est daté après la demande. La demande est terminée et `exportEnded` est envoyé.
+- `old` : le .zip est daté avant la demande. La demande reste en attente (`prefs.requestKept`), quelle que soit la coque, et même sur le site.
+- `unsure` : .json seul ou date changée à la main. Avec la coque 11, la demande reste en attente, pour rester d'accord avec le suivi natif. Avec une coque plus ancienne ou sur le site, rien ne change par rapport à avant.
+
+`requestKept` n'est valable que pour la même heure de demande. Une nouvelle demande, « Refaire » ou « Tout effacer » le rendent caduc. Il est gardé dans les réglages, donc il survit à la fermeture de l'app.
+
+À décider plus tard (pas dans cette PR) : après l'import d'un fichier à date incertaine, la demande reste en attente jusqu'au fichier vu prêt, à « Refaire » ou à 4-5 jours. Un bouton « C'était bien mon export » pourrait la clore à la main.
 
 ## Tests sur iPhone (build 22)
 
@@ -52,5 +65,5 @@ Pages plus anciennes : elles n'envoient jamais `exportEnded`. Le build 22 garde 
 | S5 | Fichier prêt avec deux anciens exports | « C'est prêt ! Touche Télécharger » sur la bonne ligne |
 | S6 | Demande perdue (installer le build 22 pendant une attente déjà perdue) | Suivi repris sans « C'est demandé » ; fichier déjà prêt : « Un fichier est disponible chez Instagram 👀 », jamais « prêt » |
 | S7 | Import réel du .zip demandé (par Fichiers ou Partager) | Rappels retirés, plus de suivi |
-| S7b | Import d'un ancien .zip pendant une demande | Suivi et rappels gardés |
+| S7b | Pendant une demande, toucher « Télécharger » sur un ancien export dans Zieuton, puis l'importer | Carte « Ton export se prépare » toujours là, rappels gardés ; idem après fermeture et réouverture |
 | S8 | « Refaire la demande » | Rappels de l'ancienne demande retirés, jamais repris |

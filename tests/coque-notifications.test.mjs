@@ -224,3 +224,10 @@ test("sécurité du suivi (build 22) : reprise sans preuve, fin gardée en mémo
   assert.match(web, /getPendingNotificationRequests/, "« Rappel programmé » vient des rappels enregistrés chez iOS");
   assert.match(web, /window\.zyeutoWatchInfo && window\.zyeutoWatchInfo\(/);
 });
+
+test("relecture ChatGPT (21 nov.) : un téléchargement seul n'efface jamais le suivi", () => {
+  const meta = web.slice(web.indexOf("final class MetaViewController"));
+  const fin = meta.slice(meta.indexOf("func downloadDidFinish(_ download: WKDownload)"), meta.indexOf("func download(_ download: WKDownload, didFailWithError"));
+  assert.doesNotMatch(fin, /ExportWatcher|clear\(\)/, "le fichier est d'abord analysé par la page (exportEnded)");
+  assert.doesNotMatch(web, /func downloaded\(\)|\.downloaded\(\)/);
+});
