@@ -1,36 +1,51 @@
 # Zieuton : roadmap
 
-> Dernière mise à jour : 17 novembre 2026 (FOU-126 ; base FOU-123). Les statuts ci-dessous recopient Linear au 16 nov. ; deux écarts connus (FOU-121 « Done », FOU-119 « In Progress ») ne sont pas encore corrigés, à la demande de Victor. Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). Ce document donne l'ordre et les dépendances ; en cas d'écart, Linear gagne, puis on corrige ce fichier.
+> Dernière mise à jour : 21 novembre 2026, soir (ménage Linear et GitHub demandé par Victor). Les statuts recopient Linear au 21 nov. Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). Ce document donne l'ordre et les dépendances ; en cas d'écart, Linear gagne, puis on corrige ce fichier.
 > Statuts : **À faire** / **En cours** / **Bloqué** / **Terminé**. Une ligne = un ticket Linear quand il existe.
 
 ## 1. Priorités actuelles (dans l'ordre)
 
-Règle de Victor : **un seul sujet à la fois**, clôturé à 100 % avant le suivant. Tout ce qui n'est pas l'export est gelé.
+Règle de Victor : **un seul sujet à la fois**. Jalons Linear : **Build validé** 22 nov. (repoussé de fait au 23), **Soumis à Apple** 25 nov., **Sortie** 3 déc.
+
+État au 21 nov. au soir :
+- Build candidat **1.0 (23)**, installé chez Victor. Aucun build n'est prévu.
+- Le canal stable est toujours au 10 nov.
+- Aucune PR ouverte.
 
 | # | Tâche | Ticket | Statut | Dépend de |
 | --- | --- | --- | --- | --- |
-| 1 | Export fiable, P1 : détection fiable des étapes et des demandes, compte verrouillé | FOU-121 | En cours : PR #132 ouverte (coque) | – |
-| 2 | Export, P2 à P6 (voir le diagnostic) | FOU-121 | À faire | P1 relu par ChatGPT et validé par Victor |
-| 3 | Valider en canal stable la page actuelle (`npm run canal -- valider`) | pas encore de ticket | À faire | Test de Victor en canal test |
-| 4 | Build final unique **1.0 (17)** (décision de Victor du 17 nov. : pas de build 16) + test iPhone complet, achats compris | FOU-105 (parent FOU-101) | En cours | 1, 2, 4 bis ; plan `VALIDATION-BUILD-17.md` |
-| 4 bis | Notifications fiables pendant l'attente de l'export (N1 coque PR #142, N2 page PR #143, N3 plan de validation) | FOU-126 | En cours : PR ouvertes, relecture ChatGPT, aucune fusion sans Victor | – |
-| 5 | Premier export réussi par un inconnu, sans aide | FOU-37 | À faire | 4 |
-| 6 | Retours des potes TestFlight | FOU-113 | À faire | 4 |
-| 7 | Soumission à Apple, publication manuelle (visée vers le 25 nov., orientation de Victor du 16 nov.) | FOU-51 | En cours | 4, 5 ; note examinateur corrigée le 16 nov. (à revérifier sur iPhone) ; plan `VALIDATION-BUILD-17.md` |
-| 8 | Sortie le 3 décembre 2026 | FOU-51 | À faire | 7 |
+| 1 | Écrans après la demande d'export. La PR 1 (#152) et les suites (#153 à #157) sont fusionnées. Il reste à **auditer toutes les transitions** (A → B → démo → B → E → import → question → accueil, plus l'écran D sans fausse validation). Ensuite, PR 2 (page seule, démo : bulles du zieuteur et « Mon export ») si les transitions restent incomplètes. Enfin, tests iPhone U1 à U10. | FOU-131 | En cours | – |
+| 2 | Visuels du zieuteur 3D : 3 directions (face, trois-quarts, profil, 2 ou 3 expressions), toujours derrière un mur, lisibles sur petit écran en clair et en sombre. Aucune intégration dans l'app avant la soumission (FOU-125 reste reporté). | FOU-119 | À faire (22 nov.) | – |
+| 3 | ACRE : lire les documents de l'Urssaf reçus le 21 nov., puis remplir et envoyer la demande | FOU-83 | En cours | – |
+| 4 | Valider le build 23 sur iPhone : lignes restantes de `VALIDATION-BUILD-21.md` (V2, V7, V9 à V17) et parcours examinateur Apple | FOU-105 | En cours | 1 |
+| 5 | Retester les achats et la restauration sur le build 23 (sandbox) | FOU-128 | À faire (23 nov.) | – |
+| 6 | Médiateur de la consommation | FOU-82 | À faire (24 nov.) | – |
+| 7 | Passer la page validée en canal stable (`npm run canal -- valider`) | FOU-129 | À faire (24 nov.) | 1, 4 |
+| 8 | Soumettre le build validé à Apple, publication manuelle | FOU-130 (parent FOU-51) | À faire (25 nov.) | 4, 5, 6, 7 |
+| 9 | Sortie le 3 décembre 2026 | FOU-51 | En cours | 8 |
 
-**Après P1, à faire (liste de Victor, 16 nov.)** : vérifier le parcours de démonstration destiné à Apple ; corriger l'écart entre les statuts Linear et le travail réel ; fixer le minimum indispensable avant soumission ; tester le canal stable et les parcours sur les iPhone des testeurs ; revoir le calendrier de soumission. D'ici là : aucun statut Linear changé et aucune nouvelle PR technique sans l'accord de Victor.
+Si un changement de coque redevient nécessaire, il faudra un build 24, seulement avec l'accord de Victor, puis refaire FOU-105.
 
-**[Déduit]** La soumission était prévue vers le 20 novembre. Avec P1 à P6 encore à faire dans la coque, cette date est à reconfirmer par Victor (voir l'audit, risque R2).
+## Plan du 22 novembre (après le travail de Victor)
+
+1. **FOU-131, environ 1 h 30.**
+   - Audit des transitions sur pages simulées, sans nouvelle demande Instagram réelle.
+   - Une seule revue des défauts, à envoyer à Victor et ChatGPT.
+   - Puis la PR 2 (page seule), si elle est nécessaire. Victor teste sur son iPhone en canal test.
+2. **Visuels FOU-119, environ 1 h.** Planche de 3 directions dans `/mnt/project-files/abo-insta/zieuteur-3d/`. Victor choisit une direction, sans rien intégrer dans l'app.
+3. **ACRE FOU-83, environ 30 min.** Victor envoie les documents de l'Urssaf. On les lit ensemble, puis on prépare la demande. Victor l'envoie lui-même.
+4. **Si le temps le permet** : lignes restantes de FOU-105 sur le build 23, puis achats (FOU-128).
+
+**Garde-fous** : aucune fusion, aucun build, aucun passage en stable et aucune soumission sans l'accord explicite de Victor. Le moteur d'export reste inchangé.
 
 ## 2. Démarches administratives
 
 | Tâche | Ticket | Statut | Note |
 | --- | --- | --- | --- |
-| ACRE à l'URSSAF | FOU-83 | Bloqué | Attend le numéro de compte URSSAF (courrier). Objectif de dépôt : 18 décembre 2026 ; limite probable 2 janvier 2027 (60 jours après le début d'activité du 3 nov., à confirmer auprès de l'Urssaf). Voir `PROPOSITIONS-LINEAR-2026-11-16.md` |
-| Médiateur de la consommation | FOU-82 | À faire (Backlog) | Obligatoire pour vendre à des particuliers **[Déduit]**, à faire avant la sortie |
+| ACRE à l'URSSAF | FOU-83 | En cours | Documents de l'Urssaf reçus le 21 nov. ; demande à remplir le 22 nov. Objectif de dépôt : 18 décembre 2026 ; limite probable 2 janvier 2027 (60 jours après le début d'activité du 3 nov., à confirmer auprès de l'Urssaf). Voir `PROPOSITIONS-LINEAR-2026-11-16.md` |
+| Médiateur de la consommation | FOU-82 | À faire (24 nov.) | Obligatoire pour vendre à des particuliers **[Déduit]**, à faire avant la sortie |
 | Small Business Program Apple (15 %) | – | En cours | Demande envoyée le 4 nov., réponse non reçue à notre connaissance |
-| Essai Higgsfield (vidéos) + résiliation immédiate | FOU-116 | À faire (gelé) | Ne pas lancer sans Victor |
+| Essai Higgsfield (vidéos) + résiliation immédiate | FOU-116 | Backlog (gelé) | Ne pas lancer sans Victor |
 
 ## 3. Fonctionnalités prévues après la sortie (Backlog)
 
@@ -50,7 +65,7 @@ Règle de Victor : **un seul sujet à la fois**, clôturé à 100 % avant le sui
 | Builds iPhone automatiques | FOU-55 | Basse |
 | Orca + Claude Code sur le Mac | FOU-53 | Basse (après FOU-41) |
 | Android | FOU-52 | Basse |
-| Zieuteur en 3D | FOU-119 | En cours dans Linear mais gelé ; 4 styles proposés le 15 nov. (pâte à modeler, vinyle, pastel, animation), choix de Victor en attente |
+| Zieuteur vivant dans l'app (après la soumission) | FOU-125 | – |
 
 ## 4. Communication et lancement (tout en Backlog depuis le 10 nov., FOU-99)
 
@@ -61,8 +76,7 @@ FOU-56 calendrier J-14 à J+14, FOU-57 vidéos saison 1, FOU-58 vidéos « brain
 ## 5. Dépendances clés
 
 ```
-FOU-121 P1 → P2…P6 → build final (FOU-105) → test inconnu (FOU-37) → soumission (FOU-51) → sortie 3 déc.
-                                     ↘ test achats sur le build final (revérif FOU-36)
+FOU-131 → validation build 23 (FOU-105) + achats (FOU-128) + médiateur (FOU-82) → canal stable (FOU-129) → soumission (FOU-130) → sortie 3 déc. (FOU-51)
 Page fusionnée → test en canal test → PR « canal valider » → visible pour tous
 FOU-41 (découpage) → FOU-53 (Orca)
 ```

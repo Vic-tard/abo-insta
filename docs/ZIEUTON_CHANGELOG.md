@@ -1,6 +1,6 @@
 # Zieuton : historique des changements
 
-> Dernière mise à jour : 16 novembre 2026 (FOU-123). Du 4 nov. à aujourd'hui : d'après l'historique Git de `main` (numéros de PR). Avant le 4 nov. : d'après la mémoire du projet (le clone ne contient pas l'historique plus ancien), donc moins détaillé.
+> Dernière mise à jour : 21 novembre 2026 (ménage du 21 nov. ; base FOU-123). Du 4 nov. à aujourd'hui : d'après l'historique Git de `main` (numéros de PR). Avant le 4 nov. : d'après la mémoire du projet (le clone ne contient pas l'historique plus ancien), donc moins détaillé.
 > **Page** = visible sans Xcode (canal test d'abord). **Coque** = visible seulement après un nouveau build Xcode.
 > Pour ajouter une entrée : en haut de la bonne date, une ligne par PR fusionnée, avec ticket et type.
 
@@ -14,9 +14,29 @@
 | 1.0 (4) | – | Jamais envoyé |
 | 1.0 (5) | 10 nov. | Mises à jour via zieuton.com (#111, #112) |
 | 1.0 (7) | 15 nov. | « Build 6 » : notifications (#116), confidentialité Apple (#122) |
-| prochain | – | Coque déjà à 10 dans `main` : #124 (code de sécurité), #126 (flèche, « C'était moi »), #130 (bandeau cookies) + P1 à venir |
+| 1.0 (15) | 16 nov. | Export P1 à P6 (#132, #134 à #138) |
+| 1.0 (17) | 17 nov. | Notifications FOU-126 (#142, #143) ; non validé sur iPhone |
+| 1.0 (21) | 18 nov. | Correctifs FOU-126 (#146 à #150) |
+| 1.0 (22) | 21 nov. | Sécurité du suivi (#155) |
+| 1.0 (23) | 21 nov. | Bandeau « Un fichier est disponible » (#156) ; **candidat actuel**, installé chez Victor |
 
 ## Novembre 2026
+
+### 21 nov.
+- #157 Après un import : « Est-ce bien le fichier de ta demande ? » (page, FOU-126 / FOU-131)
+- #156 Bandeau « Un fichier est disponible » redessiné quand « Télécharger » apparaît (coque, build 23, FOU-126)
+- #155 Sécurité du suivi dans la coque, fin du suivi seulement sur preuve (coque, build 22, FOU-126)
+- #154 La page ne dit plus « plus en attente » au démarrage (page, FOU-126)
+- #153 La démo ne fait plus oublier la demande suivie (page, FOU-126)
+- #152 Écrans après la demande d'export A, B, D, E et frise (page, FOU-131 PR 1)
+- #151 Test obligatoire « page du build 17 » (test, FOU-126)
+
+### 18 nov.
+- #146 à #150 Correctifs du build 17 : lecture de la vraie liste d'Instagram, plus de faux « Touche Télécharger », demande du jour, cartes « Expire le » (coque build 21 + page + doc, FOU-126)
+
+### 17 nov.
+- #145 Résultats des tests Mac (doc) ; #144 plan de validation du build 17 + note Apple (doc, remplace #140 fermée) ; #143 page et #142 coque des notifications fiables (FOU-126, build 17)
+- #141 « Voir la démo d'abord » sur la bienvenue, prénoms de démo au hasard (page, FOU-51)
 
 ### 16 nov.
 - #131 Règles de collaboration Claude / ChatGPT (doc, FOU-122)

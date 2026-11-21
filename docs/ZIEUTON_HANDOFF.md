@@ -1,11 +1,11 @@
 # Zieuton : document de transmission pour ChatGPT
 
-> Dernière mise à jour : 17 novembre 2026 (FOU-126 ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
+> Dernière mise à jour : 21 novembre 2026, soir (ménage Linear et GitHub ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
 > À mettre à jour par Claude après chaque étape importante (fin de PR, décision, build).
 
 ## 1. Le projet en 10 lignes
 
-Zieuton est une app iPhone (français, iOS 17+) qui montre qui s'est désabonné d'un compte Instagram, en comparant les exports officiels que l'utilisateur demande lui-même à Instagram. Pas de serveur, pas de compte, jamais de mot de passe : tout reste sur le téléphone (+ sauvegarde iCloud). Modèle : gratuit (2 imports, puis 1 par mois) + Zieuton Plus (2,99 €/mois, 14,99 €/an, 29,99 € à vie). Propriétaire : Victor, seul, non développeur, micro-entreprise. Sortie visée sur l'App Store : 3 décembre 2026. App en test sur TestFlight auprès d'amis (build 1.0 (7)).
+Zieuton est une app iPhone (français, iOS 17+) qui montre qui s'est désabonné d'un compte Instagram, en comparant les exports officiels que l'utilisateur demande lui-même à Instagram. Pas de serveur, pas de compte, jamais de mot de passe : tout reste sur le téléphone (+ sauvegarde iCloud). Modèle : gratuit (2 imports, puis 1 par mois) + Zieuton Plus (2,99 €/mois, 14,99 €/an, 29,99 € à vie). Propriétaire : Victor, seul, non développeur, micro-entreprise. Sortie visée sur l'App Store : 3 décembre 2026. Build candidat actuel : 1.0 (23) sur TestFlight.
 
 Architecture : une page web unique `index.html` (~8 600 lignes, HTML/CSS/JS sans build) embarquée dans une coque Swift (`ios/Zieuton/WebViewController.swift`, ~3 100 lignes, WKWebView). La page se met à jour depuis zieuton.com (signée, canal test puis stable) ; la coque demande un build Xcode. Tests Node + CI GitHub.
 
@@ -26,34 +26,66 @@ Architecture : une page web unique `index.html` (~8 600 lignes, HTML/CSS/JS sans
 
 Pas de scraping ni de connexion automatisée à Instagram ; jamais le mot de passe ; l'utilisateur touche lui-même « Télécharger » ; aucune donnée envoyée à un serveur (pas d'analytics, pas de SDK) sans décision écrite de Victor ; aucune mention d'IA dans l'app ; identifiants `fr.zyeuto.*` intouchables.
 
-## 5. Où en est le projet (17 nov.)
+## 5. Où en est le projet (21 nov. au soir)
 
-- **Export (FOU-121)** : P1 à P6 fusionnées (PR #132, #134 à #138). Build **1.0 (15)** envoyé sur TestFlight le 16 nov. ; Victor déclare un export et un import réels réussis sur son iPhone.
-- **FOU-124** (attente après la demande) fusionnée (PR #139). La partie page est en canal test ; la partie coque (bouton « Revenir dans Zieuton ») attend le **build 1.0 (17)** : Victor a décidé le 17 nov. de ne pas faire de build 16 et de viser directement un build 17 candidat à la soumission.
-- **Canal stable** encore au 10 nov. : les testeurs en canal normal ne voient pas les nouveautés de la page.
-- **Orientations de Victor (16 nov., 19h11)** : soumission visée vers le **25 novembre**, sortie manuelle possible le 3 décembre ; aucun build, aucune soumission, aucun changement de statut Linear, aucune modification du moteur Instagram sans son accord.
-- **Notifications fiables (FOU-126, autorisé par Victor le 17 nov.)** : PR #142 (coque : « C'est demandé ✓ » seulement sur preuve, « Ton fichier est prêt 🎉 » seulement si la ligne de la demande est prête, rappels 30 min et 24 h, plus d'alertes « expire », pont v10, build 17) et PR #143 (page : écran « Je te préviens ? » avant Instagram, état de l'attente, demande liée au bon compte). Tests Swift écrits, à lancer sur le Mac. Relues par ChatGPT (2 sécurisations ajoutées : multicompte côté coque, parcours Apple par la démo), **fusionnées le 17 nov.** (`main` a823ea5). Tests Swift et compilation sans signature **verts sur le Mac de Victor** le 17 nov. **Build 1.0 (17) testé sur iPhone le 17 nov. : non validé** (3 problèmes : demande pas vue dans la fenêtre d'Instagram, faux « Touche Télécharger » sur un ancien export, « déjà en cours » à tort). Correctifs #146, #147, #148 en relecture ; build suivant = 20, seulement avec l'accord de Victor. FOU-126 reste ouvert jusqu'à la validation sur iPhone (section 4 de `VALIDATION-BUILD-17.md`) ; build 17 et soumission seulement avec l'accord de Victor. Limite assumée : iOS ne laisse pas vérifier en permanence une app fermée, l'app ne le prétend jamais.
-- **PR de documentation en relecture** (FOU-51, FOU-126) : note examinateur corrigée (`note-revue-apple.md`), plan de validation du build 17 (`VALIDATION-BUILD-17.md`, remplace celui du build 16), plan B 5.2.2 (`PLAN-B-APPLE-5-2-2.md`), propositions Linear pour FOU-83, FOU-101, FOU-105, FOU-33 (`PROPOSITIONS-LINEAR-2026-11-16.md`).
+- **Build candidat : 1.0 (23)**, installé chez Victor. Historique des builds :
+  - 15 : export P1 à P6 ;
+  - 17 : notifications, non validé ;
+  - 21 : correctifs du 18 nov. ;
+  - 22 : sécurité du suivi ;
+  - 23 : bandeau « Un fichier est disponible ».
 
-## 6. Bugs non résolus (détail : `docs/ZIEUTON_BUG_TRACKER.md`)
+  Aucun nouveau build n'est prévu tant que la coque ne change pas.
+- **Fusionné le 21 nov.** :
+  - #151 : test ;
+  - #152 : FOU-131 PR 1, écrans A, B, D, E et frise ;
+  - #153 : la démo ne fait plus oublier la demande ;
+  - #154 et #155 : sécurité du suivi, build 22 ;
+  - #156 : build 23 ;
+  - #157 : « Est-ce bien le fichier de ta demande ? ».
 
-- Bandeau qui demande le mot de passe à tort ; « récupère ton fichier » sur une fenêtre blanche ; « touche Télécharger » hors écran ; demande en « Année dernière » non détectée (régression) ; conseils coupés après 2 lignes.
-- Un testeur a eu son compte verrouillé (cause non prouvée).
-- Note examinateur Apple : l'ancien chemin de démo n'existait plus (confirmé). Corrigée dans la PR de documentation du 16 nov. : à la première ouverture, il faut d'abord importer un fichier d'exemple, puis Réglages → « Voir la démo ». Vérifié en simulation navigateur, **pas encore sur iPhone**.
-- Le lien du questionnaire testeurs est un lien d'édition (lien public à récupérer).
+  La page de ces PR est en canal test seulement. Vidéo de Victor à 16 h 48 : export réel, import de 1 140 abonnés, réponse « Oui », rappels retirés, accueil et données intacts après la réouverture. Ce scénario est validé, pas tous les cas.
+- **FOU-126** (notifications) : « Done ». Les lignes restantes de la matrice `VALIDATION-BUILD-21.md` (V2, V7, V9 à V17) sont suivies dans **FOU-105**.
+- **FOU-131** (écrans après la demande) : rouvert « In Progress ». Il reste l'audit des transitions, puis la PR 2 (démo : bulles du zieuteur, « Mon export ») si nécessaire, puis les tests U1 à U10.
+- **Canal stable** toujours au 10 nov. (FOU-129, à faire avant la soumission).
+- **ACRE (FOU-83)** : documents de l'Urssaf reçus le 21 nov., demande à remplir le 22 nov. Dépôt visé avant le 18 déc.
+- **Ménage du 21 nov.** :
+  - FOU-127 (« build 20 ») annulé comme obsolète.
+  - FOU-132 créé par erreur, puis annulé comme doublon de FOU-119.
+  - FOU-116 (Higgsfield, com gelée) passé en Backlog.
+  - FOU-119 (visuels 3D) passé en Todo pour le 22 nov.
+  - Aucune PR ouverte.
+  - Les branches déjà fusionnées sont listées dans `scripts/branches-a-supprimer.txt`.
+- **Jalons Linear** : Build validé (22 nov., en pratique le 23), Soumis à Apple (25 nov.), Sortie (3 déc.).
 
-## 7. État du lancement
+## 6. Plan du 22 novembre
 
-Fiche App Store, captures, achats, confidentialité : prêts. Reste : export fiable → build final → test par un inconnu → soumission (prévue « vers le 20 nov. », probablement à décaler) → sortie le 3 déc. Toute la com est gelée.
+1. **FOU-131** : auditer toutes les transitions sur pages simulées, sans nouvelle demande Instagram. Les transitions sont : A → B → démo → B → E → import → question → accueil, et D sans fausse validation. Une seule revue des défauts, puis la PR 2 (page seule) si nécessaire.
+2. **FOU-119** : 3 directions du zieuteur 3D, toujours derrière un mur, palette rose, lilas et corail. Aucune intégration dans l'app avant la soumission.
+3. **FOU-83** : lire les documents de l'Urssaf et préparer la demande d'ACRE.
+4. Ensuite (23 et 24 nov.) :
+   - FOU-105 : lignes restantes sur le build 23 ;
+   - FOU-128 : achats en sandbox ;
+   - FOU-82 : médiateur ;
+   - FOU-129 : canal stable.
+
+   Puis FOU-130 : soumission le 25 nov.
+
+Garde-fous : aucune fusion, aucun build, aucun passage en stable et aucune soumission sans l'accord explicite de Victor.
+
+## 7. Bugs et risques ouverts (détail : `docs/ZIEUTON_BUG_TRACKER.md`)
+
+- **Cas V2 du build 21** : une vraie demande a été vue « à vérifier ». Cause non démontrée (piste : une demande du même jour lue avant la touche). L'écran D reste le repli honnête.
+- **Risque Apple 5.2.2** (vue Instagram intégrée) : plan B en réserve (`PLAN-B-APPLE-5-2-2.md`, FOU-33).
+- **Compte testeur verrouillé** : cause non prouvée.
+- **Lien du questionnaire testeurs** : c'est un lien d'édition.
 
 ## 8. Questions où un second avis serait utile
 
-1. **Build** : soumission prévue avec 1.0 (17) (décision du 17 nov.). Le plan `VALIDATION-BUILD-17.md` est-il complet, en particulier la section 4 (notifications) ?
-2. **Risque Apple 5.2.2** : la vue Instagram intégrée est le risque de refus n°1. Proposition : plan B en réserve (réponse écrite d'abord, puis passage par l'app Instagram via P6), voir `PLAN-B-APPLE-5-2-2.md`. D'accord ?
-3. **Compte verrouillé** : quels signaux d'Instagram sont assez explicites pour dire « verrouillé » sans confondre avec un simple code de sécurité ?
-4. **Test utilisateur** : comment organiser un test « inconnu, sans aide » (FOU-37) utile en peu de temps ?
-5. **Lancement** : la com gelée peut-elle encore tenir le 3 décembre ? Quel minimum (comptes, 3 vidéos, 10 créateurs) ?
-6. **Prix** : 2,99 €/mois et 29,99 € à vie sont-ils cohérents avec les concurrents (FollowMeter, FANS, Unfollr, Reports+) ?
+1. **FOU-131** : la liste des transitions à auditer est-elle complète ? La PR 2 (bulles dans la démo) vaut-elle le risque avant la soumission ?
+2. **Build 23 comme build final** : quelles lignes de la matrice sont indispensables avant de soumettre ?
+3. **Risque 5.2.2** : faut-il une réponse prête pour l'examinateur ?
+4. **Lancement** : quel minimum de com, avec la sortie au 3 déc. ?
 
 ## 9. Où trouver le reste
 
