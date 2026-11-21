@@ -762,5 +762,22 @@ check(GetBanner.of(waiting: true, proven: false, verdict: .pending, fileVisible:
       "39. la demande est encore « En attente » : un ancien export prêt ne la remplace pas")
 check(GetBanner.of(waiting: true, proven: false, verdict: .ready, fileVisible: true) == .ready && GetBanner.of(waiting: true, proven: true, verdict: nil, fileVisible: false) == .ready,
       "39. preuve « prêt » : Touche Télécharger, comme avant")
+// 40. Vidéo build 22 (21 nov., 15 h 28) : carte « Expire le 25/11/2026 » dans la fenêtre « Téléchargements disponibles ».
+// Si la date n'est pas dans son propre bloc, le lecteur ne voit que « télécharger annuler » (tests/lecteur, ?lignes=1).
+let vu40 = ["télécharger annuler"]
+var r40 = ReadyProof(day: n21)
+for t in [0.0, 2.5, 30] { r40.read(pending: [], ready: vu40, now: later.addingTimeInterval(t), calendar: cal) }
+let v40 = rv(r40, [], vu40, at: later.addingTimeInterval(60))
+check(v40 == .unknown, "40. « Télécharger » sans date : verdict inconnu (preuve inchangée, jamais « prêt »)")
+check(v40 == rv(r40, [], [], at: later.addingTimeInterval(60)), "40. même verdict avec ou sans ce bouton : seul « fichier vu » change")
+check(GetBanner.fileChanged(before: false, after: true) && GetBanner.fileChanged(before: true, after: false), "40. fichier vu qui apparaît ou disparaît : bandeau redessiné")
+check(!GetBanner.fileChanged(before: true, after: true) && !GetBanner.fileChanged(before: false, after: false), "40. rien ne change : pas de redessin en plus")
+check(GetBanner.of(waiting: true, proven: false, verdict: v40, fileVisible: true) == .available,
+      "40. bandeau : « Un fichier est disponible chez Instagram » (et non « Vérifie la date »)")
+var r40b = ReadyProof(day: nil)
+let carte40 = "expire le 25/11/2026 · moins de 1 mo · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json expire le 25/11/2026 · moins de 1 mo télécharger annuler"
+r40b.read(pending: [], ready: [carte40], now: later, calendar: cal)
+check(rv(r40b, [], [carte40], at: later.addingTimeInterval(5)) == .toCheck, "40. carte lue avec sa date, jour inconnu : à vérifier, jamais « prêt »")
+check(GetBanner.of(waiting: true, proven: false, verdict: .toCheck, fileVisible: true) == .available, "40. … et le bandeau dit « disponible »")
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

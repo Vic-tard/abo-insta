@@ -1,0 +1,49 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<!-- Reconstituée d'après la vidéo iPhone du 21 nov. 2026 à 15 h 28 (build 22, 38 à 44 s) : seuls les TEXTES et les BOUTONS visibles
+     sont repris. Fenêtre par-dessus la page (croix en haut), « Exporter vos informations », « Créer une exportation », onglets
+     « Activité en cours / Activité passée », section « Téléchargements disponibles » avec UNE carte prête, et aucune section « En attente ».
+     ?fenetre=0 : la même fenêtre sans role=dialog (la vraie balise est inconnue).
+     ?lignes=1 : « Exporter vers Appareil… » et « Expire le… » dans UN SEUL bloc, coupé par un retour à la ligne (structure possible,
+     inconnue elle aussi) : la ligne datée ne commence plus par « Expire le ». -->
+<style>
+  body { margin: 0; font: 16px system-ui; }
+  .fond { padding: 16px; }
+  .fenetre { position: fixed; inset: 40px 0 0 0; background: #fff; overflow: auto; padding: 16px; border-radius: 24px 24px 0 0; box-shadow: 0 -4px 20px #0003; }
+  .carte { border: 1px solid #ddd; border-radius: 16px; padding: 12px; margin: 8px 0; }
+  button { padding: 10px 24px; border-radius: 20px; border: 0; background: #eee; }
+</style>
+<body>
+<div class="fond">
+  <div><span>Espace comptes</span></div>
+  <div><span>Connexions d'applications</span></div>
+</div>
+<div class="fenetre" role="dialog" aria-modal="true">
+  <div><div role="button" aria-label="Fermer"><svg width="20" height="20"></svg></div></div>
+  <div><span>Exporter vos informations</span></div>
+  <div><span>Vous pouvez exporter une copie de vos informations vers un service externe ou sur votre appareil. Les données disponibles incluent les contenus et les informations que vous avez partagés, votre activité et les informations que nous recueillons.</span></div>
+  <div><button>Créer une exportation</button></div>
+  <div><div role="tab" aria-selected="true"><span>Activité en cours</span></div><div role="tab" aria-selected="false"><span>Activité passée</span></div></div>
+  <div>
+    <div><span>Téléchargements disponibles</span></div>
+    <div><span>Vous disposerez de 4 jours pour télécharger les fichiers sur votre appareil. Nous vous recommandons de télécharger vos fichiers sur ordinateur pour une expérience optimale.</span></div>
+    <div class="carte">
+      <div><div><img alt="" width="40" height="40"></div><div>
+        <div><span>vifrnt (Instagram)</span></div><div><span>Followers et suivi(e)s</span></div>
+        <div class="lignes"><span>Exporter vers Appareil · Une fois · JSON</span></div><div><span>Expire le 25/11/2026 · Moins de 1 Mo</span></div>
+      </div></div>
+      <div><div><button>Télécharger</button></div><div><button>Annuler</button></div></div>
+    </div>
+  </div>
+  <div><span>Votre exportation ne comprendra pas d'informations partagées par d'autres personnes, comme les photos de quelqu'un d'autre sur lesquelles votre nom est mentionné.</span> <a href="#">En savoir plus sur l'exportation de vos informations</a></div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.get("lignes") === "1") {
+    const l = document.querySelector(".lignes"); l.nextElementSibling.remove();
+    l.innerHTML = "<span>Exporter vers Appareil · Une fois · JSON<br>Expire le 25/11/2026 · Moins de 1 Mo</span>";
+  }
+  if (q.get("fenetre") === "0") {
+    const f = document.querySelector(".fenetre"); f.removeAttribute("role"); f.removeAttribute("aria-modal");
+  }
+</script>
+</body>

@@ -67,3 +67,16 @@ Pages plus anciennes : elles n'envoient jamais `exportEnded`. Le build 22 garde 
 | S7 | Import réel du .zip demandé (par Fichiers ou Partager) | Rappels retirés, plus de suivi |
 | S7b | Pendant une demande, toucher « Télécharger » sur un ancien export dans Zieuton, puis l'importer | Carte « Ton export se prépare » toujours là, rappels gardés ; idem après fermeture et réouverture |
 | S8 | « Refaire la demande » | Rappels de l'ancienne demande retirés, jamais repris |
+
+## Vidéo build 22 (21 nov., 15 h 28) : « Un fichier est disponible » absent
+
+Constat : fenêtre « Téléchargements disponibles » avec la carte « Expire le 25/11/2026 » et un vrai « Télécharger », mais le bandeau disait « Vérifie la date de ton export ».
+
+Diagnostic :
+1. Le bandeau ne se redessinait que lorsque le verdict de la preuve changeait. Le premier état reçu (avant la liste) donne « inconnu ».
+2. Si la date de la carte n'est pas dans son propre bloc chez Instagram, le lecteur voit bien « Télécharger » mais sans date (« télécharger annuler ») : le verdict reste « inconnu ». Le « fichier vu » changeait, pas le verdict : aucun redessin.
+   Avec une carte dont la date est lue, le verdict serait passé à « à vérifier » et le bandeau aurait changé : la vidéo désigne donc ce cas-là (ou une liste lue dans un sous-cadre, que ce correctif ne couvre pas).
+
+Correctif (coque, build 23) : le bandeau se redessine aussi quand le « fichier vu » apparaît ou disparaît (`GetBanner.fileChanged`). La preuve « prêt » (ReadyProof) n'est pas touchée : un « Télécharger » sans date ne compte jamais.
+
+Test iPhone (build 23) : rouvrir Instagram depuis « Vérifier mon export » quand la carte prête est là : le bandeau doit dire « Un fichier est disponible chez Instagram 👀 », jamais « C'est prêt ».
