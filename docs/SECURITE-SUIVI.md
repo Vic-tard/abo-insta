@@ -80,3 +80,19 @@ Diagnostic :
 Correctif (coque, build 23) : le bandeau se redessine aussi quand le « fichier vu » apparaît ou disparaît (`GetBanner.fileChanged`). La preuve « prêt » (ReadyProof) n'est pas touchée : un « Télécharger » sans date ne compte jamais.
 
 Test iPhone (build 23) : rouvrir Instagram depuis « Vérifier mon export » quand la carte prête est là : le bandeau doit dire « Un fichier est disponible chez Instagram 👀 », jamais « C'est prêt ».
+
+## Build 23 (21 nov., 16 h 20) : bon export importé, mais « Ton export se prépare » reste
+
+Constat : le .zip de la demande récente (1 140 abonnés) est importé, mais l'accueil dit encore « Ton export se prépare ».
+
+Diagnostic : l'heure inscrite dans un .zip (format « DOS ») n'a pas de fuseau horaire ; Zieuton la lisait comme une heure du téléphone. Si Instagram écrit l'heure universelle, un export fait 10 min après la demande paraît daté 50 min avant (Paris, UTC+1) : classé « ancien », demande gardée (`requestKept`). Dans un fuseau en retard (New York), un vieux fichier pouvait au contraire passer pour le bon. Et ce n'est de toute façon qu'une heure de fichier (modification), pas une preuve d'identité.
+
+Règle (page seule, coque 11 inchangée) :
+- fin automatique seulement si le .zip porte une heure UTC exacte (champ 0x5455) **après** la demande **et** si l'app a vu le fichier de cette demande devenir prêt (`readyAt`) ;
+- sinon la demande est gardée et Zieuton demande, après le premier écran de réussite ou le bilan : « 1 140 abonnés enregistrés ! 🎉 Est-ce bien le fichier de ta demande Instagram en cours ? »
+  - **Oui, c'est le bon export** : demande terminée (`exportEnded` raison `cleared`, compte et heure de la demande), état local nettoyé ; le message dit que les rappels sont retirés seulement si la coque le confirme (`zyeutoWatchInfo`) ;
+  - **Non, c'est un ancien fichier** / **Je ne sais pas** : demande gardée ; l'accueil dit « Demande toujours suivie · Ta demande du JJ/MM/AAAA reste suivie » avec « Vérifier mon export ».
+- Un import fait avant cette page (demande gardée, aucune question) reçoit la question au prochain lancement, sans réimporter. Elle revient tant qu'il n'y a pas de réponse.
+- Jamais en démo, jamais pour un import d'un autre compte, jamais après « Annuler » l'import. L'historique importé n'est jamais touché.
+
+Test iPhone (build 23, page en canal test) : rouvrir Zieuton → après l'accueil, la question apparaît pour l'import des 1 140 abonnés. « Oui » → « Mettre à jour » à l'accueil, plus de rappel.

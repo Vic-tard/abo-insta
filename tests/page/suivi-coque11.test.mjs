@@ -90,14 +90,15 @@ async function reopen(page) {
   await page.evaluate(() => { prefs = JSON.parse(localStorage.getItem("abo-prefs")); watchInfo = null; resumeSentFor = null; window.__sent.length = 0; renderAll(); });
 }
 // Point 2 : seul un export d'Instagram daté après la demande la termine. On importe comme l'app (commit), avec un faux export.
-async function importExport(page, { minsAgo, dated = true, manual = false }) {
-  await page.evaluate(async ([m, d, man]) => {
+// exact : heure UTC du .zip (champ 0x5455) ; sans elle, l'heure du .zip n'a pas de fuseau (build 23).
+async function importExport(page, { minsAgo, dated = true, manual = false, exact = false }) {
+  await page.evaluate(async ([m, d, man, ex]) => {
     const followers = {};
     for (let i = 0; i < 60; i++) followers["ami" + i] = 1700000000 + i;
-    pending = { followers, following: null, date: new Date(Date.now() - m * 60000), dated: d, source: d ? "export.zip" : "followers_1.json" };
+    pending = { followers, following: null, date: new Date(Date.now() - m * 60000), dated: d, exact: d && ex, source: d ? "export.zip" : "followers_1.json" };
     const takenAt = man ? new Date(Date.now() - 60000).toISOString() : pending.date.toISOString();
     await commit(takenAt);
-  }, [minsAgo, dated, manual]);
+  }, [minsAgo, dated, manual, exact]);
 }
 
 test("nouvelle demande en cours + import d'un ancien export : suivi conservé, demande toujours visible, même après réouverture", async () => {
@@ -105,15 +106,15 @@ test("nouvelle demande en cours + import d'un ancien export : suivi conservé, d
   await importExport(page, { minsAgo: 3 * 1440 });
   assert.deepEqual(await of(page, "exportEnded"), [], "la coque garde son suivi");
   assert.equal(await page.evaluate(() => reqPending()), true, "la page garde la demande en attente");
-  // Avec un historique, l'attente se voit sur la carte de l'accueil.
-  assert.equal(await page.textContent("#weekly-title"), "Ton export se prépare");
+  // Avec un historique, la demande gardée se voit discrètement sur la carte de l'accueil (build 23 : plus « se prépare »).
+  assert.equal(await page.textContent("#weekly-title"), "Demande toujours suivie");
   // Fermeture et réouverture de l'app : réglages relus depuis le stockage (l'historique reste celui du téléphone).
   // Rien ne change, et la page ne demande pas de reprise (la coque suit toujours).
   await reopen(page);
   const again = page;
   const saved = await page.evaluate(() => prefs);
   assert.equal(await again.evaluate(() => reqPending()), true);
-  assert.equal(await again.textContent("#weekly-title"), "Ton export se prépare");
+  assert.equal(await again.textContent("#weekly-title"), "Demande toujours suivie");
   await info(again, { waiting: true, ready: false, reminders: 1, acct: "a1", requestedAt: saved.requestedAt });
   assert.deepEqual(await of(again, "exportEnded"), []);
   assert.deepEqual(await of(again, "exportResume"), []);
@@ -131,9 +132,9 @@ test("coque 10 (build 21) : un ancien export ne fait pas non plus disparaître l
   await page.close();
 });
 
-test("téléchargement puis import du bon export : fin normale (page et coque), même après réouverture", async () => {
-  const page = await open({ requestedAt: ago(30) });
-  await importExport(page, { minsAgo: 10 });
+test("téléchargement puis import du bon export (heure exacte + vu prêt) : fin normale (page et coque), même après réouverture", async () => {
+  const page = await open({ requestedAt: ago(30), readyAt: ago(12) });
+  await importExport(page, { minsAgo: 10, exact: true });
   assert.equal((await of(page, "exportEnded")).length, 1);
   assert.equal(await page.evaluate(() => reqPending()), false);
   assert.equal(await page.textContent("#weekly-title"), "Mettre à jour");
@@ -143,10 +144,10 @@ test("téléchargement puis import du bon export : fin normale (page et coque), 
   await page.close();
 });
 
-test("import du bon export (daté après la demande, bon compte) : suivi terminé", async () => {
+test("import du bon export (heure exacte après la demande, vu prêt, bon compte) : suivi terminé", async () => {
   const req = ago(30);
-  const page = await open({ accts, acctCur: "a1", requestAcct: "a1", requestedAt: req });
-  await importExport(page, { minsAgo: 10 });
+  const page = await open({ accts, acctCur: "a1", requestAcct: "a1", requestedAt: req, readyAt: ago(12) });
+  await importExport(page, { minsAgo: 10, exact: true });
   const e = await of(page, "exportEnded");
   assert.equal(e.length, 1);
   assert.equal(e[0].reason, "imported");
@@ -172,15 +173,15 @@ for (const [name, opt] of [
 }
 
 test("multicompte : bon export importé dans l'autre compte → la demande du compte 1 reste suivie", async () => {
-  const page = await open({ accts, acctCur: "a2", requestAcct: "a1", requestedAt: ago(30) });
-  await importExport(page, { minsAgo: 10 });
+  const page = await open({ accts, acctCur: "a2", requestAcct: "a1", requestedAt: ago(30), readyAt: ago(12) });
+  await importExport(page, { minsAgo: 10, exact: true });
   assert.deepEqual(await of(page, "exportEnded"), []);
   await page.close();
 });
 
 test("coque 10 (page plus ancienne côté coque) : aucun exportEnded, même pour le bon export", async () => {
-  const page = await open({ requestedAt: ago(30) }, 10);
-  await importExport(page, { minsAgo: 10 });
+  const page = await open({ requestedAt: ago(30), readyAt: ago(12) }, 10);
+  await importExport(page, { minsAgo: 10, exact: true });
   assert.deepEqual(await of(page, "exportEnded"), []);
   await page.close();
 });

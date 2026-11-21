@@ -13,10 +13,10 @@ async function importFiles(core, files) {
   const ex = await core.readExport(files);
   return core.recordSnapshot(ex.followers, ex.following, ex.date.toISOString(), ex.source);
 }
-const zipOf = (followers, { following, date, store } = {}) => makeZip([
+const zipOf = (followers, { following, date, store, utc } = {}) => makeZip([
   { name: DIR + "followers_1.json", text: followersJson(followers) },
   ...(following ? [{ name: DIR + "following.json", text: followingJson(following) }] : []),
-], { date, store });
+], { date, store, utc });
 
 // ---------- Petit compte ----------
 test("petit compte : lit followers_1.json (ancien et nouveau format) et following.json", async () => {
@@ -260,4 +260,21 @@ test("date de l'export : .zip = date d'Instagram (dated), .json seul = date ince
   // .zip et .json mélangés, le .json plus récent : sa date est retenue, donc incertaine.
   const m = await core.readExport([await zipOf(names("a", 0, 20), { date: JAN }), jsonFile(followersJson(names("b", 0, 5)), "followers_2.json", MAR)]);
   assert.equal(m.dated, false);
+});
+
+// Build 23 (vidéo du 21 nov., 16 h 20) : l'heure « DOS » d'un .zip n'a pas de fuseau horaire. Seule l'heure UTC (champ 0x5455)
+// est exacte ; sans elle, la date reste « datée par le .zip » mais jamais exacte (Zieuton pose alors la question).
+test("heure du .zip : exacte seulement avec le champ UTC, et c'est elle qui date l'export", async () => {
+  const core = loadCore();
+  const dos = await core.readExport([await zipOf(names("a", 0, 20), { date: FEB })]);
+  assert.equal(dos.dated, true);
+  assert.equal(dos.exact, false, "heure DOS seule : fuseau inconnu");
+  const real = new Date("2026-11-21T15:05:00Z");
+  const utc = await core.readExport([await zipOf(names("a", 0, 20), { date: new Date("2026-11-21T15:05:00"), utc: real })]);
+  assert.equal(utc.exact, true);
+  assert.equal(utc.date.getTime(), real.getTime(), "l'heure UTC remplace l'heure DOS");
+  const json = await core.readExport([jsonFile(followersJson(names("a", 0, 20)), "followers_1.json", FEB)]);
+  assert.equal(json.exact, false);
+  const mixed = await core.readExport([await zipOf(names("a", 0, 20), { date: JAN, utc: JAN }), jsonFile(followersJson(names("b", 0, 5)), "followers_2.json", MAR)]);
+  assert.equal(mixed.exact, false);
 });

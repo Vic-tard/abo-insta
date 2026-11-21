@@ -3154,10 +3154,12 @@ async function listZip(file) {
     let comp = cd.getUint32(p + 20, true), size = cd.getUint32(p + 24, true), local = cd.getUint32(p + 42, true);
     const nameLen = cd.getUint16(p + 28, true), extraLen = cd.getUint16(p + 30, true), commentLen = cd.getUint16(p + 32, true);
     const name = dec.decode(new Uint8Array(cd.buffer, cd.byteOffset + p + 46, nameLen));
-    let q = p + 46 + nameLen;
+    let q = p + 46 + nameLen, utc = null;
     const extraEnd = q + extraLen;
     while (q + 4 <= extraEnd) {
       const id = cd.getUint16(q, true), len = cd.getUint16(q + 2, true);
+      // Heure exacte (UTC, secondes depuis 1970), si le .zip la donne : l'heure « DOS » plus bas n'a pas de fuseau horaire.
+      if (id === 0x5455 && len >= 5 && q + 9 <= extraEnd && (cd.getUint8(q + 4) & 1)) utc = new Date(cd.getInt32(q + 5, true) * 1000);
       if (id === 0x0001) {
         let r = q + 4;
         if (size === 0xffffffff) { size = Number(cd.getBigUint64(r, true)); r += 8; }
@@ -3167,7 +3169,7 @@ async function listZip(file) {
       q += 4 + len;
     }
     const date = new Date(1980 + (day >> 9), ((day >> 5) & 15) - 1, day & 31, time >> 11, (time >> 5) & 63, (time & 31) * 2);
-    out.push({ name, method, comp, size, local, date });
+    out.push({ name, method, comp, size, local, date, utc });
     p = extraEnd + commentLen;
   }
   zipNames = out.map((e) => e.name);
@@ -3191,6 +3193,9 @@ async function readExport(files) {
   // Sécurité du suivi (21 nov.) : vrai seulement si la date vient des fichiers du .zip d'Instagram (heure de création de l'export).
   // La date d'un .json seul (date du fichier sur le téléphone) ou une date absente ne prouvent pas quand l'export a été fait.
   let dated = false;
+  // Build 23 (21 nov., 16 h 20) : l'heure « DOS » d'un .zip n'a pas de fuseau horaire (lue ici comme heure du téléphone, elle
+  // peut être décalée de plusieurs heures). exact : toutes les listes d'abonnés portent une heure UTC exacte.
+  let exact = null;
   for (const file of files) {
     const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const isZip = head[0] === 0x50 && head[1] === 0x4b;
@@ -3203,8 +3208,10 @@ async function readExport(files) {
       }
       for (const e of entries) {
         Object.assign(followers, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
-        if (!date || e.date > date) date = e.date;
+        const d = e.utc || e.date;
+        if (!date || d > date) date = d;
         dated = true;
+        exact = exact !== false && !!e.utc;
       }
       for (const e of all.filter((e) => FOLLOWING_RE.test(e.name))) {
         following = Object.assign(following || {}, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
@@ -3214,14 +3221,14 @@ async function readExport(files) {
       if (listKind(data) === "following") { following = Object.assign(following || {}, parseAccounts(data)); continue; }
       Object.assign(followers, parseAccounts(data));
       const d = new Date(file.lastModified);
-      if (file.lastModified && (!date || d > date)) { date = d; dated = false; }
+      if (file.lastModified && (!date || d > date)) { date = d; dated = false; exact = false; }
     }
   }
   if (!Object.keys(followers).length) {
     if (following) throw new Error("Ce fichier liste les comptes que TU suis (following.json). Choisis-le avec followers_1.json, ou importe le .zip complet.");
     throw new Error("L'export ne contient aucun abonné.");
   }
-  return { followers, following, date: date || new Date(), dated: dated && !!date, source: files.map((f) => f.name).join(" + ") };
+  return { followers, following, date: date || new Date(), dated: dated && !!date, exact: dated && !!date && exact === true, source: files.map((f) => f.name).join(" + ") };
 }
 
 async function hashNames(names) {
@@ -3544,6 +3551,7 @@ function render() {
   renderMode();
   renderWeekly();
   renderAcct();
+  setTimeout(maybeAskImport, 0);
   const snaps = state.snapshots;
   const last = snaps[snaps.length - 1];
   const compared = snaps.length >= 2;
@@ -4081,10 +4089,19 @@ async function commit(takenAt) {
     // Sécurité du suivi (relecture ChatGPT du 21 nov.) : un import ne termine la demande en attente que si c'est son export
     // (.zip daté après la demande, date pas changée à la main). Un ancien export ne la termine jamais (écran d'attente gardé,
     // suivi de la coque gardé). Date incertaine : gardée aussi avec la coque 11, pour rester d'accord avec son suivi.
+    // Build 23 (vidéo du 21 nov., 16 h 20) : l'heure d'un .zip peut être décalée de plusieurs heures (pas de fuseau) et n'est
+    // qu'une heure de fichier. Fin automatique seulement si l'heure est exacte (UTC), après la demande, ET si l'app a vu le fichier
+    // de cette demande devenir prêt. Sinon, la demande est gardée et Zieuton pose la question (askImport), sans rien effacer.
     if (waitingReq) {
-      const v = importVerdict(takenAt, !!(pending && pending.dated && takenAt === pending.date.toISOString()), waitingReq);
-      if (v === "proves") { delete prefs.requestKept; endWatchImported(takenAt); }
-      else if (v === "old" || watchApp()) prefs.requestKept = waitingReq;
+      const same = !!(pending && pending.dated && takenAt === pending.date.toISOString());
+      const v = importVerdict(takenAt, same, waitingReq, same && !!pending.exact, exportSeenReady());
+      delete prefs.importAnswer;
+      if (v === "proves") { delete prefs.requestKept; delete prefs.importAsk; endWatchImported(takenAt); }
+      else {
+        prefs.requestKept = waitingReq;
+        prefs.importAsk = { req: waitingReq, acct: prefs.requestAcct || prefs.acctCur || "", n: r.count, old: v === "old" };
+        askHold = Date.now() + 2600;
+      }
     }
     savePrefs();
     closeSheet();
@@ -4167,6 +4184,8 @@ $("undo").addEventListener("click", async () => {
   // Les points et trophées gagnés avec cet import repartent aussi : pas de niveau gonflé en important puis en annulant.
   if (undoState.gains) { for (const k of GAIN_KEYS) { if (undoState.gains[k] === undefined) delete prefs[k]; else prefs[k] = undoState.gains[k]; } savePrefs(); clearTimeout(unlockTimer); unlockTimer = null; unlockQueue = []; $("unlock").hidden = true; $("xp-pop").hidden = true; }
   undoState = null;
+  // Import annulé : plus de question à son sujet (la demande, elle, reste suivie).
+  delete prefs.importAsk; savePrefs(); $("ia")?.remove();
   $("bilan").hidden = true;
   $("toast").hidden = true;
   shown = PAGE;
@@ -4556,12 +4575,92 @@ function endWatchCleared(req, acct) {
   if (!watchApp() || DEMO || !req) return;
   postWatch({ type: "exportEnded", reason: "cleared", acct: acct || "", requestedAt: req });
 }
-// Ce que l'import d'un fichier dit de la demande en attente : « proves » (export du .zip daté après la demande), « old » (export
-// du .zip daté avant : un ancien fichier), « unsure » (.json seul, date changée à la main, date dans le futur).
-function importVerdict(takenAt, dated, req) {
+// Ce que l'import d'un fichier dit de la demande en attente :
+// - « proves » : heure exacte (UTC) du .zip après la demande, et fichier de cette demande vu prêt par l'app (deux preuves) ;
+// - « old » : heure exacte du .zip avant la demande (un ancien fichier) ;
+// - « unsure » : tout le reste (.json seul, heure du .zip sans fuseau, date changée à la main, dans le futur, pas vu prêt).
+// Build 23 : l'heure « DOS » seule d'un .zip ne prouve jamais rien, ni dans un sens ni dans l'autre.
+function importVerdict(takenAt, dated, req, exact, seenReady) {
   const t = Date.parse(takenAt), r = Date.parse(req);
-  if (!dated || !(t <= Date.now() + 5 * 60000)) return "unsure";
-  return t > r ? "proves" : "old";
+  if (!dated || !exact || !(t <= Date.now() + 5 * 60000)) return "unsure";
+  if (t <= r) return "old";
+  return seenReady ? "proves" : "unsure";
+}
+// ---------- Après un import : « Est-ce bien le fichier de ta demande ? » (build 23, 21 nov.) ----------
+// prefs.importAsk = { req, acct, n, old } : question en attente pour l'import qui a gardé la demande (requestKept).
+// prefs.importAnswer = { req, a: "yes" | "no" | "unknown" } : réponse donnée pour cette demande (la question n'est plus posée).
+let askHold = 0, askEnding = null;
+function keptAfterImport() {
+  return !!(prefs.requestedAt && prefs.requestKept === prefs.requestedAt && reqPending());
+}
+// Import déjà fait avec une page plus ancienne (cas de Victor) : la demande a été gardée, sans question. On la pose une fois.
+function ensureImportAsk() {
+  if (prefs.importAsk || !keptAfterImport()) return;
+  if (prefs.importAnswer && prefs.importAnswer.req === prefs.requestedAt) return;
+  const last = state.snapshots[state.snapshots.length - 1];
+  if (!last || !prefs.lastImportAt || !(Date.parse(prefs.lastImportAt) > Date.parse(prefs.requestedAt))) return;
+  prefs.importAsk = { req: prefs.requestedAt, acct: prefs.requestAcct || prefs.acctCur || "", n: last.count, old: false };
+  savePrefs();
+}
+function askBusy() {
+  return loading || !$("gf").hidden || !$("bilan").hidden || !$("sheet").hidden
+    || [...document.querySelectorAll(".asked")].some((o) => !o.hidden);
+}
+function maybeAskImport() {
+  if (DEMO || loading || !state.snapshots.length) return;
+  ensureImportAsk();
+  const q = prefs.importAsk;
+  if (!q || $("ia")) return;
+  // La demande a changé (refaite, effacée) ou ce n'est plus son compte : la question ne la concerne plus.
+  if (q.req !== prefs.requestedAt || !keptAfterImport()) { delete prefs.importAsk; savePrefs(); return; }
+  if (reqOtherAcct() || (q.acct && q.acct !== (prefs.requestAcct || prefs.acctCur || ""))) return;
+  // Le premier écran de réussite et le bilan passent d'abord : la question vient juste après.
+  if (Date.now() < askHold) { setTimeout(maybeAskImport, askHold - Date.now() + 50); return; }
+  if (askBusy()) return;
+  const o = document.createElement("div");
+  o.className = "asked"; o.id = "ia"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "ia-h");
+  o.innerHTML = `<div class="asked-card"><h2 id="ia-h">${nf(q.n)} abonnés enregistrés&nbsp;! 🎉</h2>
+    <p>Est-ce bien le fichier de ta demande Instagram en cours&nbsp;?${q.old ? "<br><small>Sa date dit qu'il a été fait avant ta demande.</small>" : ""}</p>
+    <button class="asked-go main" id="ia-yes" type="button">Oui, c'est le bon export</button>
+    <button class="asked-go stats" id="ia-no" type="button">Non, c'est un ancien fichier</button>
+    <button class="asked-stay" id="ia-idk" type="button">Je ne sais pas</button></div>`;
+  document.body.appendChild(o);
+  $("ia-yes").onclick = () => answerImport("yes");
+  $("ia-no").onclick = () => answerImport("no");
+  $("ia-idk").onclick = () => answerImport("unknown");
+  $("ia-yes").focus();
+}
+function answerImport(a) {
+  const q = prefs.importAsk;
+  $("ia")?.remove();
+  if (!q) return;
+  haptic("light");
+  delete prefs.importAsk;
+  prefs.importAnswer = { req: q.req, a };
+  if (a !== "yes") {
+    savePrefs(); render();
+    toast(a === "no" ? "D'accord : je garde ta demande en suivi. Ton import est bien enregistré." : "Pas de souci : je garde ta demande en suivi. Ton import est bien enregistré.", false);
+    return;
+  }
+  // Oui : la demande est terminée (confirmation explicite). La coque arrête son suivi et retire ses rappels (raison « cleared »,
+  // la même que pour une action confirmée). L'historique importé n'est jamais touché.
+  const req = q.req, acct = prefs.requestAcct || prefs.acctCur;
+  delete prefs.requestKept; delete prefs.readyAt; delete prefs.watch; delete prefs.requestUnsure; delete prefs.requestUnsureToday;
+  savePrefs();
+  render();
+  if (!watchApp()) { toast("C'est noté : ta demande est terminée.", false); return; }
+  askEnding = { req, at: Date.now() };
+  endWatchCleared(req, acct);
+  // On n'annonce l'arrêt du suivi de l'app que si la coque le confirme (zyeutoWatchInfo).
+  setTimeout(() => { if (askEnding && askEnding.req === req) { askEnding = null; toast("C'est noté : ta demande est terminée dans Zieuton.", false); } }, 4000);
+}
+function importEndSeen(info) {
+  const e = askEnding;
+  if (!e) return;
+  askEnding = null;
+  const same = info && info.waiting && (!info.requestedAt || Math.abs(Date.parse(info.requestedAt) - Date.parse(e.req)) <= 120000);
+  toast(same ? "C'est noté dans Zieuton, mais l'app suit encore cette demande : un rappel peut encore arriver."
+    : info && info.reminders > 0 && !info.waiting ? "C'est noté : ta demande est terminée." : "C'est noté : ta demande est terminée et ses rappels sont retirés.", false);
 }
 function endWatchImported(takenAt) {
   if (!watchApp() || DEMO || !prefs.requestedAt || reqOtherAcct() || prefs.requestUnsure) return;
@@ -4586,6 +4685,7 @@ function reminderSet() {
 }
 window.zyeutoWatchInfo = (info) => {
   watchInfo = info && typeof info === "object" ? info : null;
+  importEndSeen(watchInfo);
   maybeResume();
   if (gfOn()) renderGuided();
 };
@@ -4606,7 +4706,10 @@ function renderWeekly() {
   const pend = reqPending();
   const mins = pend && prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0;
   // Dans l'app iPhone (version 3), Zieuton regarde lui-même la page d'Instagram et dit quand le fichier est là.
-  const ready = pend && exportSeenReady();
+  // Build 23 : demande gardée après un import (pas prouvé, ou « Non » / « Je ne sais pas ») : jamais « se prépare » ni « prêt »
+  // à côté de l'historique tout neuf ; une ligne discrète, et « Vérifier mon export » reste là.
+  const kept = pend && keptAfterImport();
+  const ready = pend && !kept && exportSeenReady();
   // L'app arrête de guetter (et retire ses rappels) dès qu'il n'y a plus d'export en attente.
   // FOU-126 : jamais pour un autre compte que celui de la demande (sinon l'app annulerait ses rappels à tort).
   // Vidéo du 21 nov. 13 h 50 : la démo remplace prefs (pas de demande, compte « a1 ») ; envoyer « plus en attente » faisait
@@ -4621,8 +4724,9 @@ function renderWeekly() {
     li.className = i < at ? "done" : i === at ? "on" : "";
     li.querySelector("i").textContent = i < at ? "✓" : String(i + 1);
   });
-  $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : prefs.requestUnsure ? "Demande à vérifier" : "Ton export se prépare";
-  if (pend) { due.textContent = prefs.requestUnsure ? "Demande à vérifier chez Instagram" : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
+  $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : kept ? "Demande toujours suivie" : prefs.requestUnsure ? "Demande à vérifier" : "Ton export se prépare";
+  if (kept) { due.textContent = `Ta demande du ${fmtDate(prefs.requestedAt)} reste suivie`; due.className = "due"; }
+  else if (pend) { due.textContent = prefs.requestUnsure ? "Demande à vérifier chez Instagram" : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
   // App iPhone : le gros bouton fait tout (Instagram dans Zieuton, téléchargement, import). Le reste est rangé dans « Un souci ? ».
   const simple = metaInApp();
   $("wk-redo").hidden = !pend || simple;
@@ -5006,9 +5110,10 @@ function openFirst(n) {
   $("first-notback").hidden = !state.following;
   $("first").hidden = false;
 }
-$("first-ok").addEventListener("click", () => { $("first").hidden = true; });
+$("first-ok").addEventListener("click", () => { $("first").hidden = true; maybeAskImport(); });
 $("first-notback").addEventListener("click", () => {
   $("first").hidden = true;
+  setTimeout(maybeAskImport, 400);
   openList("notback");
 });
 // FOU-124 : seul chemin qui efface une demande en cours. Tous les « Refaire / Recommencer la demande » passent ici :
@@ -5585,7 +5690,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-21-1510";
+const BUILD = "2026-11-21-1638";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6084,6 +6189,7 @@ function closeBilan() {
   animateList();
   renderGames();
   checkTrophies();
+  setTimeout(maybeAskImport, 600);
 }
 function startGame() {
   const r = bilan.r, gone = r.unfollows[Math.random() * r.unfollows.length | 0];

@@ -77,10 +77,12 @@ async function listZip(file) {
     let comp = cd.getUint32(p + 20, true), size = cd.getUint32(p + 24, true), local = cd.getUint32(p + 42, true);
     const nameLen = cd.getUint16(p + 28, true), extraLen = cd.getUint16(p + 30, true), commentLen = cd.getUint16(p + 32, true);
     const name = dec.decode(new Uint8Array(cd.buffer, cd.byteOffset + p + 46, nameLen));
-    let q = p + 46 + nameLen;
+    let q = p + 46 + nameLen, utc = null;
     const extraEnd = q + extraLen;
     while (q + 4 <= extraEnd) {
       const id = cd.getUint16(q, true), len = cd.getUint16(q + 2, true);
+      // Heure exacte (UTC, secondes depuis 1970), si le .zip la donne : l'heure « DOS » plus bas n'a pas de fuseau horaire.
+      if (id === 0x5455 && len >= 5 && q + 9 <= extraEnd && (cd.getUint8(q + 4) & 1)) utc = new Date(cd.getInt32(q + 5, true) * 1000);
       if (id === 0x0001) {
         let r = q + 4;
         if (size === 0xffffffff) { size = Number(cd.getBigUint64(r, true)); r += 8; }
@@ -90,7 +92,7 @@ async function listZip(file) {
       q += 4 + len;
     }
     const date = new Date(1980 + (day >> 9), ((day >> 5) & 15) - 1, day & 31, time >> 11, (time >> 5) & 63, (time & 31) * 2);
-    out.push({ name, method, comp, size, local, date });
+    out.push({ name, method, comp, size, local, date, utc });
     p = extraEnd + commentLen;
   }
   zipNames = out.map((e) => e.name);
@@ -114,6 +116,9 @@ async function readExport(files) {
   // Sécurité du suivi (21 nov.) : vrai seulement si la date vient des fichiers du .zip d'Instagram (heure de création de l'export).
   // La date d'un .json seul (date du fichier sur le téléphone) ou une date absente ne prouvent pas quand l'export a été fait.
   let dated = false;
+  // Build 23 (21 nov., 16 h 20) : l'heure « DOS » d'un .zip n'a pas de fuseau horaire (lue ici comme heure du téléphone, elle
+  // peut être décalée de plusieurs heures). exact : toutes les listes d'abonnés portent une heure UTC exacte.
+  let exact = null;
   for (const file of files) {
     const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const isZip = head[0] === 0x50 && head[1] === 0x4b;
@@ -126,8 +131,10 @@ async function readExport(files) {
       }
       for (const e of entries) {
         Object.assign(followers, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
-        if (!date || e.date > date) date = e.date;
+        const d = e.utc || e.date;
+        if (!date || d > date) date = d;
         dated = true;
+        exact = exact !== false && !!e.utc;
       }
       for (const e of all.filter((e) => FOLLOWING_RE.test(e.name))) {
         following = Object.assign(following || {}, parseAccounts(parseJsonText(await readZipEntry(file, e), e.name)));
@@ -137,14 +144,14 @@ async function readExport(files) {
       if (listKind(data) === "following") { following = Object.assign(following || {}, parseAccounts(data)); continue; }
       Object.assign(followers, parseAccounts(data));
       const d = new Date(file.lastModified);
-      if (file.lastModified && (!date || d > date)) { date = d; dated = false; }
+      if (file.lastModified && (!date || d > date)) { date = d; dated = false; exact = false; }
     }
   }
   if (!Object.keys(followers).length) {
     if (following) throw new Error("Ce fichier liste les comptes que TU suis (following.json). Choisis-le avec followers_1.json, ou importe le .zip complet.");
     throw new Error("L'export ne contient aucun abonné.");
   }
-  return { followers, following, date: date || new Date(), dated: dated && !!date, source: files.map((f) => f.name).join(" + ") };
+  return { followers, following, date: date || new Date(), dated: dated && !!date, exact: dated && !!date && exact === true, source: files.map((f) => f.name).join(" + ") };
 }
 
 async function hashNames(names) {

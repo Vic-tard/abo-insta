@@ -79,7 +79,8 @@ const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n+
 function crc32(buf) { let c = 0xffffffff; for (const b of buf) c = CRC[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
 
 // entries : [{ name, text }]. date : date des fichiers dans le .zip (c'est la date de l'export pour l'app).
-export function makeZip(entries, { date = new Date("2026-01-10T12:00:00"), store = false, name = "instagram-export.zip" } = {}) {
+// utc : ajoute l'heure exacte (champ 0x5455) que certains .zip portent en plus de l'heure « DOS » sans fuseau.
+export function makeZip(entries, { date = new Date("2026-01-10T12:00:00"), store = false, name = "instagram-export.zip", utc = null } = {}) {
   const dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1);
   const dosDate = ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
   const locals = [], central = [];
@@ -95,7 +96,10 @@ export function makeZip(entries, { date = new Date("2026-01-10T12:00:00"), store
     ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(0x0800, 8); ch.writeUInt16LE(method, 10);
     ch.writeUInt16LE(dosTime, 12); ch.writeUInt16LE(dosDate, 14); ch.writeUInt32LE(crc, 16);
     ch.writeUInt32LE(data.length, 20); ch.writeUInt32LE(raw.length, 24); ch.writeUInt16LE(nameBuf.length, 28); ch.writeUInt32LE(offset, 42);
-    locals.push(lh, nameBuf, data); central.push(ch, nameBuf);
+    const extra = Buffer.alloc(utc ? 9 : 0);
+    if (utc) { extra.writeUInt16LE(0x5455, 0); extra.writeUInt16LE(5, 2); extra.writeUInt8(1, 4); extra.writeInt32LE(Math.floor(utc.getTime() / 1000), 5); }
+    ch.writeUInt16LE(extra.length, 30);
+    locals.push(lh, nameBuf, data); central.push(ch, nameBuf, extra);
     offset += 30 + nameBuf.length + data.length;
   }
   const cd = Buffer.concat(central), end = Buffer.alloc(22);
