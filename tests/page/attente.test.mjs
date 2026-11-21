@@ -28,17 +28,17 @@ const text = (page, id) => page.evaluate((i) => document.getElementById(i)?.text
 
 test("15 min après la demande, sans fichier vu : jamais « prête »", async () => {
   const page = await waiting(15);
-  assert.equal(await text(page, "weekly-title"), "En préparation");
-  assert.equal(await text(page, "wk-go-t"), "Regarder si c'est prêt");
+  assert.equal(await text(page, "weekly-title"), "Ton export se prépare");
+  assert.equal(await text(page, "wk-go-t"), "Vérifier mon export");
   const guided = await page.evaluate(() => document.body.innerText);
   assert.doesNotMatch(guided, /devrait être prête|sans doute arrivée|sûrement prête/i);
   assert.doesNotMatch(guided, /1 à 3 min/);
   await page.close();
 });
 
-test("2 jours après la demande, toujours rien vu : toujours « En préparation »", async () => {
+test("2 jours après la demande, toujours rien vu : toujours « Ton export se prépare »", async () => {
   const page = await waiting(2 * 24 * 60);
-  assert.equal(await text(page, "weekly-title"), "En préparation");
+  assert.equal(await text(page, "weekly-title"), "Ton export se prépare");
   await page.close();
 });
 

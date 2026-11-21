@@ -32,13 +32,14 @@ const gfText = (page) => page.evaluate(() => document.getElementById("gf").inner
 test("attente : pas d'estimation de délai ni de progression fixe", async () => {
   for (const mins of [1, 15, 200]) {
     const page = await waiting(mins);
-    assert.equal(await page.textContent("#gf-title"), "Instagram prépare ta liste");
+    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
     const txt = await gfText(page);
     assert.doesNotMatch(txt, /quelques minutes|en général|1 à 3 min|devrait être prête|sûrement prête/i);
     // Aucune barre de progression ni pourcentage.
     assert.equal(await page.locator("#gf [aria-valuenow], #gf [role=progressbar]").count(), 0);
-    // Trois petits points animés à la place d'une barre (rien qui ressemble à une progression).
-    assert.equal(await page.locator(".gw-dots i").count(), 3);
+    // Trois petits points animés à la place d'une barre (rien qui ressemble à une progression), dans l'étape en cours (FOU-131).
+    assert.equal(await page.locator("#gw-fr li.now .gw-dots i").count(), 3);
+    assert.doesNotMatch(txt, /%|reste \d|encore \d+ min/);
     assert.deepEqual(page.errors, []);
     await page.close();
   }
@@ -64,12 +65,17 @@ test("demande déjà en cours : pas de « je guette »", async () => {
   await page.close();
 });
 
-test("« Découvrir Zieuton en attendant » est le bouton principal, « Refaire la demande » est discret", async () => {
+test("FOU-131 : « Découvrir Zieuton » est le bouton principal, « Vérifier mon export » juste dessous, « Refaire la demande » est discret", async () => {
   const page = await waiting(5);
-  const first = await page.evaluate(() => { const b = document.querySelector("#gf .gf-foot .btn"); return b && { id: b.id, cls: b.className, t: b.textContent.trim() }; });
-  assert.equal(first.id, "gf-wait-demo");
-  assert.match(first.cls, /cheer/);
-  assert.equal(first.t, "Découvrir Zieuton en attendant");
+  const btns = await page.evaluate(() => [...document.querySelectorAll("#gf .gw-acts button")].map((b) => ({ id: b.id, cls: b.className, t: b.textContent.trim() })));
+  assert.equal(btns.length, 2);
+  assert.equal(btns[0].id, "gf-wait-demo");
+  assert.match(btns[0].cls, /cheer/);
+  assert.equal(btns[0].t, "Découvrir Zieuton");
+  assert.equal(btns[1].id, "gf-get");
+  assert.doesNotMatch(btns[1].cls, /cheer/, "un seul bouton principal");
+  assert.equal(btns[1].t, "Vérifier mon export");
+  assert.equal(await page.locator("#gf .btn.cheer").count(), 1);
   assert.match(await page.getAttribute("#gf-back", "class"), /\balt\b/);
   await page.close();
 });
@@ -99,11 +105,14 @@ test("« Refaire la demande » demande une confirmation : rien n'est effacé san
   await page.close();
 });
 
-test("fichier vu prêt : l'écran passe à « Récupérer ma liste » (téléchargement et import inchangés)", async () => {
+test("fichier vu prêt : écran E « Ton export est prêt » (téléchargement et import inchangés)", async () => {
   const page = await waiting(5);
   await page.evaluate(() => window.zyeutoMeta("ready"));
-  assert.equal(await page.textContent("#gf-title"), "Ta liste est prête");
-  assert.match(await page.textContent("#gf-get"), /Récupérer ma liste/);
+  assert.equal(await page.textContent("#gf-title"), "Ton export est prêt\u00a0! 🎉");
+  assert.match(await page.textContent("#gf-get"), /Récupérer mon export/);
+  assert.match(await gfText(page), /Touche toi-même « Télécharger »/);
+  // Frise : étapes 1 à 3 faites, l'import reste à faire.
+  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["ok", "ok", "ok", "now"]);
   await page.close();
 });
 

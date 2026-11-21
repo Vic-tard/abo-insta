@@ -52,12 +52,15 @@ test("retour d'Instagram sans preuve, ligne du jour vue : attente « Demande à 
   await page.evaluate(() => window.zyeutoMeta("unsure", { today: true }));
   const txt = await gfText(page);
   assert.doesNotMatch(txt, /Zieuton en haut|J'ai compris, on y va/, "plus de boucle vers l'écran d'avant Instagram");
+  // FOU-131 : écran D « Vérifions ta demande ».
+  assert.match(txt, /À vérifier/);
+  assert.equal(await page.textContent("#gf-title"), "Vérifions ta demande");
+  assert.match(txt, /Instagram semble avoir enregistré une demande\. Vérifions-la ensemble pour éviter d'en créer une autre\./);
+  assert.match(txt, /J'ai vu une demande d'aujourd'hui dans ta liste Instagram/);
   assert.match(txt, /Demande à vérifier/);
-  assert.match(txt, /Vérifie la demande, sans la refaire/);
-  assert.match(txt, /demande d'aujourd'hui chez Instagram, sans pouvoir confirmer que c'est la tienne/);
-  assert.match(txt, /Ne refais rien/);
-  assert.doesNotMatch(txt, /C'est demandé|Bravo|Instagram prépare ta liste|Rappel activé|Ta liste est prête/, "aucune preuve inventée, aucune promesse");
-  assert.equal(await page.evaluate(() => document.getElementById("asked").hidden), true, "pas de fenêtre « C'est demandé »");
+  assert.doesNotMatch(txt, /C'est demandé|C'est parti|Demande confirmée|Bravo|Bien joué|Instagram prépare ta liste|Rappel activé|Ton export est prêt/, "aucune preuve inventée, aucune promesse");
+  assert.equal(await page.evaluate(() => document.getElementById("asked").hidden), true, "pas d'écran A « C'est parti »");
+  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["warn", "", "", ""], "frise : seulement « à vérifier »");
   const p = await prefsOf(page);
   assert.equal(p.requestUnsure, true);
   assert.ok(p.requestedAt, "l'attente est notée, pour ne pas proposer une nouvelle demande");
@@ -72,7 +75,7 @@ test("« Demande à vérifier » sans ligne du jour : texte neutre", async () =>
   await toInstagram(page);
   await page.evaluate(() => window.zyeutoMeta("unsure", { today: false }));
   const txt = await gfText(page);
-  assert.match(txt, /Je n'ai pas pu confirmer ta demande chez Instagram/);
+  assert.match(txt, /Instagram semble avoir enregistré une demande/);
   assert.doesNotMatch(txt, /demande d'aujourd'hui/);
   await page.close();
 });
@@ -142,11 +145,13 @@ test("ancienne coque (aucun évènement « unsure ») : comportement inchangé, 
   }
 });
 
-test("page de main (plus ancienne) : l'évènement « unsure » est ignoré sans erreur, la coque peut l'envoyer sans risque", async () => {
-  // La page en ligne sur le canal stable ne connaît pas « unsure ». On la reprend telle quelle depuis main.
+test("page du build 17 (plus ancienne) : l'évènement « unsure » est ignoré sans erreur, la coque peut l'envoyer sans risque", async () => {
+  // Une page qui ne connaît pas « unsure » : celle du build 17 (main au 17 nov., commit 40edbe4), reprise telle quelle.
+  // (origin/main contient désormais la nouvelle page : elle ne peut plus servir de « page ancienne ».)
   let old;
-  try { old = execSync("git show origin/main:index.html", { cwd: root, encoding: "utf8", maxBuffer: 64 << 20 }); }
-  catch (e) { console.log("main introuvable (copie sans historique) : test sauté", e.message); return; }
+  try { old = execSync("git show 40edbe4:index.html", { cwd: root, encoding: "utf8", maxBuffer: 64 << 20 }); }
+  // Relecture ChatGPT (18 nov., 16 h 24) : test obligatoire. Sans l'historique git, il échoue au lieu de se sauter.
+  catch (e) { assert.fail(`page du build 17 introuvable (commit 40edbe4) : il faut l'historique complet (git fetch --unshallow). ${e.message}`); }
   const dir = mkdtempSync(join(tmpdir(), "zieuton-main-"));
   writeFileSync(join(dir, "index.html"), old);
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR" });
