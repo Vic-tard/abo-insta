@@ -808,7 +808,7 @@ if (!window.ZYEUTO_APP) {
   .wk-big:active { transform: scale(.97); }
   .asked { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgb(46 35 40 / .45); padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
   .asked[hidden] { display: none; }
-  .asked-card { width: 100%; max-width: 420px; border-radius: 28px; padding: 22px 18px 14px; text-align: center; color: #2e2328; background: linear-gradient(160deg, #ffe0b8, #f7a96c); box-shadow: 0 18px 40px rgb(46 35 40 / .3); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .asked-card { position: relative; width: 100%; max-width: 420px; border-radius: 28px; padding: 22px 18px 14px; text-align: center; color: #2e2328; background: linear-gradient(160deg, #ffe0b8, #f7a96c); box-shadow: 0 18px 40px rgb(46 35 40 / .3); display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .asked-card h2 { margin: 4px 0 0; font: 800 26px/1.15 var(--round); }
   .asked-card p { margin: 0; font-size: 15px; line-height: 1.4; color: rgb(46 35 40 / .8); }
   .asked-card .asked-sub { margin-top: 8px; font: 700 15px var(--round); color: #2e2328; }
@@ -1166,6 +1166,41 @@ if (!window.ZYEUTO_APP) {
   @keyframes gwDot { 0%, 100% { opacity: .35; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
   @keyframes gwBreath { 0%, 100% { transform: scale(.92); opacity: .75; } 50% { transform: scale(1.06); opacity: 1; } }
   @media (max-height: 640px) { .gw-hero { width: 124px; height: 124px; } .gw-av { width: 84px; height: 84px; } .gf .gw h2 { font-size: 26px; } .gw-tips { gap: 12px; } }
+  /* FOU-131 : frise des 4 étapes réelles (B, D, E). Aucun pourcentage ni temps restant : elle ne bouge que sur un signal de l'app. */
+  .gw-fr { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; max-width: 330px; text-align: left; display: flex; flex-direction: column; }
+  .gw-fr li { position: relative; display: flex; align-items: center; gap: 12px; padding: 6px 0; font: 700 15.5px/1.25 var(--round); color: var(--muted); }
+  .gw-fr li > i { flex: none; width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; display: grid; place-items: center; border: 2px solid color-mix(in srgb, var(--muted) 45%, transparent); background: var(--bg); z-index: 1; }
+  .gw-fr li:not(:last-child)::after { content: ""; position: absolute; left: 11px; top: 30px; height: 12px; width: 2px; background: color-mix(in srgb, var(--muted) 35%, transparent); }
+  .gw-fr li.ok, .gw-fr li.now { color: var(--ink); }
+  .gw-fr li.ok > i { background: #9d86e4; border-color: #9d86e4; }
+  .gw-fr li.ok > i::before { content: ""; width: 9px; height: 5px; margin-top: -2px; border: solid #fff; border-width: 0 0 2.2px 2.2px; transform: rotate(-45deg); }
+  .gw-fr li.now > i { border-color: #9d86e4; }
+  .gw-fr li.now > i::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #9d86e4; }
+  .gw-fr li.warn { color: var(--down); }
+  .gw-fr li.warn > i { border-color: var(--down); }
+  .gw-fr li.warn > i::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--down); }
+  .gw-fr .gw-dots { display: inline-flex; margin: 0 0 0 8px; gap: 4px; vertical-align: middle; }
+  .gw-fr .gw-dots i { width: 6px; height: 6px; }
+  .gw-fr small { display: block; margin-top: 1px; font: 500 12.5px/1.3 var(--font); color: var(--muted); }
+  /* B et D (FOU-131) : titre, frise et les deux boutons tiennent sans défiler ; rappels et « Refaire » plus bas. */
+  .gw.gw-b { margin-block: 0; padding-top: 0; gap: 8px; }
+  .gw-b .gw-hero { width: 104px; height: 104px; margin-bottom: 0; }
+  .gw-b .gw-av { width: 74px; height: 74px; }
+  .gf .gw-b h2 { font-size: 28px; }
+  .gw-acts { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+  .gw-sec { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; box-sizing: border-box; border-radius: 14px; border: 2px solid var(--ink); background: transparent; color: var(--ink); font: 700 17px var(--round); cursor: pointer; }
+  .gw-b .gw-tips { margin-top: 18px; }
+  .gw-b .alt { margin-top: 6px; }
+  @media (max-height: 700px) { .gw-b .gw-hero { width: 80px; height: 80px; } .gw-b .gw-av { width: 58px; height: 58px; } .gf .gw-b h2 { font-size: 25px; } .gw-fr li { padding: 4px 0; } .gw-fr li:not(:last-child)::after { top: 28px; height: 8px; } .gw-b .gw-say { font-size: 15px; } }
+  @media (max-height: 600px) { .gw-b .gw-hero { display: none; } }
+  /* Écran A (FOU-131) : demande prouvée, une seule fois. */
+  .asked-chip { margin: 0; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: #fff; color: #8e4552; font: 700 12.5px var(--round); position: relative; z-index: 1; }
+  .asked-card .asked-go.main { background: #2e2328; margin-top: 8px; }
+  .asked-conf { position: absolute; inset: 0 0 auto; height: 90px; pointer-events: none; overflow: hidden; border-radius: 28px 28px 0 0; }
+  .asked-conf i { position: absolute; width: 8px; height: 13px; border-radius: 3px; opacity: .9; }
+  @media (prefers-reduced-motion: no-preference) { .asked:not([hidden]) .asked-conf i { animation: confFall 1.6s ease-out both; } }
+  @media (prefers-reduced-motion: reduce) { .asked-conf { display: none; } }
+  @keyframes confFall { from { transform: translateY(-40px) rotate(0deg); opacity: 0; } 20% { opacity: 1; } to { opacity: .9; } }
   /* FOU-126 : état réel des notifications et de la dernière vérification (coque version 10). */
   .gw-state { margin: 2px 0 0; font: 600 14px/1.4 var(--round); color: var(--muted); }
   .gw-state.ok { color: var(--ink); opacity: .75; }
@@ -2799,15 +2834,15 @@ if (!window.ZYEUTO_APP) {
   </div>
 </div>
 <!-- Après la demande faite dans Instagram (app iPhone) : on propose de quoi patienter. -->
+<!-- FOU-131, écran A : seulement sur une demande prouvée par l'app (évènement « requested » nouveau), une seule fois. -->
 <div class="asked" id="asked" hidden role="dialog" aria-modal="true" aria-labelledby="asked-t">
   <div class="asked-card">
+    <span class="asked-conf" id="asked-conf" aria-hidden="true"></span>
     <span class="zy-av asked-av" id="asked-av" aria-hidden="true"></span>
-    <h2 id="asked-t">C'est demandé&nbsp;!</h2>
-    <p>Instagram prépare ta liste. Tu pourras vérifier son état ici, à chaque ouverture de Zieuton.</p>
-    <p class="asked-sub">En attendant&nbsp;?</p>
-    <button class="asked-go games" id="asked-games" type="button">Jouer aux mini-jeux</button>
-    <button class="asked-go stats" id="asked-stats" type="button">Explorer mes graphiques</button>
-    <button class="asked-stay" id="asked-stay" type="button">Rester sur l'accueil</button>
+    <p class="asked-chip">Demande confirmée ✓</p>
+    <h2 id="asked-t">Bien joué&nbsp;! Instagram prépare ta liste d'abonnés.</h2>
+    <p>Tu as terminé les étapes chez Instagram. Je t'explique la suite&nbsp;!</p>
+    <button class="asked-go main" id="asked-go" type="button">Continuer dans Zieuton</button>
   </div>
 </div>
 <!-- Juste après le tout premier import : ce qu'on voit déjà, et ce qui vient ensuite -->
@@ -4481,8 +4516,6 @@ $("install-x").addEventListener("click", () => { prefs.installDismissed = true; 
 
 // FOU-121 P3 : « prête » seulement quand l'app a VU le fichier chez Instagram (prefs.readyAt), jamais après un délai.
 function exportSeenReady() { return !!prefs.readyAt; }
-// Au-delà, l'écran d'attente dit simplement qu'il n'a pas encore vu la liste prête et propose d'aller regarder.
-const WAIT_LONG_MIN = 10;
 var lastPendingSent = null;
 function daysSince(iso) { return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000); }
 function renderWeekly() {
@@ -4509,14 +4542,14 @@ function renderWeekly() {
     li.className = i < at ? "done" : i === at ? "on" : "";
     li.querySelector("i").textContent = i < at ? "✓" : String(i + 1);
   });
-  $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : "En préparation";
+  $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : prefs.requestUnsure ? "Demande à vérifier" : "Ton export se prépare";
   if (pend) { due.textContent = prefs.requestUnsure ? "Demande à vérifier chez Instagram" : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
   // App iPhone : le gros bouton fait tout (Instagram dans Zieuton, téléchargement, import). Le reste est rangé dans « Un souci ? ».
   const simple = metaInApp();
   $("wk-redo").hidden = !pend || simple;
   $("wk-help").hidden = !simple;
   if (simple) { $("wk-more").hidden = true; $("wk-toggle").setAttribute("aria-expanded", "false"); $("sos-redo").hidden = !pend; }
-  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? "Télécharger mon export" : "Regarder si c'est prêt";
+  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? "Télécharger mon export" : "Vérifier mon export";
   $("wk-go-i").innerHTML = pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
@@ -4808,10 +4841,10 @@ function watchLine() {
   const hh = isNaN(t) ? "" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   switch (w.state) {
     case "pending": return hh ? `✓ Vérifié à ${hh}&nbsp;: pas encore prêt` : "";
-    case "toCheck": return "Un fichier est peut-être prêt&nbsp;: touche « Regarder si c'est prêt » et vérifie sa date.";
-    case "offline": return "Pas de connexion internet&nbsp;: je n'ai pas pu regarder. Touche « Regarder si c'est prêt » une fois connecté.";
-    case "login": return "Reconnecte-toi à Instagram pour que je puisse regarder&nbsp;: touche « Regarder si c'est prêt ».";
-    case "unknown": return "Je n'ai pas pu regarder chez Instagram. Touche « Regarder si c'est prêt ».";
+    case "toCheck": return "Un fichier est peut-être prêt&nbsp;: touche « Vérifier mon export » et vérifie sa date.";
+    case "offline": return "Pas de connexion internet&nbsp;: je n'ai pas pu regarder. Touche « Vérifier mon export » une fois connecté.";
+    case "login": return "Reconnecte-toi à Instagram pour que je puisse regarder&nbsp;: touche « Vérifier mon export ».";
+    case "unknown": return "Je n'ai pas pu regarder chez Instagram. Touche « Vérifier mon export ».";
     default: return "";
   }
 }
@@ -4847,11 +4880,11 @@ window.zyeutoMeta = (ev, info) => {
     if (reqPending() && !prefs.readyAt) { prefs.readyAt = new Date().toISOString(); savePrefs(); haptic("success"); renderWeekly(); if (gfOn()) renderGuided(); }
     return;
   }
-  // Notification « C'est demandé » touchée : retour à l'accueil, sur la carte « En préparation ».
-  if (ev === "home") { $("asked").hidden = true; setPage("home"); scrollTo({ top: 0, behavior: "smooth" }); return; }
+  // Notification « C'est demandé » touchée : retour à l'accueil, sur la carte « En préparation ». L'écran A, s'il attend, reste.
+  if (ev === "home") { setPage("home"); scrollTo({ top: 0, behavior: "smooth" }); return; }
   // Notification touchée : on file directement sur « Télécharger ».
   if (ev === "open") {
-    if (reqPending()) { $("asked").hidden = true; setPage("home"); scrollTo({ top: 0 }); wkGo(); }
+    if (reqPending()) { celebrateFor = null; $("asked").hidden = true; setPage("home"); scrollTo({ top: 0 }); wkGo(); }
     return;
   }
   if (ev === "unsure") { markUnsure(!!(info && info.today === true)); scrollTo({ top: 0 }); return; }
@@ -4859,19 +4892,33 @@ window.zyeutoMeta = (ev, info) => {
     const existing = !!(info && info.existing === true);
     const today = existing && !!(info && info.today === true);
     markRequested(existing, today); haptic("success"); scrollTo({ top: 0 });
-    // Premier export : l'écran d'attente du parcours prend le relais (pas de jeux ni de graphiques encore vides).
-    if (gfOn()) return;
-    // Demande déjà en cours (FOU-121) : pas de « C'est demandé » comme si elle venait de partir.
-    if (existing) { toast(today ? "Une demande d'aujourd'hui est en cours chez Instagram ✓ Tu peux vérifier son état ici." : "Une demande était déjà en cours chez Instagram ✓ Tu peux vérifier son état ici.", false); return; }
-    $("asked-av").innerHTML = $("wk-av").innerHTML;
-    $("asked").hidden = false;
+    // Demande déjà en cours (FOU-121) : pas d'écran A comme si elle venait de partir. Le parcours (premier export) affiche
+    // déjà l'attente ; ailleurs, un petit message.
+    if (existing) { if (!gfOn()) toast(today ? "Une demande d'aujourd'hui est en cours chez Instagram ✓ Tu peux vérifier son état ici." : "Une demande était déjà en cours chez Instagram ✓ Tu peux vérifier son état ici.", false); return; }
+    // FOU-131 : demande prouvée par l'app, à l'instant : écran A, une seule fois.
+    celebrateFor = prefs.requestedAt;
+    showCelebrate();
   }
 };
-const closeAsked = (p) => { $("asked").hidden = true; if (p) setPage(p); };
-$("asked-games").addEventListener("click", () => closeAsked("games"));
-$("asked-stats").addEventListener("click", () => closeAsked("stats"));
-$("asked-stay").addEventListener("click", () => closeAsked());
-$("asked").addEventListener("click", (e) => { if (e.target === $("asked")) closeAsked(); });
+// FOU-131, écran A. L'évènement « requested » arrive pendant qu'Instagram est encore affiché par-dessus Zieuton.
+// L'écran A est mis en place tout de suite, ou dès que la page redevient visible (retour dans Zieuton) si iOS la dit cachée :
+// il reste ouvert jusqu'à « Continuer dans Zieuton », donc on le voit au retour. Il n'est noté qu'en mémoire : fermer l'app
+// ou recharger la page ne le rejoue jamais (on retrouve l'attente, écran B).
+let celebrateFor = null;
+function showCelebrate() {
+  const ok = celebrateFor && !DEMO && reqPending() && prefs.requestedAt === celebrateFor && !prefs.requestExisting && !prefs.requestUnsure && !exportSeenReady();
+  if (!ok) { if (celebrateFor && !reqPending()) celebrateFor = null; return; }
+  if (document.visibilityState === "hidden") return;
+  celebrateFor = null;
+  $("asked-av").innerHTML = MASCOT;
+  const cols = ["#f4a3c4", "#d4919b", "#9d86e4", "#ef7f6a", "#ffffff"];
+  $("asked-conf").innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37 + 4) % 96}%;top:${(i * 29) % 70}px;background:${cols[i % 5]};transform:rotate(${i * 41}deg);animation-delay:${(i % 6) * 0.06}s"></i>`).join("");
+  $("asked").hidden = false;
+  $("asked-go").focus({ preventScroll: true });
+}
+document.addEventListener("visibilitychange", showCelebrate);
+const closeAsked = () => { $("asked").hidden = true; if (!gfOn()) { setPage("home"); scrollTo({ top: 0 }); } };
+$("asked-go").addEventListener("click", closeAsked);
 // Après le tout premier import : ce que ça veut dire, et la suite.
 function openFirst(n) {
   $("first-av").innerHTML = $("wk-av").innerHTML;
@@ -5275,16 +5322,14 @@ function renderGuided() {
     const ready = exportSeenReady();
     const ago = since < 60 ? since + " min" : Math.round(since / 60) + " h";
     const unsure = !ready && !!prefs.requestUnsure;
-    const say = ready ? "Ta liste est prête&nbsp;! On va la chercher 🏃"
-      : unsure && prefs.requestUnsureToday ? "J'ai vu une demande d'aujourd'hui chez Instagram, sans pouvoir confirmer que c'est la tienne. Ne refais rien&nbsp;: vérifie-la."
-      : unsure ? "Je n'ai pas pu confirmer ta demande chez Instagram. Ne refais rien&nbsp;: vérifie son état."
+    const say = ready ? "Il est là&nbsp;! On va le chercher 🏃"
+      : unsure && prefs.requestUnsureToday ? "Instagram semble avoir enregistré une demande. Vérifions-la ensemble pour éviter d'en créer une autre.<br>J'ai vu une demande d'aujourd'hui dans ta liste Instagram."
+      : unsure ? "Instagram semble avoir enregistré une demande. Vérifions-la ensemble pour éviter d'en créer une autre."
       : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram&nbsp;: inutile d'en refaire une."
       : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: inutile d'en refaire une."
-      : since < 2 ? "Bravo, c'est demandé&nbsp;! 🎉 Tu n'as plus rien à faire."
-      // FOU-126 : avec la coque version 10, la ligne d'état dit déjà ce que l'app a vu chez Instagram.
-      : since >= WAIT_LONG_MIN && notifApp() && prefs.watch ? `Demandé il y a ${ago}.`
-      : since >= WAIT_LONG_MIN ? `Demandé il y a ${ago}. Je ne l'ai pas encore vue prête&nbsp;: touche « Regarder si c'est prêt ».`
-      : `Demandé il y a ${ago}. Instagram y travaille encore…`;
+      : "Instagram prépare ton fichier. Tu peux profiter de Zieuton pendant ce temps&nbsp;!";
+    // Ligne sous l'étape 2 : depuis quand, sans jamais promettre de délai (FOU-124).
+    const sinceLine = since < 2 ? "Demandé à l'instant" : `Demandé il y a ${ago}`;
     // Attente puis « prête » : même carte prune et or que l'accueil, puis des lignes façon Réglages.
     const SV = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
     const I_MAIL = SV('<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 7.5 8 6 8-6"/>');
@@ -5294,40 +5339,45 @@ function renderGuided() {
     const I_TAP = SV('<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>');
     const I_OUT = SV('<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>');
     const row = (ic, cls, t, d) => `<li class="gx-row"><span class="gx-b ${cls}">${ic}</span><span><b>${t}</b><small>${d}</small></span></li>`;
-    const track = (pct, st) => `<div class="gx-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
-        <ol class="gx-steps">${["Demandé", "Instagram prépare", "Prête"].map((t, k) => `<li class="${k < st ? "done" : k === st ? "now" : ""}">${t}</li>`).join("")}</ol>`;
+    // FOU-131 : frise des 4 étapes réelles. Elle ne bouge que sur un signal de l'app : « requested » (étape 1), « ready » (étape 3),
+    // import (étape 4, l'écran se ferme alors sur le bilan). Ni pourcentage ni temps restant.
+    const first = unsure ? "Demande à vérifier" : prefs.requestExisting ? "Demande trouvée chez Instagram" : "Demande confirmée";
+    const frise = (st) => `<ol class="gw-fr" id="gw-fr" aria-label="Où en est ton export">${[
+      [first, ""], ["Préparation chez Instagram", st === 1 && !unsure ? sinceLine : ""], ["Fichier disponible", ""], ["Import terminé", ""],
+    ].map(([t, d], k) => `<li class="${unsure && k === 0 ? "warn" : k < st ? "ok" : k === st && !unsure ? "now" : ""}"${k === st && !unsure ? ' aria-current="step"' : ""}><i></i><span>${t}${k === 1 && st === 1 && !unsure ? '<span class="gw-dots" role="status" aria-label="Instagram prépare ton fichier"><i></i><i></i><i></i></span>' : ""}${d ? `<small>${d}</small>` : ""}</span></li>`).join("")}</ol>`;
     if (!ready) {
-      // Attente (FOU-124) : Instagram prépare le fichier, aucune estimation de délai, aucune promesse de surveillance
-      // quand Zieuton est fermé. La barre ne mesure rien : une lueur passe, sans pourcentage.
-      // Présentation épurée : le zieuteur derrière son mur, un titre fort, l'état en une ligne, 3 infos, 1 action principale.
+      // Attente (FOU-124, FOU-131 écrans B et D) : Instagram prépare le fichier, aucune estimation de délai, aucune promesse de
+      // surveillance quand Zieuton est fermé. En haut, sans défiler : titre, frise, « Découvrir Zieuton », « Vérifier mon export ».
+      // Plus bas : rappels, e-mail d'Instagram, « Refaire la demande ».
       const tip = (ic, t, d) => `<li><span class="gw-ic">${ic}</span><span><b>${t}</b><small>${d}</small></span></li>`;
       // FOU-126 : l'état réel des rappels (coque version 10). Sinon (build 15), un texte sans promesse.
+      // FOU-131 : un rappel ne prouve jamais que le fichier est prêt.
       const card = (cls, t, d, btn, id) => `<li class="gw-card"><div class="gw-nc${cls}"><span class="gw-ic">${I_BELL}</span><span><b>${t}</b><small>${d}</small>${btn ? `<button type="button" id="${id}">${btn}</button>` : ""}</span></div></li>`;
       const notifTip = unsure ? tip(I_BELL, "Pas encore de rappel", "Les rappels démarrent quand ta demande est vérifiée.")
         : !notifApp() || !notifStatus ? tip(I_BELL, "Ouvre Zieuton pour vérifier", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")
-        : notifStatus === "authorized" ? tip(I_BELL, "Rappel activé", "Un rappel 30 min après ta demande, puis le lendemain si c'est encore en cours.")
-        : notifStatus === "denied" ? card(" warn", "Tes notifications sont coupées", "Je ne pourrai pas te prévenir.", "Ouvrir les Réglages", "gw-notif-set")
-        : card("", "Recevoir les nouvelles de ton export", "Une notification quand ta demande est confirmée, puis un rappel.", "Activer les notifications", "gw-notif-ask");
+        : notifStatus === "authorized" ? tip(I_BELL, "Rappel activé", "Un rappel 30 min après ta demande, puis le lendemain si c'est encore en cours. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
+        : notifStatus === "denied" ? card(" warn", "Tes notifications sont coupées", "Je ne pourrai pas te prévenir. Instagram t'envoie quand même un e-mail quand c'est prêt.", "Ouvrir les Réglages", "gw-notif-set")
+        : card("", "Recevoir les nouvelles de ton export", "Une notification quand ta demande est confirmée, puis un rappel. Un rappel ne veut pas dire que ton fichier est prêt.", "Activer les notifications", "gw-notif-ask");
       const wline = unsure ? "" : watchLine();
-      body.innerHTML = `<div class="gw">
+      body.innerHTML = `<div class="gw gw-b">
         <div class="gw-hero" aria-hidden="true"><span class="gw-halo"></span><span class="gw-av">${MASCOT}</span></div>
-        <p class="gw-chip${unsure ? " warn" : ""}" id="gw-chip"><i></i>${unsure ? "Demande à vérifier" : "En cours chez Instagram"}</p>
-        <h2 id="gf-title">${unsure ? "Vérifie la demande, sans la refaire" : "Instagram prépare ta liste"}</h2>
+        <p class="gw-chip${unsure ? " warn" : ""}" id="gw-chip"><i></i>${unsure ? "À vérifier" : "En cours chez Instagram"}</p>
+        <h2 id="gf-title">${unsure ? "Vérifions ta demande" : "Ton export se prépare 👀"}</h2>
+        ${frise(1)}
         <p class="gw-say" id="guide-say">${say}</p>
         ${wline ? `<p class="gw-state${prefs.watch && prefs.watch.state === "pending" ? " ok" : ""}" id="gw-state" role="status">${wline}</p>` : ""}
-        ${unsure ? "" : `<p class="gw-dots" role="status" aria-label="Instagram prépare ton fichier"><i></i><i></i><i></i></p>`}
+        <div class="gw-acts">${unsure ? `
+          <button class="btn cheer big" id="gf-get" type="button">Vérifier dans Instagram</button>
+          <button class="gw-check" id="gf-wait-demo" type="button">Découvrir Zieuton en attendant</button>` : `
+          <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Découvrir Zieuton</button>
+          <button class="gw-sec" id="gf-get" type="button">Vérifier mon export</button>`}
+        </div>
         <ul class="gw-tips">
-          ${(unsure ? tip(I_PHONE, "Vérifie sans tout refaire", "Je rouvre la liste d'Instagram : ta demande y est peut-être déjà.")
+          ${(unsure ? tip(I_PHONE, "Vérifie sans tout refaire", "Je rouvre la liste d'Instagram&nbsp;: ta demande y est peut-être déjà.")
             : tip(I_PHONE, "Tu peux fermer l'app", "À chaque ouverture de Zieuton, je regarde où en est Instagram.")).replace("<li>", '<li class="gw-key">')}
           ${notifTip}
           ${tip(I_MAIL, "Instagram t'envoie aussi un e-mail", "Quand ton fichier est prêt. Reviens alors dans Zieuton pour le récupérer.")}
         </ul>
-      </div>
-      <div class="gf-foot gw-foot">${unsure ? `
-        <button class="btn cheer big" id="gf-get" type="button">Vérifier dans Instagram</button>
-        <button class="gw-check" id="gf-wait-demo" type="button">Découvrir Zieuton en attendant</button>` : `
-        <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Découvrir Zieuton en attendant</button>
-        <button class="gw-check" id="gf-get" type="button">Regarder si c'est prêt</button>`}
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
       $("gf-wait-demo").onclick = () => enterDemo();
@@ -5336,19 +5386,17 @@ function renderGuided() {
       // Le texte (« Demandé il y a X min ») se met à jour chaque minute tant qu'on attend.
       clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get" && !$("gf-redo")) renderGuided(); }, 60000);
     } else {
+    // Écran E (FOU-131) : seulement après le signal « ready » de l'app (le bon fichier, jamais un ancien).
     body.innerHTML = `${guide(say)}
-      <h2 id="gf-title">Ta liste est prête</h2>
-      <div class="gx ready">
-        <div class="gx-top"><span class="gx-ic">${I_CHECK}</span><div><small>Arrivée</small><b>Plus qu'une touche</b></div></div>
-        ${track(100, 3)}
-      </div>
+      <h2 id="gf-title">Ton export est prêt&nbsp;! 🎉</h2>
+      ${frise(3)}
       <ul class="gx-list">
-        ${row(I_TAP, "lilac", "Touche « Récupérer ma liste »", "Juste en dessous.")}
-        ${row(I_OUT, "rose", "Instagram s'ouvre ici", "Touche « Télécharger » à côté de ton export.")}
+        ${row(I_TAP, "lilac", "Touche « Récupérer mon export »", "Instagram s'ouvre ici.")}
+        ${row(I_OUT, "rose", "Touche toi-même « Télécharger »", "Sur la ligne que mon bandeau te montre.")}
         ${row(I_CHECK, "plum", "Je m'occupe du reste", "Ta liste s'affiche toute seule.")}
       </ul>
       <div class="gf-foot">
-        <button class="btn cheer big" id="gf-get" type="button">${I_TAP}Récupérer ma liste</button>
+        <button class="btn cheer big" id="gf-get" type="button">${I_TAP}Récupérer mon export</button>
         <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
     }
@@ -5452,7 +5500,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-18-1525";
+const BUILD = "2026-11-21-1323";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

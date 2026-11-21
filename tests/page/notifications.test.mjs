@@ -93,7 +93,7 @@ test("dernière vérification de l'app : chaque état a son texte, jamais « pr�
     await page.evaluate((s) => window.zyeutoWatch({ state: s, at: new Date().toISOString() }), state);
     const txt = await gfText(page);
     assert.match(txt, re, state);
-    assert.equal(await page.textContent("#gf-title"), "Instagram prépare ta liste", state);
+    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀", state);
     assert.deepEqual(page.errors, []);
     await page.close();
   }

@@ -52,12 +52,15 @@ test("retour d'Instagram sans preuve, ligne du jour vue : attente « Demande à 
   await page.evaluate(() => window.zyeutoMeta("unsure", { today: true }));
   const txt = await gfText(page);
   assert.doesNotMatch(txt, /Zieuton en haut|J'ai compris, on y va/, "plus de boucle vers l'écran d'avant Instagram");
+  // FOU-131 : écran D « Vérifions ta demande ».
+  assert.match(txt, /À vérifier/);
+  assert.equal(await page.textContent("#gf-title"), "Vérifions ta demande");
+  assert.match(txt, /Instagram semble avoir enregistré une demande\. Vérifions-la ensemble pour éviter d'en créer une autre\./);
+  assert.match(txt, /J'ai vu une demande d'aujourd'hui dans ta liste Instagram/);
   assert.match(txt, /Demande à vérifier/);
-  assert.match(txt, /Vérifie la demande, sans la refaire/);
-  assert.match(txt, /demande d'aujourd'hui chez Instagram, sans pouvoir confirmer que c'est la tienne/);
-  assert.match(txt, /Ne refais rien/);
-  assert.doesNotMatch(txt, /C'est demandé|Bravo|Instagram prépare ta liste|Rappel activé|Ta liste est prête/, "aucune preuve inventée, aucune promesse");
-  assert.equal(await page.evaluate(() => document.getElementById("asked").hidden), true, "pas de fenêtre « C'est demandé »");
+  assert.doesNotMatch(txt, /C'est demandé|C'est parti|Demande confirmée|Bravo|Bien joué|Instagram prépare ta liste|Rappel activé|Ton export est prêt/, "aucune preuve inventée, aucune promesse");
+  assert.equal(await page.evaluate(() => document.getElementById("asked").hidden), true, "pas d'écran A « C'est parti »");
+  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["warn", "", "", ""], "frise : seulement « à vérifier »");
   const p = await prefsOf(page);
   assert.equal(p.requestUnsure, true);
   assert.ok(p.requestedAt, "l'attente est notée, pour ne pas proposer une nouvelle demande");
@@ -72,7 +75,7 @@ test("« Demande à vérifier » sans ligne du jour : texte neutre", async () =>
   await toInstagram(page);
   await page.evaluate(() => window.zyeutoMeta("unsure", { today: false }));
   const txt = await gfText(page);
-  assert.match(txt, /Je n'ai pas pu confirmer ta demande chez Instagram/);
+  assert.match(txt, /Instagram semble avoir enregistré une demande/);
   assert.doesNotMatch(txt, /demande d'aujourd'hui/);
   await page.close();
 });
