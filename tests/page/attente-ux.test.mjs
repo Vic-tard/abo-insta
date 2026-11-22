@@ -27,12 +27,14 @@ async function waiting(mins, extra = {}) {
   page.errors = errors;
   return page;
 }
-const gfText = (page) => page.evaluate(() => document.getElementById("gf").innerText);
+// Refonte FOU-131 : rappels, e-mail et « Refaire la demande » sont dans « Plus d'infos » : on l'ouvre avant de lire l'écran.
+const openInfo = async (page) => { if (await page.isVisible("#gw-more") && !(await page.isVisible("#gw-info"))) await page.click("#gw-more"); };
+const gfText = async (page) => { await openInfo(page); return page.evaluate(() => document.getElementById("gf").innerText); };
 
 test("attente : pas d'estimation de délai ni de progression fixe", async () => {
   for (const mins of [1, 15, 200]) {
     const page = await waiting(mins);
-    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
     const txt = await gfText(page);
     assert.doesNotMatch(txt, /quelques minutes|en général|1 à 3 min|devrait être prête|sûrement prête/i);
     // Aucune barre de progression ni pourcentage.
@@ -67,15 +69,17 @@ test("demande déjà en cours : pas de « je guette »", async () => {
 
 test("FOU-131 : « Découvrir Zieuton » est le bouton principal, « Vérifier mon export » juste dessous, « Refaire la demande » est discret", async () => {
   const page = await waiting(5);
-  const btns = await page.evaluate(() => [...document.querySelectorAll("#gf .gw-acts button")].map((b) => ({ id: b.id, cls: b.className, t: b.textContent.trim() })));
-  assert.equal(btns.length, 2);
-  assert.equal(btns[0].id, "gf-wait-demo");
-  assert.match(btns[0].cls, /cheer/);
-  assert.equal(btns[0].t, "Découvrir Zieuton");
-  assert.equal(btns[1].id, "gf-get");
-  assert.doesNotMatch(btns[1].cls, /cheer/, "un seul bouton principal");
-  assert.equal(btns[1].t, "Vérifier mon export");
+  // Refonte du 23 nov. : un seul bouton principal (« Découvrir Zieuton », dans la carte de découverte), puis « Vérifier mon export ».
   assert.equal(await page.locator("#gf .btn.cheer").count(), 1);
+  assert.equal((await page.textContent("#gf-wait-demo")).trim(), "Découvrir Zieuton");
+  assert.match(await page.getAttribute("#gf-wait-demo", "class"), /cheer/);
+  assert.equal((await page.textContent("#gf-get")).trim(), "Vérifier mon export");
+  assert.doesNotMatch(await page.getAttribute("#gf-get", "class"), /cheer/, "un seul bouton principal");
+  const a = await page.locator("#gf-wait-demo").boundingBox(), b = await page.locator("#gf-get").boundingBox();
+  assert.ok(b.y > a.y, "« Vérifier mon export » juste dessous");
+  // « Refaire la demande » : dans « Plus d'infos », en lien discret.
+  assert.equal(await page.isVisible("#gf-back"), false);
+  await openInfo(page);
   assert.match(await page.getAttribute("#gf-back", "class"), /\balt\b/);
   await page.close();
 });
@@ -83,6 +87,7 @@ test("FOU-131 : « Découvrir Zieuton » est le bouton principal, « Vérifier m
 test("« Refaire la demande » demande une confirmation : rien n'est effacé sans elle", async () => {
   const page = await waiting(5);
   const other = await page.evaluate(() => Object.keys(localStorage).filter((k) => k !== "abo-prefs").map((k) => k + "=" + localStorage.getItem(k)).sort());
+  await openInfo(page);
   await page.click("#gf-back");
   assert.match(await page.textContent("#gf-redo"), /doublon/);
   let p = await page.evaluate(() => JSON.parse(localStorage.getItem("abo-prefs")));

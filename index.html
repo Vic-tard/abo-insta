@@ -534,7 +534,7 @@ if (!window.ZYEUTO_APP) {
   /* FOU-51 : « Quitter la démo » bien visible : bouton blanc, gros, facile à toucher. */
   .demo-bar button { flex: none; border: 0; border-radius: 999px; min-height: 44px; padding: 11px 18px; background: #fff; color: #3a1d2c; font: 800 15px var(--round); cursor: pointer; box-shadow: 0 3px 10px rgb(0 0 0 / .25); }
   .demo-bar button:active { background: #f3e6ea; }
-  /* FOU-131 : « Données d'exemple » en entier à côté de « Mon export » dès 375 points (iPhone SE, iPhone 15). Plus étroit
+  /* FOU-131 : « Compte fictif » en entier à côté de « Mon export » dès 375 points (iPhone SE, iPhone 15). Plus étroit
      (zoom d'affichage) : le texte serait coupé ; l'étiquette DÉMO suffit. */
   .demo-bar { gap: 8px; }
   .demo-bar span:not(.demo-tag) { font-size: 14px; }
@@ -543,15 +543,40 @@ if (!window.ZYEUTO_APP) {
   @media (max-width: 374px) { .demo-bar span:not(.demo-tag) { visibility: hidden; } }
   /* FOU-131 (écran C) : visite de la démo, 4 bulles du zieuteur posées sur les vraies cartes. Lilas, jamais d'or (réservé à Plus). */
   .dt { position: fixed; inset: 0; z-index: 70; }
-  .dt-ring { position: fixed; border-radius: 22px; box-shadow: 0 0 0 3px #9d86e4, 0 0 0 9999px rgb(46 35 40 / .5); pointer-events: none; transition: all .25s ease; }
-  .dt-bub { position: fixed; left: 16px; width: min(340px, calc(100% - 32px)); box-sizing: border-box; padding: 14px 14px 12px; border-radius: 22px;
-    background: var(--surface); color: var(--ink); box-shadow: 0 14px 34px rgb(46 35 40 / .35), inset 0 0 0 1.5px #c9b8f7; display: grid; grid-template-columns: 52px 1fr; gap: 6px 12px; align-items: center; }
-  .dt-av { width: 52px !important; grid-row: span 2; border-radius: 16px; box-shadow: 0 3px 8px rgb(46 35 40 / .18); }
-  .dt-n { font: 800 12px var(--round); letter-spacing: .05em; text-transform: uppercase; color: #8072d0; }
-  .dt-say { margin: 0; font: 700 17px/1.3 var(--round); }
-  .dt-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
-  .dt-next { border: 0; border-radius: 999px; min-height: 44px; padding: 10px 20px; font: 800 15px var(--round); color: #fff; background: linear-gradient(135deg, #b4a2f0, #8a72dc); cursor: pointer; }
-  .dt-x { position: absolute; top: 6px; right: 6px; width: 44px; height: 44px; border: 0; background: none; color: var(--muted); font: 700 22px/1 var(--round); cursor: pointer; }
+  /* « Mon export » reste touchable pendant la visite : la barre de la démo passe au-dessus du voile. */
+  /* Pendant la visite, de la place sous la page : la case peut monter juste sous la barre, même tout en bas. */
+body.dt-on { padding-bottom: 100vh; }
+body:has(#dt) .demo-bar { z-index: 72; }
+  .dt-ring { position: fixed; border-radius: 26px; border: 0; padding: 0; background: transparent; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #8f80dc, 0 0 0 9999px rgb(46 35 40 / .55); cursor: pointer; transition: all .25s ease; }
+  .dt-bub { position: fixed; left: 16px; width: min(358px, calc(100% - 32px)); box-sizing: border-box; padding: 12px 16px 14px; border-radius: 26px; overflow-y: auto;
+    background: var(--surface); color: var(--ink); box-shadow: 0 14px 40px rgb(46 35 40 / .35); display: flex; flex-direction: column; gap: 8px; }
+  .dt-arrow { position: absolute; width: 18px; height: 18px; background: var(--surface); transform: rotate(45deg); border-radius: 4px; }
+  .dt-top { position: relative; display: flex; align-items: center; gap: 10px; }
+  .dt-av { width: 38px !important; flex: none; border-radius: 12px; box-shadow: 0 2px 6px rgb(46 35 40 / .15); }
+  .dt-pr { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .dt-n { font: 900 12px var(--round); color: var(--muted); }
+  .dt-bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .dt-bars i { height: 5px; border-radius: 3px; background: var(--line); }
+  .dt-bars i.on { background: #7c6bd0; }
+  .dt-skip { flex: none; min-height: 44px; padding: 0 4px 0 12px; border: 0; background: none; color: var(--muted); font: 900 15px var(--round); cursor: pointer; }
+  .dt-t { margin: 2px 0 0; display: flex; align-items: center; gap: 10px; font: 900 22px/1.2 var(--round); }
+  .dt-sym { width: 30px; height: 30px; flex: none; border-radius: 10px; display: grid; place-items: center; color: #2e2328; font: 900 16px var(--round); }
+  .dt-sym.t-down { background: linear-gradient(160deg, #ffd4ca, #ec7262); } .dt-sym.t-up { background: linear-gradient(160deg, #d3f4e3, #6fc79e); }
+  .dt-sym.t-notback { background: linear-gradient(160deg, #e6dcfd, #a28be3); } .dt-sym.t-fans { background: linear-gradient(160deg, #ffe6c4, #f5a262); }
+  .dt-say { margin: 0; font: 700 16px/1.4 var(--round); }
+  .dt-ex { border-radius: 16px; background: var(--bg); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .dt-ex[hidden] { display: none; }
+  .dt-ex small { font: 900 11px var(--round); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .dt-ex span { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .dt-ex i { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font: 900 12px var(--round); font-style: normal; }
+  .dt-ex b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 14px var(--round); }
+  .dt-ex em { flex: none; font: 800 12px var(--round); font-style: normal; color: var(--muted); }
+  .dt-end { margin: 0; font: 700 14px/1.4 var(--round); color: var(--muted); }
+  .dt-row { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 2px; }
+  .dt-hint { flex: 1; font: 700 13px/1.3 var(--round); color: var(--muted); }
+  .dt-next { flex: none; border: 0; border-radius: 16px; min-height: 48px; padding: 10px 22px; font: 900 16px var(--round); color: #fff; background: #2e2328; cursor: pointer; }
+  :root[data-theme="dark"] .dt-next { background: #b9a9f5; color: #1d1530; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dt-next { background: #b9a9f5; color: #1d1530; } }
   @media (prefers-reduced-motion: reduce) { .dt-ring { transition: none; } }
   body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 70px); }
   /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
@@ -823,6 +848,23 @@ if (!window.ZYEUTO_APP) {
   .wk-steps li.done i { background: #3f7f68; }
   .wk-big { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 58px; border: 0; border-radius: 18px; background: #2e2328; color: #fff; font: 700 18px/1.1 var(--round); cursor: pointer; padding: 0 16px; transition: transform .12s; }
   .wk-big:active { transform: scale(.97); }
+  /* Refonte FOU-131 : carte de l'accueil pendant une demande (app iPhone) : calme, une pastille, les stats juste dessous. */
+  .weekly.wk-pend { background: var(--surface) !important; border: 1.5px solid #ddd3fb; box-shadow: 0 8px 24px rgb(46 35 40 / .07); }
+  .weekly.wk-pend.wk-unsure { border-color: #f3d9b0; }
+  .weekly.wk-pend .wk-steps { display: none; }
+  .weekly.wk-pend .wk-toggle .t { font-size: 19px !important; white-space: normal; }
+  .weekly.wk-pend .wk-big { background: var(--surface); color: var(--ink); border: 1.5px solid var(--line); min-height: 50px; font-size: 16px; }
+  .weekly.wk-pend .wk-big svg { stroke: currentColor; }
+  .weekly.wk-pend.wk-unsure .wk-big { background: linear-gradient(135deg, #c4493b, #cf622a); color: #fff; border: 0; }
+  .wk-chip { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 3px; padding: 3px 9px 3px 4px; border-radius: 999px; background: #ece6fd; color: #5f4fb0; font: 900 12px var(--round); }
+  .wk-chip[hidden] { display: none; }
+  .wk-chip i { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; background: #7c6bd0; color: #fff; font: 900 10px/1 var(--round); font-style: normal; }
+  .wk-unsure .wk-chip { background: #fbefdc; color: #7a4f0e; }
+  .wk-unsure .wk-chip i { background: #c9801a; }
+  :root[data-theme="dark"] .weekly.wk-pend { border-color: #4a3d6e; } :root[data-theme="dark"] .weekly.wk-pend.wk-unsure { border-color: #6b4f22; }
+  :root[data-theme="dark"] .wk-chip { background: #2f2742; color: #c9bcf8; } :root[data-theme="dark"] .wk-unsure .wk-chip { background: #3a2c17; color: #f4cf8e; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .weekly.wk-pend { border-color: #4a3d6e; } :root:not([data-theme="light"]) .weekly.wk-pend.wk-unsure { border-color: #6b4f22; }
+    :root:not([data-theme="light"]) .wk-chip { background: #2f2742; color: #c9bcf8; } :root:not([data-theme="light"]) .wk-unsure .wk-chip { background: #3a2c17; color: #f4cf8e; } }
   .asked { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgb(46 35 40 / .45); padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
   .asked[hidden] { display: none; }
   .asked-card { position: relative; width: 100%; max-width: 420px; border-radius: 28px; padding: 22px 18px 14px; text-align: center; color: #2e2328; background: linear-gradient(160deg, #ffe0b8, #f7a96c); box-shadow: 0 18px 40px rgb(46 35 40 / .3); display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -1210,6 +1252,79 @@ if (!window.ZYEUTO_APP) {
   .gw-b .alt { margin-top: 6px; }
   @media (max-height: 700px) { .gw-b .gw-hero { width: 80px; height: 80px; } .gw-b .gw-av { width: 58px; height: 58px; } .gf .gw-b h2 { font-size: 25px; } .gw-fr li { padding: 4px 0; } .gw-fr li:not(:last-child)::after { top: 28px; height: 8px; } .gw-b .gw-say { font-size: 15px; } }
   @media (max-height: 600px) { .gw-b .gw-hero { display: none; } }
+  /* Refonte FOU-131 (23 nov.) : attente B (lilas) et vérification D (ambre). Peu de texte, une action principale, le zieuteur
+     derrière son mur. Orange plus foncé derrière le texte blanc (lisibilité). Ces règles ne touchent que .gw-r. */
+  .gw-r { --amb: #c9801a; --amb-soft: #fbefdc; --amb-ink: #7a4f0e; --lil: #7c6bd0; --lil-soft: #ece6fd; --lil-ink: #5f4fb0; gap: 10px; padding-bottom: 8px; }
+  :root[data-theme="dark"] .gw-r { --amb: #d9932c; --amb-soft: #3a2c17; --amb-ink: #f4cf8e; --lil: #8f80dc; --lil-soft: #2f2742; --lil-ink: #c9bcf8; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gw-r { --amb: #d9932c; --amb-soft: #3a2c17; --amb-ink: #f4cf8e; --lil: #8f80dc; --lil-soft: #2f2742; --lil-ink: #c9bcf8; } }
+  .gw-r .gw-hero { width: 220px; height: 128px; place-items: end center; margin-bottom: 0; }
+  .gw-r .gw-halo { inset: auto 20px -48px; height: 180px; background: radial-gradient(circle, rgb(162 139 227 / .42) 0%, rgb(244 163 196 / .18) 45%, transparent 70%); }
+  .gw-r.gw-unsure .gw-halo { background: radial-gradient(circle, rgb(244 169 90 / .42) 0%, rgb(244 163 196 / .14) 45%, transparent 70%); }
+  .gw-r .gw-av { width: 116px; height: 116px; border-radius: 0; background: none; box-shadow: none; overflow: visible; }
+  :root[data-theme="dark"] .gw-r .gw-av svg > rect { fill: #3d2e33; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gw-r .gw-av svg > rect { fill: #3d2e33; } }
+  .gw-bub { position: absolute; top: 4px; left: calc(50% + 38px); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 16px 16px 16px 4px; padding: 6px 11px; font: 800 14px var(--round); white-space: nowrap; box-shadow: 0 6px 18px rgb(46 35 40 / .1); }
+  .gw-r .gw-chip { gap: 8px; padding: 5px 12px 5px 6px; background: var(--lil-soft); color: var(--lil-ink); font: 800 14px var(--round); }
+  .gw-r .gw-chip i { width: 20px; height: 20px; display: grid; place-items: center; background: var(--lil); color: #fff; font: 900 12px/1 var(--round); font-style: normal; animation: none; }
+  .gw-r .gw-chip.warn { background: var(--amb-soft); color: var(--amb-ink); }
+  .gw-r .gw-chip.warn i { background: var(--amb); }
+  .gf .gw-r h2 { font-size: 30px; }
+  .gw-r .gw-say { max-width: 32ch; font: 600 16px/1.4 var(--round); }
+  /* Frise à 3 points, en ligne : rien qui ressemble à un pourcentage. */
+  .gw-fr3 { flex-direction: row; max-width: none; margin: 4px 0 0; padding: 14px 6px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); box-sizing: border-box; }
+  .gw-fr3 li { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 6px; padding: 0 2px; text-align: center; font: 800 13px/1.2 var(--round); }
+  .gw-fr3 li:not(:last-child)::after { left: calc(50% + 16px); right: calc(-50% + 16px); top: 13px; width: auto; height: 2px; }
+  .gw-fr3 li > i { width: 28px; height: 28px; font: 900 14px/1 var(--round); font-style: normal; color: #fff; }
+  .gw-fr3 li.ok > i { background: var(--lil); border-color: var(--lil); }
+  .gw-fr3 li.now > i { border-color: var(--lil); }
+  .gw-fr3 li.now > i::before { background: var(--lil); }
+  .gw-fr3 li.warn { color: var(--amb-ink); }
+  .gw-fr3 li.warn > i { background: var(--amb); border-color: var(--amb); }
+  .gw-fr3 li.warn > i::before { content: none; }
+  .gw-fr3 .gw-dots { display: flex; justify-content: center; margin: 4px 0 0; }
+  .gw-r .btn.cheer { background: linear-gradient(135deg, #c4493b, #cf622a); box-shadow: 0 8px 20px rgb(196 73 59 / .32); font: 900 18px var(--round); min-height: 56px; border-radius: 18px; }
+  .gw-r .btn.cheer svg, .gw-r .gw-sec svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .gw-disc { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 14px; border-radius: 26px; text-align: left; background: linear-gradient(160deg, var(--surface) 0%, #fbeef1 100%); border: 1px solid var(--line); box-shadow: 0 10px 30px rgb(194 90 111 / .1); display: flex; flex-direction: column; gap: 8px; }
+  :root[data-theme="dark"] .gw-disc { background: linear-gradient(160deg, #251c1f 0%, #2e2028 100%); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gw-disc { background: linear-gradient(160deg, #251c1f 0%, #2e2028 100%); } }
+  .gw-fict { margin: 0; font: 900 12px var(--round); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .gw-mini { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .gw-mini span { border-radius: 13px; padding: 7px 7px 6px; color: #2e2328; font: 800 10.5px/1.15 var(--round); display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .gw-mini b { font: 900 16px/1.1 var(--round); }
+  .gw-mini .t-down, .gw-mini4 .t-down { background: linear-gradient(160deg, #ffd4ca, #ec7262); }
+  .gw-mini .t-up, .gw-mini4 .t-up { background: linear-gradient(160deg, #d3f4e3, #6fc79e); }
+  .gw-mini .t-notback, .gw-mini4 .t-notback { background: linear-gradient(160deg, #e6dcfd, #a28be3); }
+  .gw-mini .t-fans, .gw-mini4 .t-fans { background: linear-gradient(160deg, #ffe6c4, #f5a262); }
+  .gw-disc h3 { margin: 2px 0 0; font: 900 20px/1.2 var(--round); }
+  .gw-disc p { margin: 0 0 4px; font: 600 14px/1.35 var(--round); color: var(--muted); }
+  .gw-r .gw-sec { min-height: 50px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface); font: 800 16px var(--round); gap: 8px; }
+  .gw-cap { margin: -2px 0 0; font: 700 13px/1.35 var(--round); color: var(--muted); }
+  .gw-row { width: 100%; box-sizing: border-box; min-height: 68px; margin-top: 4px; padding: 10px 14px 10px 10px; border-radius: 20px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); text-align: left; display: flex; align-items: center; gap: 12px; cursor: pointer; font: inherit; }
+  .gw-row > span:nth-child(2) { flex: 1; min-width: 0; }
+  .gw-row b { display: block; font: 900 16px/1.25 var(--round); }
+  .gw-row small { display: block; font: 700 13px/1.3 var(--round); color: var(--muted); }
+  .gw-row > svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .gw-mini4 { width: 46px; height: 46px; flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .gw-mini4 i { border-radius: 7px; }
+  .gw-line { width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 6px; text-align: left; font: 700 13.5px/1.35 var(--round); color: var(--muted); }
+  .gw-line .gw-ic { width: 30px; height: 30px; border-radius: 10px; }
+  .gw-more { border: 0; background: none; min-height: 44px; padding: 0 14px; font: 900 15px var(--round); color: var(--link); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  /* « Plus d'infos » : feuille du bas. */
+  .gw-info { position: fixed; inset: 0; z-index: 30; background: rgb(46 35 40 / .42); display: flex; align-items: flex-end; }
+  .gw-info[hidden] { display: none; }
+  .gw-sheet { width: 100%; max-width: 560px; margin: 0 auto; max-height: calc(100% - 20px); overflow-y: auto; box-sizing: border-box; background: var(--surface); color: var(--ink); border-radius: 28px 28px 0 0; padding: 14px 20px calc(22px + env(safe-area-inset-bottom, 0px)); text-align: left; box-shadow: 0 -12px 40px rgb(46 35 40 / .18); }
+  .gw-sh-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .gw-sh-top h3 { margin: 0; font: 900 22px var(--round); }
+  .gw-x { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--ink); font: 800 16px var(--round); cursor: pointer; }
+  .gw-sheet .gw-tips { margin: 0; gap: 12px; }
+  .gw-sheet .gw-tips li:not(.gw-key):not(.gw-card) { padding: 0 4px; }
+  .gw-redo { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
+  .gw-redo .alt { min-height: 44px; font: 900 16px var(--round) !important; color: var(--link) !important; }
+  .gw-redo small { font: 600 13px/1.35 var(--round); color: var(--muted); }
+  /* Petits écrans (et zoom d'affichage) : le zieuteur rapetisse, l'aperçu des chiffres disparaît ; tout reste atteignable en défilant. */
+  @media (max-height: 760px) { .gw-r .gw-hero { height: 96px; } .gw-r .gw-av { width: 88px; height: 88px; } .gw-r .gw-halo { height: 140px; } .gf .gw-r h2 { font-size: 27px; } }
+  @media (max-height: 700px) { .gw-r .gw-mini, .gw-r .gw-fict { display: none; } .gw-disc h3 { font-size: 18px; } .gw-r .gw-say { font-size: 15px; } }
+  @media (max-height: 600px) { .gw-r .gw-hero { display: none; } .gf .gw-r h2 { font-size: 24px; } .gw-r { gap: 8px; } .gw-fr3 { padding: 10px 4px 8px; } .gw-disc { padding: 12px; gap: 6px; } .gw-disc p { display: none; } }
   /* Écran A (FOU-131) : demande prouvée, une seule fois. */
   .asked-chip { margin: 0; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: #fff; color: #8e4552; font: 700 12.5px var(--round); position: relative; z-index: 1; }
   .asked-card .asked-go.main { background: #2e2328; margin-top: 8px; }
@@ -2346,7 +2461,7 @@ if (!window.ZYEUTO_APP) {
 
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
     <div class="wk-bar">
-      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="t" id="weekly-title">Mettre à jour</span><small class="due" id="due"></small></span></button>
+      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="wk-chip" id="wk-chip" hidden></span><span class="t" id="weekly-title">Mettre à jour</span><small class="due" id="due"></small></span></button>
       <button class="btn primary pill" id="bar-file" type="button" disabled hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer</button>
     </div>
@@ -2787,7 +2902,7 @@ if (!window.ZYEUTO_APP) {
 <canvas id="confetti" aria-hidden="true"></canvas>
 
 <!-- Page de gauche : jeux, quiz et animations -->
-<div class="demo-bar" id="demo-bar" role="status" hidden><b class="demo-tag">Démo</b><span>Données d'exemple</span><button type="button" id="demo-quit">Quitter la démo</button></div>
+<div class="demo-bar" id="demo-bar" role="status" hidden><b class="demo-tag">Démo</b><span>Compte fictif</span><button type="button" id="demo-quit">Quitter la démo</button></div>
 <div class="pg off" id="pg-games" role="region" aria-label="Mini-jeux" inert>
   <div class="wrap">
     <div class="pg-head center has-trophy"><div><h1 class="pg-title-big">Mini-jeux</h1></div><button class="pg-trophy" id="tile-trophies" type="button" aria-label="Trophées"><span class="t-cup" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M15 8h18v11a9 9 0 0 1-18 0z" fill="#fff6d8"/><path d="M15 11H9a6 6 0 0 0 6 8M33 11h6a6 6 0 0 1-6 8" fill="none" stroke="#fff6d8" stroke-width="3" stroke-linecap="round"/><path d="M21 27h6v6h-6z" fill="#fff6d8"/><rect x="15" y="33" width="18" height="6" rx="2" fill="#fff6d8"/><path d="M19 12v6" stroke="#ef7f6a" stroke-width="2.4" stroke-linecap="round"/></svg></span></button></div>
@@ -3620,6 +3735,8 @@ var LISTS = {
   recent: { t: "Mes abonnés", ic: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.6c2 .6 3.2 2.4 3.5 5.4"/></svg>' },
 };
 var listInfo = {};
+// Les pseudos montrés sur chaque case de l'accueil (la visite de la démo en reprend deux en exemple).
+var homeFaces = {};
 function renderTiles(counts, rel, last, compared) {
   const n = state.snapshots.length;
   const evTop = (kind) => state.events.filter((e) => e.kind === kind).slice(-3).reverse().map((e) => e.u);
@@ -3634,6 +3751,7 @@ function renderTiles(counts, rel, last, compared) {
     $("hn-" + k).textContent = v.n == null ? "–" : nf(v.n);
     $("hs-" + k).textContent = v.s;
     $("hf-" + k).innerHTML = facesHTML(v.f);
+    homeFaces[k] = v.f;
   }
   const firstAt = state.snapshots[0]?.takenAt;
   $("hn-recent").textContent = n ? nf(nFol) : "–";
@@ -4749,8 +4867,15 @@ function renderWeekly() {
   $("wk-redo").hidden = !pend || simple;
   $("wk-help").hidden = !simple;
   if (simple) { $("wk-more").hidden = true; $("wk-toggle").setAttribute("aria-expanded", "false"); $("sos-redo").hidden = !pend; }
-  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? "Télécharger mon export" : "Vérifier mon export";
-  $("wk-go-i").innerHTML = pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
+  // Refonte FOU-131 : pendant une demande (app iPhone), carte calme avec une pastille. Confirmée : lilas, ✓, bouton discret.
+  // À vérifier : ambre, ?, « Vérifier dans Instagram » en avant. Jamais de coche sur une demande à vérifier.
+  const live = simple && pend && !ready && !kept, unsureLive = live && !!prefs.requestUnsure;
+  $("weekly").classList.toggle("wk-pend", live);
+  $("weekly").classList.toggle("wk-unsure", unsureLive);
+  $("wk-chip").hidden = !live;
+  if (live) $("wk-chip").innerHTML = unsureLive ? '<i aria-hidden="true">?</i>À vérifier' : '<i aria-hidden="true">✓</i>En cours chez Instagram';
+  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? "Télécharger mon export" : unsureLive ? "Vérifier dans Instagram" : "Vérifier mon export";
+  $("wk-go-i").innerHTML = unsureLive ? '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>' : pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
   $("quick-import").className = "btn " + (waiting ? "primary" : "ghost");
@@ -5136,7 +5261,7 @@ $("first-notback").addEventListener("click", () => {
 // FOU-124 : seul chemin qui efface une demande en cours. Tous les « Refaire / Recommencer la demande » passent ici :
 // une confirmation dans l'écran (pas de fenêtre du navigateur), et rien n'est effacé sans « Refaire quand même ».
 function confirmRedo(then) {
-  const clear = () => { delete prefs.requestedAt; delete prefs.readyAt; delete prefs.requestAcct; delete prefs.requestToday; delete prefs.requestUnsure; delete prefs.requestUnsureToday; delete prefs.watch; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); then(); };
+  const clear = () => { gwInfo = false; delete prefs.requestedAt; delete prefs.readyAt; delete prefs.requestAcct; delete prefs.requestToday; delete prefs.requestUnsure; delete prefs.requestUnsureToday; delete prefs.watch; prefs.igOpened = false; prefs.igStep = 0; prefs.getStep = 0; savePrefs(); then(); };
   if (!prefs.requestedAt) return clear();
   if ($("gf-redo")) return;
   haptic("light");
@@ -5404,6 +5529,8 @@ let gfLeftAt = 0, gfOnReturn = null;
 // Écran « Zieuton en haut, Instagram en bas », entre le plan et Instagram (FOU-121).
 let gfIntro = false;
 let gmTick = null;
+// Refonte FOU-131 : « Plus d'infos » ouvert sur l'attente (gardé quand l'écran se redessine).
+let gwInfo = false;
 // gfRepeat : le même parcours, rouvert depuis « Nouvel export » pour les imports suivants.
 let gfRepeat = false, gfRepeatFrom = 0;
 // Gardé le temps de la session (rechargement de la page, mise à jour).
@@ -5550,48 +5677,78 @@ function renderGuided() {
       [first, ""], ["Préparation chez Instagram", st === 1 && !unsure ? sinceLine : ""], ["Fichier disponible", ""], ["Import terminé", ""],
     ].map(([t, d], k) => `<li class="${unsure && k === 0 ? "warn" : k < st ? "ok" : k === st && !unsure ? "now" : ""}"${k === st && !unsure ? ' aria-current="step"' : ""}><i></i><span>${t}${k === 1 && st === 1 && !unsure ? '<span class="gw-dots" role="status" aria-label="Instagram prépare ton fichier"><i></i><i></i><i></i></span>' : ""}${d ? `<small>${d}</small>` : ""}</span></li>`).join("")}</ol>`;
     if (!ready) {
-      // Attente (FOU-124, FOU-131 écrans B et D) : Instagram prépare le fichier, aucune estimation de délai, aucune promesse de
-      // surveillance quand Zieuton est fermé. En haut, sans défiler : titre, frise, « Découvrir Zieuton », « Vérifier mon export ».
-      // Plus bas : rappels, e-mail d'Instagram, « Refaire la demande ».
+      // Refonte FOU-131 (validée le 23 nov.) : un état, une action, une envie. En haut, sans défiler : pastille, titre, frise à
+      // 3 points et l'action principale. B (demande confirmée, lilas) : « Découvrir Zieuton » en avant, « Vérifier mon export »
+      // juste dessous. D (à vérifier, ambre, jamais de coche) : « Vérifier dans Instagram » en avant, la découverte en second.
+      // Les rappels, l'e-mail d'Instagram et « Refaire la demande » (avec sa confirmation) sont dans « Plus d'infos ».
+      // Aucune estimation de délai, aucune promesse de surveillance quand Zieuton est fermé (FOU-124).
       const tip = (ic, t, d) => `<li><span class="gw-ic">${ic}</span><span><b>${t}</b><small>${d}</small></span></li>`;
-      // FOU-126 : l'état réel des rappels (coque version 10). Sinon (build 15), un texte sans promesse.
-      // FOU-131 : un rappel ne prouve jamais que le fichier est prêt.
+      // FOU-126 : l'état réel des rappels. « Rappel programmé » seulement si la coque dit qu'un rappel est vraiment prévu.
       const card = (cls, t, d, btn, id) => `<li class="gw-card"><div class="gw-nc${cls}"><span class="gw-ic">${I_BELL}</span><span><b>${t}</b><small>${d}</small>${btn ? `<button type="button" id="${id}">${btn}</button>` : ""}</span></div></li>`;
       const notifTip = unsure ? tip(I_BELL, "Pas encore de rappel", "Les rappels démarrent quand ta demande est vérifiée.")
         : !notifApp() || !notifStatus ? tip(I_BELL, "Ouvre Zieuton pour vérifier", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")
         // Sécurité du suivi (21 nov.) : l'autorisation iOS ne prouve pas qu'un rappel est programmé. Sans l'état réel des rappels
         // (coque 11), on dit seulement « Notifications autorisées », jamais « Rappel activé ».
-        : notifStatus === "authorized" && reminderSet() ? tip(I_BELL, "Rappel programmé", "Je t'envoie un rappel si c'est encore en cours. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
+        : notifStatus === "authorized" && reminderSet() ? tip(I_BELL, "Rappel programmé", "Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
         : notifStatus === "authorized" ? tip(I_BELL, "Notifications autorisées", "Zieuton peut t'envoyer un rappel pendant l'attente. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
         : notifStatus === "denied" ? card(" warn", "Tes notifications sont coupées", "Je ne pourrai pas te prévenir. Instagram t'envoie quand même un e-mail quand c'est prêt.", "Ouvrir les Réglages", "gw-notif-set")
         : card("", "Recevoir les nouvelles de ton export", "Une notification quand ta demande est confirmée, puis un rappel. Un rappel ne veut pas dire que ton fichier est prêt.", "Activer les notifications", "gw-notif-ask");
       const wline = unsure ? "" : watchLine();
-      body.innerHTML = `<div class="gw gw-b">
-        <div class="gw-hero" aria-hidden="true"><span class="gw-halo"></span><span class="gw-av">${MASCOT}</span></div>
-        <p class="gw-chip${unsure ? " warn" : ""}" id="gw-chip"><i></i>${unsure ? "À vérifier" : "En cours chez Instagram"}</p>
-        <h2 id="gf-title">${unsure ? "Vérifions ta demande" : "Ton export se prépare 👀"}</h2>
-        ${frise(1)}
-        <p class="gw-say" id="guide-say">${say}</p>
+      const I_EYE = SV('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>');
+      const I_FIND = SV('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>');
+      const I_MUTE = SV('<path d="M6 16.5V11a6 6 0 0 1 9.5-4.9M18 11v5.5l1.5 1.5h-15"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0M3 3l18 18"/>');
+      // Les 4 chiffres de la démo, en aperçu : « Compte fictif » au-dessus, avant même d'y entrer.
+      const mini = `<p class="gw-fict">Compte fictif</p><div class="gw-mini" aria-hidden="true">${[["61", "Départs", "t-down"], ["130", "Arrivées", "t-up"], ["96", "Pas en retour", "t-notback"], ["670", "Fans", "t-fans"]].map(([n, l, c]) => `<span class="${c}"><b>${n}</b>${l}</span>`).join("")}</div>`;
+      const frise3 = `<ol class="gw-fr gw-fr3" id="gw-fr" aria-label="Où en est ton export">${[
+        [unsure ? "À vérifier" : first, unsure ? "warn" : "ok", unsure ? "?" : ""],
+        ["Instagram prépare", unsure ? "" : "now", ""],
+        ["Prête à récupérer", "", ""],
+      ].map(([t, c, m], k) => `<li class="${c}"${c === "now" ? ' aria-current="step"' : ""}><i>${m}</i><span>${t}${c === "now" ? '<span class="gw-dots" role="status" aria-label="Instagram prépare ton fichier"><i></i><i></i><i></i></span>' : ""}</span></li>`).join("")}</ol>`;
+      const sub = unsure ? "Vérifie si ta demande apparaît dans Instagram. Tu n'as pas besoin de la refaire pour vérifier."
+        : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram&nbsp;: inutile d'en refaire une."
+        : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: inutile d'en refaire une."
+        : `Instagram prépare ton fichier. ${sinceLine}.`;
+      body.innerHTML = `<div class="gw gw-b gw-r${unsure ? " gw-unsure" : ""}">
+        <div class="gw-hero" aria-hidden="true"><span class="gw-halo"></span><span class="gw-av">${MASCOT}</span><span class="gw-bub">${unsure ? "On vérifie&nbsp;?" : "C'est en route&nbsp;!"}</span></div>
+        <p class="gw-chip${unsure ? " warn" : ""}" id="gw-chip"><i aria-hidden="true">${unsure ? "?" : "✓"}</i>${unsure ? "À vérifier" : "En cours chez Instagram"}</p>
+        <h2 id="gf-title">${unsure ? "Vérifions ta demande" : "Ton export se prépare"}</h2>
+        <p class="gw-say" id="guide-say">${sub}</p>
+        ${frise3}
         ${wline ? `<p class="gw-state${prefs.watch && prefs.watch.state === "pending" ? " ok" : ""}" id="gw-state" role="status">${wline}</p>` : ""}
-        <div class="gw-acts">${unsure ? `
-          <button class="btn cheer big" id="gf-get" type="button">Vérifier dans Instagram</button>
-          <button class="gw-check" id="gf-wait-demo" type="button">Découvrir Zieuton en attendant</button>` : `
-          <button class="btn cheer big" id="gf-wait-demo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Découvrir Zieuton</button>
-          <button class="gw-sec" id="gf-get" type="button">Vérifier mon export</button>`}
+        ${unsure ? `
+        <button class="btn cheer big" id="gf-get" type="button">${I_FIND}Vérifier dans Instagram</button>
+        <p class="gw-cap">Je rouvre ta liste Instagram et je te montre où regarder.</p>
+        <button class="gw-row" id="gf-wait-demo" type="button"><span class="gw-mini4" aria-hidden="true"><i class="t-down"></i><i class="t-up"></i><i class="t-notback"></i><i class="t-fans"></i></span><span><b>Découvrir Zieuton en attendant</b><small>Visite en 4 étapes, compte fictif</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>` : `
+        <section class="gw-disc" aria-labelledby="gw-disc-t">${mini}
+          <h3 id="gw-disc-t">En attendant, découvre Zieuton</h3>
+          <p>Une visite en 4 étapes, sur un compte fictif.</p>
+          <button class="btn cheer big" id="gf-wait-demo" type="button">${I_EYE}Découvrir Zieuton</button>
+        </section>
+        <button class="gw-sec" id="gf-get" type="button">${I_FIND}Vérifier mon export</button>`}
+        <div class="gw-line"><span class="gw-ic">${unsure ? I_MUTE : I_PHONE}</span><span>${unsure ? "Pas de rappel tant que ta demande n'est pas vérifiée." : "Tu peux fermer l'app&nbsp;: je regarde chez Instagram à chaque ouverture."}</span></div>
+        <button class="gw-more" id="gw-more" type="button" aria-expanded="${gwInfo}" aria-controls="gw-info">Plus d'infos</button>
+      </div>
+      <div class="gw-info" id="gw-info" role="dialog" aria-modal="true" aria-labelledby="gw-info-t"${gwInfo ? "" : " hidden"}>
+        <div class="gw-sheet">
+          <div class="gw-sh-top"><h3 id="gw-info-t">Pendant l'attente</h3><button class="gw-x" id="gw-info-x" type="button" aria-label="Fermer">✕</button></div>
+          <ul class="gw-tips">
+            ${(unsure ? tip(I_PHONE, "Vérifie sans tout refaire", "Je rouvre la liste d'Instagram&nbsp;: ta demande y est peut-être déjà.")
+              : tip(I_PHONE, "Tu peux fermer l'app", "À chaque ouverture de Zieuton, je regarde où en est Instagram. Quand Zieuton est fermé, je ne peux pas regarder.")).replace("<li>", '<li class="gw-key">')}
+            ${notifTip}
+            ${tip(I_MAIL, "Instagram t'envoie aussi un e-mail", "Quand ton fichier est prêt. Reviens alors dans Zieuton pour le récupérer.")}
+          </ul>
+          <div class="gw-redo"><button class="alt" id="gf-back" type="button">Refaire la demande</button><small>Je te demanderai de confirmer, pour éviter un doublon chez Instagram.</small></div>
         </div>
-        <ul class="gw-tips">
-          ${(unsure ? tip(I_PHONE, "Vérifie sans tout refaire", "Je rouvre la liste d'Instagram&nbsp;: ta demande y est peut-être déjà.")
-            : tip(I_PHONE, "Tu peux fermer l'app", "À chaque ouverture de Zieuton, je regarde où en est Instagram.")).replace("<li>", '<li class="gw-key">')}
-          ${notifTip}
-          ${tip(I_MAIL, "Instagram t'envoie aussi un e-mail", "Quand ton fichier est prêt. Reviens alors dans Zieuton pour le récupérer.")}
-        </ul>
-        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
       </div>`;
-      $("gf-wait-demo").onclick = () => enterDemo();
+      $("gf-wait-demo").onclick = () => { gwInfo = false; enterDemo(); };
+      const info = (on) => { gwInfo = on; $("gw-info").hidden = !on; $("gw-more").setAttribute("aria-expanded", String(on)); if (on) $("gw-info-x").focus(); else $("gw-more").focus(); };
+      $("gw-more").onclick = () => { haptic("light"); info(true); };
+      $("gw-info-x").onclick = () => info(false);
+      $("gw-info").onclick = (e) => { if (e.target === $("gw-info")) info(false); };
       if ($("gw-notif-ask")) $("gw-notif-ask").onclick = () => { haptic("light"); nativePost({ type: "notif", action: "ask" }); };
       if ($("gw-notif-set")) $("gw-notif-set").onclick = () => { haptic("light"); nativePost({ type: "notif", action: "settings" }); };
-      // Le texte (« Demandé il y a X min ») se met à jour chaque minute tant qu'on attend.
-      clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get" && !$("gf-redo")) renderGuided(); }, 60000);
+      // Le texte (« Demandé il y a X min ») se met à jour chaque minute tant qu'on attend (pas pendant « Plus d'infos »).
+      clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get" && !$("gf-redo") && !gwInfo) renderGuided(); }, 60000);
     } else {
     // Écran E (FOU-131) : seulement après le signal « ready » de l'app (le bon fichier, jamais un ancien).
     body.innerHTML = `${guide(say)}
@@ -5707,7 +5864,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-22-2329";
+const BUILD = "2026-11-23-0018";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -9120,11 +9277,11 @@ function realWait() {
   try { if (reqPending()) { const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0; r = { ready: exportSeenReady(), since }; } } finally { prefs = sp; state = ss; }
   return r;
 }
-// FOU-131 (écran C) : « DÉMO · Données d'exemple » ; pendant une vraie demande, le bouton s'appelle « Mon export » et ramène
+// FOU-131 (écran C) : « DÉMO · Compte fictif » ; pendant une vraie demande, le bouton s'appelle « Mon export » et ramène
 // à l'écran d'attente (B), ou à « Ton export est prêt » (E) quand le fichier est prêt.
 function renderDemoBar() {
   const w = realWait(), sp = $("demo-bar").querySelector("span:not(.demo-tag)");
-  sp.textContent = w && w.ready ? "Ton export est prêt 🎉" : "Données d'exemple";
+  sp.textContent = w && w.ready ? "Ton export est prêt 🎉" : "Compte fictif";
   $("demo-quit").textContent = w ? "Mon export" : "Quitter la démo";
   $("demo-bar").classList.toggle("go", !!(w && w.ready));
 }
@@ -9135,15 +9292,16 @@ function renderDemoRow() {
   $("st-demo-s").textContent = DEMO ? "Revenir à tes vraies données" : "Des abonnés inventés, tes données ne bougent pas";
 }
 // ---------- FOU-131 (écran C) : visite de la démo par le zieuteur ----------
-// 4 bulles, une à la fois, posées sur les vraies cartes. « Suivant » ou la croix (qui arrête la visite : on reste libre dans la démo).
+// Refonte du 23 nov. : 4 étapes pour comprendre les 4 chiffres (Départs, Arrivées, Pas en retour, Fans). Chaque bulle dit à quoi
+// sert le chiffre, avec deux pseudos de la démo en exemple. « Suivant » ou toucher la case entourée ; « Passer » ou
+// « Explorer la démo » laissent libre dans la démo ; « Mon export » (en haut) ramène au statut réel de la demande.
 // Une seule fois : notée dans les vrais réglages dès le début (pas rejouée, même si l'app est fermée pendant la visite).
-// Seulement pour la démo ouverte pendant une vraie demande (écran C, « Découvrir Zieuton ») : la démo de la bienvenue (FOU-51)
-// n'écrit toujours rien sur le téléphone.
+// Seulement pour la démo ouverte pendant une vraie demande : la démo de la bienvenue (FOU-51) n'écrit toujours rien.
 const DEMO_TOUR = [
-  { sel: '.hm-tile[data-list="unfollow"]', say: "Ici, ceux qui se sont désabonnés de toi." },
-  { sel: '.hm-tile[data-list="follow"]', say: "Là, tes nouveaux abonnés." },
-  { sel: '.hm-tile[data-list="notback"]', say: "Ceux que tu suis et qui ne te suivent pas." },
-  { sel: '#pager [data-page="stats"]', say: "Et tes courbes, import après import." },
+  { list: "unfollow", sym: "↘", t: "Les Départs", say: "Ceux qui se sont désabonnés de toi depuis l'import précédent. Fini de deviner qui est parti.", tag: "ne te suit plus" },
+  { list: "follow", sym: "↖", t: "Les Arrivées", say: "Tes nouveaux abonnés depuis l'import précédent. Tu vois tout de suite qui vient d'arriver.", tag: "te suit depuis peu" },
+  { list: "notback", sym: "⇄", t: "Les Pas en retour", say: "Tu les suis, mais eux ne te suivent pas. À toi de voir si tu continues à les suivre.", tag: "tu suis · pas en retour" },
+  { list: "fans", sym: "♡", t: "Les Fans", say: "Ils te suivent, mais toi tu ne les suis pas. Des gens à découvrir, et peut-être à suivre en retour.", tag: "te suit · tu ne suis pas" },
 ];
 let demoTourAt = -1;
 function startDemoTour() {
@@ -9152,46 +9310,76 @@ function startDemoTour() {
   realPrefs.v = PREFS_V;
   try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch (e) { logError("prefs-save-tour", e); }
   const o = document.createElement("div");
-  o.className = "dt"; o.id = "dt"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "dt-say");
-  o.innerHTML = `<div class="dt-ring" id="dt-ring"></div><div class="dt-bub" id="dt-bub">
-    <span class="zy-av dt-av" aria-hidden="true">${$("wk-av").innerHTML}</span>
-    <span class="dt-n" id="dt-n"></span><p class="dt-say" id="dt-say"></p>
-    <div class="dt-row"><button class="dt-next" id="dt-next" type="button">Suivant</button></div>
-    <button class="dt-x" id="dt-x" type="button" aria-label="Arrêter la visite">×</button></div>`;
+  o.className = "dt"; o.id = "dt"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "dt-t");
+  o.innerHTML = `<button class="dt-ring" id="dt-ring" type="button" aria-label="Étape suivante"></button><div class="dt-bub" id="dt-bub">
+    <span class="dt-arrow" id="dt-arrow" aria-hidden="true"></span>
+    <div class="dt-top"><span class="zy-av dt-av" aria-hidden="true">${$("wk-av").innerHTML}</span>
+      <span class="dt-pr"><span class="dt-n" id="dt-n"></span><span class="dt-bars" aria-hidden="true">${DEMO_TOUR.map(() => "<i></i>").join("")}</span></span>
+      <button class="dt-skip" id="dt-x" type="button">Passer</button></div>
+    <h2 class="dt-t" id="dt-t"><span class="dt-sym" id="dt-sym" aria-hidden="true"></span><span id="dt-tt"></span></h2>
+    <p class="dt-say" id="dt-say"></p>
+    <div class="dt-ex" id="dt-ex"></div>
+    <p class="dt-end" id="dt-end" hidden>Retrouve le suivi de ta demande dans «&nbsp;Mon export&nbsp;».</p>
+    <div class="dt-row"><small class="dt-hint" id="dt-hint">Ou touche la case entourée</small><button class="dt-next" id="dt-next" type="button">Suivant</button></div></div>`;
   document.body.appendChild(o);
-  $("dt-next").onclick = () => { haptic("light"); demoTourAt + 1 < DEMO_TOUR.length ? showDemoTour(demoTourAt + 1) : endDemoTour(); };
+  document.body.classList.add("dt-on");
+  const next = () => { haptic("light"); demoTourAt + 1 < DEMO_TOUR.length ? showDemoTour(demoTourAt + 1) : endDemoTour(); };
+  $("dt-next").onclick = next;
+  $("dt-ring").onclick = next;
   $("dt-x").onclick = () => endDemoTour();
   showDemoTour(0);
 }
 function showDemoTour(i) {
-  const s = DEMO_TOUR[i], el = document.querySelector(s.sel), o = $("dt");
+  const s = DEMO_TOUR[i], el = document.querySelector(`.hm-tile[data-list="${s.list}"]`), o = $("dt");
   if (!o) return;
   if (!el || !el.getClientRects().length) return endDemoTour();
   demoTourAt = i;
+  const last = i === DEMO_TOUR.length - 1;
   $("dt-n").textContent = `Visite · ${i + 1} sur ${DEMO_TOUR.length}`;
+  o.querySelectorAll(".dt-bars i").forEach((b, k) => b.classList.toggle("on", k <= i));
+  $("dt-sym").textContent = s.sym; $("dt-sym").className = "dt-sym " + el.className.split(" ").find((c) => c.startsWith("t-"));
+  $("dt-tt").textContent = s.t;
   $("dt-say").textContent = s.say;
-  $("dt-next").textContent = i === DEMO_TOUR.length - 1 ? "J'ai compris" : "Suivant";
-  if (!el.closest("#pager")) el.scrollIntoView({ block: "center", behavior: "instant" });
+  // Deux pseudos de la démo, ceux que la case montre déjà : on voit tout de suite à quoi ressemble la liste.
+  const ex = ((homeFaces && homeFaces[s.list]) || []).slice(0, 2);
+  $("dt-ex").hidden = !ex.length;
+  $("dt-ex").innerHTML = ex.length ? `<small>Exemple fictif</small>${ex.map((u) => `<span><i aria-hidden="true">${esc((u[0] || "?").toUpperCase())}</i><b>${esc(u)}</b><em>${s.tag}</em></span>`).join("")}` : "";
+  $("dt-end").hidden = !last;
+  $("dt-hint").hidden = last;
+  $("dt-ring").setAttribute("aria-label", last ? "Terminer la visite" : "Étape suivante");
+  $("dt-next").textContent = last ? "Explorer la démo" : "Suivant";
+  // La case passe en haut de l'écran (sous la barre de la démo) : la bulle tient dessous, sans la cacher.
+  const bar = $("demo-bar").getBoundingClientRect();
+  window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - (bar.bottom || 0) - 16), behavior: "instant" });
   placeDemoTour();
   $("dt-next").focus();
 }
 function placeDemoTour() {
   const o = $("dt");
   if (!o || demoTourAt < 0) return;
-  const el = document.querySelector(DEMO_TOUR[demoTourAt].sel);
+  const el = document.querySelector(`.hm-tile[data-list="${DEMO_TOUR[demoTourAt].list}"]`);
   if (!el) return;
-  const r = el.getBoundingClientRect(), ring = $("dt-ring"), bub = $("dt-bub"), pad = 6;
+  const r = el.getBoundingClientRect(), ring = $("dt-ring"), bub = $("dt-bub"), pad = 6, vh = window.innerHeight, vw = window.innerWidth;
   Object.assign(ring.style, { left: r.left - pad + "px", top: r.top - pad + "px", width: r.width + 2 * pad + "px", height: r.height + 2 * pad + "px" });
-  const h = bub.offsetHeight, vh = window.innerHeight, w = bub.offsetWidth;
-  // Sous la carte s'il y a la place, sinon au-dessus ; jamais hors de l'écran.
-  const below = r.bottom + pad + 12, above = r.top - pad - 12 - h;
-  const top = below + h <= vh - 12 ? below : Math.max(12, above);
-  const left = Math.min(Math.max(16, r.left + r.width / 2 - w / 2), window.innerWidth - w - 16);
+  // Sous la case s'il y a la place, sinon au-dessus ; jamais hors de l'écran. Trop haute (petit iPhone) : elle défile.
+  bub.style.maxHeight = "";
+  const full = bub.offsetHeight, w = bub.offsetWidth;
+  const below = r.bottom + pad + 14, roomBelow = vh - 12 - below, roomAbove = r.top - pad - 14 - 12;
+  // Du côté où elle tient ; sinon du côté le plus grand, en défilant dedans (jamais sur la case).
+  const under = full <= roomBelow || (full > roomAbove && roomBelow >= roomAbove);
+  const room = Math.max(150, under ? roomBelow : roomAbove);
+  bub.style.maxHeight = Math.min(room, vh - 24) + "px";
+  const h = bub.offsetHeight;
+  const top = under ? Math.min(below, Math.max(12, vh - 12 - h)) : Math.max(12, r.top - pad - 14 - h);
+  const left = Math.min(Math.max(16, r.left + r.width / 2 - w / 2), vw - w - 16);
   Object.assign(bub.style, { top: top + "px", left: left + "px" });
+  const ax = Math.min(Math.max(22, r.left + r.width / 2 - left - 9), w - 40);
+  Object.assign($("dt-arrow").style, { left: ax + "px", top: under ? "-8px" : "", bottom: under ? "" : "-8px", display: (under ? top >= below - 1 : true) ? "" : "none" });
 }
 function endDemoTour() {
   demoTourAt = -1;
   $("dt")?.remove();
+  document.body.classList.remove("dt-on");
 }
 addEventListener("resize", placeDemoTour);
 // Les pseudos de la démo sont inventés : on n'ouvre pas Instagram dessus.

@@ -51,7 +51,7 @@ for (const [name, prefs] of [
     assert.deepEqual((await states(page)).filter((m) => m.pending === false), [], "la coque ne doit pas oublier la demande");
     assert.ok((await stored(page)).requestedAt, "la demande est gardée");
     assert.equal(await page.evaluate(() => reqPending()), true);
-    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
     assert.deepEqual(page.errors, []);
     await page.close();
   });
@@ -74,7 +74,7 @@ test("réouverture de l'app après la démo : la demande et son compte sont inta
   // Nouvelle page avec les réglages enregistrés (comme une app relancée).
   const page = await open(saved);
   const p = await stored(page);
-  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
   assert.ok(p.requestedAt);
   assert.equal(p.requestAcct, "a1");
   assert.equal(p.acctCur, "a1");

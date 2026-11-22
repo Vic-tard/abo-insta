@@ -34,7 +34,9 @@ async function open({ version = 10, prefs = {}, status = null, waitMins = null }
   return page;
 }
 const sent = (page) => page.evaluate(() => window.__sent);
-const gfText = (page) => page.evaluate(() => document.getElementById("gf").innerText);
+// Refonte FOU-131 : rappels, e-mail et « Refaire la demande » sont dans « Plus d'infos » : on l'ouvre avant de lire l'écran.
+const openInfo = async (page) => { if (await page.isVisible("#gw-more") && !(await page.isVisible("#gw-info"))) await page.click("#gw-more"); };
+const gfText = async (page) => { await openInfo(page); return page.evaluate(() => document.getElementById("gf").innerText); };
 
 test("coque version 9 (build 15) : textes de repli sans promesse, aucun nouveau message", async () => {
   const page = await open({ version: 9, waitMins: 5 });
@@ -94,7 +96,7 @@ test("dernière vérification de l'app : chaque état a son texte, jamais « pr�
     await page.evaluate((s) => window.zyeutoWatch({ state: s, at: new Date().toISOString() }), state);
     const txt = await gfText(page);
     assert.match(txt, re, state);
-    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀", state);
+    assert.equal(await page.textContent("#gf-title"), "Ton export se prépare", state);
     assert.deepEqual(page.errors, []);
     await page.close();
   }
