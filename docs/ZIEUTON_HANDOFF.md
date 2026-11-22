@@ -1,11 +1,11 @@
 # Zieuton : document de transmission pour ChatGPT
 
-> Dernière mise à jour : 21 novembre 2026, soir (ménage Linear et GitHub ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
+> Dernière mise à jour : 22 novembre 2026, soir (nouveau planning : sortie le 15 décembre ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
 > À mettre à jour par Claude après chaque étape importante (fin de PR, décision, build).
 
 ## 1. Le projet en 10 lignes
 
-Zieuton est une app iPhone (français, iOS 17+) qui montre qui s'est désabonné d'un compte Instagram, en comparant les exports officiels que l'utilisateur demande lui-même à Instagram. Pas de serveur, pas de compte, jamais de mot de passe : tout reste sur le téléphone (+ sauvegarde iCloud). Modèle : gratuit (2 imports, puis 1 par mois) + Zieuton Plus (2,99 €/mois, 14,99 €/an, 29,99 € à vie). Propriétaire : Victor, seul, non développeur, micro-entreprise. Sortie visée sur l'App Store : 3 décembre 2026. Build candidat actuel : 1.0 (23) sur TestFlight.
+Zieuton est une app iPhone (français, iOS 17+) qui montre qui s'est désabonné d'un compte Instagram, en comparant les exports officiels que l'utilisateur demande lui-même à Instagram. Pas de serveur, pas de compte, jamais de mot de passe : tout reste sur le téléphone (+ sauvegarde iCloud). Modèle : gratuit (2 imports, puis 1 par mois) + Zieuton Plus (2,99 €/mois, 14,99 €/an, 29,99 € à vie). Propriétaire : Victor, seul, non développeur, micro-entreprise. Sortie visée sur l'App Store : **15 décembre 2026** (décalée de 10 jours le 22 nov.). Build candidat actuel : 1.0 (23) sur TestFlight.
 
 Architecture : une page web unique `index.html` (~8 600 lignes, HTML/CSS/JS sans build) embarquée dans une coque Swift (`ios/Zieuton/WebViewController.swift`, ~3 100 lignes, WKWebView). La page se met à jour depuis zieuton.com (signée, canal test puis stable) ; la coque demande un build Xcode. Tests Node + CI GitHub.
 
@@ -26,8 +26,13 @@ Architecture : une page web unique `index.html` (~8 600 lignes, HTML/CSS/JS sans
 
 Pas de scraping ni de connexion automatisée à Instagram ; jamais le mot de passe ; l'utilisateur touche lui-même « Télécharger » ; aucune donnée envoyée à un serveur (pas d'analytics, pas de SDK) sans décision écrite de Victor ; aucune mention d'IA dans l'app ; identifiants `fr.zyeuto.*` intouchables.
 
-## 5. Où en est le projet (21 nov. au soir)
+## 5. Où en est le projet (22 nov. au soir)
 
+- **Nouveau planning (Victor, 22 nov.) : tout décalé de 10 jours.**
+  - Build validé : 2 déc.
+  - Soumission à Apple : 5 déc. (FOU-130, publication manuelle).
+  - Sortie sur l'App Store : **15 déc.**
+  - Les jalons Linear sont à ces dates.
 - **Build candidat : 1.0 (23)**, installé chez Victor. Historique des builds :
   - 15 : export P1 à P6 ;
   - 17 : notifications, non validé ;
@@ -36,40 +41,23 @@ Pas de scraping ni de connexion automatisée à Instagram ; jamais le mot de pas
   - 23 : bandeau « Un fichier est disponible ».
 
   Aucun nouveau build n'est prévu tant que la coque ne change pas.
-- **Fusionné le 21 nov.** :
-  - #151 : test ;
-  - #152 : FOU-131 PR 1, écrans A, B, D, E et frise ;
-  - #153 : la démo ne fait plus oublier la demande ;
-  - #154 et #155 : sécurité du suivi, build 22 ;
-  - #156 : build 23 ;
-  - #157 : « Est-ce bien le fichier de ta demande ? ».
+- **Canal stable** : page du 21 nov. (2026-11-21-1638), validée par Victor sur son iPhone. PR #159 fusionnée le 22 nov. (FOU-129 terminé).
+- **FOU-131** (écrans après la demande d'export) : la PR 1 (#152) et la question après l'import (#157) sont fusionnées. La **PR 2 (#160)** est ouverte, page seule, à relire. Elle porte sur la démo pendant l'attente : bandeau « DÉMO · Données d'exemple », bouton « Mon export », visite du zieuteur en 4 bulles affichée une seule fois. Après validation, il faudra repasser cette page en canal stable.
+- **FOU-126** (notifications) : terminé. Les lignes restantes de la matrice `VALIDATION-BUILD-21.md` sont suivies dans **FOU-105** (validation du build final).
+- **Linear au 22 nov.** (ChatGPT a classé FOU-51 en doublon de FOU-130, qui est le ticket de soumission) :
+  - **En cours** : FOU-131, FOU-105, FOU-83 (ACRE, documents de l'Urssaf reçus le 21 nov., dépôt avant le 18 déc.).
+  - **À faire** : FOU-128 achats (2 déc.), FOU-82 médiateur (4 déc.), FOU-130 soumission (5 déc.).
+  - **Backlog** : com, 3D (FOU-119), village, et tout ce qui vient après la sortie.
+- Com, 3D et village restent **gelés**.
 
-  La page de ces PR est en canal test seulement. Vidéo de Victor à 16 h 48 : export réel, import de 1 140 abonnés, réponse « Oui », rappels retirés, accueil et données intacts après la réouverture. Ce scénario est validé, pas tous les cas.
-- **FOU-126** (notifications) : « Done ». Les lignes restantes de la matrice `VALIDATION-BUILD-21.md` (V2, V7, V9 à V17) sont suivies dans **FOU-105**.
-- **FOU-131** (écrans après la demande) : rouvert « In Progress ». Il reste l'audit des transitions, puis la PR 2 (démo : bulles du zieuteur, « Mon export ») si nécessaire, puis les tests U1 à U10.
-- **Canal stable** toujours au 10 nov. (FOU-129, à faire avant la soumission).
-- **ACRE (FOU-83)** : documents de l'Urssaf reçus le 21 nov., demande à remplir le 22 nov. Dépôt visé avant le 18 déc.
-- **Ménage du 21 nov.** :
-  - FOU-127 (« build 20 ») annulé comme obsolète.
-  - FOU-132 créé par erreur, puis annulé comme doublon de FOU-119.
-  - FOU-116 (Higgsfield, com gelée) passé en Backlog.
-  - FOU-119 (visuels 3D) passé en Todo pour le 22 nov.
-  - Aucune PR ouverte.
-  - Les branches déjà fusionnées sont listées dans `scripts/branches-a-supprimer.txt`.
-- **Jalons Linear** : Build validé (22 nov., en pratique le 23), Soumis à Apple (25 nov.), Sortie (3 déc.).
+## 6. Prochaines étapes, dans l'ordre
 
-## 6. Plan du 22 novembre
-
-1. **FOU-131** : auditer toutes les transitions sur pages simulées, sans nouvelle demande Instagram. Les transitions sont : A → B → démo → B → E → import → question → accueil, et D sans fausse validation. Une seule revue des défauts, puis la PR 2 (page seule) si nécessaire.
-2. **FOU-119** : 3 directions du zieuteur 3D, toujours derrière un mur, palette rose, lilas et corail. Aucune intégration dans l'app avant la soumission.
-3. **FOU-83** : lire les documents de l'Urssaf et préparer la demande d'ACRE.
-4. Ensuite (23 et 24 nov.) :
-   - FOU-105 : lignes restantes sur le build 23 ;
-   - FOU-128 : achats en sandbox ;
-   - FOU-82 : médiateur ;
-   - FOU-129 : canal stable.
-
-   Puis FOU-130 : soumission le 25 nov.
+1. Relire et valider la PR #160 (FOU-131 PR 2), test iPhone en canal test, fusion, puis canal stable.
+2. FOU-83 : préparer la demande d'ACRE avec les documents de l'Urssaf.
+3. FOU-105 : lignes restantes de la matrice sur le build 23, et le parcours de l'examinateur Apple.
+4. FOU-128 : achats et restauration en sandbox.
+5. FOU-82 : adhérer à un médiateur et l'ajouter aux textes légaux.
+6. FOU-130 : soumission le 5 déc., publication manuelle le 15 déc.
 
 Garde-fous : aucune fusion, aucun build, aucun passage en stable et aucune soumission sans l'accord explicite de Victor.
 
@@ -82,10 +70,10 @@ Garde-fous : aucune fusion, aucun build, aucun passage en stable et aucune soumi
 
 ## 8. Questions où un second avis serait utile
 
-1. **FOU-131** : la liste des transitions à auditer est-elle complète ? La PR 2 (bulles dans la démo) vaut-elle le risque avant la soumission ?
+1. **FOU-131 PR 2 (#160)** : la visite en bulles et le bouton « Mon export » sont-ils sûrs avant la soumission ?
 2. **Build 23 comme build final** : quelles lignes de la matrice sont indispensables avant de soumettre ?
 3. **Risque 5.2.2** : faut-il une réponse prête pour l'examinateur ?
-4. **Lancement** : quel minimum de com, avec la sortie au 3 déc. ?
+4. **Lancement** : quel minimum de com, avec la sortie au 15 déc. ?
 
 ## 9. Où trouver le reste
 
