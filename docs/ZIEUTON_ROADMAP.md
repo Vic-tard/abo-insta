@@ -55,7 +55,7 @@ Terminé récemment : FOU-129 (canal stable, 22 nov.), FOU-126 (notifications fi
 
 ## 4. Communication et lancement (tout en Backlog depuis le 10 nov., FOU-99)
 
-FOU-56 calendrier J-14 à J+14, FOU-57 vidéos saison 1, FOU-58 vidéos « brainrot », FOU-59 comptes Instagram/TikTok, FOU-60 liste de 10 à 20 micro-influenceurs, FOU-61 kit influenceurs, FOU-63 annonce du 3 déc., FOU-65 suivi des résultats, FOU-66 site vitrine.
+FOU-56 calendrier J-14 à J+14, FOU-57 vidéos saison 1, FOU-58 vidéos « brainrot », FOU-59 comptes Instagram/TikTok, FOU-60 liste de 10 à 20 micro-influenceurs, FOU-61 kit influenceurs, FOU-63 annonce du 15 déc., FOU-65 suivi des résultats, FOU-66 site vitrine.
 
 **[Déduit]** Avec la sortie au 15 décembre, FOU-56, FOU-59 et FOU-60 devraient démarrer vers le 1er décembre (J-14). À arbitrer par Victor : la com est gelée.
 
