@@ -55,12 +55,11 @@ test("retour d'Instagram sans preuve, ligne du jour vue : attente « Demande à 
   // FOU-131 : écran D « Vérifions ta demande ».
   assert.match(txt, /À vérifier/);
   assert.equal(await page.textContent("#gf-title"), "Vérifions ta demande");
-  assert.match(txt, /Instagram semble avoir enregistré une demande\. Vérifions-la ensemble pour éviter d'en créer une autre\./);
-  assert.match(txt, /J'ai vu une demande d'aujourd'hui dans ta liste Instagram/);
-  assert.match(txt, /Demande à vérifier/);
+  // Refonte FOU-131 (texte de Victor, 23 nov.).
+  assert.match(txt, /Vérifie si ta demande apparaît dans Instagram\. Tu n'as pas besoin de la refaire pour vérifier\./);
   assert.doesNotMatch(txt, /C'est demandé|C'est parti|Demande confirmée|Bravo|Bien joué|Instagram prépare ta liste|Rappel activé|Ton export est prêt/, "aucune preuve inventée, aucune promesse");
   assert.equal(await page.evaluate(() => document.getElementById("asked").hidden), true, "pas d'écran A « C'est parti »");
-  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["warn", "", "", ""], "frise : seulement « à vérifier »");
+  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["warn", "", ""], "frise : seulement « à vérifier »");
   const p = await prefsOf(page);
   assert.equal(p.requestUnsure, true);
   assert.ok(p.requestedAt, "l'attente est notée, pour ne pas proposer une nouvelle demande");
@@ -75,7 +74,7 @@ test("« Demande à vérifier » sans ligne du jour : texte neutre", async () =>
   await toInstagram(page);
   await page.evaluate(() => window.zyeutoMeta("unsure", { today: false }));
   const txt = await gfText(page);
-  assert.match(txt, /Instagram semble avoir enregistré une demande/);
+  assert.match(txt, /Vérifie si ta demande apparaît dans Instagram/);
   assert.doesNotMatch(txt, /demande d'aujourd'hui/);
   await page.close();
 });
@@ -124,6 +123,7 @@ test("« Refaire la demande » efface aussi « à vérifier »", async () => {
   const page = await open();
   await toInstagram(page);
   await page.evaluate(() => window.zyeutoMeta("unsure", { today: false }));
+  await page.click("#gw-more");                                   // refonte FOU-131 : « Refaire la demande » est dans « Plus d'infos »
   await page.click("#gf-back");
   await page.click("#gf-redo-yes");
   const p = await prefsOf(page);

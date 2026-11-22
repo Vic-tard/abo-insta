@@ -35,7 +35,9 @@ async function open(prefs, version = 11) {
 }
 const of = (page, type) => page.evaluate((t) => window.__sent.filter((m) => m.type === t), type);
 const info = (page, i) => page.evaluate((x) => window.zyeutoWatchInfo(x), i);
-const gf = (page) => page.evaluate(() => document.getElementById("gf").innerText);
+// Refonte FOU-131 : rappels, e-mail et « Refaire la demande » sont dans « Plus d'infos » : on l'ouvre avant de lire l'écran.
+const openInfo = async (page) => { if (await page.isVisible("#gw-more") && !(await page.isVisible("#gw-info"))) await page.click("#gw-more"); };
+const gf = async (page) => { await openInfo(page); return page.evaluate(() => document.getElementById("gf").innerText); };
 
 test("coque 11 : plus aucun exportState (ni au démarrage, ni en démo)", async () => {
   for (const prefs of [{}, { requestedAt: ago(10) }, { accts, acctCur: "a1", requestAcct: "a1", requestedAt: ago(10) }]) {
@@ -205,7 +207,7 @@ test("demande déjà perdue par la coque : une seule reprise, sans preuve, et la
   assert.deepEqual(r[0], { type: "exportResume", acct: "a1", requestedAt: req, existing: true, today: true, proven: true });
   // Rien n'est inventé : pas d'écran A, pas de « prêt », pas de « Rappel programmé » tant que la coque n'a pas de rappel.
   assert.equal(await page.evaluate(() => document.getElementById("asked").hidden), true);
-  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
   assert.equal(await page.evaluate(() => exportSeenReady()), false);
   assert.doesNotMatch(await gf(page), /Rappel programmé/);
   await page.close();

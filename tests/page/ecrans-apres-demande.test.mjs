@@ -59,8 +59,8 @@ test("A : demande prouvée pendant qu'Instagram est par-dessus → A s'affiche a
   // Instagram rouvert puis refermé (« Vérifier mon export ») : A n'est pas rejoué.
   await page.click("#asked-go");
   assert.equal(await askedShown(page), false);
-  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
-  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["ok", "now", "", ""]);
+  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
+  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["ok", "now", ""]);
   await page.evaluate(() => { window.__setVisible(false); window.__setVisible(true); });
   assert.equal(await askedShown(page), false, "pas de double confirmation");
   assert.deepEqual(page.errors, []);
@@ -87,15 +87,15 @@ test("A n'est jamais rejoué à la réouverture de l'app : on retrouve B", async
   await page.close();
   page = await open({ prefs: saved });
   assert.equal(await askedShown(page), false);
-  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
   assert.ok((await prefsOf(page)).requestedAt);
   await page.close();
 });
 
 test("A seulement sur une demande prouvée : ni demande déjà en cours, ni « à vérifier », ni fichier déjà vu prêt", async () => {
   for (const [ev, info, title] of [
-    ["requested", { existing: true, today: true }, "Ton export se prépare 👀"],
-    ["requested", { existing: true, today: false }, "Ton export se prépare 👀"],
+    ["requested", { existing: true, today: true }, "Ton export se prépare"],
+    ["requested", { existing: true, today: false }, "Ton export se prépare"],
     ["unsure", { today: true }, "Vérifions ta demande"],
   ]) {
     const page = await open();
@@ -120,7 +120,7 @@ test("D puis vérification réussie : B sans A, avec « Demande trouvée chez In
   await page.click("#gf-get");
   await page.evaluate(() => window.zyeutoMeta("requested", { existing: true, today: true }));
   assert.equal(await askedShown(page), false);
-  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
   assert.match(await page.textContent("#gw-fr"), /Demande trouvée chez Instagram/);
   assert.match(await page.textContent("#guide-say"), /Une demande d'aujourd'hui est en cours chez Instagram/);
   await page.close();
@@ -139,8 +139,9 @@ test("fichier vu prêt pendant que A attend : E passe devant, A est refermé", a
 
 test("B : rappels honnêtes, aucun délai ni pourcentage", async () => {
   const page = await open({ prefs: { requestedAt: new Date(Date.now() - 12 * 60000).toISOString() } });
+  await page.click("#gw-more");                                   // refonte FOU-131 : les rappels sont dans « Plus d'infos »
   const txt = await page.evaluate(() => document.getElementById("gf").innerText);
-  assert.match(txt, /Instagram prépare ton fichier\. Tu peux profiter de Zieuton pendant ce temps\s!/);
+  assert.match(txt, /Instagram prépare ton fichier\. Demandé il y a 12 min\./);
   assert.match(txt, /Un rappel ne veut pas dire que ton fichier est prêt/);
   assert.match(txt, /Demandé il y a 12 min/);
   assert.doesNotMatch(txt, /\d+\s?%|il reste|prêt dans|quelques minutes|en permanence|en continu/i);
@@ -162,7 +163,9 @@ for (const [name, viewport] of [["iPhone SE (2e/3e gén.)", { width: 375, height
       }
       // Rien ne déborde sur le côté.
       assert.equal(await page.evaluate(() => document.getElementById("gf").scrollWidth <= document.getElementById("gf").clientWidth), true);
-      // Les rappels et « Refaire la demande » restent atteignables en défilant.
+      // Les rappels et « Refaire la demande » restent atteignables : « Plus d'infos » en défilant, puis dans la feuille.
+      await page.locator("#gw-more").scrollIntoViewIfNeeded();
+      await page.click("#gw-more");
       await page.locator("#gf-back").scrollIntoViewIfNeeded();
       assert.ok(await page.isVisible("#gf-back"));
       assert.deepEqual(page.errors, []);

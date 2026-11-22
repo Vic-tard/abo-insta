@@ -1,6 +1,6 @@
 // FOU-131 PR 2 (écran C) : la démo ouverte pendant une vraie demande (« Découvrir Zieuton » sur B).
-// - bandeau « DÉMO · Données d'exemple » ; pendant une demande, le bouton du haut s'appelle « Mon export » et ramène à B (ou E) ;
-// - visite par le zieuteur : 4 bulles posées sur les vraies cartes, « Suivant » ou la croix, jamais rejouée ;
+// - bandeau « DÉMO · Compte fictif » ; pendant une demande, le bouton du haut s'appelle « Mon export » et ramène à B (ou E) ;
+// - visite par le zieuteur : 4 bulles posées sur les vraies cartes, « Suivant » ou « Passer », jamais rejouée ;
 // - la démo de la bienvenue (FOU-51) n'a pas de visite et n'écrit toujours rien sur le téléphone.
 // Lancer : npm run test:lecteur.
 import { test, before, after } from "node:test";
@@ -42,24 +42,25 @@ const bubble = (page) => page.waitForSelector("#dt", { timeout: 3000 });
 const say = (page) => page.textContent("#dt-say");
 const inside = (a, b, pad = 0) => a.x >= b.x - pad && a.y >= b.y - pad && a.x + a.width <= b.x + b.width + pad && a.y + a.height <= b.y + b.height + pad;
 
-test("B → « Découvrir Zieuton » : bandeau « Données d'exemple », bouton « Mon export », 4 bulles dans l'ordre sur les vraies cartes", async () => {
+test("B → « Découvrir Zieuton » : bandeau « Compte fictif », bouton « Mon export », 4 bulles dans l'ordre sur les vraies cartes", async () => {
   const page = await open();
   await discover(page);
-  assert.equal((await page.textContent("#demo-bar span:not(.demo-tag)")).trim(), "Données d'exemple");
+  assert.equal((await page.textContent("#demo-bar span:not(.demo-tag)")).trim(), "Compte fictif");
   assert.equal((await page.textContent("#demo-quit")).trim(), "Mon export");
   await bubble(page);
+  // Refonte FOU-131 : Départs, Arrivées, Pas en retour, Fans (le détail des textes est dans refonte-attente.test.mjs).
   const want = [
-    ['.hm-tile[data-list="unfollow"]', "Ici, ceux qui se sont désabonnés de toi."],
-    ['.hm-tile[data-list="follow"]', "Là, tes nouveaux abonnés."],
-    ['.hm-tile[data-list="notback"]', "Ceux que tu suis et qui ne te suivent pas."],
-    ['#pager [data-page="stats"]', "Et tes courbes, import après import."],
+    ['.hm-tile[data-list="unfollow"]', "Les Départs"],
+    ['.hm-tile[data-list="follow"]', "Les Arrivées"],
+    ['.hm-tile[data-list="notback"]', "Les Pas en retour"],
+    ['.hm-tile[data-list="fans"]', "Les Fans"],
   ];
   for (let i = 0; i < want.length; i++) {
-    assert.equal(await say(page), want[i][1]);
+    assert.equal(await page.textContent("#dt-tt"), want[i][1]);
     assert.equal(await page.textContent("#dt-n"), `Visite · ${i + 1} sur 4`);
     const card = await page.locator(want[i][0]).boundingBox(), ring = await page.locator("#dt-ring").boundingBox();
     assert.ok(inside(card, ring, 1), `l'anneau entoure la carte ${i + 1}`);
-    assert.equal((await page.textContent("#dt-next")).trim(), i === 3 ? "J'ai compris" : "Suivant");
+    assert.equal((await page.textContent("#dt-next")).trim(), i === 3 ? "Explorer la démo" : "Suivant");
     await page.click("#dt-next");
   }
   assert.equal(await page.locator("#dt").count(), 0, "visite finie");
@@ -121,6 +122,29 @@ test("U14 : fichier prêt pendant la démo : « Ton export est prêt 🎉 », «
   await page.close();
 });
 
+test("U14 : export prêt pendant qu'une bulle est affichée, clic direct sur « Mon export » : visite fermée, E affiché, Instagram jamais ouvert", async () => {
+  const page = await open();
+  await discover(page);
+  await bubble(page);
+  await page.click("#dt-next");                                         // une bulle au milieu de la visite
+  assert.equal(await page.textContent("#dt-n"), "Visite · 2 sur 4");
+  await page.evaluate(() => { window.__sent.length = 0; window.zyeutoMeta("ready"); });
+  assert.equal(await page.locator("#dt").count(), 1, "la bulle est toujours là quand le fichier devient prêt");
+  assert.equal((await page.textContent("#demo-bar span:not(.demo-tag)")).trim(), "Ton export est prêt 🎉");
+  await page.click("#demo-quit");                                       // sans fermer la bulle avant
+  await page.waitForFunction(() => DEMO === false);
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator("#dt").count(), 0, "la visite est fermée");
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dt-lock") || document.body.classList.contains("dt-on")), false, "le défilement est rendu");
+  assert.equal(await page.textContent("#gf-title"), "Ton export est prêt\u00a0! 🎉");
+  assert.match(await page.textContent("#gf-get"), /Récupérer mon export/);
+  const t = await page.locator("#gf-title").boundingBox();
+  assert.ok(t.y >= 0 && t.y + t.height <= 852, "titre de E visible sans défiler");
+  assert.deepEqual(await igSent(page), [], "aucune commande d'ouverture d'Instagram envoyée à la coque");
+  assert.deepEqual(page.errors, []);
+  await page.close();
+});
+
 test("U14 : pendant l'attente, « Mon export » ramène toujours à B sans ouvrir Instagram", async () => {
   const page = await open();
   await discover(page);
@@ -130,7 +154,7 @@ test("U14 : pendant l'attente, « Mon export » ramène toujours à B sans ouvri
   await page.click("#demo-quit");
   await page.waitForFunction(() => DEMO === false);
   await page.waitForTimeout(400);
-  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
   assert.ok(await page.isVisible("#gf-wait-demo"));
   assert.deepEqual(await igSent(page), []);
   await page.close();
@@ -183,7 +207,7 @@ test("démo de la bienvenue (sans demande) : pas de visite, bouton « Quitter la
   await page.waitForTimeout(1000);
   assert.equal(await page.locator("#dt").count(), 0);
   assert.equal((await page.textContent("#demo-quit")).trim(), "Quitter la démo");
-  assert.equal((await page.textContent("#demo-bar span:not(.demo-tag)")).trim(), "Données d'exemple");
+  assert.equal((await page.textContent("#demo-bar span:not(.demo-tag)")).trim(), "Compte fictif");
   assert.equal(await page.evaluate(() => localStorage.getItem("abo-prefs")), before);
   await page.close();
 });
@@ -204,7 +228,7 @@ for (const [name, viewport] of [["320 × 568", { width: 320, height: 568 }], ["i
         assert.ok(next.height >= 44, "bouton facile à toucher");
         await page.click("#dt-next");
       }
-      // Le bandeau : « Données d'exemple » entier dès 375 points de large.
+      // Le bandeau : « Compte fictif » entier dès 375 points de large.
       const cut = await page.$eval("#demo-bar span:not(.demo-tag)", (el) => ({ hidden: getComputedStyle(el).visibility === "hidden", cut: el.scrollWidth > el.clientWidth }));
       if (viewport.width >= 375) assert.deepEqual(cut, { hidden: false, cut: false });
       assert.deepEqual(page.errors, []);

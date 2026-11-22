@@ -114,3 +114,12 @@ Page seule (`index.html`), sans Xcode.
 Tests : `tests/page/demo-visite.test.mjs` (ordre et cible des bulles, croix, pas rejouée, réouverture, fichier prêt pendant la démo, démo de bienvenue, 320/375/393 points en clair et en sombre : bulle dans l'écran, sans cacher sa carte, boutons de 44 points). Captures : `/mnt/project-files/abo-insta/fou131-pr2/`.
 
 Tests iPhone : U11 à U14 du tableau de la proposition.
+
+## Refonte attente et visite (validée par Victor le 23 nov. 2026)
+
+- **B « Ton export se prépare »** : lilas, coche, frise à 3 points. Bouton principal « Découvrir Zieuton » (orange foncé, texte blanc), dans une carte « Compte fictif » avec les 4 chiffres. « Vérifier mon export » juste dessous, en bouton clair.
+- **D « Vérifions ta demande »** : ambre, point d'interrogation, jamais de coche. Texte : « Vérifie si ta demande apparaît dans Instagram. Tu n'as pas besoin de la refaire pour vérifier. » Bouton principal « Vérifier dans Instagram » ; « Découvrir Zieuton en attendant » en carte, en second.
+- **« Plus d'infos »** : rappels, e-mail d'Instagram, « Refaire la demande » (toujours avec confirmation). « Rappel programmé » seulement si la coque dit qu'un rappel est vraiment prévu.
+- **Carte de l'accueil** pendant une demande : compacte, pastille « En cours chez Instagram » ou « À vérifier ».
+- **Visite** : Départs → Arrivées → Pas en retour → Fans, avec un exemple fictif. Départs et Arrivées expliquent que le grand chiffre cumule tous les imports et que la ligne dessous résume la dernière comparaison. Pendant la visite, le fond ne défile plus (seule la bulle défile sur petit écran). « Suivant » ou toucher la case ; « Passer » et « Explorer la démo » ouvrent la démo libre ; « Mon export » ramène au vrai suivi.
+- Inchangés : moteur, preuves, notifications, imports, historique, achats, écran E et écrans après import.
