@@ -78,7 +78,7 @@
 
 ## 6. Décisions encore à prendre
 
-1. Fusion de la PR #160 après correction, puis nouvelle promotion en canal stable (Victor).
+1. PR #160 (fusionnée le 22 nov., canal test) : passage en canal stable après les tests sur iPhone (Victor).
 2. Préparer ou non le plan B (FOU-33) **avant** la soumission du 5 déc.
 3. Com minimale pour la sortie du 15 déc. (FOU-56, 59, 60, en Backlog).
 4. Lien public du questionnaire testeurs (BUG-22).

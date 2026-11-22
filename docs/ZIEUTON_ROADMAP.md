@@ -12,11 +12,11 @@ Règle de Victor : **un seul sujet à la fois**. Jalons Linear :
 
 | # | Tâche | Ticket | Statut | Échéance |
 | --- | --- | --- | --- | --- |
-| 1 | PR #160 (démo pendant l'attente) : correction demandée le 22 nov., relecture, test iPhone, fusion puis stable avec l'accord de Victor | FOU-131 (Done pour le code fusionné) | PR ouverte | – |
+| 1 | PR #160 (démo pendant l'attente) : fusionnée le 22 nov. (canal test). Restent les tests iPhone U11 à U14 (FOU-105), puis le passage en stable avec l'accord de Victor | FOU-131 (Done), tests dans FOU-105 | Fusionnée ; tests iPhone et stable à faire | – |
 | 2 | Valider le build 23 sur iPhone : transitions UX, notifications, non-régression, parcours Apple | FOU-105 | En cours | 2 déc. |
 | 3 | Achats et restauration en sandbox | FOU-128 | À faire | 4 déc. |
 | 4 | Médiateur de la consommation | FOU-82 | À faire | 4 déc. |
-| 5 | Soumission à Apple, publication manuelle | FOU-130 | À faire | 5 déc. |
+| 5 | Soumission à Apple, publication manuelle | FOU-130 | In Progress dans Linear (préparation, rien n'est soumis) | 5 déc. |
 | 6 | Sortie sur l'App Store | FOU-130 (FOU-51 classé doublon) | – | **15 déc.** |
 
 Dépendances : FOU-105 bloque FOU-130. FOU-128 et FOU-82 sont menés en parallèle, avant la soumission.
@@ -61,7 +61,7 @@ FOU-56 calendrier J-14 à J+14, FOU-57 vidéos saison 1, FOU-58 vidéos « brain
 ## 5. Dépendances clés
 
 ```
-PR #160 (+ nouvelle promotion stable) → validation build 23 (FOU-105) + achats (FOU-128) + médiateur (FOU-82) → soumission 5 déc. (FOU-130) → sortie 15 déc.
+Tests iPhone de #160 (déjà fusionnée) puis promotion stable sur accord → validation build 23 (FOU-105) + achats (FOU-128) + médiateur (FOU-82) → soumission 5 déc. (FOU-130) → sortie 15 déc.
 Page fusionnée → test en canal test → PR « canal valider » → visible pour tous
 FOU-41 (découpage) → FOU-53 (Orca)
 ```

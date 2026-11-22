@@ -44,19 +44,19 @@ Rien n'est soumis sans l'accord explicite de Victor.
 
 Un build 24 ne se fera que si la coque doit changer.
 
-**Canal stable** : page du 21 nov. (2026-11-21-1638), promue le 22 nov. (PR #159). La PR #160 n'y est **pas** : il faudra une nouvelle promotion, séparée, après sa validation.
+**Canal stable** : page du 21 nov. (2026-11-21-1638), promue le 22 nov. (PR #159). La PR #160, fusionnée le 22 nov., n'y est **pas** : elle est en canal test seulement. Son passage en stable demandera une promotion séparée, après les tests sur iPhone et l'accord de Victor.
 
 ### Tickets (Linear fait foi)
 
 | Ticket | Sujet | Statut | Échéance | Remarque |
 | --- | --- | --- | --- | --- |
-| FOU-131 | Écrans après la demande d'export | Done | – | « Done » vaut pour le code fusionné (#152, #157). Les tests UX réels restants sont suivis dans FOU-105. La PR #160 (démo pendant l'attente) est ouverte, avec une correction demandée le 22 nov. : « Mon export » doit ramener à l'écran E sans ouvrir Instagram, et le balayage doit être bloqué pendant les bulles. |
+| FOU-131 | Écrans après la demande d'export | Done | – | « Done » vaut pour le code fusionné (#152, #157). Les tests UX réels restants sont suivis dans FOU-105. La PR #160 (démo pendant l'attente) a été **fusionnée le 22 nov. à 23 h 37** (commit 33ce02e, page 2026-11-22-2329), avec la correction demandée : « Mon export » ramène à l'écran B ou E sans ouvrir Instagram, et le balayage est bloqué pendant les bulles. Elle est en canal test seulement. Ses tests sur iPhone (U11 à U14) restent à faire dans FOU-105. |
 | FOU-129 | Canal stable | Done | – | Promotion du 22 nov. seulement. |
 | FOU-126 | Notifications fiables | Done | – | Lignes restantes de la matrice suivies dans FOU-105. |
 | FOU-105 | Valider le build final sur iPhone | In Progress | 2 déc. | Restent : transitions UX (dont #160), notifications, non-régression, iCloud, compte 2, parcours de l'examinateur Apple. Bloque FOU-130. |
 | FOU-128 | Achats et restauration (sandbox) | Todo | 4 déc. | En parallèle de FOU-105, avant la soumission. |
 | FOU-82 | Médiateur de la consommation | Todo | 4 déc. | Avant la soumission. |
-| FOU-130 | Soumission à Apple, publication manuelle | Todo | 5 déc. | Ticket de soumission officiel. FOU-51 a été classé doublon. |
+| FOU-130 | Soumission à Apple, publication manuelle | In Progress (depuis le 23 nov., 0 h 18) | 5 déc. | Ticket de soumission officiel. FOU-51 a été classé doublon. Statut lu dans Linear le 23 nov. ; « In Progress » veut dire que la préparation a commencé, rien n'est soumis. La soumission reste bloquée par FOU-105 et demande l'accord de Victor. |
 | FOU-83 | ACRE | In Progress | 18 déc. | Documents de l'Urssaf reçus le 21 nov. |
 | FOU-116 | Essai Higgsfield | Done | – | Cinq vidéos livrées. **Résiliation du renouvellement non confirmée** : à vérifier sur le compte Higgsfield. |
 
@@ -69,12 +69,12 @@ Les dates exactes sont dans Linear.
 
 ## 6. Prochaines étapes, dans l'ordre
 
-1. PR #160 : correction par le fil Export, relecture ChatGPT, test sur iPhone en canal test. La fusion, puis la promotion en stable, se font seulement avec l'accord de Victor.
+1. PR #160 (déjà fusionnée le 22 nov., en canal test) : tests sur iPhone U11 à U14, consignés dans FOU-105. Ensuite seulement, et avec l'accord de Victor, une PR séparée la passe en canal stable.
 2. FOU-105 : tests restants sur le build 23, à consigner.
 3. FOU-128 : achats en sandbox, avant le 4 déc.
 4. FOU-82 : médiateur, avant le 4 déc.
 5. FOU-83 : demande d'ACRE.
-6. FOU-130 : soumission le 5 déc., sortie le 15 déc.
+6. FOU-130 (In Progress) : soumission le 5 déc., sortie le 15 déc., avec l'accord de Victor.
 
 Garde-fous : aucune fusion, aucun build, aucun passage en stable et aucune soumission sans l'accord explicite de Victor.
 
@@ -87,7 +87,7 @@ Garde-fous : aucune fusion, aucun build, aucun passage en stable et aucune soumi
 
 ## 8. Questions où un second avis serait utile
 
-1. **PR #160** : une fois corrigée, la visite en bulles et le bouton « Mon export » sont-ils sûrs avant la soumission ?
+1. **PR #160** (fusionnée, canal test) : après les tests sur iPhone, la passe-t-on en canal stable avant la soumission ?
 2. **Build 23 comme build final** : quelles lignes de la matrice sont indispensables avant de soumettre ?
 3. **Risque 5.2.2** : faut-il une réponse prête pour l'examinateur ?
 4. **Lancement** : quel minimum de com, avec la sortie au 15 déc. ?

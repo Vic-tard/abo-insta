@@ -23,10 +23,10 @@
 ## Novembre 2026
 
 ### 22 nov.
+- #160 FOU-131 PR 2 : démo pendant l'attente, bulles du zieuteur, « Mon export » (page 2026-11-22-2329, fusionnée à 23 h 37, canal test seulement ; tests iPhone et stable à faire)
 - #161 Nouveau planning : sortie le 15 déc. (doc)
 - #159 Canal stable = page du 21 nov. (2026-11-21-1638), validée sur l'iPhone de Victor (FOU-126 / FOU-129)
 - #158 Ménage : branches fusionnées supprimées, roadmap, handoff (doc, 21 nov. au soir)
-- En cours : #160 FOU-131 PR 2, démo pendant l'attente (page), correction demandée avant fusion
 
 ### 21 nov.
 - #157 Après un import : « Est-ce bien le fichier de ta demande ? » (page, FOU-126 / FOU-131)

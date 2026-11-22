@@ -45,7 +45,7 @@
 | --- | --- | --- |
 | Export fiable (FOU-121, 126, 131) | – | Fait (code) |
 | Build final validé (FOU-105, 128) | 2 à 4 déc. | En cours |
-| Soumission Apple (FOU-130) | 5 déc. | À faire |
+| Soumission Apple (FOU-130) | 5 déc. | In Progress (préparation, rien n'est soumis) |
 | Teasing (J-14, FOU-56) | 1er déc. | Gelé (Backlog) |
 | Sortie manuelle | **15 déc. 2026** (avant : 3 déc.) | Visée |
 | Suivi des résultats (FOU-65) | J+14 | Backlog |
