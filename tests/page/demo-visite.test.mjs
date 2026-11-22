@@ -95,7 +95,9 @@ test("la croix arrête la visite ; elle n'est jamais rejouée (ni en revenant, n
   await again.close();
 });
 
-test("fichier prêt pendant la démo : « Ton export est prêt 🎉 » et « Mon export » mène à E", async () => {
+const igSent = (page) => page.evaluate(() => window.__sent.filter((m) => m.type === "meta"));
+
+test("U14 : fichier prêt pendant la démo : « Ton export est prêt 🎉 », « Mon export » ramène à E sans ouvrir Instagram", async () => {
   const page = await open();
   await discover(page);
   await bubble(page);
@@ -103,9 +105,63 @@ test("fichier prêt pendant la démo : « Ton export est prêt 🎉 » et « Mon
   assert.equal((await page.textContent("#demo-bar span:not(.demo-tag)")).trim(), "Ton export est prêt 🎉");
   assert.equal((await page.textContent("#demo-quit")).trim(), "Mon export");
   await page.click("#dt-x");
+  await page.evaluate(() => { window.__sent.length = 0; });
   await page.click("#demo-quit");
   await page.waitForFunction(() => DEMO === false);
+  await page.waitForTimeout(400);
   assert.equal(await page.evaluate(() => exportSeenReady()), true);
+  // Écran E visible, en haut, avec son bouton : c'est la personne qui choisit d'aller dans Instagram.
+  assert.ok(await page.isVisible("#gf"));
+  assert.equal(await page.textContent("#gf-title"), "Ton export est prêt\u00a0! 🎉");
+  assert.match(await page.textContent("#gf-get"), /Récupérer mon export/);
+  const t = await page.locator("#gf-title").boundingBox();
+  assert.ok(t.y >= 0 && t.y + t.height <= 852, "titre de E visible sans défiler");
+  assert.deepEqual(await igSent(page), [], "aucune commande d'ouverture d'Instagram envoyée à la coque");
+  assert.deepEqual(page.errors, []);
+  await page.close();
+});
+
+test("U14 : pendant l'attente, « Mon export » ramène toujours à B sans ouvrir Instagram", async () => {
+  const page = await open();
+  await discover(page);
+  await bubble(page);
+  await page.click("#dt-x");
+  await page.evaluate(() => { window.__sent.length = 0; });
+  await page.click("#demo-quit");
+  await page.waitForFunction(() => DEMO === false);
+  await page.waitForTimeout(400);
+  assert.equal(await page.textContent("#gf-title"), "Ton export se prépare 👀");
+  assert.ok(await page.isVisible("#gf-wait-demo"));
+  assert.deepEqual(await igSent(page), []);
+  await page.close();
+});
+
+// Balayage horizontal (Jeux ← Accueil → Graphiques) pendant les bulles : bloqué, la page derrière ne bouge pas.
+async function swipe(page, dx) {
+  await page.evaluate(async (dx) => {
+    const x0 = 200, y = 400, mk = (x) => new Touch({ identifier: 1, target: document.body, clientX: x, clientY: y });
+    const fire = (type, x) => document.body.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === "touchend" ? [] : [mk(x)], changedTouches: [mk(x)] }));
+    fire("touchstart", x0);
+    for (let i = 1; i <= 10; i++) { fire("touchmove", x0 + (dx * i) / 10); await new Promise((r) => setTimeout(r, 8)); }
+    fire("touchend", x0 + dx);
+  }, dx);
+  await page.waitForTimeout(350);
+}
+
+test("U14 : pendant la visite, le balayage ne change pas la page ; après la visite il marche à nouveau", async () => {
+  const page = await open();
+  await discover(page);
+  await bubble(page);
+  for (const dx of [-250, 250]) {
+    await swipe(page, dx);
+    assert.equal(await page.evaluate(() => page), "home", `balayage ${dx} bloqué pendant la visite`);
+    assert.equal(await page.locator("#dt").count(), 1, "la visite reste ouverte");
+  }
+  // Témoin : sans la visite, le même geste ouvre bien les Graphiques.
+  await page.click("#dt-x");
+  await swipe(page, -250);
+  assert.equal(await page.evaluate(() => page), "stats");
+  assert.deepEqual(page.errors, []);
   await page.close();
 });
 

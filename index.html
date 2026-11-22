@@ -5707,7 +5707,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-22-2309";
+const BUILD = "2026-11-22-2329";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -7086,7 +7086,7 @@ const PAGES = { games: $("pg-games"), stats: $("pg-stats") };
 const REST = { games: -100, stats: 100 };
 let page = "home";
 const pageW = () => window.innerWidth || 1;
-const overlayOpen = () => ["settings", "imports-page", "list-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "rec-sheet", "zy-sheet", "wheel-page", "prono-page", "who-sheet", "sheet", "village"].some((id) => $(id) && !$(id).hidden);
+const overlayOpen = () => ["settings", "imports-page", "list-page", "st-account", "st-plus", "st-look", "st-backup", "st-help", "st-privacy", "onb", "bilan", "quiz", "trophy-sheet", "rec-sheet", "zy-sheet", "wheel-page", "prono-page", "who-sheet", "sheet", "village", "dt"].some((id) => $(id) && !$(id).hidden);
 function placePage(p, pct, dragging) {
   const el = PAGES[p];
   el.classList.toggle("dragging", !!dragging);
@@ -9104,7 +9104,9 @@ function leaveDemo(quiet) {
   setPage("home"); window.scrollTo(0, 0);
   askWatch();
 }
-$("demo-quit").addEventListener("click", () => { const w = realWait(); leaveDemo(); if (w && w.ready) wkGo(); });
+// « Mon export » ramène seulement à l'écran de la vraie demande : B (attente) ou E (« Ton export est prêt »).
+// Instagram ne s'ouvre jamais d'ici : c'est la personne qui choisit « Récupérer mon export » sur E.
+$("demo-quit").addEventListener("click", () => leaveDemo());
 // Réglages → « Voir la démo » (ou « Quitter la démo ») : on referme les Réglages, puis on bascule.
 $("st-demo-row").addEventListener("click", () => {
   ST_PAGES.forEach((id) => { if (!$(id).hidden) closeStPage(id); });
