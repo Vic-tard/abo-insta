@@ -543,12 +543,14 @@ if (!window.ZYEUTO_APP) {
   @media (max-width: 374px) { .demo-bar span:not(.demo-tag) { visibility: hidden; } }
   /* FOU-131 (écran C) : visite de la démo, 4 bulles du zieuteur posées sur les vraies cartes. Lilas, jamais d'or (réservé à Plus). */
   .dt { position: fixed; inset: 0; z-index: 70; }
+  /* Pendant la visite, de la place sous la page : la case peut monter juste sous la barre, même tout en bas.
+     Le fond ne défile plus (le cadre reste sur sa case) ; seule la bulle défile, sans entraîner la page. */
+  body.dt-on { padding-bottom: 100vh; }
+  html.dt-lock { overflow-y: hidden; }
   /* « Mon export » reste touchable pendant la visite : la barre de la démo passe au-dessus du voile. */
-  /* Pendant la visite, de la place sous la page : la case peut monter juste sous la barre, même tout en bas. */
-body.dt-on { padding-bottom: 100vh; }
-body:has(#dt) .demo-bar { z-index: 72; }
+  body:has(#dt) .demo-bar { z-index: 72; }
   .dt-ring { position: fixed; border-radius: 26px; border: 0; padding: 0; background: transparent; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #8f80dc, 0 0 0 9999px rgb(46 35 40 / .55); cursor: pointer; transition: all .25s ease; }
-  .dt-bub { position: fixed; left: 16px; width: min(358px, calc(100% - 32px)); box-sizing: border-box; padding: 12px 16px 14px; border-radius: 26px; overflow-y: auto;
+  .dt-bub { position: fixed; left: 16px; width: min(358px, calc(100% - 32px)); box-sizing: border-box; padding: 12px 16px 14px; border-radius: 26px; overflow-y: auto; overscroll-behavior: contain;
     background: var(--surface); color: var(--ink); box-shadow: 0 14px 40px rgb(46 35 40 / .35); display: flex; flex-direction: column; gap: 8px; }
   .dt-arrow { position: absolute; width: 18px; height: 18px; background: var(--surface); transform: rotate(45deg); border-radius: 4px; }
   .dt-top { position: relative; display: flex; align-items: center; gap: 10px; }
@@ -5864,7 +5866,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-0018";
+const BUILD = "2026-11-23-0034";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -9298,8 +9300,8 @@ function renderDemoRow() {
 // Une seule fois : notée dans les vrais réglages dès le début (pas rejouée, même si l'app est fermée pendant la visite).
 // Seulement pour la démo ouverte pendant une vraie demande : la démo de la bienvenue (FOU-51) n'écrit toujours rien.
 const DEMO_TOUR = [
-  { list: "unfollow", sym: "↘", t: "Les Départs", say: "Ceux qui se sont désabonnés de toi depuis l'import précédent. Fini de deviner qui est parti.", tag: "ne te suit plus" },
-  { list: "follow", sym: "↖", t: "Les Arrivées", say: "Tes nouveaux abonnés depuis l'import précédent. Tu vois tout de suite qui vient d'arriver.", tag: "te suit depuis peu" },
+  { list: "unfollow", sym: "↘", t: "Les Départs", say: "Ceux qui se sont désabonnés de toi. Le grand chiffre cumule tous tes imports ; la ligne en dessous résume la dernière comparaison.", tag: "ne te suit plus" },
+  { list: "follow", sym: "↖", t: "Les Arrivées", say: "Tes nouveaux abonnés. Le grand chiffre cumule tous tes imports ; la ligne en dessous résume la dernière comparaison.", tag: "te suit depuis peu" },
   { list: "notback", sym: "⇄", t: "Les Pas en retour", say: "Tu les suis, mais eux ne te suivent pas. À toi de voir si tu continues à les suivre.", tag: "tu suis · pas en retour" },
   { list: "fans", sym: "♡", t: "Les Fans", say: "Ils te suivent, mais toi tu ne les suis pas. Des gens à découvrir, et peut-être à suivre en retour.", tag: "te suit · tu ne suis pas" },
 ];
@@ -9323,6 +9325,11 @@ function startDemoTour() {
     <div class="dt-row"><small class="dt-hint" id="dt-hint">Ou touche la case entourée</small><button class="dt-next" id="dt-next" type="button">Suivant</button></div></div>`;
   document.body.appendChild(o);
   document.body.classList.add("dt-on");
+  document.documentElement.classList.add("dt-lock");
+  // Glisser sur le voile ne fait pas défiler la page derrière ; dans la bulle, oui si elle est trop haute (petit écran).
+  const still = (e) => { const b = $("dt-bub"); if (b && b.contains(e.target) && b.scrollHeight > b.clientHeight + 1) return; e.preventDefault(); };
+  o.addEventListener("touchmove", still, { passive: false });
+  o.addEventListener("wheel", still, { passive: false });
   const next = () => { haptic("light"); demoTourAt + 1 < DEMO_TOUR.length ? showDemoTour(demoTourAt + 1) : endDemoTour(); };
   $("dt-next").onclick = next;
   $("dt-ring").onclick = next;
@@ -9380,8 +9387,11 @@ function endDemoTour() {
   demoTourAt = -1;
   $("dt")?.remove();
   document.body.classList.remove("dt-on");
+  document.documentElement.classList.remove("dt-lock");
 }
 addEventListener("resize", placeDemoTour);
+// Filet : si la page bouge quand même (clavier, rotation…), le cadre suit sa case.
+addEventListener("scroll", () => { if (demoTourAt >= 0) placeDemoTour(); }, { passive: true });
 // Les pseudos de la démo sont inventés : on n'ouvre pas Instagram dessus.
 document.addEventListener("click", (e) => {
   if (!DEMO) return;

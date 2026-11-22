@@ -122,6 +122,29 @@ test("U14 : fichier prêt pendant la démo : « Ton export est prêt 🎉 », «
   await page.close();
 });
 
+test("U14 : export prêt pendant qu'une bulle est affichée, clic direct sur « Mon export » : visite fermée, E affiché, Instagram jamais ouvert", async () => {
+  const page = await open();
+  await discover(page);
+  await bubble(page);
+  await page.click("#dt-next");                                         // une bulle au milieu de la visite
+  assert.equal(await page.textContent("#dt-n"), "Visite · 2 sur 4");
+  await page.evaluate(() => { window.__sent.length = 0; window.zyeutoMeta("ready"); });
+  assert.equal(await page.locator("#dt").count(), 1, "la bulle est toujours là quand le fichier devient prêt");
+  assert.equal((await page.textContent("#demo-bar span:not(.demo-tag)")).trim(), "Ton export est prêt 🎉");
+  await page.click("#demo-quit");                                       // sans fermer la bulle avant
+  await page.waitForFunction(() => DEMO === false);
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator("#dt").count(), 0, "la visite est fermée");
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dt-lock") || document.body.classList.contains("dt-on")), false, "le défilement est rendu");
+  assert.equal(await page.textContent("#gf-title"), "Ton export est prêt\u00a0! 🎉");
+  assert.match(await page.textContent("#gf-get"), /Récupérer mon export/);
+  const t = await page.locator("#gf-title").boundingBox();
+  assert.ok(t.y >= 0 && t.y + t.height <= 852, "titre de E visible sans défiler");
+  assert.deepEqual(await igSent(page), [], "aucune commande d'ouverture d'Instagram envoyée à la coque");
+  assert.deepEqual(page.errors, []);
+  await page.close();
+});
+
 test("U14 : pendant l'attente, « Mon export » ramène toujours à B sans ouvrir Instagram", async () => {
   const page = await open();
   await discover(page);

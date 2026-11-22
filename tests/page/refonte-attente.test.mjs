@@ -115,13 +115,14 @@ test("aller-retour D → Découvrir → visite → Mon export : on retrouve D, l
   await page.close();
 });
 
-test("visite : 4 étapes Départs → Arrivées → Pas en retour → Fans, « depuis l'import précédent », toucher la case = Suivant", async () => {
+test("visite : 4 étapes Départs → Arrivées → Pas en retour → Fans, le grand chiffre cumule les imports, toucher la case = Suivant", async () => {
   const page = await open();
   await page.click("#gf-wait-demo");
   await page.waitForSelector("#dt", { timeout: 3000 });
   const want = [
-    ["unfollow", "Les Départs", /depuis l'import précédent/],
-    ["follow", "Les Arrivées", /depuis l'import précédent/],
+    // Le grand chiffre (61, 130) cumule tous les imports ; la ligne dessous (−11, +17) résume la dernière comparaison.
+    ["unfollow", "Les Départs", /Le grand chiffre cumule tous tes imports ; la ligne en dessous résume la dernière comparaison\./],
+    ["follow", "Les Arrivées", /Le grand chiffre cumule tous tes imports ; la ligne en dessous résume la dernière comparaison\./],
     ["notback", "Les Pas en retour", /Tu les suis, mais eux ne te suivent pas/],
     ["fans", "Les Fans", /Ils te suivent, mais toi tu ne les suis pas/],
   ];
@@ -135,6 +136,7 @@ test("visite : 4 étapes Départs → Arrivées → Pas en retour → Fans, « d
     // La bulle ne cache pas la case entourée.
     const tile = await page.locator(`.hm-tile[data-list="${want[i][0]}"]`).boundingBox(), bub = await page.locator("#dt-bub").boundingBox();
     assert.ok(bub.y >= tile.y + tile.height - 1 || bub.y + bub.height <= tile.y + 1, `bulle ${i + 1} à côté de la case`);
+    assert.doesNotMatch(await page.textContent("#dt-say"), /depuis l'import précédent/);
     if (i < 3) await page.click(i % 2 ? "#dt-ring" : "#dt-next");
   }
   assert.equal(await page.textContent("#dt-next"), "Explorer la démo");
@@ -174,6 +176,70 @@ for (const [name, vp] of [["petit iPhone", { width: 320, height: 568 }], ["petit
     await reach(page, "#dt-x");
     assert.equal(await page.textContent("#dt-next"), "Explorer la démo");
     await reach(page, "#demo-quit");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+}
+
+// Glisser verticalement pendant la visite : le fond ne bouge pas, le cadre reste sur sa case ; la bulle défile seule
+// sur petit écran ; le défilement normal revient dès la fin de la visite.
+async function drag(page, x, y, dy) {
+  // Molette (le vrai défilement de Chromium) + geste tactile : sur le voile, le geste est refusé (preventDefault).
+  await page.mouse.move(x, y);
+  await page.mouse.wheel(0, dy);
+  await page.waitForTimeout(150);
+  return page.evaluate(([x, y, dy]) => {
+    const t = document.elementFromPoint(x, y), mk = (yy) => new Touch({ identifier: 1, target: t, clientX: x, clientY: yy });
+    t.dispatchEvent(new TouchEvent("touchstart", { bubbles: true, cancelable: true, touches: [mk(y)], changedTouches: [mk(y)] }));
+    const ev = new TouchEvent("touchmove", { bubbles: true, cancelable: true, touches: [mk(y - dy)], changedTouches: [mk(y - dy)] });
+    t.dispatchEvent(ev);
+    t.dispatchEvent(new TouchEvent("touchend", { bubbles: true, cancelable: true, touches: [], changedTouches: [mk(y - dy)] }));
+    return ev.defaultPrevented;
+  }, [x, y, dy]);
+}
+const aligned = async (page, list) => {
+  const tile = await page.locator(`.hm-tile[data-list="${list}"]`).boundingBox(), ring = await page.locator("#dt-ring").boundingBox();
+  return Math.abs(ring.x + 6 - tile.x) < 2 && Math.abs(ring.y + 6 - tile.y) < 2 && Math.abs(ring.height - 12 - tile.height) < 2;
+};
+for (const [name, vp] of [["iPhone 15", { width: 393, height: 852 }], ["petit iPhone, texte agrandi", { width: 246, height: 437 }]]) {
+  test(`visite, ${name} : glisser sur le voile ne fait pas bouger le fond, le cadre reste aligné`, async () => {
+    const page = await open({ viewport: vp });
+    await page.click("#gf-wait-demo");
+    await page.waitForSelector("#dt", { timeout: 3000 });
+    const lists = ["unfollow", "follow", "notback", "fans"];
+    for (let i = 0; i < 4; i++) {
+      const y0 = await page.evaluate(() => scrollY);
+      const bub = await page.locator("#dt-bub").boundingBox(), ring = await page.locator("#dt-ring").boundingBox();
+      // Un point du voile, hors de la bulle et du cadre.
+      const vy = bub.y > ring.y ? Math.min(vp.height - 4, bub.y + bub.height + 4) : Math.max(60, ring.y + ring.height + 4);
+      const veilY = vy < vp.height - 2 && !(vy >= bub.y && vy <= bub.y + bub.height) ? vy : Math.max(bub.y + bub.height + 2, ring.y + ring.height + 2);
+      for (const dy of [300, -300]) {
+        const blocked = await drag(page, 4, Math.min(veilY, vp.height - 3), dy);
+        assert.equal(blocked, true, "le geste sur le voile est bloqué");
+        assert.equal(await page.evaluate(() => scrollY), y0, `étape ${i + 1} : le fond ne défile pas (${dy})`);
+        assert.ok(await aligned(page, lists[i]), `étape ${i + 1} : le cadre reste sur sa case`);
+      }
+      // Bulle trop haute (petit écran) : elle défile, elle, sans entraîner la page.
+      const tall = await page.evaluate(() => { const b = document.getElementById("dt-bub"); return b.scrollHeight > b.clientHeight + 1; });
+      if (tall) {
+        const b = await page.locator("#dt-bub").boundingBox();
+        assert.equal(await drag(page, b.x + b.width / 2, b.y + b.height / 2, 200), false, "dans la bulle, le geste passe");
+        assert.ok(await page.evaluate(() => document.getElementById("dt-bub").scrollTop) > 0, "la bulle défile");
+        assert.equal(await page.evaluate(() => scrollY), y0, "la page, elle, ne bouge pas");
+      }
+      if (i < 3) await page.click("#dt-next");
+    }
+    if (vp.height < 500) assert.ok(true);
+    await page.locator("#dt-next").scrollIntoViewIfNeeded();
+    await page.click("#dt-next");
+    assert.equal(await page.locator("#dt").count(), 0);
+    // Fin de visite : la page défile de nouveau normalement.
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.mouse.move(vp.width / 2, vp.height / 2);
+    await page.mouse.wheel(0, 300);
+    await page.waitForTimeout(200);
+    assert.ok(await page.evaluate(() => scrollY) > 0, "défilement normal après la visite");
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dt-lock") || document.body.classList.contains("dt-on")), false);
     assert.deepEqual(page.errors, []);
     await page.close();
   });
