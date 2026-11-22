@@ -1,6 +1,6 @@
 # Zieuton : business et stratégie
 
-> Dernière mise à jour : 16 novembre 2026 (FOU-123). **Toute la com est gelée** depuis le 10 nov. (FOU-99) et la priorité est l'export (16 nov.). Ce document range ce qui existe, il ne relance rien.
+> Dernière mise à jour : 23 novembre 2026 (base FOU-123). **Toute la com est gelée** depuis le 10 nov. (FOU-99) et la priorité est l'export (16 nov.). Ce document range ce qui existe, il ne relance rien.
 
 ## 1. Positionnement
 
@@ -43,13 +43,13 @@
 
 | Étape | Cible | État |
 | --- | --- | --- |
-| Export fiable (FOU-121) | – | En cours |
-| Build final + test inconnu | – | À faire |
-| Soumission Apple | « vers le 20 nov. » | À reconfirmer |
-| Teasing (J-14) | ~19 nov. | Gelé |
-| Sortie manuelle | 3 déc. 2026 | Visée |
+| Export fiable (FOU-121, 126, 131) | – | Fait (code) |
+| Build final validé (FOU-105, 128) | 2 à 4 déc. | En cours |
+| Soumission Apple (FOU-130) | 5 déc. | À faire |
+| Teasing (J-14, FOU-56) | 1er déc. | Gelé (Backlog) |
+| Sortie manuelle | **15 déc. 2026** (avant : 3 déc.) | Visée |
 | Suivi des résultats (FOU-65) | J+14 | Backlog |
 
 ## 7. Cadre légal et administratif
 
-**[Confirmé]** EI micro-entreprise (micro-BIC, franchise de TVA), immatriculée le 5 nov. 2026, SIREN 132 433 392. Textes légaux à jour (FOU-34, FOU-68). Contrat Apps payantes, banque, W-8BEN, statut commerçant DSA : faits. À faire : ACRE avant le 18 déc. (FOU-83, attend le courrier URSSAF), médiateur de la consommation (FOU-82). Marque INPI : **[Inconnu]** (conseillée, aucun dépôt noté).
+**[Confirmé]** EI micro-entreprise (micro-BIC, franchise de TVA), immatriculée le 5 nov. 2026, SIREN 132 433 392. Textes légaux à jour (FOU-34, FOU-68). Contrat Apps payantes, banque, W-8BEN, statut commerçant DSA : faits. À faire : ACRE avant le 18 déc. (FOU-83, documents de l'Urssaf reçus le 21 nov.), médiateur de la consommation (FOU-82). Marque INPI : **[Inconnu]** (conseillée, aucun dépôt noté).

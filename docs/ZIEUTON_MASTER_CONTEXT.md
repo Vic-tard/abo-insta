@@ -1,6 +1,6 @@
 # Zieuton : contexte de référence
 
-> Dernière mise à jour : 16 novembre 2026 (ticket FOU-123). À relire au début de toute nouvelle conversation.
+> Dernière mise à jour : 23 novembre 2026 (base FOU-123). L'état au jour le jour est dans `ZIEUTON_HANDOFF.md`. À relire au début de toute nouvelle conversation.
 > Légende : **[Confirmé]** = vu dans le dépôt, Linear ou une décision écrite de Victor. **[Déduit]** = recoupement raisonnable, à vérifier. **[Inconnu]** = information manquante.
 
 Ce document résume le projet. Il ne remplace pas les documents existants, il pointe vers eux :
@@ -102,16 +102,16 @@ Non commencé ou en attente : Android, version anglaise, accessibilité, découp
 
 ## 7. État général (16 nov. 2026)
 
-- **[Confirmé]** Build 1.0 (7) sur TestFlight, testé par des amis (groupe « TEST ZIEUTON POTES », 50 places). Leurs retours ont montré que l'export reste difficile (connexion, alerte « appareil non reconnu », réglages, un compte verrouillé).
-- **[Confirmé]** En cours : refonte de la fiabilité de l'export (FOU-121). L'étape P1 est dans la **PR #132** (ouverte, coque, `CURRENT_PROJECT_VERSION` 11), à relire par ChatGPT et à valider par Victor. Plan P1 à P6 validé par Victor et ChatGPT. Diagnostic : https://claude.ai/artifact/EoLTde9KQffLq2JGBuwqkj
+- **[Confirmé]** Build candidat **1.0 (23)** sur TestFlight (23 nov.). Avant lui, le build 1.0 (7) avait été testé par des amis (groupe « TEST ZIEUTON POTES », 50 places). Leurs retours ont montré que l'export restait difficile (connexion, alerte « appareil non reconnu », réglages, un compte verrouillé).
+- **[Confirmé]** Export fiabilisé : P1 à P6 (FOU-121, 16 nov.), notifications fiables (FOU-126), écrans après la demande (FOU-131). Canal stable = page du 21 nov. Validation finale en cours (FOU-105).
 - **[Confirmé]** Gelé : com, zieuteur 3D, village (améliorations).
 - **[Confirmé]** Fiche App Store remplie, captures déposées, achats créés, App Privacy « Données non collectées ».
 
 ## 8. Objectifs à court terme
 
-1. Rendre l'export fiable (P1 → P6), puis un premier export réussi par un inconnu sans aide (FOU-37).
-2. Un seul build final, testé sur iPhone (achats compris), puis soumission à Apple (FOU-51).
-3. Sortie manuelle visée le **3 décembre 2026**. **[Déduit]** La soumission « vers le 20 novembre » est probablement intenable si P1 à P6 touchent la coque : date à reconfirmer par Victor.
+1. Valider le build 23 sur iPhone (FOU-105), les achats (FOU-128) et le médiateur (FOU-82).
+2. Soumettre à Apple le **5 décembre** (FOU-130), avec publication manuelle.
+3. Sortie sur l'App Store le **15 décembre 2026**. Le planning a été décalé de 10 jours le 22 nov. ; l'ancienne date était le 3 déc.
 
 ## 9. Liens et références
 
