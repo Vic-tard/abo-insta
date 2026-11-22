@@ -534,8 +534,25 @@ if (!window.ZYEUTO_APP) {
   /* FOU-51 : « Quitter la démo » bien visible : bouton blanc, gros, facile à toucher. */
   .demo-bar button { flex: none; border: 0; border-radius: 999px; min-height: 44px; padding: 11px 18px; background: #fff; color: #3a1d2c; font: 800 15px var(--round); cursor: pointer; box-shadow: 0 3px 10px rgb(0 0 0 / .25); }
   .demo-bar button:active { background: #f3e6ea; }
-  /* Petit écran : le texte du milieu serait coupé (« Données i… ») ; l'étiquette DÉMO suffit. */
-  @media (max-width: 400px) { .demo-bar span:not(.demo-tag) { visibility: hidden; } }
+  /* FOU-131 : « Données d'exemple » en entier à côté de « Mon export » dès 375 points (iPhone SE, iPhone 15). Plus étroit
+     (zoom d'affichage) : le texte serait coupé ; l'étiquette DÉMO suffit. */
+  .demo-bar { gap: 8px; }
+  .demo-bar span:not(.demo-tag) { font-size: 14px; }
+  .demo-bar button { padding: 11px 14px; }
+  .demo-bar .demo-tag { padding: 8px 9px; }
+  @media (max-width: 374px) { .demo-bar span:not(.demo-tag) { visibility: hidden; } }
+  /* FOU-131 (écran C) : visite de la démo, 4 bulles du zieuteur posées sur les vraies cartes. Lilas, jamais d'or (réservé à Plus). */
+  .dt { position: fixed; inset: 0; z-index: 70; }
+  .dt-ring { position: fixed; border-radius: 22px; box-shadow: 0 0 0 3px #9d86e4, 0 0 0 9999px rgb(46 35 40 / .5); pointer-events: none; transition: all .25s ease; }
+  .dt-bub { position: fixed; left: 16px; width: min(340px, calc(100% - 32px)); box-sizing: border-box; padding: 14px 14px 12px; border-radius: 22px;
+    background: var(--surface); color: var(--ink); box-shadow: 0 14px 34px rgb(46 35 40 / .35), inset 0 0 0 1.5px #c9b8f7; display: grid; grid-template-columns: 52px 1fr; gap: 6px 12px; align-items: center; }
+  .dt-av { width: 52px !important; grid-row: span 2; border-radius: 16px; box-shadow: 0 3px 8px rgb(46 35 40 / .18); }
+  .dt-n { font: 800 12px var(--round); letter-spacing: .05em; text-transform: uppercase; color: #8072d0; }
+  .dt-say { margin: 0; font: 700 17px/1.3 var(--round); }
+  .dt-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+  .dt-next { border: 0; border-radius: 999px; min-height: 44px; padding: 10px 20px; font: 800 15px var(--round); color: #fff; background: linear-gradient(135deg, #b4a2f0, #8a72dc); cursor: pointer; }
+  .dt-x { position: absolute; top: 6px; right: 6px; width: 44px; height: 44px; border: 0; background: none; color: var(--muted); font: 700 22px/1 var(--round); cursor: pointer; }
+  @media (prefers-reduced-motion: reduce) { .dt-ring { transition: none; } }
   body.demo .wrap { padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 70px); }
   /* « Voir une démo » : petite pastille ronde et douce, pas un lien souligné */
   /* Plan avant Instagram (FOU-121) */
@@ -2770,7 +2787,7 @@ if (!window.ZYEUTO_APP) {
 <canvas id="confetti" aria-hidden="true"></canvas>
 
 <!-- Page de gauche : jeux, quiz et animations -->
-<div class="demo-bar" id="demo-bar" role="status" hidden><b class="demo-tag">Démo</b><span>Données inventées</span><button type="button" id="demo-quit">Quitter la démo</button></div>
+<div class="demo-bar" id="demo-bar" role="status" hidden><b class="demo-tag">Démo</b><span>Données d'exemple</span><button type="button" id="demo-quit">Quitter la démo</button></div>
 <div class="pg off" id="pg-games" role="region" aria-label="Mini-jeux" inert>
   <div class="wrap">
     <div class="pg-head center has-trophy"><div><h1 class="pg-title-big">Mini-jeux</h1></div><button class="pg-trophy" id="tile-trophies" type="button" aria-label="Trophées"><span class="t-cup" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M15 8h18v11a9 9 0 0 1-18 0z" fill="#fff6d8"/><path d="M15 11H9a6 6 0 0 0 6 8M33 11h6a6 6 0 0 1-6 8" fill="none" stroke="#fff6d8" stroke-width="3" stroke-linecap="round"/><path d="M21 27h6v6h-6z" fill="#fff6d8"/><rect x="15" y="33" width="18" height="6" rx="2" fill="#fff6d8"/><path d="M19 12v6" stroke="#ef7f6a" stroke-width="2.4" stroke-linecap="round"/></svg></span></button></div>
@@ -5054,7 +5071,7 @@ window.zyeutoMeta = (ev, info) => {
   // Pendant la démo : « prêt » est noté sur les vraies données (la barre du haut le dit), une notification touchée ramène aux vraies données.
   if (DEMO && ev === "ready") {
     if (realPrefs && !realPrefs.readyAt) { realPrefs.readyAt = new Date().toISOString(); try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch { /* normal : stockage du navigateur indisponible */ } }
-    haptic("success"); renderDemoBar(); toast("Ta vraie liste est prête 🎉 Touche « Récupérer ma liste » en haut.", false);
+    haptic("success"); renderDemoBar(); toast("Ton export est prêt 🎉 Touche « Mon export » en haut.", false);
     return;
   }
   if (DEMO && (ev === "open" || ev === "home")) leaveDemo(true);
@@ -5690,7 +5707,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-21-1638";
+const BUILD = "2026-11-22-2309";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -9067,6 +9084,7 @@ function enterDemo() {
   render(); renderPlusBlock(); renderBackup(); checkTrophies();
   setPage("home"); window.scrollTo(0, 0);
   playIntro();
+  setTimeout(startDemoTour, 500);
 }
 // quiet : sortie automatique (import d'un vrai fichier), sans rouvrir le parcours.
 function leaveDemo(quiet) {
@@ -9075,6 +9093,7 @@ function leaveDemo(quiet) {
   for (const k of ["theme", "plus", "plusSlots", "plusPrices"]) if (k in prefs) realPrefs[k] = prefs[k];
   if (avatar !== demoAvatar) { avatar = demoAvatar; try { renderAvatar(); } catch (e) { logError("render-avatar", e); } }
   demoParked = {};
+  endDemoTour();
   DEMO = false; state = realState; prefs = realPrefs; realState = realPrefs = null;
   savePrefs();
   document.body.classList.remove("demo"); $("demo-bar").hidden = true; renderDemoRow();
@@ -9099,10 +9118,12 @@ function realWait() {
   try { if (reqPending()) { const since = prefs.requestedAt ? Math.max(0, Math.round((Date.now() - Date.parse(prefs.requestedAt)) / 60000)) : 0; r = { ready: exportSeenReady(), since }; } } finally { prefs = sp; state = ss; }
   return r;
 }
+// FOU-131 (écran C) : « DÉMO · Données d'exemple » ; pendant une vraie demande, le bouton s'appelle « Mon export » et ramène
+// à l'écran d'attente (B), ou à « Ton export est prêt » (E) quand le fichier est prêt.
 function renderDemoBar() {
   const w = realWait(), sp = $("demo-bar").querySelector("span:not(.demo-tag)");
-  sp.textContent = !w ? "Données inventées" : w.ready ? "Ta liste est prête 🎉" : "Instagram prépare ta liste";
-  $("demo-quit").textContent = w && w.ready ? "Récupérer ma liste" : w ? "Ma liste" : "Quitter la démo";
+  sp.textContent = w && w.ready ? "Ton export est prêt 🎉" : "Données d'exemple";
+  $("demo-quit").textContent = w ? "Mon export" : "Quitter la démo";
   $("demo-bar").classList.toggle("go", !!(w && w.ready));
 }
 setInterval(() => { if (DEMO) renderDemoBar(); }, 30000);
@@ -9111,6 +9132,66 @@ function renderDemoRow() {
   $("st-demo-t").textContent = DEMO ? "Quitter la démo" : "Voir la démo";
   $("st-demo-s").textContent = DEMO ? "Revenir à tes vraies données" : "Des abonnés inventés, tes données ne bougent pas";
 }
+// ---------- FOU-131 (écran C) : visite de la démo par le zieuteur ----------
+// 4 bulles, une à la fois, posées sur les vraies cartes. « Suivant » ou la croix (qui arrête la visite : on reste libre dans la démo).
+// Une seule fois : notée dans les vrais réglages dès le début (pas rejouée, même si l'app est fermée pendant la visite).
+// Seulement pour la démo ouverte pendant une vraie demande (écran C, « Découvrir Zieuton ») : la démo de la bienvenue (FOU-51)
+// n'écrit toujours rien sur le téléphone.
+const DEMO_TOUR = [
+  { sel: '.hm-tile[data-list="unfollow"]', say: "Ici, ceux qui se sont désabonnés de toi." },
+  { sel: '.hm-tile[data-list="follow"]', say: "Là, tes nouveaux abonnés." },
+  { sel: '.hm-tile[data-list="notback"]', say: "Ceux que tu suis et qui ne te suivent pas." },
+  { sel: '#pager [data-page="stats"]', say: "Et tes courbes, import après import." },
+];
+let demoTourAt = -1;
+function startDemoTour() {
+  if (!DEMO || !realPrefs || realPrefs.demoTourDone || $("dt") || !realWait()) return;
+  realPrefs.demoTourDone = true;
+  realPrefs.v = PREFS_V;
+  try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch (e) { logError("prefs-save-tour", e); }
+  const o = document.createElement("div");
+  o.className = "dt"; o.id = "dt"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "dt-say");
+  o.innerHTML = `<div class="dt-ring" id="dt-ring"></div><div class="dt-bub" id="dt-bub">
+    <span class="zy-av dt-av" aria-hidden="true">${$("wk-av").innerHTML}</span>
+    <span class="dt-n" id="dt-n"></span><p class="dt-say" id="dt-say"></p>
+    <div class="dt-row"><button class="dt-next" id="dt-next" type="button">Suivant</button></div>
+    <button class="dt-x" id="dt-x" type="button" aria-label="Arrêter la visite">×</button></div>`;
+  document.body.appendChild(o);
+  $("dt-next").onclick = () => { haptic("light"); demoTourAt + 1 < DEMO_TOUR.length ? showDemoTour(demoTourAt + 1) : endDemoTour(); };
+  $("dt-x").onclick = () => endDemoTour();
+  showDemoTour(0);
+}
+function showDemoTour(i) {
+  const s = DEMO_TOUR[i], el = document.querySelector(s.sel), o = $("dt");
+  if (!o) return;
+  if (!el || !el.getClientRects().length) return endDemoTour();
+  demoTourAt = i;
+  $("dt-n").textContent = `Visite · ${i + 1} sur ${DEMO_TOUR.length}`;
+  $("dt-say").textContent = s.say;
+  $("dt-next").textContent = i === DEMO_TOUR.length - 1 ? "J'ai compris" : "Suivant";
+  if (!el.closest("#pager")) el.scrollIntoView({ block: "center", behavior: "instant" });
+  placeDemoTour();
+  $("dt-next").focus();
+}
+function placeDemoTour() {
+  const o = $("dt");
+  if (!o || demoTourAt < 0) return;
+  const el = document.querySelector(DEMO_TOUR[demoTourAt].sel);
+  if (!el) return;
+  const r = el.getBoundingClientRect(), ring = $("dt-ring"), bub = $("dt-bub"), pad = 6;
+  Object.assign(ring.style, { left: r.left - pad + "px", top: r.top - pad + "px", width: r.width + 2 * pad + "px", height: r.height + 2 * pad + "px" });
+  const h = bub.offsetHeight, vh = window.innerHeight, w = bub.offsetWidth;
+  // Sous la carte s'il y a la place, sinon au-dessus ; jamais hors de l'écran.
+  const below = r.bottom + pad + 12, above = r.top - pad - 12 - h;
+  const top = below + h <= vh - 12 ? below : Math.max(12, above);
+  const left = Math.min(Math.max(16, r.left + r.width / 2 - w / 2), window.innerWidth - w - 16);
+  Object.assign(bub.style, { top: top + "px", left: left + "px" });
+}
+function endDemoTour() {
+  demoTourAt = -1;
+  $("dt")?.remove();
+}
+addEventListener("resize", placeDemoTour);
 // Les pseudos de la démo sont inventés : on n'ouvre pas Instagram dessus.
 document.addEventListener("click", (e) => {
   if (!DEMO) return;

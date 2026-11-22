@@ -100,3 +100,17 @@ ReadyProof sans référence : jamais « prêt » automatique, au mieux « vérif
 Pour le build 22 (coque, à décider) :
 - Défense en double : `pending: false` n'efface la demande que si la page dit pourquoi (import fait, demande refaite, effacement).
 - Bandeau `unproven` quand un « Télécharger » est visible : ne plus dire « En attente : pas prêt », mais « Un fichier est disponible. Regarde sa date « Expire le » pour savoir si c'est le tien : le plus récent a la date la plus lointaine. »
+
+## PR 2 : écran C, la démo pendant l'attente (22 nov.)
+
+Page seule (`index.html`), sans Xcode.
+
+- Bandeau du haut : « DÉMO · Données d'exemple » (avant : « Données inventées »). Pendant une vraie demande, le bouton s'appelle « Mon export » (avant : « Ma liste » / « Récupérer ma liste ») et ramène à B, ou à E quand le fichier est prêt ; le bandeau dit alors « Ton export est prêt 🎉 ». Sans demande en cours : « Quitter la démo », comme avant.
+- « Données d'exemple » tient en entier à côté de « Mon export » dès 375 points (iPhone SE, iPhone 15). Plus étroit (zoom d'affichage), seule l'étiquette DÉMO reste.
+- Visite par le zieuteur, à l'entrée dans la démo depuis B (« Découvrir Zieuton ») : 4 bulles posées sur les vraies cartes (Départs, Arrivées, Pas en retour, bouton Graphiques), « Suivant » (dernière : « J'ai compris ») et une croix qui arrête la visite. On reste libre dans la démo.
+- Une seule fois : notée (`demoTourDone`) dans les vrais réglages dès le début de la visite, donc jamais rejouée, même après réouverture.
+- La démo de la bienvenue (FOU-51) n'a pas de visite et n'écrit toujours rien sur le téléphone.
+
+Tests : `tests/page/demo-visite.test.mjs` (ordre et cible des bulles, croix, pas rejouée, réouverture, fichier prêt pendant la démo, démo de bienvenue, 320/375/393 points en clair et en sombre : bulle dans l'écran, sans cacher sa carte, boutons de 44 points). Captures : `/mnt/project-files/abo-insta/fou131-pr2/`.
+
+Tests iPhone : U11 à U14 du tableau de la proposition.
