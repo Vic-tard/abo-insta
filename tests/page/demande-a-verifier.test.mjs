@@ -39,7 +39,7 @@ const prefsOf = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("a
 
 // Jusqu'à l'écran « Zieuton en haut, Instagram en bas », puis Instagram (comme dans la vidéo du 18 nov.).
 async function toInstagram(page) {
-  await page.click("#gf-meta");                                   // « Ouvrir Instagram »
+  await page.click("#gf-meta");                                   // « Continuer » (écran des 3 étapes)
   assert.match(await gfText(page), /Zieuton en haut/);
   await page.click("#gf-meta");                                   // « J'ai compris, on y va »
   const metas = (await sent(page)).filter((m) => m.type === "meta");

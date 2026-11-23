@@ -1,4 +1,5 @@
 // Ouvre la page dans un vrai navigateur (Chromium, via Playwright) et échoue s'il y a une erreur dans la console.
+import { readFileSync } from "node:fs";
 // Trois passages : comme dans l'app iPhone (coque version 8, puis ancienne coque version 7), puis comme dans Safari.
 // Dans l'app, on vérifie aussi le signal « je suis bien démarrée » et le réglage caché du canal test (FOU-28).
 // Lancer : npm run check:page   (il faut d'abord : npm ci && npx playwright install chromium)
@@ -39,6 +40,12 @@ for (const run of runs) {
   const errors = [];
   page.on("console", (m) => { if (m.type() === "error") errors.push(`console : ${m.text()}`); });
   page.on("pageerror", (e) => errors.push(`erreur JavaScript : ${e.message}`));
+  // Images du Zieuteur 3D : dans l'app, la page les lit sur zieuton.com (puis GitHub Pages). Ici, on les sert depuis le dépôt,
+  // comme le site une fois publié (sans réseau, la page afficherait l'ancien dessin).
+  for (const host of ["https://zieuton.com/", "https://vic-tard.github.io/abo-insta/"]) {
+    await page.route(host + "guide/**", (r) => r.fulfill({ contentType: "image/png",
+      body: readFileSync(new URL("../guide/" + r.request().url().split("/guide/")[1].split("?")[0], import.meta.url)) }));
+  }
   if (run.app) await page.addInitScript((app) => {
     window.ZYEUTO_APP = app;
     // Fausse coque : on note les messages envoyés à l'app.

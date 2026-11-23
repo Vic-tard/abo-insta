@@ -115,7 +115,7 @@ test("parcours Instagram inchangé après la démo : « C'est parti ! » mène a
   await page.click("#gf-go");
   await page.waitForFunction(() => document.getElementById("gf-body").dataset.step === "insta");
   assert.equal(await page.textContent("#gf-title"), "On va chercher tes abonnés chez Instagram");
-  assert.equal((await page.textContent("#gf-meta")).trim(), "Ouvrir Instagram");
+  assert.equal((await page.textContent("#gf-meta")).trim(), "Continuer");
   assert.equal(await page.locator("#gf-via").isVisible(), true);
   assert.equal(await page.locator("#gf-restore").isVisible(), true);
   // Le lien démo reste propre à la bienvenue : le plan n'a pas un bouton de plus.

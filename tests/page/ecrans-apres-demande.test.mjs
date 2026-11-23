@@ -42,7 +42,7 @@ const prefsOf = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("a
 
 test("A : demande prouvée pendant qu'Instagram est par-dessus → A s'affiche au retour dans Zieuton, une seule fois", async () => {
   const page = await open();
-  await page.click("#gf-meta");                                   // « Ouvrir Instagram »
+  await page.click("#gf-meta");                                   // « Continuer » (écran des 3 étapes)
   await page.click("#gf-meta");                                   // « J'ai compris, on y va » : Instagram s'ouvre par-dessus
   await page.evaluate(() => window.__setVisible(false));
   await page.evaluate(() => window.zyeutoMeta("requested", { existing: false, today: false }));

@@ -2097,7 +2097,9 @@ if (!window.ZYEUTO_APP) {
   .wl-tap { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 28%; -webkit-tap-highlight-color: transparent; }
   .wl-tap:focus-visible { outline: 3px solid var(--link); outline-offset: 4px; }
   .wl-hint { position: absolute; left: 50%; top: 40%; width: 30%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; border: 3px solid #fff; pointer-events: none; opacity: 0; }
-  .wl-stage.hinting .wl-hint { animation: ping 1.4s ease-out infinite; }
+  /* « Réduire les animations » : l'anneau reste fixe, il ne pulse pas en boucle. */
+  .wl-stage.hinting .wl-hint { opacity: .7; }
+  @media (prefers-reduced-motion: no-preference) { .wl-stage.hinting .wl-hint { animation: ping 1.4s ease-out infinite; } }
   .wl-bubble { position: absolute; top: -18px; right: -34px; background: #fff; color: #2e2328; font: 700 15px var(--round, var(--font)); padding: 8px 12px; border-radius: 16px 16px 16px 4px; box-shadow: 0 6px 18px rgb(0 0 0 / .12); white-space: nowrap; }
   .wl-stage + h2 { margin-top: 18px; }
   .wl-bubble { top: -14px; right: -18px; }
@@ -5562,16 +5564,28 @@ const MASCOT = `<svg viewBox="0 0 100 100"><defs><clipPath id="wl-clip"><rect wi
 // Refonte visuelle (23 nov.) : le Zieuteur 3D P06, en deux calques rangés dans guide/ (donc aussi dans l'app au prochain build).
 // Sans réseau et sans l'image rangée dans l'app, on garde l'ancien dessin (ztFail).
 const ZT_PERSO = "guide/zieuteur-p06-perso-v1.png", ZT_BLOC = "guide/zieuteur-p06-bloc-v1.png";
+// Dans l'app, la page s'affiche à l'adresse GitHub Pages (loadHTMLString) : un chemin relatif irait chercher l'image là-bas.
+// On lit donc d'abord zieuton.com (là où l'app prend ses mises à jour), puis GitHub Pages en secours.
+// Une image rangée dans l'app (ZYEUTO_ASSETS, builds suivants) passe avant tout.
+const ZT_HOSTS = ["https://zieuton.com/", "https://vic-tard.github.io/abo-insta/"];
+function ztSources(f) {
+  if (window.ZYEUTO_ASSETS && window.ZYEUTO_ASSETS[f]) return [window.ZYEUTO_ASSETS[f]];
+  return nativeApp ? ZT_HOSTS.map((h) => h + f) : [f];
+}
 function zieuteurHTML(cls = "") {
-  const img = (f) => `<img src="${asset(f)}" alt="" draggable="false" onerror="ztFail(this)">`;
+  const img = (f) => { const [first, ...rest] = ztSources(f); return `<img src="${first}" data-next="${rest.join(" ")}" alt="" draggable="false" onerror="ztFail(this)">`; };
   return `<span class="zt ${cls}" aria-hidden="true"><span class="zt-move zt-back">${img(ZT_PERSO)}</span>${img(ZT_BLOC)}<span class="zt-move zt-front">${img(ZT_PERSO)}</span></span>`;
 }
 function ztFail(img) {
+  // Adresse suivante (GitHub Pages) avant d'abandonner.
+  const next = (img.dataset.next || "").split(" ").filter(Boolean);
+  if (next.length) { img.dataset.next = next.slice(1).join(" "); img.src = next[0]; return; }
   const z = img.closest(".zt");
   if (!z || z.classList.contains("zt-off")) return;
   z.classList.add("zt-off");
   z.innerHTML = `<span class="zt-svg">${MASCOT}</span>`;
-  logError("zieuteur-3d", new Error("image du Zieuteur introuvable"));
+  // Pas de logError : il écrirait sur le téléphone (la démo de la bienvenue ne doit rien écrire). Message visible dans la console.
+  console.warn("Zieuton : image du Zieuteur 3D introuvable (zieuton.com et GitHub Pages), ancien dessin affiché");
 }
 // Toucher la tête : il se tasse, rebondit de quelques pixels et retrouve sa pose (350 ms). Le bloc ne bouge pas.
 const ZT_BOUNCE = [
@@ -5595,7 +5609,7 @@ function wlPlay() {
   const stage = $("wl-stage"), bubble = $("wl-bubble");
   clearTimeout(wlTimer);
   // Si personne ne touche, il le demande.
-  wlTimer = setTimeout(() => { if (!n && $("wl-stage")) { bubble.innerHTML = "Touche ma tête&nbsp;!"; bubble.animate([{ scale: .6 }, { scale: 1.08 }, { scale: 1 }], { duration: 400 }); stage.classList.add("hinting"); } }, 4800);
+  wlTimer = setTimeout(() => { if (!n && $("wl-stage")) { bubble.innerHTML = "Touche ma tête&nbsp;!"; if (!calm()) bubble.animate([{ scale: .6 }, { scale: 1.08 }, { scale: 1 }], { duration: 400 }); stage.classList.add("hinting"); } }, 4800);
   $("wl-tap").onclick = () => {
     if (busy) return;
     busy = true; n++;
@@ -5677,7 +5691,7 @@ function renderGuided() {
         <h2 id="gf-title">Salut, jeune <em>zieuteur·euse</em>&nbsp;!</h2>
         <p class="lead">Bienvenue&nbsp;! Ici, tu vas enfin voir qui se désabonne de toi, qui arrive, et plein d'autres choses. On s'y met ensemble&nbsp;?</p>
         <ul class="wl-pts">
-          <li><i>${ICON.lock}</i>Zéro mot<br>de passe</li>
+          <li><i>${ICON.lock}</i>Mot de passe saisi chez Instagram</li>
           <li><i><svg viewBox="0 0 24 24"><path d="M5 12h12M13 7l5 5-5 5"/></svg></i>Je te guide<br>pas à pas</li>
           <li><i><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg></i>Tout reste<br>chez toi</li>
         </ul>
@@ -5728,7 +5742,7 @@ function renderGuided() {
       <h2 id="gf-title">On va chercher tes abonnés chez Instagram</h2>
       <ol class="pl-steps">${PLAN.map(([t, d], k) => `<li><i>${k + 1}</i><span><b>${t}</b><small>${d}</small></span></li>`).join("")}</ol></div>
       <div class="gf-foot pl-foot pl2-foot">
-        <button class="btn cheer big gf-huge" id="gf-meta" type="button">Ouvrir Instagram</button>
+        <button class="btn cheer big gf-huge" id="gf-meta" type="button">Continuer</button>
         <div class="pl2-links"><button class="pl-restore" id="gf-via" type="button">Passer par l'app Instagram</button>
         <button class="pl-restore" id="gf-restore" type="button">J'ai une sauvegarde</button></div>
       </div>`;
@@ -5951,7 +5965,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-0157";
+const BUILD = "2026-11-23-0303";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
