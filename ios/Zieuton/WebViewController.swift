@@ -27,7 +27,10 @@ final class WebViewController: UIViewController {
     private var pending: [(name: String, data: Data)] = []
     private var downloads: [ObjectIdentifier: URL] = [:]
     private let splash = UIView()
-    private var splashShownAt = Date()
+    /// La page a été chargée et on attend (au plus 2 s) que son animation d'ouverture s'affiche.
+    private var splashWaiting = false
+    /// Première image de l'animation d'ouverture (dossier media/ rangé dans l'app, comme dans la page).
+    private static let splashImage = "media/ouverture-v2-image1.jpg"
     /// Version de la page affichée (sa ligne « const BUILD »).
     private var loadedBuild = ""
     private var checkingUpdate = false
@@ -136,115 +139,49 @@ final class WebViewController: UIViewController {
         webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('home'); true")
     }
 
-    // MARK: Écran d'ouverture (le bonhomme)
+    // MARK: Écran de lancement (première image de l'animation d'ouverture)
 
+    /// La première image de l'animation d'ouverture (logo net du visuel fixe), sur son rose, en clair comme en sombre.
+    /// Elle est rangée dans l'app (marche sans internet) et cadrée comme dans la page (plein écran, sans rien couper) :
+    /// quand la page prend le relais avec l'animation, rien ne bouge. Plus d'écran sombre avec l'icône.
     private func buildSplash() {
         splash.frame = view.bounds
         splash.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        splash.backgroundColor = view.backgroundColor
-
-        // L'icône dessinée en morceaux (même dessin que icon.svg, 100 unités = 120 points) :
-        // le fond rose, le bonhomme caché derrière le mur, le mur, puis les mains.
-        let size: CGFloat = 120, u = size / 100
-        func rgb(_ hex: UInt32) -> UIColor {
-            UIColor(red: CGFloat((hex >> 16) & 0xff) / 255, green: CGFloat((hex >> 8) & 0xff) / 255, blue: CGFloat(hex & 0xff) / 255, alpha: 1)
+        splash.backgroundColor = UIColor(red: 0xf8 / 255, green: 0xd7 / 255, blue: 0xe2 / 255, alpha: 1)
+        if let url = Bundle.main.resourceURL?.appendingPathComponent(Self.splashImage),
+           let image = UIImage(contentsOfFile: url.path) {
+            let still = UIImageView(image: image)
+            still.frame = splash.bounds
+            still.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            still.contentMode = .scaleAspectFit
+            splash.addSubview(still)
+        } else {
+            print("Zieuton : image de lancement introuvable (\(Self.splashImage))")
         }
-        func shape(_ path: UIBezierPath, _ color: UInt32) -> CAShapeLayer {
-            let l = CAShapeLayer(); l.path = path.cgPath; l.fillColor = rgb(color).cgColor; return l
-        }
-        func oval(_ cx: CGFloat, _ cy: CGFloat, _ rx: CGFloat, _ ry: CGFloat) -> UIBezierPath {
-            UIBezierPath(ovalIn: CGRect(x: (cx - rx) * u, y: (cy - ry) * u, width: rx * 2 * u, height: ry * 2 * u))
-        }
-        func rect(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat, _ r: CGFloat = 0) -> UIBezierPath {
-            UIBezierPath(roundedRect: CGRect(x: x * u, y: y * u, width: w * u, height: h * u), cornerRadius: r * u)
-        }
-
-        // Ombre douce autour de l'icône (dans une vue à part, car l'icône coupe ce qui dépasse).
-        let holder = UIView()
-        holder.translatesAutoresizingMaskIntoConstraints = false
-        holder.layer.shadowColor = rgb(0xd4919b).cgColor
-        holder.layer.shadowOpacity = 0.35
-        holder.layer.shadowRadius = 15
-        holder.layer.shadowOffset = CGSize(width: 0, height: 10)
-        splash.addSubview(holder)
-
-        let icon = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
-        icon.backgroundColor = rgb(0xd4919b)
-        icon.layer.cornerRadius = 27
-        icon.layer.cornerCurve = .continuous
-        icon.clipsToBounds = true
-        holder.addSubview(icon)
-
-        let head = UIView(frame: icon.bounds)
-        head.layer.addSublayer(shape(oval(50, 58, 30, 30), 0xffffff))
-        var eyes: [CAShapeLayer] = []
-        for cx: CGFloat in [39.5, 60.5] {
-            let eye = shape(UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: 10.8 * u, height: 12.8 * u)), 0x2e2328)
-            eye.bounds = CGRect(x: 0, y: 0, width: 10.8 * u, height: 12.8 * u)
-            eye.position = CGPoint(x: cx * u, y: 48 * u)
-            head.layer.addSublayer(eye); eyes.append(eye)
-        }
-        for cx: CGFloat in [41.4, 62.4] { head.layer.addSublayer(shape(oval(cx, 45.6, 1.9, 1.9), 0xffffff)) }
-        for cx: CGFloat in [30, 70] { head.layer.addSublayer(shape(oval(cx, 57, 4.6, 2.8), 0xf2b3bc)) }
-        icon.addSubview(head)
-
-        let wall = UIView(frame: icon.bounds)
-        wall.layer.addSublayer(shape(rect(0, 64, 100, 36), 0x2e2328))
-        icon.addSubview(wall)
-
-        let hands = UIView(frame: icon.bounds)
-        hands.layer.addSublayer(shape(rect(17, 57, 16, 12, 6), 0xffffff))
-        hands.layer.addSublayer(shape(rect(67, 57, 16, 12, 6), 0xffffff))
-        let fingers = UIBezierPath()
-        for x: CGFloat in [23, 27.5, 72.5, 77] { fingers.move(to: CGPoint(x: x * u, y: 60 * u)); fingers.addLine(to: CGPoint(x: x * u, y: 65 * u)) }
-        let lines = CAShapeLayer(); lines.path = fingers.cgPath; lines.strokeColor = rgb(0xe7d6d9).cgColor
-        lines.lineWidth = 1.4 * u; lines.lineCap = .round; lines.fillColor = nil
-        hands.layer.addSublayer(lines)
-        icon.addSubview(hands)
-
-        NSLayoutConstraint.activate([
-            holder.centerXAnchor.constraint(equalTo: splash.centerXAnchor),
-            holder.centerYAnchor.constraint(equalTo: splash.centerYAnchor),
-            holder.widthAnchor.constraint(equalToConstant: size),
-            holder.heightAnchor.constraint(equalToConstant: size),
-        ])
         view.addSubview(splash)
-        splashShownAt = Date()
-
-        // 1. L'icône arrive (le bonhomme est encore caché derrière le mur).
-        holder.alpha = 0
-        holder.transform = CGAffineTransform(scaleX: 0.86, y: 0.86)
-        head.transform = CGAffineTransform(translationX: 0, y: 40 * u)
-        hands.transform = CGAffineTransform(translationX: 0, y: -14 * u)
-        hands.alpha = 0
-        UIView.animate(withDuration: 0.55, delay: 0.1, usingSpringWithDamping: 0.6, initialSpringVelocity: 0.8) {
-            holder.alpha = 1; holder.transform = .identity
-        }
-        // 2. Il sort de derrière le mur.
-        UIView.animate(withDuration: 0.6, delay: 0.45, usingSpringWithDamping: 0.62, initialSpringVelocity: 0.6) {
-            head.transform = .identity
-        }
-        // 3. Il pose les mains sur le mur.
-        UIView.animate(withDuration: 0.35, delay: 0.9, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.8) {
-            hands.alpha = 1; hands.transform = .identity
-        }
-        // 4. Il cligne deux fois des yeux.
-        let blink = CABasicAnimation(keyPath: "transform.scale.y")
-        blink.fromValue = 1; blink.toValue = 0.1
-        blink.duration = 0.11; blink.autoreverses = true; blink.repeatCount = 2
-        blink.beginTime = CACurrentMediaTime() + 1.35
-        for eye in eyes { eye.add(blink, forKey: "blink") }
-
         // Au cas où la page tarde : on n'attend pas plus de 6 secondes.
         DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in self?.hideSplash() }
     }
 
+    /// La page est chargée : si elle joue l'animation d'ouverture, on attend qu'elle soit affichée
+    /// (message « opening ») pour passer la main sans écran vide ; sinon on part tout de suite.
+    private func pageLoaded() {
+        guard splash.superview != nil, !splashWaiting else { return }
+        splashWaiting = true
+        webView.evaluateJavaScript("document.documentElement.classList.contains('op-on')") { [weak self] result, _ in
+            guard let self else { return }
+            if (result as? Bool) == true {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.hideSplash() }
+            } else {
+                self.hideSplash()
+            }
+        }
+    }
+
     private func hideSplash() {
         guard splash.superview != nil, splash.alpha == 1 else { return }
-        let wait = max(0, 1.9 - Date().timeIntervalSince(splashShownAt)) // le temps que le bonhomme sorte et cligne des yeux
-        UIView.animate(withDuration: 0.35, delay: wait, options: .curveEaseOut) {
+        UIView.animate(withDuration: 0.15, delay: 0, options: .curveEaseOut) {
             self.splash.alpha = 0
-            self.splash.transform = CGAffineTransform(scaleX: 1.04, y: 1.04)
         } completion: { _ in self.splash.removeFromSuperview() }
     }
 
@@ -467,10 +404,13 @@ final class WebViewController: UIViewController {
         let guide = root.appendingPathComponent("guide")
         let files = (try? FileManager.default.contentsOfDirectory(atPath: guide.path)) ?? []
         names += files.filter { $0.hasSuffix(".jpg") || $0.hasSuffix(".png") }.sorted().map { "guide/" + $0 }
+        // L'animation d'ouverture et sa première image : jouées sans internet, sans attendre le réseau.
+        let media = (try? FileManager.default.contentsOfDirectory(atPath: root.appendingPathComponent("media").path)) ?? []
+        names += media.filter { $0.hasSuffix(".jpg") || $0.hasSuffix(".webp") }.sorted().map { "media/" + $0 }
         var map: [String: String] = [:]
         for name in names {
             guard let data = try? Data(contentsOf: root.appendingPathComponent(name)) else { continue }
-            let type = name.hasSuffix(".png") ? "image/png" : "image/jpeg"
+            let type = name.hasSuffix(".png") ? "image/png" : name.hasSuffix(".webp") ? "image/webp" : "image/jpeg"
             map[name] = "data:\(type);base64,\(data.base64EncodedString())"
         }
         guard let json = try? JSONSerialization.data(withJSONObject: map),
@@ -587,8 +527,11 @@ extension WebViewController: WKScriptMessageHandler {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
         switch type {
-        case "ready":
+        case "opening":
+            // L'animation d'ouverture de la page est affichée (ou n'aura pas lieu) : l'écran de lancement s'efface.
             hideSplash()
+        case "ready":
+            pageLoaded()
             pageReady = true
             sending = false
             flush()
@@ -857,7 +800,7 @@ extension WebViewController: WKNavigationDelegate, WKUIDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        hideSplash()
+        pageLoaded()
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {

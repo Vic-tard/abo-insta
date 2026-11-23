@@ -15,6 +15,7 @@
 		B0E1A5E00000000000000010 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = B0E1A5E00000000000000020 /* index.html */; };
 		B0E1A5E00000000000000030 /* icone-v5-180.png in Resources */ = {isa = PBXBuildFile; fileRef = B0E1A5E00000000000000040 /* icone-v5-180.png */; };
 		B0E1A5E00000000000000050 /* guide in Resources */ = {isa = PBXBuildFile; fileRef = B0E1A5E00000000000000060 /* guide */; };
+		B0E1A5E00000000000000070 /* media in Resources */ = {isa = PBXBuildFile; fileRef = B0E1A5E00000000000000080 /* media */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,7 @@
 		B0E1A5E00000000000000020 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = index.html; path = ../index.html; sourceTree = SOURCE_ROOT; };
 		B0E1A5E00000000000000040 /* icone-v5-180.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icone-v5-180.png; path = ../icone-v5-180.png; sourceTree = SOURCE_ROOT; };
 		B0E1A5E00000000000000060 /* guide */ = {isa = PBXFileReference; lastKnownFileType = folder; name = guide; path = ../guide; sourceTree = SOURCE_ROOT; };
+		B0E1A5E00000000000000080 /* media */ = {isa = PBXFileReference; lastKnownFileType = folder; name = media; path = ../media; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +65,7 @@
 				B0E1A5E00000000000000020 /* index.html */,
 				B0E1A5E00000000000000040 /* icone-v5-180.png */,
 				B0E1A5E00000000000000060 /* guide */,
+				B0E1A5E00000000000000080 /* media */,
 			);
 			name = Zieuton;
 			path = Zieuton;
@@ -151,6 +154,7 @@
 				B0E1A5E00000000000000010 /* index.html in Resources */,
 				B0E1A5E00000000000000030 /* icone-v5-180.png in Resources */,
 				B0E1A5E00000000000000050 /* guide in Resources */,
+				B0E1A5E00000000000000070 /* media in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,7 +243,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Zieuton/Zieuton.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = 65QBB9ANRF;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Zieuton/Info.plist;
@@ -263,7 +267,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Zieuton/Zieuton.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = 65QBB9ANRF;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Zieuton/Info.plist;
