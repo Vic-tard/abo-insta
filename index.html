@@ -16,6 +16,9 @@
 <link rel="icon" href="icone-v5-512.png">
 <!-- Pour l'instant, Zieuton ne s'utilise que dans l'app iPhone : dans Safari, on affiche seulement « Bientôt sur l'App Store ». -->
 <script>
+// Écran d'ouverture (Victor, 23 nov.) : le nom de l'app et le Zieuteur qui passe derrière un mur, à chaque ouverture de l'app.
+// Posé ici pour qu'il soit là dès le premier dessin. Pas sous un automate de test (sauf #ouverture), pour ne pas gêner les tests.
+if (window.ZYEUTO_APP && (!navigator.webdriver || location.hash.indexOf("ouverture") >= 0)) document.documentElement.classList.add("op-on");
 if (!window.ZYEUTO_APP) {
   document.documentElement.classList.add("web-off");
   document.addEventListener("DOMContentLoaded", function () {
@@ -2864,7 +2867,39 @@ if (!window.ZYEUTO_APP) {
   .pp-tag.cold { background: color-mix(in srgb, #9b85f0 16%, var(--r-card)); color: var(--c-nb-n); }
   .pp-go svg { stroke: color-mix(in srgb, var(--r-ink) 30%, transparent); }
   #list-page .more { border-radius: 16px; font-family: var(--zd); font-weight: 600; color: var(--kn); }
+
+  /* ---------- Écran d'ouverture (Victor, 23 nov.) ----------
+     Le nom en grand, puis le Zieuteur arrive par la gauche derrière un mur et repart par la droite : on tombe sur l'écran suivant
+     (la bienvenue au premier lancement). L'animation CSS le fait disparaître seule à 3 s, même si le script ne tourne pas. */
+  .op { display: none; }
+  html.op-on .op { display: block; position: fixed; inset: 0; z-index: 10000; overflow: hidden; cursor: pointer;
+    background: radial-gradient(120% 60% at 50% 0%, var(--rose-soft), var(--bg) 70%);
+    animation: op-out .4s ease 2.6s forwards; }
+  html.op-on .op.op-skip { animation: op-out .2s ease forwards; }
+  @keyframes op-out { to { opacity: 0; visibility: hidden; } }
+  .op-name { position: absolute; left: 0; right: 0; top: 34%; margin: 0; text-align: center;
+    font: 600 clamp(56px, 18vw, 76px)/1 var(--zd); letter-spacing: -.01em; color: var(--rose-ink); animation: op-in .5s ease-out both; }
+  @keyframes op-in { from { opacity: 0; transform: translateY(10px); } }
+  .op-scene { position: absolute; left: 0; right: 0; top: 62%; bottom: 0; }
+  .op-wall { position: absolute; inset: 0; z-index: 2; background: color-mix(in srgb, var(--rose) 32%, var(--bg));
+    box-shadow: inset 0 3px 0 color-mix(in srgb, #fff 45%, transparent), 0 -1px 0 color-mix(in srgb, var(--rose) 60%, var(--bg)); }
+  .op-run { position: absolute; left: 0; bottom: calc(100% - 12px); width: 150px; z-index: 1; animation: op-walk 2.2s cubic-bezier(.45,.05,.55,.95) .3s both; }
+  .op-run.op-front { z-index: 3; }
+  .op-back .zt-f, .op-front .zt-b { display: none; }
+  .op-run .zt { animation: op-hop .275s ease-in-out .3s 8 alternate both; }
+  @keyframes op-walk { from { transform: translateX(-170px); } to { transform: translateX(calc(100vw + 20px)); } }
+  @keyframes op-hop { to { transform: translateY(-9px); } }
+  @media (prefers-reduced-motion: reduce) {
+    html.op-on .op { animation: op-out .3s ease 1.2s forwards; }
+    .op-name { animation: none; }
+    .op-run { animation: none; left: calc(50% - 75px); }
+    .op-run .zt { animation: none; }
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .op-wall { box-shadow: inset 0 3px 0 rgb(255 255 255 / .08); } }
+  :root[data-theme="dark"] .op-wall { box-shadow: inset 0 3px 0 rgb(255 255 255 / .08); }
 </style>
+
+<div class="op" id="op" aria-hidden="true"><p class="op-name">Zieuton</p><div class="op-scene"><span class="op-run op-back" id="op-back"></span><span class="op-wall"></span><span class="op-run op-front" id="op-front"></span></div></div>
 
 <div class="wrap">
   <div class="top">
@@ -6114,6 +6149,20 @@ function ztSetPose(host, pose) {
   const [first, ...rest] = ztSources(ZT_POSES[pose] || ZT_POSES.neutre);
   z.querySelectorAll("img").forEach((img) => { img.dataset.next = rest.join(" "); img.src = first; });
 }
+// Écran d'ouverture : on y met le Zieuteur (mêmes adresses d'images que partout), puis on l'enlève à la fin de l'animation.
+// Toucher l'écran le fait partir tout de suite.
+(function opening() {
+  const op = $("op");
+  if (!op) return;
+  if (!document.documentElement.classList.contains("op-on")) { op.remove(); return; }
+  $("op-back").innerHTML = ztPoseHTML("neutre");
+  $("op-front").innerHTML = ztPoseHTML("neutre");
+  let done = false;
+  const end = () => { if (done) return; done = true; document.documentElement.classList.remove("op-on"); op.remove(); };
+  op.addEventListener("animationend", (e) => { if (e.target === op) end(); });
+  op.addEventListener("click", () => op.classList.add("op-skip"));
+  setTimeout(end, 4000);   // sécurité si l'animation ne se termine pas (onglet en arrière-plan)
+})();
 // Mauvaise réponse : il secoue la tête (même règle que le rebond : rien si les animations sont réduites).
 function ztShake(z) {
   if (!z || calm()) return null;
@@ -6499,7 +6548,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-1828";
+const BUILD = "2026-11-23-1925";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
