@@ -64,8 +64,8 @@ test("B : lilas avec la coche, « Découvrir Zieuton » en avant, « Compte fict
   assert.equal(await page.textContent(".gw-fict"), "Compte fictif");
   assert.ok(fict.y + fict.height <= mini.y + 1, "« Compte fictif » au-dessus des chiffres");
   assert.match(await page.textContent(".gw-disc"), /compte fictif/);
-  // Orange plus foncé derrière le texte blanc.
-  assert.match(await page.evaluate(() => getComputedStyle(document.getElementById("gf-wait-demo")).backgroundImage), /rgb\(196, 73, 59\)/);
+  // V3 (maquette « En préparation ») : bouton lilas foncé de la maquette, texte blanc.
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("gf-wait-demo")).backgroundColor), "rgb(78, 52, 143)");
   await page.close();
 });
 

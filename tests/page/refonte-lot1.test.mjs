@@ -45,9 +45,9 @@ test("accueil : date de l'import en premier, départs et arrivées en grand, et 
   assert.equal(await page.textContent("#st-up"), s.follows.toLocaleString("fr-FR"));
   const net = s.follows - s.unfollows;
   assert.equal(await page.textContent("#hh-net"), `${net > 0 ? "+" : net < 0 ? "−" : "±"}${Math.abs(net).toLocaleString("fr-FR")} au dernier import`);
-  // La carte des chiffres passe avant « Mettre à jour » quand rien n'est en cours.
+  // V3 (maquette « Accueil ») : la carte « Mettre à jour » compacte, puis la carte des chiffres.
   const heroY = (await page.locator(".home-hero").boundingBox()).y, wkY = (await page.locator("#weekly").boundingBox()).y;
-  assert.ok(heroY < wkY, "la carte des chiffres en premier");
+  assert.ok(wkY < heroY, "« Mettre à jour » puis la carte des chiffres");
   // Les cases disent la période de leur grand chiffre (depuis le premier import).
   const first = await page.evaluate(() => fmtShort(state.snapshots[0].takenAt));
   assert.equal(await page.textContent("#hs-unfollow"), `depuis le ${first}`);
@@ -118,7 +118,7 @@ test("graphiques : la courbe en tête répond à une question, donne la période
   const page = await demo();
   await page.evaluate(() => setPage("stats"));
   await page.waitForSelector("#evo svg");
-  assert.match(await page.textContent(".sh-q"), /Combien d'abonnés à chaque import/);
+  assert.match(await page.textContent(".sh-q"), /Abonnés à chaque import/);
   const snaps = await page.evaluate(() => state.snapshots.map((s) => ({ c: s.count, f: s.follows, u: s.unfollows, d: fmtDate(s.takenAt), ds: fmtShort(s.takenAt) })));
   assert.match(await page.textContent(".evo-span"), new RegExp(`Du ${snaps[0].ds} au ${snaps.at(-1).ds} · ${snaps.length} imports`));
   // Par défaut : le dernier import.
