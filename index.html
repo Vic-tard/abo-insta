@@ -2869,37 +2869,19 @@ if (!window.ZYEUTO_APP) {
   #list-page .more { border-radius: 16px; font-family: var(--zd); font-weight: 600; color: var(--kn); }
 
   /* ---------- Écran d'ouverture (Victor, 23 nov.) ----------
-     Le nom en grand, puis le Zieuteur arrive par la gauche derrière un mur et repart par la droite : on tombe sur l'écran suivant
-     (la bienvenue au premier lancement). L'animation CSS le fait disparaître seule à 3 s, même si le script ne tourne pas. */
+     Vidéo officielle (2,4 s, muette) : le Zieuteur traverse sous le nom, puis on tombe sur l'écran suivant (la bienvenue au premier
+     lancement). L'app se charge dessous et ne l'attend jamais : un toucher la coupe ; si elle ne démarre pas vite, on passe.
+     L'animation CSS la fait disparaître seule à 4,5 s, même si le script ne tourne pas. Le fond reprend le rose de la vidéo
+     (bandes en haut et en bas sur les écrans plus allongés que la vidéo, pour ne jamais couper le nom). */
   .op { display: none; }
   html.op-on .op { display: block; position: fixed; inset: 0; z-index: 10000; overflow: hidden; cursor: pointer;
-    background: radial-gradient(120% 60% at 50% 0%, var(--rose-soft), var(--bg) 70%);
-    animation: op-out .4s ease 2.6s forwards; }
-  html.op-on .op.op-skip { animation: op-out .2s ease forwards; }
+    background: linear-gradient(#f6d9de, #f4d7de); animation: op-out .3s ease 4.5s forwards; }
+  html.op-on .op.op-skip { animation: op-out .25s ease forwards; }
   @keyframes op-out { to { opacity: 0; visibility: hidden; } }
-  .op-name { position: absolute; left: 0; right: 0; top: 34%; margin: 0; text-align: center;
-    font: 600 clamp(56px, 18vw, 76px)/1 var(--zd); letter-spacing: -.01em; color: var(--rose-ink); animation: op-in .5s ease-out both; }
-  @keyframes op-in { from { opacity: 0; transform: translateY(10px); } }
-  .op-scene { position: absolute; left: 0; right: 0; top: 62%; bottom: 0; }
-  .op-wall { position: absolute; inset: 0; z-index: 2; background: color-mix(in srgb, var(--rose) 32%, var(--bg));
-    box-shadow: inset 0 3px 0 color-mix(in srgb, #fff 45%, transparent), 0 -1px 0 color-mix(in srgb, var(--rose) 60%, var(--bg)); }
-  .op-run { position: absolute; left: 0; bottom: calc(100% - 12px); width: 150px; z-index: 1; animation: op-walk 2.2s cubic-bezier(.45,.05,.55,.95) .3s both; }
-  .op-run.op-front { z-index: 3; }
-  .op-back .zt-f, .op-front .zt-b { display: none; }
-  .op-run .zt { animation: op-hop .275s ease-in-out .3s 8 alternate both; }
-  @keyframes op-walk { from { transform: translateX(-170px); } to { transform: translateX(calc(100vw + 20px)); } }
-  @keyframes op-hop { to { transform: translateY(-9px); } }
-  @media (prefers-reduced-motion: reduce) {
-    html.op-on .op { animation: op-out .3s ease 1.2s forwards; }
-    .op-name { animation: none; }
-    .op-run { animation: none; left: calc(50% - 75px); }
-    .op-run .zt { animation: none; }
-  }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .op-wall { box-shadow: inset 0 3px 0 rgb(255 255 255 / .08); } }
-  :root[data-theme="dark"] .op-wall { box-shadow: inset 0 3px 0 rgb(255 255 255 / .08); }
+  .op video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: transparent; }
 </style>
 
-<div class="op" id="op" aria-hidden="true"><p class="op-name">Zieuton</p><div class="op-scene"><span class="op-run op-back" id="op-back"></span><span class="op-wall"></span><span class="op-run op-front" id="op-front"></span></div></div>
+<div class="op" id="op" aria-hidden="true"></div>
 
 <div class="wrap">
   <div class="top">
@@ -6149,19 +6131,37 @@ function ztSetPose(host, pose) {
   const [first, ...rest] = ztSources(ZT_POSES[pose] || ZT_POSES.neutre);
   z.querySelectorAll("img").forEach((img) => { img.dataset.next = rest.join(" "); img.src = first; });
 }
-// Écran d'ouverture : on y met le Zieuteur (mêmes adresses d'images que partout), puis on l'enlève à la fin de l'animation.
-// Toucher l'écran le fait partir tout de suite.
+// Écran d'ouverture : la vidéo officielle (même adresses que les images : zieuton.com, puis GitHub Pages).
+// Elle part dès qu'elle est finie ; un toucher la coupe ; si elle ne joue pas au bout de 1,5 s (pas de réseau, lecture
+// refusée), on passe directement à l'app. Avec « Réduire les animations », pas de vidéo.
+const OP_VIDEO = "media/ouverture-gemini-v1.mp4";
 (function opening() {
   const op = $("op");
   if (!op) return;
   if (!document.documentElement.classList.contains("op-on")) { op.remove(); return; }
-  $("op-back").innerHTML = ztPoseHTML("neutre");
-  $("op-front").innerHTML = ztPoseHTML("neutre");
-  let done = false;
+  let done = false, leaving = false;
   const end = () => { if (done) return; done = true; document.documentElement.classList.remove("op-on"); op.remove(); };
+  const leave = () => { if (leaving) return; leaving = true; op.classList.add("op-skip"); setTimeout(end, 300); };
   op.addEventListener("animationend", (e) => { if (e.target === op) end(); });
-  op.addEventListener("click", () => op.classList.add("op-skip"));
-  setTimeout(end, 4000);   // sécurité si l'animation ne se termine pas (onglet en arrière-plan)
+  op.addEventListener("click", leave);
+  setTimeout(end, 5000);   // sécurité si l'animation ne se termine pas (onglet en arrière-plan)
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { leave(); return; }
+  const srcs = ztSources(OP_VIDEO);
+  const v = document.createElement("video");
+  v.muted = true; v.defaultMuted = true; v.playsInline = true; v.autoplay = true; v.preload = "auto";
+  v.setAttribute("muted", ""); v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
+  let started = false;
+  v.addEventListener("playing", () => { started = true; });
+  v.addEventListener("ended", leave);
+  v.addEventListener("error", () => {
+    const next = srcs.shift();
+    if (next && !started) { v.src = next; v.play().catch(() => {}); } else leave();
+  });
+  v.src = srcs.shift();
+  op.appendChild(v);
+  const p = v.play();
+  if (p && p.catch) p.catch(() => { if (!started) leave(); });
+  setTimeout(() => { if (!started) leave(); }, 1500);
 })();
 // Mauvaise réponse : il secoue la tête (même règle que le rebond : rien si les animations sont réduites).
 function ztShake(z) {
@@ -6548,7 +6548,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-1925";
+const BUILD = "2026-11-23-2332";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
