@@ -1,4 +1,4 @@
-// Refonte visuelle, lot 1 (23 nov.) : accueil, courbe des abonnés en tête des Graphiques, Zieuteur 3D des jeux.
+// Refonte visuelle, lot 1 puis V2 (23 nov.) : accueil, courbe des abonnés en tête des Graphiques, Zieuteur 3D des jeux, listes.
 // Lancer : npm run test:lecteur.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -37,7 +37,7 @@ const imgReady = (page, sel) => page.waitForFunction((s) => { const i = document
 test("accueil : date de l'import en premier, départs et arrivées en grand, et ils ouvrent leur liste", async () => {
   const page = await demo();
   const cap = await page.textContent("#caption");
-  const { last, prev } = await page.evaluate(() => ({ last: fmtDate(state.snapshots.at(-1).takenAt), prev: fmtDate(state.snapshots.at(-2).takenAt) }));
+  const { last, prev } = await page.evaluate(() => ({ last: fmtDate(state.snapshots.at(-1).takenAt), prev: fmtShort(state.snapshots.at(-2).takenAt) }));
   assert.match(cap, new RegExp(`Import du ${last}`));
   assert.match(cap, new RegExp(`comparé au ${prev}`));
   const s = await page.evaluate(() => state.snapshots.at(-1));
@@ -48,9 +48,19 @@ test("accueil : date de l'import en premier, départs et arrivées en grand, et 
   // La carte des chiffres passe avant « Mettre à jour » quand rien n'est en cours.
   const heroY = (await page.locator(".home-hero").boundingBox()).y, wkY = (await page.locator("#weekly").boundingBox()).y;
   assert.ok(heroY < wkY, "la carte des chiffres en premier");
+  // Les cases disent la période de leur grand chiffre (depuis le premier import).
+  const first = await page.evaluate(() => fmtShort(state.snapshots[0].takenAt));
+  assert.equal(await page.textContent("#hs-unfollow"), `depuis le ${first}`);
+  // « 11 départs » ouvre les départs de ce dernier import ; on peut passer à tous les départs.
   await page.click(".home-hero .stat.down");
   await page.waitForFunction(() => !document.getElementById("list-page").hidden);
   assert.equal(await page.textContent("#lp-title"), "Départs");
+  assert.equal(await page.getAttribute('#lp-scope [data-scope="last"]', "aria-pressed"), "true");
+  assert.equal(await page.locator("#people li.pp").count(), Math.min(40, s.unfollows));
+  await page.click('#lp-scope [data-scope="all"]');
+  const all = await page.evaluate(() => state.events.filter((e) => e.kind === "unfollow").length);
+  assert.equal(await page.locator("#people li.pp").count(), Math.min(40, all));
+  assert.ok(all > s.unfollows, "la liste complète en a plus");
   assert.deepEqual(page.errors, []);
   await page.close();
 });
@@ -61,9 +71,11 @@ test("accueil : le Zieuteur 3D réagit au dernier import et rebondit au toucher"
   const want = !s.unfollows && s.follows ? "saut" : s.follows > s.unfollows ? "clin" : s.unfollows > s.follows ? "surpris" : "neutre";
   assert.equal(await page.getAttribute("#hh-3d .zt-pose", "data-pose"), want);
   await imgReady(page, "#hh-3d img");
-  // Pattes sur le bord de la carte : le bas de l'image passe derrière (quelques pixels), pas plus.
-  const z = await page.locator("#hh-3d").boundingBox(), card = await page.locator(".home-hero").boundingBox();
-  assert.ok(z.y + z.height > card.y && z.y + z.height - card.y < 16, "posé sur le bord de la carte");
+  // Dans la carte, derrière le panneau des chiffres : ses pattes (le 2ᵉ calque) dépassent sur le bord, pas plus.
+  const z = await page.locator("#hh-3d").boundingBox(), card = await page.locator(".home-hero").boundingBox(), wall = await page.locator(".home-hero .stats").boundingBox();
+  assert.ok(z.y > card.y && z.x + z.width <= card.x + card.width, "dans le cadre de la carte");
+  assert.ok(z.y + z.height > wall.y && z.y + z.height - wall.y < 16, "pattes sur le bord du panneau");
+  assert.equal(await page.locator("#hh-3d .zt-f img").count(), 1, "les pattes devant");
   await page.click("#hh-3d");
   assert.ok(await page.evaluate(() => document.querySelector("#hh-3d .zt-move").getAnimations().length > 0), "rebond");
   await page.close();
@@ -126,6 +138,8 @@ test("graphiques : la courbe en tête répond à une question, donne la période
   // Le record a son repère ; l'ancienne carte « Record » ne fait plus doublon.
   assert.equal(await page.textContent(".evo-rec text"), "Record");
   assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("g-evo-block")).display), "none");
+  // Glisser le doigt ne sélectionne pas de texte (le surlignage bleu sur iPhone).
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#st-hero")).userSelect), "none");
   assert.deepEqual(page.errors, []);
   await page.close();
 });
@@ -153,6 +167,9 @@ test("jeu « Ça match ? » : le Zieuteur saute quand c'est juste, est choqué q
   const pose = () => page.getAttribute("#quiz-stage .zt-pose", "data-pose");
   assert.equal(await pose(), "malicieux");
   await page.click("#quiz-start");
+  // Avant la réponse, Oui et Non ont exactement le même poids (même fond, même taille).
+  const looks = await page.$$eval("#quiz-body .g-opt", (l) => l.map((b) => { const c = getComputedStyle(b), r = b.getBoundingClientRect(); return [c.backgroundColor, Math.round(r.width), Math.round(r.height)].join(); }));
+  assert.equal(looks.length, 2); assert.equal(looks[0], looks[1]);
   await page.evaluate(() => document.querySelector(`#quiz-body .g-opt[data-a="${quiz.q.answer}"]`).click());
   assert.equal(await pose(), "saut");
   await page.click("#quiz-next");
@@ -165,6 +182,15 @@ test("jeu « Ça match ? » : le Zieuteur saute quand c'est juste, est choqué q
   // Le temps qui reste file sur le bord de la carte de la question.
   const bar = await page.locator("#quiz-ring").boundingBox(), card = await page.locator(".qz-card").boundingBox();
   assert.ok(bar.y >= card.y && bar.y < card.y + 30 && bar.width > card.width * 0.8);
+  assert.deepEqual(page.errors, []);
+  await page.close();
+});
+
+test("V2 : la police de Zieuton est chargée sans réseau, et les 4 cases ont chacune leur surface", async () => {
+  const page = await demo();
+  assert.ok(await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('600 20px "Zieuton Display"'); }), "police intégrée");
+  const bgs = await page.$$eval("#hm-tiles .hm-tile", (l) => l.map((t) => getComputedStyle(t).backgroundImage));
+  assert.equal(new Set(bgs).size, 4, "4 surfaces différentes");
   assert.deepEqual(page.errors, []);
   await page.close();
 });
