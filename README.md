@@ -2,7 +2,7 @@
 
 Vois qui se désabonne de ton compte Instagram, à partir de l'**export officiel** d'Instagram. Aucune connexion à ton compte, aucun bot : aucun risque de restriction.
 
-Zieuton est une **app iPhone** (iOS 17 ou plus). Elle est en test sur TestFlight ; sortie sur l'App Store visée le 3 décembre 2026. Le site https://vic-tard.github.io/abo-insta/ affiche seulement « Bientôt sur l'App Store » quand on l'ouvre dans un navigateur.
+Zieuton est une **app iPhone** (iOS 17 ou plus). Elle est en test sur TestFlight ; sortie sur l'App Store visée le 15 décembre 2026. Le site https://vic-tard.github.io/abo-insta/ affiche seulement « Bientôt sur l'App Store » quand on l'ouvre dans un navigateur.
 
 **Ce que fait l'app, et ce qu'elle ne fera pas : voir [`docs/SPEC.md`](docs/SPEC.md).** C'est la référence en cas de doute.
 

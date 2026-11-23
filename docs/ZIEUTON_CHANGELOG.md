@@ -1,6 +1,6 @@
 # Zieuton : historique des changements
 
-> Dernière mise à jour : 21 novembre 2026 (ménage du 21 nov. ; base FOU-123). Du 4 nov. à aujourd'hui : d'après l'historique Git de `main` (numéros de PR). Avant le 4 nov. : d'après la mémoire du projet (le clone ne contient pas l'historique plus ancien), donc moins détaillé.
+> Dernière mise à jour : 23 novembre 2026 (base FOU-123). Du 4 nov. à aujourd'hui : d'après l'historique Git de `main` (numéros de PR). Avant le 4 nov. : d'après la mémoire du projet (le clone ne contient pas l'historique plus ancien), donc moins détaillé.
 > **Page** = visible sans Xcode (canal test d'abord). **Coque** = visible seulement après un nouveau build Xcode.
 > Pour ajouter une entrée : en haut de la bonne date, une ligne par PR fusionnée, avec ticket et type.
 
@@ -21,6 +21,12 @@
 | 1.0 (23) | 21 nov. | Bandeau « Un fichier est disponible » (#156) ; **candidat actuel**, installé chez Victor |
 
 ## Novembre 2026
+
+### 22 nov.
+- #160 FOU-131 PR 2 : démo pendant l'attente, bulles du zieuteur, « Mon export » (page 2026-11-22-2329, fusionnée à 23 h 37, canal test seulement ; tests iPhone et stable à faire)
+- #161 Nouveau planning : sortie le 15 déc. (doc)
+- #159 Canal stable = page du 21 nov. (2026-11-21-1638), validée sur l'iPhone de Victor (FOU-126 / FOU-129)
+- #158 Ménage : branches fusionnées supprimées, roadmap, handoff (doc, 21 nov. au soir)
 
 ### 21 nov.
 - #157 Après un import : « Est-ce bien le fichier de ta demande ? » (page, FOU-126 / FOU-131)

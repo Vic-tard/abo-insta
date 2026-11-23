@@ -1,28 +1,27 @@
 # Zieuton : roadmap
 
-> Dernière mise à jour : 22 novembre 2026, soir (nouveau planning de Victor : tout décalé de 10 jours, sortie le 15 déc.). Les statuts recopient Linear au 22 nov. Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). En cas d'écart, Linear gagne.
+> Dernière mise à jour : 23 novembre 2026 (audit Linear de Victor et ChatGPT). Les statuts recopient Linear au 23 nov. Source de vérité des tâches : **Linear** (équipe FOU, projet « Zieuton 1.0 »). En cas d'écart, Linear gagne.
 > Statuts : **À faire** / **En cours** / **Bloqué** / **Terminé**. Une ligne = un ticket Linear quand il existe.
 
 ## 1. Priorités actuelles (dans l'ordre)
 
-Règle de Victor : **un seul sujet à la fois**. Jalons Linear : **Build validé** 2 déc., **Soumis à Apple** 5 déc., **Sortie** 15 déc.
-
-État au 22 nov. au soir :
-- Build candidat **1.0 (23)**.
-- Canal stable = page du 21 nov. (fait).
-- PR #160 ouverte (FOU-131 PR 2).
+Règle de Victor : **un seul sujet à la fois**. Jalons Linear :
+- **Build validé** : 2 déc. ;
+- **Soumis à Apple** : 5 déc. ;
+- **Sortie** : 15 déc.
 
 | # | Tâche | Ticket | Statut | Échéance |
 | --- | --- | --- | --- | --- |
-| 1 | Écrans après la demande. PR 2 #160 (démo : bulles, « Mon export ») à relire, à tester sur iPhone et à fusionner, puis canal stable | FOU-131 | En cours | 2 déc. |
-| 2 | ACRE : demande à préparer avec les documents de l'Urssaf | FOU-83 | En cours | 18 déc. (légal) |
-| 3 | Valider le build 23 sur iPhone (matrice restante, parcours Apple) | FOU-105 | En cours | 2 déc. |
-| 4 | Achats et restauration en sandbox | FOU-128 | À faire | 2 déc. |
-| 5 | Médiateur de la consommation | FOU-82 | À faire | 4 déc. |
-| 6 | Soumission à Apple, publication manuelle | FOU-130 | À faire | 5 déc. |
-| 7 | Sortie sur l'App Store | FOU-130 (FOU-51 classé doublon) | – | **15 déc.** |
+| 1 | PR #160 (démo pendant l'attente) : fusionnée le 22 nov. (canal test). Restent les tests iPhone U11 à U14 (FOU-105), puis le passage en stable avec l'accord de Victor | FOU-131 (Done), tests dans FOU-105 | Fusionnée ; tests iPhone et stable à faire | – |
+| 2 | Valider le build 23 sur iPhone : transitions UX, notifications, non-régression, parcours Apple | FOU-105 | En cours | 2 déc. |
+| 3 | Achats et restauration en sandbox | FOU-128 | À faire | 4 déc. |
+| 4 | Médiateur de la consommation | FOU-82 | À faire | 4 déc. |
+| 5 | Soumission à Apple, publication manuelle | FOU-130 | In Progress dans Linear (préparation, rien n'est soumis) | 5 déc. |
+| 6 | Sortie sur l'App Store | FOU-130 (FOU-51 classé doublon) | – | **15 déc.** |
 
-Terminé récemment : FOU-129 (canal stable, 22 nov.), FOU-126 (notifications fiables). Un build 24 ne serait fait que si la coque doit changer, avec l'accord de Victor.
+Dépendances : FOU-105 bloque FOU-130. FOU-128 et FOU-82 sont menés en parallèle, avant la soumission.
+
+Terminé récemment : FOU-129 (canal stable, 22 nov.), FOU-131 (code des écrans A à E), FOU-126 (notifications), FOU-116 (vidéos Higgsfield, mais résiliation non confirmée).
 
 ## 2. Démarches administratives
 
@@ -31,7 +30,7 @@ Terminé récemment : FOU-129 (canal stable, 22 nov.), FOU-126 (notifications fi
 | ACRE à l'URSSAF | FOU-83 | En cours | Documents de l'Urssaf reçus le 21 nov. ; demande à remplir le 22 nov. Objectif de dépôt : 18 décembre 2026 ; limite probable 2 janvier 2027 (60 jours après le début d'activité du 3 nov., à confirmer auprès de l'Urssaf). Voir `PROPOSITIONS-LINEAR-2026-11-16.md` |
 | Médiateur de la consommation | FOU-82 | À faire (4 déc.) | Obligatoire pour vendre à des particuliers **[Déduit]**, à faire avant la sortie |
 | Small Business Program Apple (15 %) | – | En cours | Demande envoyée le 4 nov., réponse non reçue à notre connaissance |
-| Essai Higgsfield (vidéos) + résiliation immédiate | FOU-116 | Backlog (gelé) | Ne pas lancer sans Victor |
+| Essai Higgsfield (vidéos) + résiliation | FOU-116 | Done (5 vidéos livrées) | **Résiliation du renouvellement non confirmée** : vérifier le compte Higgsfield |
 
 ## 3. Fonctionnalités prévues après la sortie (Backlog)
 
@@ -62,7 +61,7 @@ FOU-56 calendrier J-14 à J+14, FOU-57 vidéos saison 1, FOU-58 vidéos « brain
 ## 5. Dépendances clés
 
 ```
-FOU-131 (+ canal stable) → validation build 23 (FOU-105) + achats (FOU-128) + médiateur (FOU-82) → soumission 5 déc. (FOU-130) → sortie 15 déc.
+Tests iPhone de #160 (déjà fusionnée) puis promotion stable sur accord → validation build 23 (FOU-105) + achats (FOU-128) + médiateur (FOU-82) → soumission 5 déc. (FOU-130) → sortie 15 déc.
 Page fusionnée → test en canal test → PR « canal valider » → visible pour tous
 FOU-41 (découpage) → FOU-53 (Orca)
 ```

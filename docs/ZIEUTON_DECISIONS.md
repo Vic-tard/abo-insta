@@ -1,6 +1,6 @@
 # Zieuton : journal des décisions
 
-> Dernière mise à jour : 16 novembre 2026 (FOU-123). Reconstitué depuis la mémoire du projet Claude, Linear et Git. Les dates sont celles notées au moment de la décision (heure de Paris quand précisée).
+> Dernière mise à jour : 23 novembre 2026 (base FOU-123). Reconstitué depuis la mémoire du projet Claude, Linear et Git. Les dates sont celles notées au moment de la décision (heure de Paris quand précisée).
 > État : **Active** / **Remplacée** (par une décision plus récente, citée) / **Abandonnée**.
 > Pour ajouter une décision : nouvelle ligne en haut de sa section, avec date, source (fil, ticket ou PR) et état. Ne jamais effacer une ancienne décision : la passer en « Remplacée ».
 
@@ -62,6 +62,10 @@
 | D-52 | 2 nov. | Nom « Zieuton » ; identifiants techniques `fr.zyeuto.*` gardés | Active | PR #28 |
 | D-53 | 3 nov. | Micro-entreprise à l'adresse personnelle (publique au registre), accepté par Victor | Active | Mémoire `abo-insta-micro-entreprise` |
 | D-54 | 10 nov. | Com entière en Backlog | Active | FOU-99 |
+| D-55 | 16 nov. 19h11 | Soumission à Apple vers le 25 nov., sortie le 3 déc. | **Remplacée** par D-56 | Message de Victor, fil 00 |
+| D-56 | 22 nov. | Tout le planning est décalé de 10 jours : build validé le 2 déc., soumission le 5 déc., **sortie le 15 déc. 2026** | Active | Message de Victor, fil 00 ; projet Linear |
+| D-57 | 17 nov. | Pas de build 16 ; un seul build candidat. Candidat actuel : 1.0 (23) | Active | Fils 00 et 01 ; CHANGELOG |
+| D-58 | 23 nov. | Linear (audit Victor + ChatGPT) : FOU-130 est le seul ticket de soumission (FOU-51 doublon) ; « Done » sur FOU-131 et FOU-129 = code fusionné et promotion du 22 nov., les tests réels restent dans FOU-105 | Active | Linear |
 
 ## 5. Décisions abandonnées
 
@@ -74,10 +78,10 @@
 
 ## 6. Décisions encore à prendre
 
-1. Nouvelle date de soumission à Apple si P1 à P6 dépassent le 20 novembre.
-2. Préparer ou non le plan B (FOU-33) **avant** la soumission.
-3. Garder ou non la sortie au 3 décembre si la com (FOU-56, 59, 60) n'a pas démarré.
-4. Quand valider en canal stable les écrans d'arrivée du 15–16 nov.
-5. Accès à la démo pour l'examinateur Apple après la suppression de « Faisons connaissance ».
-6. Statut des tickets FOU-121 (marqué « Done » dans Linear alors que le travail continue) et FOU-119 (« In Progress » mais gelé). Victor : ne pas les changer avant la fin de P1.
-7. Lien public du questionnaire testeurs (BUG-22).
+1. PR #160 (fusionnée le 22 nov., canal test) : passage en canal stable après les tests sur iPhone (Victor).
+2. Préparer ou non le plan B (FOU-33) **avant** la soumission du 5 déc.
+3. Com minimale pour la sortie du 15 déc. (FOU-56, 59, 60, en Backlog).
+4. Lien public du questionnaire testeurs (BUG-22).
+5. Vérifier et confirmer la résiliation du renouvellement Higgsfield (FOU-116).
+
+Décisions tranchées depuis le 16 nov. (ancienne liste) : date de soumission (D-56) ; canal stable promu le 22 nov. ; démo accessible dès la bienvenue (PR #141) ; statuts Linear rangés le 22 et le 23 nov.

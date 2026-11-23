@@ -1,6 +1,6 @@
 # Zieuton : document de transmission pour ChatGPT
 
-> Dernière mise à jour : 22 novembre 2026, soir (nouveau planning : sortie le 15 décembre ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
+> Dernière mise à jour : 23 novembre 2026, nuit (audit Linear de Victor et ChatGPT ; base créée par FOU-123). **À coller tel quel au début d'une conversation ChatGPT**, ou à lui faire lire sur GitHub (`docs/ZIEUTON_HANDOFF.md` du dépôt Vic-tard/abo-insta). Ce document se suffit à lui-même : ChatGPT n'a pas accès aux conversations Claude ni à leurs fichiers.
 > À mettre à jour par Claude après chaque étape importante (fin de PR, décision, build).
 
 ## 1. Le projet en 10 lignes
@@ -26,38 +26,55 @@ Architecture : une page web unique `index.html` (~8 600 lignes, HTML/CSS/JS sans
 
 Pas de scraping ni de connexion automatisée à Instagram ; jamais le mot de passe ; l'utilisateur touche lui-même « Télécharger » ; aucune donnée envoyée à un serveur (pas d'analytics, pas de SDK) sans décision écrite de Victor ; aucune mention d'IA dans l'app ; identifiants `fr.zyeuto.*` intouchables.
 
-## 5. Où en est le projet (22 nov. au soir)
+## 5. Où en est le projet (23 nov., d'après Linear)
 
-- **Nouveau planning (Victor, 22 nov.) : tout décalé de 10 jours.**
-  - Build validé : 2 déc.
-  - Soumission à Apple : 5 déc. (FOU-130, publication manuelle).
-  - Sortie sur l'App Store : **15 déc.**
-  - Les jalons Linear sont à ces dates.
-- **Build candidat : 1.0 (23)**, installé chez Victor. Historique des builds :
-  - 15 : export P1 à P6 ;
-  - 17 : notifications, non validé ;
-  - 21 : correctifs du 18 nov. ;
-  - 22 : sécurité du suivi ;
-  - 23 : bandeau « Un fichier est disponible ».
+**Planning du projet « Zieuton 1.0 »** (décision de Victor du 22 nov. : tout décalé de 10 jours) :
+- **Build validé** : 2 déc. ;
+- **Soumission à Apple** : 5 déc. ;
+- **Sortie sur l'App Store** : 15 déc., avec publication manuelle.
 
-  Aucun nouveau build n'est prévu tant que la coque ne change pas.
-- **Canal stable** : page du 21 nov. (2026-11-21-1638), validée par Victor sur son iPhone. PR #159 fusionnée le 22 nov. (FOU-129 terminé).
-- **FOU-131** (écrans après la demande d'export) : la PR 1 (#152) et la question après l'import (#157) sont fusionnées. La **PR 2 (#160)** est ouverte, page seule, à relire. Elle porte sur la démo pendant l'attente : bandeau « DÉMO · Données d'exemple », bouton « Mon export », visite du zieuteur en 4 bulles affichée une seule fois. Après validation, il faudra repasser cette page en canal stable.
-- **FOU-126** (notifications) : terminé. Les lignes restantes de la matrice `VALIDATION-BUILD-21.md` sont suivies dans **FOU-105** (validation du build final).
-- **Linear au 22 nov.** (ChatGPT a classé FOU-51 en doublon de FOU-130, qui est le ticket de soumission) :
-  - **En cours** : FOU-131, FOU-105, FOU-83 (ACRE, documents de l'Urssaf reçus le 21 nov., dépôt avant le 18 déc.).
-  - **À faire** : FOU-128 achats (2 déc.), FOU-82 médiateur (4 déc.), FOU-130 soumission (5 déc.).
-  - **Backlog** : com, 3D (FOU-119), village, et tout ce qui vient après la sortie.
-- Com, 3D et village restent **gelés**.
+Rien n'est soumis sans l'accord explicite de Victor.
+
+**Build candidat : 1.0 (23)**, installé chez Victor. Historique des builds :
+- 15 : export P1 à P6 ;
+- 17 : notifications, non validé ;
+- 21 : correctifs du 18 nov. ;
+- 22 : sécurité du suivi ;
+- 23 : bandeau « Un fichier est disponible ».
+
+Un build 24 ne se fera que si la coque doit changer.
+
+**Canal stable** : page du 21 nov. (2026-11-21-1638), promue le 22 nov. (PR #159). La PR #160, fusionnée le 22 nov., n'y est **pas** : elle est en canal test seulement. Son passage en stable demandera une promotion séparée, après les tests sur iPhone et l'accord de Victor.
+
+### Tickets (Linear fait foi)
+
+| Ticket | Sujet | Statut | Échéance | Remarque |
+| --- | --- | --- | --- | --- |
+| FOU-131 | Écrans après la demande d'export | Done | – | « Done » vaut pour le code fusionné (#152, #157). Les tests UX réels restants sont suivis dans FOU-105. La PR #160 (démo pendant l'attente) a été **fusionnée le 22 nov. à 23 h 37** (commit 33ce02e, page 2026-11-22-2329), avec la correction demandée : « Mon export » ramène à l'écran B ou E sans ouvrir Instagram, et le balayage est bloqué pendant les bulles. Elle est en canal test seulement. Ses tests sur iPhone (U11 à U14) restent à faire dans FOU-105. |
+| FOU-129 | Canal stable | Done | – | Promotion du 22 nov. seulement. |
+| FOU-126 | Notifications fiables | Done | – | Lignes restantes de la matrice suivies dans FOU-105. |
+| FOU-105 | Valider le build final sur iPhone | In Progress | 2 déc. | Restent : transitions UX (dont #160), notifications, non-régression, iCloud, compte 2, parcours de l'examinateur Apple. Bloque FOU-130. |
+| FOU-128 | Achats et restauration (sandbox) | Todo | 4 déc. | En parallèle de FOU-105, avant la soumission. |
+| FOU-82 | Médiateur de la consommation | Todo | 4 déc. | Avant la soumission. |
+| FOU-130 | Soumission à Apple, publication manuelle | In Progress (depuis le 23 nov., 0 h 18) | 5 déc. | Ticket de soumission officiel. FOU-51 a été classé doublon. Statut lu dans Linear le 23 nov. ; « In Progress » veut dire que la préparation a commencé, rien n'est soumis. La soumission reste bloquée par FOU-105 et demande l'accord de Victor. |
+| FOU-83 | ACRE | In Progress | 18 déc. | Documents de l'Urssaf reçus le 21 nov. |
+| FOU-116 | Essai Higgsfield | Done | – | Cinq vidéos livrées. **Résiliation du renouvellement non confirmée** : à vérifier sur le compte Higgsfield. |
+
+**Backlog** (gelé ou après la sortie) :
+- com : FOU-56 calendrier du 1er au 29 déc., FOU-59, FOU-60, FOU-63 annonce le 15 déc. ;
+- FOU-119 (3D) et le village ;
+- FOU-41 et FOU-55 (technique, après la sortie).
+
+Les dates exactes sont dans Linear.
 
 ## 6. Prochaines étapes, dans l'ordre
 
-1. Relire et valider la PR #160 (FOU-131 PR 2), test iPhone en canal test, fusion, puis canal stable.
-2. FOU-83 : préparer la demande d'ACRE avec les documents de l'Urssaf.
-3. FOU-105 : lignes restantes de la matrice sur le build 23, et le parcours de l'examinateur Apple.
-4. FOU-128 : achats et restauration en sandbox.
-5. FOU-82 : adhérer à un médiateur et l'ajouter aux textes légaux.
-6. FOU-130 : soumission le 5 déc., publication manuelle le 15 déc.
+1. PR #160 (déjà fusionnée le 22 nov., en canal test) : tests sur iPhone U11 à U14, consignés dans FOU-105. Ensuite seulement, et avec l'accord de Victor, une PR séparée la passe en canal stable.
+2. FOU-105 : tests restants sur le build 23, à consigner.
+3. FOU-128 : achats en sandbox, avant le 4 déc.
+4. FOU-82 : médiateur, avant le 4 déc.
+5. FOU-83 : demande d'ACRE.
+6. FOU-130 (In Progress) : soumission le 5 déc., sortie le 15 déc., avec l'accord de Victor.
 
 Garde-fous : aucune fusion, aucun build, aucun passage en stable et aucune soumission sans l'accord explicite de Victor.
 
@@ -70,7 +87,7 @@ Garde-fous : aucune fusion, aucun build, aucun passage en stable et aucune soumi
 
 ## 8. Questions où un second avis serait utile
 
-1. **FOU-131 PR 2 (#160)** : la visite en bulles et le bouton « Mon export » sont-ils sûrs avant la soumission ?
+1. **PR #160** (fusionnée, canal test) : après les tests sur iPhone, la passe-t-on en canal stable avant la soumission ?
 2. **Build 23 comme build final** : quelles lignes de la matrice sont indispensables avant de soumettre ?
 3. **Risque 5.2.2** : faut-il une réponse prête pour l'examinateur ?
 4. **Lancement** : quel minimum de com, avec la sortie au 15 déc. ?

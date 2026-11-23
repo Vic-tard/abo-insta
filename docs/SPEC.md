@@ -73,7 +73,7 @@ Zieuton montre à une personne qui s'est désabonnée de son compte Instagram (e
 
 ## 6. Contraintes
 
-- **Sortie visée** : 3 décembre 2026, soumission à Apple vers le 20 novembre, sortie manuelle.
+- **Sortie visée** : 15 décembre 2026, soumission à Apple vers le 5 décembre, sortie manuelle (planning décalé le 22 nov. ; l'ancienne date était le 3 déc.).
 - **Apple** : règles 5.2.2 (service tiers), 2.5.2 (code téléchargé), 3.1.1 (achats). La note au testeur doit expliquer la vue Instagram et la page embarquée.
 - **Légal** : micro-entreprise (SIRET en attente), textes légaux (PR #35), RGPD (aucune donnée collectée).
 - **Performance** : un compte à 200 000 abonnés doit s'importer en moins de 5 secondes sur un iPhone récent.
