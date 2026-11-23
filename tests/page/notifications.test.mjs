@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -16,6 +17,7 @@ after(async () => { await browser?.close(); });
 // Ouvre la page comme dans l'app. prefs : réglages enregistrés ; version : celle de la coque ; status : réponse de la coque.
 async function open({ version = 10, prefs = {}, status = null, waitMins = null } = {}) {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR", reducedMotion: "reduce" });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(([v, p, w]) => {

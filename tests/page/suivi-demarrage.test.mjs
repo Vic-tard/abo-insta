@@ -5,6 +5,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -16,6 +17,7 @@ const accts = [{ id: "a1", slot: 1, h: [], n: 0 }, { id: "a2", slot: 2, h: [], n
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
 async function open(prefs, version = 10) {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR", reducedMotion: "reduce" });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(([p, v]) => {

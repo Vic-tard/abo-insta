@@ -6,6 +6,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -15,6 +16,7 @@ after(async () => { await browser?.close(); });
 
 async function open({ viewport = { width: 393, height: 852 }, colorScheme = "light", prefs = {}, status = "authorized" } = {}) {
   const page = await browser.newPage({ viewport, locale: "fr-FR", reducedMotion: "reduce", colorScheme });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });

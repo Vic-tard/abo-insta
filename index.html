@@ -2468,6 +2468,180 @@ if (!window.ZYEUTO_APP) {
   .vs-act.gold { background: var(--gold); color: var(--gold-ink); }
   .vil-x:focus-visible, .vs-act:focus-visible, .vil-card:focus-visible { outline: 3px solid #9d86e4; outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { .vil-sheet, .vil-bub { transition: none; } }
+
+  /* ==========================================================================
+     Refonte visuelle, lot 1 (23 nov.) : accueil, courbe des abonnés, jeu « Ça match ? » et ses deux cousins.
+     Règles communes : une couleur dominante par écran (prune pour l'accueil et les graphiques, la nuit du jeu
+     pour les jeux), les couleurs des catégories seulement sur les chiffres et les icônes, des cartes calmes,
+     le Zieuteur 3D posé sur le bord d'une carte (la carte sert de mur), des réactions courtes au toucher.
+     ========================================================================== */
+  :root { --r-card: #fff; --r-ink: #2e2328; --r-muted: #6f5f66; --r-line: #efe3e6; --r-shadow: 0 1px 2px rgb(46 35 40 / .05), 0 8px 22px rgb(46 35 40 / .07);
+    --k-down: #c4412f; --k-down-s: #fde5de; --k-up: #17794d; --k-up-s: #dcf2e7; --k-nb: #6a4fc4; --k-nb-s: #ece6fd; --k-fan: #a3540a; --k-fan-s: #fdecd6; --k-all: #a8466a; --k-all-s: #f9e1e8; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --r-card: #221a1d; --r-ink: #f5ecee; --r-muted: #b3a2a8; --r-line: #33282c; --r-shadow: 0 0 0 1px #2f2528;
+    --k-down: #f39a85; --k-down-s: #3a221d; --k-up: #7cd3ac; --k-up-s: #16291f; --k-nb: #c9b8f7; --k-nb-s: #2c2540; --k-fan: #f6b77a; --k-fan-s: #3a2a17; --k-all: #f0a3bd; --k-all-s: #3d2530; } }
+  :root[data-theme="dark"] { --r-card: #221a1d; --r-ink: #f5ecee; --r-muted: #b3a2a8; --r-line: #33282c; --r-shadow: 0 0 0 1px #2f2528;
+    --k-down: #f39a85; --k-down-s: #3a221d; --k-up: #7cd3ac; --k-up-s: #16291f; --k-nb: #c9b8f7; --k-nb-s: #2c2540; --k-fan: #f6b77a; --k-fan-s: #3a2a17; --k-all: #f0a3bd; --k-all-s: #3d2530; }
+
+  /* Le Zieuteur 3D d'une seule image : la boîte a la hauteur de la pose la plus haute (le saut), l'image est calée en bas.
+     Le bas de l'image (sous les pattes) passe derrière la carte : -9 % de sa hauteur. */
+  .zt-pose { aspect-ratio: 330 / 282; }
+  .zt-pose img { object-fit: contain; object-position: 50% 100%; }
+  .zt-pose .zt-move { transform-origin: 50% 100%; }
+  .zt-pose.zt-off { aspect-ratio: 1; }
+
+  /* ---------- Accueil ---------- */
+  body[data-mode="data"] .top { grid-template-columns: 1fr auto; }
+  body[data-mode="data"] .top .brand { display: none; }
+  body[data-mode="data"] .acct-pill { justify-self: start; }
+  #pg-home .wrap, .wrap { row-gap: 16px; }
+  .wrap > .home-hero { order: 1; } .wrap > #weekly { order: 2; } .wrap > #hm-h { order: 3; } .wrap > #hm-tiles { order: 3; } .wrap > #hm-all { order: 4; } .wrap > #plus-mini { order: 5; } .wrap > #imp-row { order: 6; }
+  /* Une demande en cours passe devant : c'est elle qu'on vient suivre. */
+  .wrap > #weekly.wk-pend, .wrap > #weekly.wk-unsure { order: 0; }
+  body[data-mode="data"] .wrap { padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
+
+  /* La carte prune : le fond est peint par ::after pour que le Zieuteur passe derrière son bord. */
+  .home-hero { margin-top: 70px; background: none !important; box-shadow: none !important; padding: 16px 16px 16px; gap: 14px; isolation: isolate; }
+  .home-hero::after { content: ""; position: absolute; inset: 0; border-radius: 26px; z-index: -1; pointer-events: none;
+    background: radial-gradient(110% 80% at 100% 0%, rgb(239 127 142 / .32), transparent 60%), linear-gradient(160deg, #5a2c40 0%, #3a1d2c 70%, #2c1622 100%);
+    box-shadow: 0 14px 30px rgb(58 29 44 / .28), inset 0 0 0 1px rgb(246 201 90 / .22); }
+  .home-hero::before { display: none; }
+  .home-hero .hh-zy { display: none; }
+  .hh-3d { position: absolute; right: 14px; bottom: calc(100% - 9px); width: 116px; z-index: -2; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .hh-3d .zt { filter: drop-shadow(0 -2px 10px rgb(239 127 142 / .25)); }
+  .home-hero .hh-bub { right: 132px; left: auto; top: -46px; z-index: 1; }
+  .home-hero .hh-spark { z-index: 0; height: 36%; opacity: .22; }
+  .home-hero .profile { grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding-right: 0; }
+  .home-hero .ring { width: 48px; height: 48px; padding: 2px; }
+  .home-hero .ring-in { padding: 2px; }
+  .home-hero .avatar-edit { width: 20px; height: 20px; border-width: 2px; right: -4px; bottom: -4px; }
+  .home-hero .avatar-edit svg { width: 11px; height: 11px; }
+  .home-hero .caption { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; margin: 0; font: 600 13px/1.3 var(--round); color: rgb(255 255 255 / .7); }
+  .home-hero .caption strong { font: 800 17px/1.2 var(--round); color: #fff; }
+  .home-hero .stats { grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+  .home-hero .stat + .stat::before { display: none; }
+  .home-hero button.stat { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; border: 0; cursor: pointer; font: inherit; text-align: left;
+    padding: 12px 14px 12px; border-radius: 18px; background: rgb(255 255 255 / .07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); color: #fff; -webkit-tap-highlight-color: transparent; }
+  .home-hero button.stat:active { transform: scale(.97); background: rgb(255 255 255 / .12); }
+  .home-hero button.stat:focus-visible { outline: 3px solid #f6c95a; outline-offset: 2px; }
+  .home-hero button.stat b { font: 800 42px/1 var(--round); letter-spacing: -.03em; }
+  .home-hero button.stat > span { font: 700 14px/1.2 var(--round); text-transform: none; letter-spacing: 0; color: rgb(255 255 255 / .82); display: flex; align-items: center; gap: 4px; }
+  .home-hero button.stat > span::after { content: "›"; font-size: 18px; line-height: 1; color: rgb(255 255 255 / .5); }
+  .home-hero button.stat.down b { color: #ffb4a6; } .home-hero button.stat.up b { color: #9fe8c4; }
+  .hh-total { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 2px 0; }
+  .hh-total .stat { display: flex; align-items: baseline; gap: 6px; padding: 0; }
+  .home-hero .hh-total .stat b { font: 800 20px/1 var(--round); color: #fff3d1; }
+  .home-hero .hh-total .stat > span { font: 700 13px var(--round); text-transform: none; letter-spacing: 0; color: rgb(255 255 255 / .7); }
+  .hh-total .hh-net { font: 800 12px/1 var(--round); padding: 6px 9px; }
+
+  /* « Mettre à jour » quand rien n'est en cours : une ligne calme, le bouton à droite. */
+  #weekly:not(.wk-pend):not(.wk-unsure) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 10px;
+    background: var(--r-card) !important; box-shadow: var(--r-shadow); border-radius: 22px !important; padding: 10px 10px 10px 12px !important; color: var(--r-ink); }
+  #weekly:not(.wk-pend):not(.wk-unsure)::before { display: none; }
+  #weekly:not(.wk-pend):not(.wk-unsure) > * { grid-column: 1 / -1; }
+  #weekly:not(.wk-pend):not(.wk-unsure) > .wk-bar { grid-column: 1; grid-row: 1; min-width: 0; }
+  #weekly:not(.wk-pend):not(.wk-unsure) > #wk-go { grid-column: 2; grid-row: 1; width: auto; min-height: 44px; padding: 0 16px; gap: 6px; font-size: 15px; border-radius: 14px; }
+  #weekly:not(.wk-pend):not(.wk-unsure) > #wk-go svg { width: 18px; height: 18px; }
+  #weekly:not(.wk-pend):not(.wk-unsure) > .wk-steps { display: none; }
+  #weekly:not(.wk-pend):not(.wk-unsure) .wk-toggle .t { font-size: 16px; }
+  #weekly:not(.wk-pend):not(.wk-unsure) .wk-av { width: 34px !important; }
+  #weekly:not(.wk-pend):not(.wk-unsure) .wk-redo { justify-self: start; padding: 2px 4px; color: var(--r-muted); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #weekly:not(.wk-pend):not(.wk-unsure) { --ink: #f5ecee; --muted: #b3a2a8; --surface: #2a2023; --surface-2: #2a2023; --surface-2-press: #382b2f; --line: #3a2d31; --link: #f0bcc4; --btn: #f5ecee; --btn-ink: #1a1416; --btn-press: #dccfd2; color: #f5ecee; } }
+  :root[data-theme="dark"] #weekly:not(.wk-pend):not(.wk-unsure) { --ink: #f5ecee; --muted: #b3a2a8; --surface: #2a2023; --surface-2: #2a2023; --surface-2-press: #382b2f; --line: #3a2d31; --link: #f0bcc4; --btn: #f5ecee; --btn-ink: #1a1416; --btn-press: #dccfd2; color: #f5ecee; }
+  #weekly:not(.wk-pend):not(.wk-unsure) .wk-toggle .due { color: var(--r-muted); }
+
+  .hm-h { margin: 6px 2px -6px; font: 800 13px/1.2 var(--round); text-transform: uppercase; letter-spacing: .07em; color: var(--r-muted); }
+  /* Les 4 listes : des cartes calmes, la couleur de la catégorie sur le chiffre et l'icône seulement. */
+  .hm-tile { --k: var(--k-down); --ks: var(--k-down-s); }
+  .hm-tile.t-up { --k: var(--k-up); --ks: var(--k-up-s); } .hm-tile.t-notback { --k: var(--k-nb); --ks: var(--k-nb-s); } .hm-tile.t-fans { --k: var(--k-fan); --ks: var(--k-fan-s); }
+  .hm-tiles .hm-tile { background: var(--r-card) !important; color: var(--r-ink); box-shadow: var(--r-shadow); min-height: 124px; border-radius: 22px; padding: 12px 14px 12px; }
+  .hm-tiles .hm-tile::before { display: none; }
+  .hm-tiles .hm-ic { background: var(--ks); box-shadow: none; width: 32px; height: 32px; border-radius: 10px; }
+  .hm-tiles .hm-ic svg { stroke: var(--k); }
+  .hm-tiles .hm-n { color: var(--k); font-size: 30px; }
+  .hm-tiles .hm-l { color: var(--r-ink); }
+  .hm-tiles .hm-s { color: var(--r-muted); }
+  .hm-tiles .hm-faces i, .hm-tiles .hm-faces i:nth-child(2), .hm-tiles .hm-faces i:nth-child(3) { background: var(--ks); color: var(--k); box-shadow: 0 0 0 2px var(--r-card); }
+  .wrap > #hm-all { margin-top: 0; background: var(--r-card) !important; color: var(--r-ink); box-shadow: var(--r-shadow); border-radius: 22px; padding: 14px 14px 14px 16px; }
+  #hm-all::before { display: none; }
+  #hm-all .hm-all-t small { color: var(--r-muted); }
+  #hm-all .hm-all-t > b { color: var(--k-all); font-size: 28px; }
+  #hm-all .hm-all-s { color: var(--r-muted); }
+  #hm-all .hm-faces i, #hm-all .hm-faces i:nth-child(2), #hm-all .hm-faces i:nth-child(3) { background: var(--k-all-s); color: var(--k-all); box-shadow: 0 0 0 2px var(--r-card); }
+  #hm-all .hm-all-go { width: 40px; height: 40px; background: var(--k-all-s); box-shadow: none; }
+  #hm-all .hm-all-go svg { stroke: var(--k-all); }
+  .wrap > #imp-row { background: var(--r-card); box-shadow: var(--r-shadow); border-radius: 22px; color: var(--r-ink); }
+  #imp-row::before { display: none; }
+  #imp-row .imp-ic { background: var(--k-nb-s); box-shadow: none; }
+  #imp-row .imp-ic svg { stroke: var(--k-nb); }
+  #imp-row .imp-t b { color: var(--r-ink); } #imp-row .imp-t small { color: var(--r-muted); }
+  #imp-row .imp-bars i { background: var(--k-nb-s); } #imp-row .imp-bars i.on { background: var(--k-nb); }
+  #imp-row .imp-go { background: var(--k-nb-s); color: var(--k-nb); box-shadow: none; }
+
+  /* La barre du bas : les 3 onglets avec leur nom, posée au-dessus du contenu (qui s'arrête avant elle). */
+  body[data-mode="data"] .pager { left: 16px; right: 16px; translate: none; max-width: 420px; margin: 0 auto; gap: 4px; padding: 6px; border-radius: 24px;
+    background: var(--r-card); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 0 0 1px var(--r-line), 0 10px 30px rgb(46 35 40 / .16); }
+  body[data-mode="data"] .pager button { flex: 1 1 0; flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; padding: 6px 4px; border-radius: 18px; font: 700 12px/1.1 var(--round); color: var(--r-muted); }
+  body[data-mode="data"] .pager button span { display: inline; }
+  body[data-mode="data"] .pager button svg { width: 22px; height: 22px; }
+  body[data-mode="data"] .pager button[aria-current="page"] { background: var(--rose-soft); color: var(--rose-ink); }
+  body[data-mode="data"] .pager button:active { transform: scale(.96); }
+
+  /* ---------- Graphiques : la courbe des abonnés en tête ---------- */
+  #pg-stats .st-hero { --ac: #f4a3c4; margin-top: 64px; overflow: visible; isolation: isolate; background: none; box-shadow: none; gap: 10px; padding: 16px 16px 14px; }
+  #pg-stats .st-hero::after { content: ""; position: absolute; inset: 0; border-radius: 26px; z-index: -1; pointer-events: none;
+    background: radial-gradient(90% 80% at 0% 0%, #6a3460 0%, transparent 60%), radial-gradient(70% 70% at 100% 100%, rgb(246 201 90 / .14), transparent 60%), linear-gradient(160deg, #2e1b33, #1a0f1e);
+    box-shadow: 0 14px 30px rgb(30 15 25 / .3), inset 0 0 0 1px rgb(255 255 255 / .08); }
+  #pg-stats .st-hero > .sh-3d { position: absolute; right: 16px; bottom: calc(100% - 9px); width: 104px; z-index: -2; cursor: pointer; }
+  #pg-stats .sh-3d .st-bub { left: auto; right: calc(100% + 4px); top: 28px; bottom: auto; translate: none; border-radius: 12px 12px 3px 12px; z-index: 1; }
+  .sh-q { margin: 0; font: 800 12px/1.2 var(--round); text-transform: uppercase; letter-spacing: .06em; color: rgb(255 255 255 / .62); }
+  #pg-stats .sh-top { grid-template-columns: 1fr; }
+  #pg-stats .st-who { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 2px 8px; }
+  #pg-stats .st-who b { font-size: 44px; }
+  #pg-stats .st-who .st-chip { grid-column: 1 / -1; justify-self: start; margin-top: 4px; }
+  .evo { position: relative; margin: 2px -4px 0; touch-action: pan-y; cursor: crosshair; border-radius: 14px; -webkit-tap-highlight-color: transparent; }
+  .evo:focus-visible { outline: 2px solid var(--ac); outline-offset: 4px; }
+  .evo svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .evo text { font: 700 11px var(--round); fill: rgb(255 255 255 / .55); font-variant-numeric: tabular-nums; }
+  .evo-grid { stroke: rgb(255 255 255 / .1); stroke-width: 1; stroke-dasharray: 3 4; }
+  .evo-line { fill: none; stroke: var(--ac); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 2px 8px rgb(244 163 196 / .45)); }
+  .evo-dot { fill: #24152a; stroke: var(--ac); stroke-width: 2; }
+  .evo-rec circle { fill: none; stroke: #f6c95a; stroke-width: 2; stroke-dasharray: 2 3; }
+  .evo-rec text { fill: #f6c95a; font-weight: 800; }
+  .evo-cur { stroke: rgb(255 255 255 / .35); stroke-width: 1.5; opacity: 0; transition: opacity .15s; }
+  .evo-sel { fill: #fff; stroke: var(--ac); stroke-width: 3; }
+  .evo.picked .evo-cur { opacity: 1; }
+  .evo-tip { position: absolute; translate: -50% calc(-100% - 14px); pointer-events: none; display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border-radius: 12px;
+    background: #fff; color: #2e2328; box-shadow: 0 6px 16px rgb(0 0 0 / .3); white-space: nowrap; opacity: 0; transition: opacity .15s; }
+  #pg-stats .evo-tip b { display: block; font: 800 15px/1.1 var(--round); letter-spacing: 0; font-variant-numeric: tabular-nums; color: #2e2328; }
+  #pg-stats .evo-tip small { display: block; font: 700 11px var(--round); text-transform: none; letter-spacing: 0; color: #6f5f66; }
+  .evo.picked .evo-tip { opacity: 1; }
+  .evo-read { margin: 0; min-height: 2.6em; font: 600 13px/1.35 var(--round); color: rgb(255 255 255 / .78); }
+  #pg-stats .evo-read b { display: inline; font: 800 13px/1.35 var(--round); letter-spacing: 0; color: #fff; }
+  .evo-span { margin: -4px 0 2px; font: 600 11.5px/1.3 var(--round); color: rgb(255 255 255 / .5); }
+  .evo-one { padding: 18px 14px; border-radius: 16px; background: rgb(255 255 255 / .06); }
+  .evo-one p { margin: 0; font: 600 14px/1.4 var(--round); color: rgb(255 255 255 / .75); }
+  /* La courbe est maintenant en tête : sa carte repliable « Record » ferait doublon. */
+  #g-evo-block { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .pg.anim .evo-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: evoDraw .9s .15s cubic-bezier(.4,0,.2,1) forwards; }
+    @keyframes evoDraw { to { stroke-dashoffset: 0; } }
+  }
+
+  /* ---------- Jeux (L'Ancien, Coup de foudre, Ça match ?) : le Zieuteur sur la carte de la question ---------- */
+  #quiz .qz-hero { position: relative; justify-content: center; align-items: flex-end; padding-top: 4px; min-height: 0; z-index: 0; }
+  .qz-stage { display: block; width: 156px; margin-bottom: -12px; cursor: default; }
+  .qz-stage .zt { filter: drop-shadow(0 0 24px color-mix(in srgb, var(--ac) 30%, transparent)); }
+  #quiz .qz-bub { left: calc(50% + 62px); top: 2px; }
+  #quiz .pips[hidden] + .qz-hero { margin-top: auto; }
+  .qz-card { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 14px; padding: 16px 16px 18px; border-radius: 28px;
+    background: color-mix(in srgb, var(--bg1) 62%, var(--bg2)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1), 0 18px 40px rgb(0 0 0 / .35); }
+  .qz-ring.qz-bar { width: auto; height: 8px; aspect-ratio: auto; display: block; margin: 0 4px; border-radius: 99px; overflow: hidden; }
+  .qz-ring.qz-bar::before { display: none; }
+  .qz-ring.qz-bar > svg { rotate: none; inset: 0; width: 100%; height: 100%; }
+  .qz-bar line { fill: none; stroke-width: 8; stroke-linecap: butt; }
+  .qz-ring.qz-bar .arc { filter: none; }
+  #quiz .qz-card .yesno { gap: 10px; }
+  #quiz .qz-card .qz-opt.big { min-height: 132px; }
 </style>
 
 <div class="wrap">
@@ -2555,19 +2729,22 @@ if (!window.ZYEUTO_APP) {
 
   <div class="home-hero needs-data">
   <span class="hh-zy" id="hh-zy" aria-hidden="true"></span><span class="hh-bub" id="hh-bub" aria-hidden="true"></span>
+  <!-- Refonte (lot 1) : le Zieuteur 3D posé sur le bord de la carte, la date de l'import en haut, puis ce qui a changé en grand. -->
+  <span class="hh-3d" id="hh-3d"></span>
   <section class="needs-data profile" aria-label="Résumé">
     <button class="ring avatar-btn" id="avatar-btn" type="button" aria-label="Choisir ta photo de profil"><span class="ring-in"><span class="ring-core" id="avatar-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></span></span><span class="avatar-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
-    <div class="stats">
-      <div class="stat"><b id="st-count">–</b><span>abonnés</span></div>
-      <div class="stat down"><b id="st-down">–</b><span>départs</span></div>
-      <div class="stat up"><b id="st-up">–</b><span>arrivées</span></div>
-    </div>
+    <p class="needs-data caption" id="caption">Chargement…</p>
   </section>
-  <p class="needs-data caption" id="caption">Chargement…</p>
+  <div class="stats">
+    <button class="stat down" type="button" data-list="unfollow"><b id="st-down">–</b><span>départs</span></button>
+    <button class="stat up" type="button" data-list="follow"><b id="st-up">–</b><span>arrivées</span></button>
+  </div>
+  <div class="hh-total"><div class="stat"><b id="st-count">–</b><span>abonnés</span></div><span class="hh-net" id="hh-net" hidden></span></div>
   <svg class="hh-spark" id="hh-spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"></svg>
   </div>
 
   <!-- Les listes : 4 petites cases, puis les abonnés. Chaque case ouvre sa liste en plein écran. -->
+  <h2 class="hm-h needs-data" id="hm-h">Tes listes</h2>
   <div class="hm-tiles needs-data" id="hm-tiles">
     <button class="hm-tile t-down" type="button" data-list="unfollow"><span class="hm-top"><span class="hm-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 9v8H9"/></svg></span><span class="hm-faces" id="hf-unfollow"></span></span><b class="hm-n" id="hn-unfollow">–</b><span class="hm-l">Départs</span><small class="hm-s" id="hs-unfollow"></small></button>
     <button class="hm-tile t-up" type="button" data-list="follow"><span class="hm-top"><span class="hm-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 17 7 7M7 15V7h8"/></svg></span><span class="hm-faces" id="hf-follow"></span></span><b class="hm-n" id="hn-follow">–</b><span class="hm-l">Arrivées</span><small class="hm-s" id="hs-follow"></small></button>
@@ -2898,8 +3075,12 @@ if (!window.ZYEUTO_APP) {
   <div class="card">
     <div class="fp-head"><button class="fp-back" id="quiz-close" type="button" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><p id="quiz-title"></p><span id="quiz-score" aria-live="polite"></span></div>
     <div class="pips" id="quiz-pips" aria-hidden="true"></div>
-    <div class="qz-hero"><span class="qz-ring" id="quiz-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="56"/><circle class="arc" id="quiz-arc" cx="60" cy="60" r="56" pathLength="100"/></svg><span class="qz-av" id="quiz-av"></span></span><span class="qz-bub" id="quiz-bub" aria-live="polite"></span></div>
-    <div class="quiz-body" id="quiz-body"></div>
+    <!-- Refonte (lot 1) : le Zieuteur 3D posé sur la carte de la question ; le temps qui reste file le long du bord de la carte. -->
+    <div class="qz-hero"><span class="qz-stage" id="quiz-stage"></span><span class="qz-av" id="quiz-av" hidden></span><span class="qz-bub" id="quiz-bub" aria-live="polite"></span></div>
+    <div class="qz-card">
+      <span class="qz-ring qz-bar" id="quiz-ring"><svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><line class="trk" x1="0" y1="4" x2="100" y2="4"/><line class="arc" id="quiz-arc" x1="0" y1="4" x2="100" y2="4" pathLength="100"/></svg></span>
+      <div class="quiz-body" id="quiz-body"></div>
+    </div>
     <p class="g-msg" id="quiz-msg" role="status"></p>
     <div class="acts" id="quiz-acts"></div>
   </div>
@@ -3750,15 +3931,21 @@ function render() {
   $("st-count").textContent = last ? nf(last.count) : "–";
   $("st-down").textContent = compared ? nf(last.unfollows) : "–";
   $("st-up").textContent = compared ? nf(last.follows) : "–";
+  // Refonte (lot 1) : la date de l'import en premier (« Import du … », puis « comparé au … » en dessous) ;
+  // le solde (+6) passe à côté du nombre d'abonnés, en bas de la carte.
   let cap;
   if (loading) cap = "Chargement de ton historique…";
   else if (!last) cap = "Aucun import pour l'instant.";
-  else if (!compared) cap = `<strong>Au ${fmtDate(last.takenAt)}</strong> · premier import`;
-  else {
-    const net = last.follows - last.unfollows;
-    cap = `<span class="hh-net ${net > 0 ? "up" : net < 0 ? "down" : ""}">${net > 0 ? "+" : net < 0 ? "−" : "±"}${nf(Math.abs(net))}</span><span><strong>Au ${fmtDate(last.takenAt)}</strong> · comparé au ${fmtDate(snaps[snaps.length - 2].takenAt)}</span>`;
-  }
+  else if (!compared) cap = `<strong>Import du ${fmtDate(last.takenAt)}</strong><span>Ton premier import</span>`;
+  else cap = `<strong>Import du ${fmtDate(last.takenAt)}</strong><span>comparé au ${fmtDate(snaps[snaps.length - 2].takenAt)}</span>`;
   $("caption").innerHTML = cap;
+  const netEl = $("hh-net");
+  if (netEl) {
+    const net = compared ? last.follows - last.unfollows : 0;
+    netEl.hidden = !compared;
+    netEl.className = "hh-net " + (net > 0 ? "up" : net < 0 ? "down" : "");
+    netEl.textContent = compared ? `${net > 0 ? "+" : net < 0 ? "−" : "±"}${nf(Math.abs(net))} au dernier import` : "";
+  }
   const counts = { unfollow: 0, follow: 0 };
   for (const e of state.events) counts[e.kind]++;
   $("tab-unfollow").innerHTML = `Départs<span class="n">${nf(counts.unfollow)}</span>`;
@@ -4088,6 +4275,78 @@ function drawChartWhenSeen() {
     chartSeen.disconnect();
   }, { threshold: 0.5 });
   chartSeen.observe(el);
+}
+// ---------- Graphiques : la courbe des abonnés en tête de page (refonte, lot 1) ----------
+// Mêmes chiffres que la courbe « Record » (state.snapshots : un point par import). Au toucher (ou avec les flèches),
+// on lit la date, le nombre d'abonnés et le mouvement de cet import.
+const EVO = { W: 340, H: 176, L: 6, R: 46, T: 16, B: 26 };
+function evoGeom(snaps) {
+  const { W, H, L, R, T, B } = EVO;
+  const xs = snaps.map((s) => new Date(s.takenAt).getTime()), ys = snaps.map((s) => s.count);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  const step = niceStep((hi - lo) || 4);
+  const same = hi === lo;
+  lo = Math.max(0, Math.floor(lo / step) * step - (same ? step : 0)); hi = Math.ceil(hi / step) * step + (same ? step : 0);
+  const sx = (x) => L + ((x - x0) / (x1 - x0 || 1)) * (W - L - R);
+  const sy = (y) => T + (1 - (y - lo) / (hi - lo)) * (H - T - B);
+  return { xs, ys, lo, hi, step, sx, sy };
+}
+function evoHTML(snaps) {
+  if (snaps.length < 2) return `<div class="evo evo-one"><p>La courbe commence à ton 2ᵉ import&nbsp;: un point par import, pour voir si ça monte ou si ça descend.</p></div>`;
+  const { W, H, L, R, T, B } = EVO, g = evoGeom(snaps), n = snaps.length, dots = n <= 24;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><linearGradient id="evo-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--ac)" stop-opacity=".34"/><stop offset="1" stop-color="var(--ac)" stop-opacity="0"/></linearGradient></defs>`;
+  for (let v = g.lo; v <= g.hi + 1e-9; v += g.step) {
+    svg += `<line class="evo-grid" x1="${L}" x2="${W - R + 4}" y1="${g.sy(v)}" y2="${g.sy(v)}"/><text class="evo-y" x="${W}" y="${g.sy(v) + 4}" text-anchor="end">${nf(v)}</text>`;
+  }
+  const ticks = n <= 3 ? snaps.map((_, i) => i) : [0, Math.round((n - 1) / 2), n - 1];
+  ticks.forEach((i, k) => svg += `<text class="evo-x" x="${g.sx(g.xs[i])}" y="${H - 6}" text-anchor="${k === 0 ? "start" : i === n - 1 ? "end" : "middle"}">${fmtShort(snaps[i].takenAt)}</text>`);
+  const pts = g.xs.map((x, i) => `${g.sx(x).toFixed(1)},${g.sy(g.ys[i]).toFixed(1)}`);
+  svg += `<polygon points="${g.sx(g.xs[0])},${g.sy(g.lo)} ${pts.join(" ")} ${g.sx(g.xs[n - 1])},${g.sy(g.lo)}" fill="url(#evo-g)"/>`;
+  svg += `<polyline class="evo-line" points="${pts.join(" ")}" pathLength="1"/>`;
+  if (dots) g.xs.forEach((x, i) => { if (i < n - 1) svg += `<circle class="evo-dot" cx="${g.sx(x)}" cy="${g.sy(g.ys[i])}" r="3.2"/>`; });
+  // Le record (le plus haut, le plus récent s'il y en a plusieurs) a son repère.
+  const rec = g.ys.lastIndexOf(Math.max(...g.ys));
+  svg += `<g class="evo-rec"><circle cx="${g.sx(g.xs[rec])}" cy="${g.sy(g.ys[rec])}" r="7"/><text x="${g.sx(g.xs[rec]) + (rec > n / 2 ? -10 : 10)}" y="${Math.max(11, g.sy(g.ys[rec]) - 10)}" text-anchor="${rec > n / 2 ? "end" : "start"}">Record</text></g>`;
+  svg += `<line class="evo-cur" id="evo-cur" x1="0" x2="0" y1="${T - 6}" y2="${H - B}"/><circle class="evo-sel" id="evo-sel" r="6"/>`;
+  return `<div class="evo" id="evo" tabindex="0" role="img" aria-roledescription="graphique" aria-label="Abonnés à chaque import, du ${fmtDate(snaps[0].takenAt)} au ${fmtDate(snaps[n - 1].takenAt)}. Glisse le doigt ou utilise les flèches pour lire chaque import.">${svg}</svg><span class="evo-tip" id="evo-tip" aria-hidden="true"></span></div>
+    <p class="evo-read" id="evo-read" aria-live="polite"></p>
+    <p class="evo-span">Du ${fmtShort(snaps[0].takenAt)} au ${fmtShort(snaps[n - 1].takenAt)} · ${nf(n)} imports · un point par import</p>`;
+}
+function bindEvo(snaps) {
+  const box = $("evo");
+  if (!box || snaps.length < 2) return;
+  const g = evoGeom(snaps), n = snaps.length;
+  let cur = n - 1;
+  const show = (i, touch) => {
+    cur = Math.max(0, Math.min(n - 1, i));
+    const s = snaps[cur], x = g.sx(g.xs[cur]), y = g.sy(g.ys[cur]), prev = snaps[cur - 1];
+    $("evo-cur").setAttribute("x1", x); $("evo-cur").setAttribute("x2", x);
+    $("evo-sel").setAttribute("cx", x); $("evo-sel").setAttribute("cy", y);
+    box.classList.toggle("picked", cur !== n - 1 || !!touch);
+    const tip = $("evo-tip");
+    tip.innerHTML = `<b>${nf(s.count)}</b><small>${fmtShort(s.takenAt)}</small>`;
+    tip.style.left = `${Math.max(14, Math.min(86 - (EVO.R / EVO.W * 100), x / EVO.W * 100))}%`;
+    tip.style.top = `${y / EVO.H * 100}%`;
+    const moves = prev ? ` · +${nf(s.follows)} arrivée${s.follows > 1 ? "s" : ""}, −${nf(s.unfollows)} départ${s.unfollows > 1 ? "s" : ""} depuis le ${fmtShort(prev.takenAt)}` : " · premier import";
+    $("evo-read").innerHTML = `<b>${fmtDate(s.takenAt)}</b> · ${nf(s.count)} abonnés${moves}`;
+  };
+  const at = (e) => {
+    const r = box.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * EVO.W;
+    let best = 0;
+    g.xs.forEach((t, i) => { if (Math.abs(g.sx(t) - x) < Math.abs(g.sx(g.xs[best]) - x)) best = i; });
+    return best;
+  };
+  let dragging = false;
+  box.addEventListener("pointerdown", (e) => { dragging = true; const i = at(e); if (i !== cur) haptic("selection"); show(i, true); });
+  box.addEventListener("pointermove", (e) => { if (!dragging && e.pointerType !== "mouse") return; const i = at(e); if (i !== cur) { if (dragging) haptic("selection"); show(i, true); } });
+  const stop = () => { dragging = false; };
+  box.addEventListener("pointerup", stop); box.addEventListener("pointercancel", stop); box.addEventListener("pointerleave", stop);
+  box.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); show(cur + (e.key === "ArrowLeft" ? -1 : 1), true); }
+    else if (e.key === "Home" || e.key === "End") { e.preventDefault(); show(e.key === "Home" ? 0 : n - 1, true); }
+  });
+  show(n - 1);
 }
 function niceStep(range) {
   const raw = range / 3;
@@ -5585,6 +5844,33 @@ function ztFail(img) {
   // Pas de logError : il écrirait sur le téléphone (la démo de la bienvenue ne doit rien écrire). Message visible dans la console.
   console.warn("Zieuton : image du Zieuteur 3D introuvable (zieuton.com et GitHub Pages), ancien dessin affiché");
 }
+// Refonte visuelle, lot 1 (23 nov.) : les autres poses du pack, en une seule image. Le Zieuteur se pose sur le bord
+// haut d'une carte (pattes posées dessus, le bas du corps caché derrière) : la carte sert de mur.
+const ZT_POSES = {
+  neutre: "guide/zieuteur-p01-neutre-v1.png", clin: "guide/zieuteur-p02-clin-v1.png", surpris: "guide/zieuteur-p03-surpris-v1.png",
+  choque: "guide/zieuteur-p04-choque-v1.png", malicieux: "guide/zieuteur-p05-malicieux-v1.png", loupe: "guide/zieuteur-p07-loupe-v1.png",
+  saut: "guide/zieuteur-p08-saut-v1.png",
+};
+function ztPoseHTML(pose, cls = "") {
+  const [first, ...rest] = ztSources(ZT_POSES[pose] || ZT_POSES.neutre);
+  return `<span class="zt zt-pose ${cls}" data-pose="${pose}" aria-hidden="true"><span class="zt-move"><img src="${first}" data-next="${rest.join(" ")}" alt="" draggable="false" onerror="ztFail(this)"></span></span>`;
+}
+// Change la pose d'un Zieuteur déjà affiché (sans le reconstruire, pour ne pas le faire clignoter).
+function ztSetPose(host, pose) {
+  if (!host) return;
+  const z = host.querySelector(".zt-pose");
+  if (!z || z.classList.contains("zt-off")) { host.innerHTML = ztPoseHTML(pose); return; }
+  if (z.dataset.pose === pose) return;
+  z.dataset.pose = pose;
+  const img = z.querySelector("img"), [first, ...rest] = ztSources(ZT_POSES[pose] || ZT_POSES.neutre);
+  img.dataset.next = rest.join(" "); img.src = first;
+}
+// Mauvaise réponse : il secoue la tête (même règle que le rebond : rien si les animations sont réduites).
+function ztShake(z) {
+  if (!z || calm()) return null;
+  const m = z.querySelector(".zt-move");
+  return m ? m.animate([{ transform: "none" }, { transform: "translateX(-5px) rotate(-3deg)" }, { transform: "translateX(5px) rotate(3deg)" }, { transform: "translateX(-3px) rotate(-1.5deg)" }, { transform: "none" }], { duration: 380, easing: "ease-in-out" }) : null;
+}
 // Toucher la tête : il se tasse, rebondit de quelques pixels et retrouve sa pose (350 ms). Le bloc ne bouge pas.
 const ZT_BOUNCE = [
   { transform: "none" },
@@ -5963,7 +6249,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-0316";
+const BUILD = "2026-11-23-0355";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -6609,7 +6895,17 @@ function ringTo(from, to, secs, ease = "cubic-bezier(.3,1,.4,1)") {
 }
 const replayAnim2 = (el) => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; };
 function setBub(t, kind) { const b = $("quiz-bub"); b.textContent = t; b.className = "qz-bub" + (kind ? " " + kind : ""); replayAnim2(b); }
-function setMood(m) { const a = $("quiz-av"); a.className = "qz-av"; void a.offsetWidth; a.className = "qz-av " + m; }
+// Chaque jeu a son Zieuteur : la loupe pour L'Ancien, le clin d'œil pour Coup de foudre, l'air malicieux pour Ça match ?
+// Il saute quand c'est juste, il est choqué quand c'est raté, surpris quand le temps est écoulé.
+const QZ_POSE = { oldest: "loupe", first: "clin", back: "malicieux" };
+function setMood(m, late) {
+  const a = $("quiz-av"); a.className = "qz-av"; void a.offsetWidth; a.className = "qz-av " + m;
+  const stage = $("quiz-stage"); if (!stage || !quiz) return;
+  const pose = m === "happy" || m === "party" ? "saut" : m === "sad" ? (late ? "surpris" : "choque") : QZ_POSE[quiz.id] || "neutre";
+  ztSetPose(stage, pose);
+  const z = stage.querySelector(".zt");
+  if (m === "happy" || m === "party") ztBounce(z); else if (m === "sad") ztShake(z);
+}
 function openQuiz(id) {
   if (GAMES[id].ready() !== true) return;
   clearTimeout(quizTimer); clearTimeout(quizLate);
@@ -6688,7 +6984,7 @@ function answer(b) {
     setBub(quiz.streak >= 3 ? `Série de ${quiz.streak} !` : pick(["Bien vu !", "Trop fort !", "Exact !", "Bravo !", "Yes !"]), "ok");
     floatPts(b, "+" + pts);
   } else {
-    quiz.streak = 0; haptic("error"); setMood("sad");
+    quiz.streak = 0; haptic("error"); setMood("sad", !b);
     setBub(b ? pick(["Oups…", "Raté !", "Aïe…", "Presque !"]) : "Trop tard !", "no");
   }
   $("quiz-score").textContent = quiz.streak >= 2 ? `Série ${quiz.streak}` : `${quiz.pts} pts`;
@@ -8655,13 +8951,19 @@ function renderStatsPage() {
     : `<em class="st-chip">Le solde arrive au 2ᵉ import</em>`;
   const old = stamps.filter((t) => (now - t) / DAY >= 365).length;
   const stat = (v, l) => `<span><b>${v}</b>${l}</span>`;
-  $("st-hero").innerHTML = `<div class="sh-top"><span class="sh-ring"><span class="zy-av">${avatarSVG(zy().look)}</span><span class="st-bub">${quip}</span></span>
-    <div class="st-who"><b id="sh-count" data-n="${last.count}">${nf(last.count)}</b><span>abonnés</span>${chip}</div></div>
+  // Refonte (lot 1) : la courbe des abonnés devient le point d'entrée de la page. Elle part d'une question,
+  // dit la période et l'unité, et donne la valeur de chaque import au toucher (mêmes chiffres que « Mes imports »).
+  $("st-hero").innerHTML = `<p class="sh-q">Combien d'abonnés à chaque import&nbsp;?</p>
+    <span class="sh-3d" id="sh-3d">${ztPoseHTML("loupe")}<span class="st-bub">${quip}</span></span>
+    <div class="sh-top"><div class="st-who"><b id="sh-count" data-n="${last.count}">${nf(last.count)}</b><span>abonnés</span>${chip}</div></div>
+    ${evoHTML(snaps)}
     <div class="sh-stats">${[
       rel && followingN ? stat(`${pct(mutual, followingN)} %`, "en retour") : "",
       stamps.length >= 3 ? stat(`${pct(old, stamps.length)} %`, "depuis +1 an") : "",
       stat(nf(snaps.length), snaps.length > 1 ? "imports" : "import"),
     ].join("")}</div>`;
+  bindEvo(snaps);
+  $("sh-3d").addEventListener("click", () => { if (ztBounce($("sh-3d").querySelector(".zt"))) haptic("light"); });
   // Les zieuteurs qui dépassent des cartes : le tien, et un copain déguisé.
   $("peek-a").innerHTML = zyHeadSVG(zy().look);
   $("peek-b").innerHTML = zyHeadSVG(GAME_LOOKS.oldest, false);
@@ -9180,6 +9482,11 @@ function renderHomeZy() {
   if (s.length === 1) quip = "C'est ton départ !";
   else if (last) quip = !last.unfollows && last.follows ? "Que des arrivées !" : !last.unfollows ? "Personne n'est parti !" : last.follows > last.unfollows ? "Ça grimpe !" : last.follows === last.unfollows ? "Match nul !" : "Oups, des départs…";
   $("hh-bub").textContent = quip;
+  // Le Zieuteur 3D réagit au dernier import : saute s'il n'y a que des arrivées, fait un clin d'œil quand ça grimpe,
+  // est surpris quand il y a plus de départs, reste neutre sinon.
+  const pose = s.length < 2 || !last ? "neutre" : !last.unfollows && last.follows ? "saut" : last.follows > last.unfollows ? "clin" : last.unfollows > last.follows ? "surpris" : "neutre";
+  // Sans import, l'accueil n'est pas affiché : on ne charge pas d'image pour rien.
+  if (last) ztSetPose($("hh-3d"), pose); else $("hh-3d").innerHTML = "";
 }
 const renderHome = render;
 // La page Graphiques ne se recalcule que quand on l'ouvre (plus léger pour les gros comptes).
@@ -9222,6 +9529,8 @@ window.zyeutoPhoto = async (url) => {
   } catch { toast("Cette image n'a pas pu être ouverte. Essaie une autre photo.", false); }
 };
 $("avatar-btn").addEventListener("click", () => avatar ? openSheet("photo") : pickPhoto());
+// Le Zieuteur de l'accueil rebondit quand on touche sa tête (même geste que sur l'écran de bienvenue).
+$("hh-3d").addEventListener("click", () => { if (ztBounce($("hh-3d").querySelector(".zt"))) haptic("light"); });
 $("photo-change").addEventListener("click", () => { closeSheet(); pickPhoto(); });
 $("photo-remove").addEventListener("click", () => { closeSheet(); setAvatar(null); });
 $("photo-cancel").addEventListener("click", closeSheet);

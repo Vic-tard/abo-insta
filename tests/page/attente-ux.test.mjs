@@ -5,6 +5,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -14,6 +15,7 @@ after(async () => { await browser?.close(); });
 
 async function waiting(mins, extra = {}) {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR", reducedMotion: "reduce" });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(([m, x]) => {
@@ -123,6 +125,7 @@ test("fichier vu prêt : écran E « Ton export est prêt » (téléchargement e
 
 test("petit iPhone : le bouton principal reste atteignable, pas de défilement de côté", async () => {
   const page = await browser.newPage({ viewport: { width: 320, height: 568 }, locale: "fr-FR", reducedMotion: "reduce" });
+  await serveGuide(page);
   await page.addInitScript(() => {
     window.ZYEUTO_APP = { version: 9, embedded: true };
     window.webkit = { messageHandlers: { zyeuto: { postMessage: () => {} } } };

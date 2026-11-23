@@ -10,6 +10,7 @@ import { execSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -19,6 +20,7 @@ after(async () => { await browser?.close(); });
 
 async function open({ version = 10, prefs = {} } = {}) {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR", reducedMotion: "reduce" });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(([v, p]) => {
@@ -155,6 +157,7 @@ test("page du build 17 (plus ancienne) : l'évènement « unsure » est ignoré 
   const dir = mkdtempSync(join(tmpdir(), "zieuton-main-"));
   writeFileSync(join(dir, "index.html"), old);
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR" });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(() => {

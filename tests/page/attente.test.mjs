@@ -4,6 +4,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -14,6 +15,7 @@ after(async () => { await browser?.close(); });
 // Ouvre la page dans une fausse coque, avec une demande faite il y a `mins` minutes (pas encore vue prête).
 async function waiting(mins) {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR" });
+  await serveGuide(page);
   await page.addInitScript((m) => {
     window.ZYEUTO_APP = { version: 9, embedded: true };
     window.webkit = { messageHandlers: { zyeuto: { postMessage: () => {} } } };

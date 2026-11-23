@@ -4,6 +4,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -14,6 +15,7 @@ after(async () => { await browser?.close(); });
 // La page dans une fausse coque. `prefs` : réglages de départ. Les messages envoyés à la coque sont gardés dans window.sent.
 async function app(prefs, viewport = { width: 393, height: 852 }) {
   const page = await browser.newPage({ viewport, locale: "fr-FR", reducedMotion: "reduce" });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript((p) => {

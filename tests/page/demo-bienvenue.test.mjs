@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { serveGuide } from "./images-zieuteur.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
@@ -16,6 +17,7 @@ after(async () => { await browser?.close(); });
 // Premier lancement dans l'app iPhone : rien sur le téléphone. Les messages envoyés à l'app sont notés.
 async function firstLaunch(prefs) {
   const page = await browser.newPage({ viewport: { width: 375, height: 667 }, locale: "fr-FR", reducedMotion: "reduce" });
+  await serveGuide(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript((p) => {
