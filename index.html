@@ -2738,6 +2738,7 @@ if (!window.ZYEUTO_APP) {
   .hm-tiles .hm-ic svg { stroke: var(--kn); stroke-width: 2.6; }
   .hm-tiles .hm-faces i, .hm-tiles .hm-faces i:nth-child(2), .hm-tiles .hm-faces i:nth-child(3) { background: var(--kn); color: #fff; box-shadow: 0 0 0 2px var(--k1); }
   .hm-tiles .hm-faces i:nth-child(2) { opacity: .82; } .hm-tiles .hm-faces i:nth-child(3) { opacity: .64; }
+  /* Chiffres et libellés des 4 cases : styles d'origine .hm-n et .hm-l (police ronde 800, 32 px et 15,5 px), choix de Victor le 23 nov. */
   .hm-tiles .hm-n { color: var(--kn); }
   .hm-tiles .hm-l { color: var(--ki); margin-top: 2px; }
   .hm-tiles .hm-s { margin-top: auto; padding-top: 8px; font: 700 12px/1.25 var(--round); color: var(--ki); opacity: .78; }
@@ -2863,420 +2864,16 @@ if (!window.ZYEUTO_APP) {
   .pp-tag.cold { background: color-mix(in srgb, #9b85f0 16%, var(--r-card)); color: var(--c-nb-n); }
   .pp-go svg { stroke: color-mix(in srgb, var(--r-ink) 30%, transparent); }
   #list-page .more { border-radius: 16px; font-family: var(--zd); font-weight: 600; color: var(--kn); }
-
-  /* ==========================================================================
-     Refonte visuelle, V3 (23 nov.) : les maquettes Figma de Victor (« Zieuton · Page 2 »), à la lettre.
-     Jetons : couleurs claires et sombres de la maquette ; Fredoka 600 pour hero 48/52, number 36/40, title 34/40, card 22/28 ;
-     police ronde du système (SF Pro Rounded sur iPhone) pour label 17/22, body 15/20, meta 13/18, small 12/16.
-     Arrondis 14 / 16 / 18 / 22 / 24 / 28 / 99. Ombre carte : y 8, flou 24. Marges d'écran 16, écart 12.
-     ========================================================================== */
-  :root {
-    --f-bg: #faf5f5; --f-card: #ffffff; --f-ink: #2e2328; --f-muted: #6f5f66; --f-line: #ebdde2; --f-soft: #f3e7ed; --f-brand: #693751;
-    --f-action: #78364f; --f-action-ink: #ffffff;
-    --f-prune-1: #6d2f50; --f-prune-2: #4a1d37; --f-prune-3: #2f1023; --f-prune-panel: #5a2745; --f-prune-ink: #fdf1f5; --f-prune-muted: #f0cbdd;
-    --f-down-1: #ffd3c9; --f-down-2: #ffae9c; --f-c-down: #b72c17; --f-ink-down: #5c1a0f;
-    --f-up-1: #cdf6e3; --f-up-2: #93e8c2; --f-c-up: #0e7d52; --f-ink-up: #0b3f29;
-    --f-nb-1: #e7defe; --f-nb-2: #c6b5fb; --f-c-nb: #5a3fcf; --f-ink-nb: #2a1c66;
-    --f-fan-1: #ffe6c2; --f-fan-2: #ffc77f; --f-c-fan: #b35a00; --f-ink-fan: #4d2a00;
-    --f-bilan-down: #ffb19e; --f-bilan-up: #a6f0cb; --f-graph: #ff9fc4;
-    --f-verify-1: #ffe7d4; --f-verify-2: #ffd8bd; --f-verify-ink: #6a321a; --f-verify-action: #803a21;
-    --f-prepare-action: #4e348f; --f-ready-action: #18583d;
-    --f-plus-1: #ffe4a1; --f-plus-2: #ffc65b; --f-plus-ink: #38210c; --f-plus-button: #ffc65b; --f-plus-button-ink: #38210c;
-    --f-shadow: 0 8px 24px #32132a14; --f-shadow-nav: 0 4px 24px #32132a14;
-  }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-    --f-bg: #161112; --f-card: #221a1d; --f-ink: #f5ecee; --f-muted: #c6b1b9; --f-line: #45323a; --f-soft: #34252e; --f-brand: #f2bbd3;
-    --f-action: #873d60; --f-action-ink: #f5ecee;
-    --f-prune-1: #5a2242; --f-prune-2: #3a142b; --f-prune-3: #22091a; --f-prune-panel: #4c203a; --f-prune-ink: #f5ecee; --f-prune-muted: #e7bacf;
-    --f-down-1: #4b211c; --f-down-2: #351611; --f-c-down: #ff9d88; --f-ink-down: #ffe2d9;
-    --f-up-1: #173e30; --f-up-2: #0f2a20; --f-c-up: #7debbb; --f-ink-up: #d1fbe8;
-    --f-nb-1: #302755; --f-nb-2: #211b3d; --f-c-nb: #c6b6ff; --f-ink-nb: #ebe3ff;
-    --f-fan-1: #46301a; --f-fan-2: #2f200f; --f-c-fan: #ffc47a; --f-ink-fan: #ffe7c7;
-    --f-bilan-down: #ff9d88; --f-bilan-up: #9cf1c6; --f-graph: #ffa3cf;
-    --f-verify-1: #492818; --f-verify-2: #352016; --f-verify-ink: #ffe4d5; --f-verify-action: #a55130;
-    --f-prepare-action: #634aad; --f-ready-action: #28644b;
-    --f-plus-1: #33230e; --f-plus-2: #211509; --f-plus-ink: #ffe3a2;
-    --f-shadow: 0 8px 24px #00000052; --f-shadow-nav: 0 4px 24px #00000052; } }
-  :root[data-theme="dark"] {
-    --f-bg: #161112; --f-card: #221a1d; --f-ink: #f5ecee; --f-muted: #c6b1b9; --f-line: #45323a; --f-soft: #34252e; --f-brand: #f2bbd3;
-    --f-action: #873d60; --f-action-ink: #f5ecee;
-    --f-prune-1: #5a2242; --f-prune-2: #3a142b; --f-prune-3: #22091a; --f-prune-panel: #4c203a; --f-prune-ink: #f5ecee; --f-prune-muted: #e7bacf;
-    --f-down-1: #4b211c; --f-down-2: #351611; --f-c-down: #ff9d88; --f-ink-down: #ffe2d9;
-    --f-up-1: #173e30; --f-up-2: #0f2a20; --f-c-up: #7debbb; --f-ink-up: #d1fbe8;
-    --f-nb-1: #302755; --f-nb-2: #211b3d; --f-c-nb: #c6b6ff; --f-ink-nb: #ebe3ff;
-    --f-fan-1: #46301a; --f-fan-2: #2f200f; --f-c-fan: #ffc47a; --f-ink-fan: #ffe7c7;
-    --f-bilan-down: #ff9d88; --f-bilan-up: #9cf1c6; --f-graph: #ffa3cf;
-    --f-verify-1: #492818; --f-verify-2: #352016; --f-verify-ink: #ffe4d5; --f-verify-action: #a55130;
-    --f-prepare-action: #634aad; --f-ready-action: #28644b;
-    --f-plus-1: #33230e; --f-plus-2: #211509; --f-plus-ink: #ffe3a2;
-    --f-shadow: 0 8px 24px #00000052; --f-shadow-nav: 0 4px 24px #00000052; }
-
-  /* ---------- Accueil (maquette « Accueil ») ---------- */
-  body[data-mode="data"] { background: var(--f-bg); }
-  body[data-mode="data"] .wrap { row-gap: 12px; }
-  .wrap > .hd-sig { order: -2; } .wrap > .top { order: -1; }
-  .wrap > #weekly { order: 1; } .wrap > .home-hero { order: 2; } .wrap > #hm-h { order: 3; } .wrap > #hm-tiles { order: 3; }
-  .wrap > #hm-all { order: 4; } .wrap > #imp-row { order: 5; } .wrap > #plus-mini { order: 6; }
-  .hd-sig { margin: 0; text-align: center; font: 600 22px/28px var(--zd); letter-spacing: -.14px; color: var(--f-brand); }
-  body[data-mode="data"] .top { display: flex; align-items: center; gap: 8px; min-height: 48px; margin: 0; }
-  body[data-mode="data"] .top .brand { display: none; }
-  body[data-mode="data"] .top .avatar-btn { width: 36px; height: 36px; padding: 2px; flex: none; }
-  body[data-mode="data"] .top .avatar-btn .ring-in { padding: 2px; background: var(--f-bg); }
-  body[data-mode="data"] .top .avatar-edit { width: 16px; height: 16px; right: -3px; bottom: -3px; border-width: 2px; }
-  body[data-mode="data"] .top .avatar-edit svg { width: 9px; height: 9px; }
-  body[data-mode="data"] .acct-pill { flex: 0 1 auto; justify-self: auto; min-height: 48px; max-width: 60%; padding: 4px 12px; gap: 8px; border-radius: 16px;
-    background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line); color: var(--f-ink); }
-  body[data-mode="data"] .acct-pill:not(.named) { visibility: hidden; }
-  body[data-mode="data"] .acct-pill > i { display: none; }
-  body[data-mode="data"] .acct-pill .tn-t b { font: 600 17px/22px var(--round); letter-spacing: 0; }
-  body[data-mode="data"] .acct-pill .tn-t small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  body[data-mode="data"] .acct-pill .tn-chev svg { stroke: var(--f-brand); }
-  body[data-mode="data"] .top .top-actions { display: flex; gap: 8px; margin-left: auto; }
-  .hd-plus, body[data-mode="data"] .set-btn { width: 44px; height: 44px; border-radius: 16px; border: 0; display: grid; place-items: center; cursor: pointer; flex: none; }
-  .hd-plus { background: var(--f-plus-1); color: var(--f-plus-ink); }
-  .hd-plus svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-  body[data-mode="data"] .set-btn { background: var(--f-card); color: var(--f-ink); box-shadow: inset 0 0 0 1px var(--f-line); }
-  body[data-mode="data"] .set-btn svg { width: 20px; height: 20px; }
-  .hd-plus:active, body[data-mode="data"] .set-btn:active, body[data-mode="data"] .acct-pill.named:active { transform: scale(.96); }
-
-  /* « Mettre à jour » : repère 36, titre 22/28, détail 13/18, puis le bouton 48 sur toute la largeur. */
-  .wk-mark { display: none; }
-  #weekly:not(.wk-pend):not(.wk-unsure) { display: flex; flex-direction: column; gap: 8px; padding: 12px !important; border-radius: 24px !important;
-    background: var(--f-card) !important; box-shadow: inset 0 0 0 1px var(--f-line), var(--f-shadow); color: var(--f-ink); }
-  #weekly:not(.wk-pend):not(.wk-unsure) .wk-av, #weekly:not(.wk-pend):not(.wk-unsure) .wk-toggle .chev { display: none; }
-  #weekly:not(.wk-pend):not(.wk-unsure) .wk-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 16px; background: var(--f-soft); flex: none; }
-  .wk-mark svg { width: 19px; height: 19px; fill: none; stroke: var(--f-brand); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-  .wk-mark .i-clock { display: none; }
-  #weekly:not(.wk-pend):not(.wk-unsure) .wk-toggle { gap: 8px; align-items: center; padding: 0; }
-  #weekly:not(.wk-pend):not(.wk-unsure) .wk-toggle .t { font: 600 22px/28px var(--zd); letter-spacing: -.14px; color: var(--f-ink); }
-  #weekly:not(.wk-pend):not(.wk-unsure) .wk-toggle .due { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  #weekly:not(.wk-pend):not(.wk-unsure) > #wk-go { width: 100%; min-height: 48px; padding: 0 12px; gap: 8px; border-radius: 16px; background: var(--f-action); color: var(--f-action-ink);
-    font: 600 17px/22px var(--round); box-shadow: none; }
-  #weekly:not(.wk-pend):not(.wk-unsure) > #wk-go svg { width: 18px; height: 18px; stroke: currentColor; }
-  #weekly:not(.wk-pend):not(.wk-unsure) .wk-redo { align-self: flex-start; padding: 2px 0; font: 400 13px/18px var(--round); color: var(--f-brand); }
-
-  /* Le bilan : prune 1 → 2 → 3, rayon 28, ombre carte. Date 17/22, comparaison 13/18, chiffres 36/40 sur deux pavés prune-panel. */
-  .home-hero { margin-top: 26px; padding: 16px; gap: 8px; color: var(--f-prune-ink); }
-  .home-hero::after { border-radius: 28px; background: linear-gradient(155deg, var(--f-prune-1) 0%, var(--f-prune-2) 50%, var(--f-prune-3) 100%); box-shadow: var(--f-shadow); }
-  .home-hero .hh-spark { display: none; }
-  .home-hero .profile { display: block; min-height: 52px; padding: 0 116px 0 0; }
-  .home-hero .caption { font: 400 13px/18px var(--round); color: var(--f-prune-muted); }
-  .home-hero .caption small, .home-hero .caption strong { display: inline; margin: 0; font: 600 17px/22px var(--round); letter-spacing: 0; text-transform: none; color: var(--f-prune-ink); }
-  .home-hero .caption span { display: block; font: 400 13px/18px var(--round); color: var(--f-prune-muted); }
-  .home-hero .caption span::first-letter { text-transform: uppercase; }
-  .home-hero .stats { gap: 8px; padding: 9px 0 0; border-radius: 0; background: none; box-shadow: inset 0 1px 0 var(--f-prune-panel); }
-  .hh-3d { right: 0; bottom: calc(100% - 13px); width: 104px; }
-  .home-hero button.stat, .home-hero button.stat.down, .home-hero button.stat.up { min-height: 75px; margin: 0; padding: 8px 12px; gap: 0; border-radius: 16px; background: var(--f-prune-panel); box-shadow: none; justify-content: center; }
-  .home-hero button.stat b { font: 600 36px/40px var(--zd); letter-spacing: -.55px; }
-  .home-hero button.stat.down b { color: var(--f-bilan-down); } .home-hero button.stat.up b { color: var(--f-bilan-up); }
-  .home-hero button.stat > span { font: 400 13px/18px var(--round); color: var(--f-prune-ink); }
-  .home-hero button.stat > span::first-letter { text-transform: uppercase; }
-  .home-hero button.stat > span::after { content: "›"; width: auto; height: auto; margin-left: 4px; border: 0; rotate: none; font-size: 13px; color: var(--f-prune-ink); }
-  .home-hero .hh-total { padding: 0; min-height: 23px; }
-  .home-hero .hh-total .stat b { font: 600 17px/22px var(--round); color: var(--f-prune-ink); }
-  .home-hero .hh-total .stat > span { font: 600 17px/22px var(--round); color: var(--f-prune-ink); }
-  .hh-total .hh-net, .hh-total .hh-net.up, .hh-total .hh-net.down { padding: 0; background: none; font: 400 13px/18px var(--round); color: var(--f-prune-muted); }
-
-  /* Tes listes : tuiles 112 de haut, rayon 24, dégradé de la catégorie, chiffre 36/40 et icône 18 en haut, libellé 17/22, période 13/18. */
-  .hm-h { margin: 0; font: 600 17px/22px var(--round); letter-spacing: 0; text-transform: none; color: var(--f-ink); }
-  .hm-tiles { gap: 12px; }
-  .hm-tile { --k1: var(--f-down-1); --k2: var(--f-down-2); --kn: var(--f-c-down); --ki: var(--f-ink-down); }
-  .hm-tile.t-up { --k1: var(--f-up-1); --k2: var(--f-up-2); --kn: var(--f-c-up); --ki: var(--f-ink-up); }
-  .hm-tile.t-notback { --k1: var(--f-nb-1); --k2: var(--f-nb-2); --kn: var(--f-c-nb); --ki: var(--f-ink-nb); }
-  .hm-tile.t-fans { --k1: var(--f-fan-1); --k2: var(--f-fan-2); --kn: var(--f-c-fan); --ki: var(--f-ink-fan); }
-  .hm-tiles .hm-tile { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "n ic" "l l" "s s" "d d"; align-content: start; row-gap: 4px;
-    min-height: 112px; padding: 12px; border-radius: 24px; box-shadow: none; background: linear-gradient(155deg, var(--k1) 0%, var(--k2) 100%) !important; color: var(--ki); }
-  .hm-tiles .hm-tile::before { display: none; }
-  .hm-tiles .hm-top { display: contents; }
-  .hm-tiles .hm-faces { display: none; }
-  .hm-tiles .hm-ic { grid-area: ic; align-self: center; width: 18px; height: 18px; border-radius: 0; background: none; }
-  .hm-tiles .hm-ic svg { width: 18px; height: 18px; stroke: var(--ki); stroke-width: 1.75; }
-  /* Chiffres et libellés des 4 cases : styles d'origine .hm-n et .hm-l gardés (police ronde 800, 32 px et 15,5 px), choix de Victor le 23 nov. */
-  .hm-tiles .hm-n { grid-area: n; color: var(--kn); }
-  .hm-tiles .hm-l { grid-area: l; margin: 0; color: var(--ki); }
-  .hm-tiles .hm-s { grid-area: s; margin: 0; padding: 0; font: 400 13px/18px var(--round); color: var(--ki); opacity: 1; }
-  .hm-tiles .hm-d { grid-area: d; font: 400 13px/18px var(--round); color: var(--ki); opacity: .8; }
-
-  /* Mes abonnés, Mes imports, Plus : cartes 74 de haut, rayon 24, titre 17/22 et chevron, détail 13/18. */
-  .wrap > #hm-all, .wrap > #imp-row, .wrap > #plus-mini { margin: 0; min-height: 74px; padding: 12px; border-radius: 24px; background: var(--f-card) !important; color: var(--f-ink);
-    box-shadow: inset 0 0 0 1px var(--f-line); }
-  #hm-all .hm-all-t { display: block; }
-  #hm-all .hm-all-t small { display: block; font: 600 17px/22px var(--round); letter-spacing: 0; text-transform: none; color: var(--f-ink); }
-  #hm-all .hm-all-t > b { display: inline; font: 400 13px/18px var(--round); letter-spacing: 0; color: var(--f-muted); }
-  #hm-all .hm-all-t > b::after { content: " abonnés · "; }
-  #hm-all .hm-all-s { display: inline; font: 400 13px/18px var(--round); color: var(--f-muted); }
-  #hm-all .hm-faces, #imp-row .imp-ic, #imp-row .imp-bars { display: none; }
-  #hm-all .hm-all-go, #imp-row .imp-go, #plus-mini .plus-mini-go { align-self: flex-start; width: 16px; height: 22px; background: none; box-shadow: none; color: var(--f-brand); font-size: 20px; line-height: 22px; display: grid; place-items: center; }
-  #hm-all .hm-all-go svg { width: 16px; height: 16px; stroke: var(--f-brand); }
-  #imp-row .imp-t b { font: 600 17px/22px var(--round); color: var(--f-ink); }
-  #imp-row .imp-t small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  #plus-mini .plus-mini-tag { background: var(--f-plus-1); color: var(--f-plus-ink); }
-  #plus-mini .plus-mini-txt b { font: 600 17px/22px var(--round); color: var(--f-ink); }
-  #plus-mini .plus-mini-txt small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-
-  /* La barre d'onglets : 56 de haut, à 12 du bas, carte bordée, rayon 22 ; onglet actif en fond doux et couleur de marque. */
-  body[data-mode="data"] .pager { left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); gap: 4px; padding: 4px; border-radius: 22px;
-    background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line), var(--f-shadow-nav); }
-  body[data-mode="data"] .pager button { min-height: 48px; padding: 4px; gap: 0; border-radius: 16px; font: 400 13px/18px var(--round); color: var(--f-muted); }
-  body[data-mode="data"] .pager button svg { width: 20px; height: 20px; }
-  body[data-mode="data"] .pager button[aria-current="page"] { background: var(--f-soft); color: var(--f-brand); }
-  #weekly:not(.wk-pend):not(.wk-unsure) .wk-bar, #weekly:not(.wk-pend):not(.wk-unsure) .wk-toggle { width: 100%; justify-content: flex-start; text-align: left; }
-
-  /* ---------- Graphiques (maquette « Graphiques ») ---------- */
-  #pg-stats { background: var(--f-bg); }
-  #pg-stats .wrap { row-gap: 12px; }
-  #pg-stats .pg-head { justify-content: space-between; text-align: left; padding: 0; min-height: 44px; }
-  #pg-stats .pg-head .pg-title-big { font: 600 34px/40px var(--zd); letter-spacing: -.3px; color: var(--f-ink); }
-  /* La courbe : carte prune 1 → 2 → 3, rayon 28 ; libellé 12/16 en capitales, valeur 48/52, variation 15/20 ; tracé sur un panneau prune-panel rayon 18. */
-  #pg-stats .st-hero { margin-top: 0; padding: 16px; gap: 4px; color: var(--f-prune-ink); }
-  #pg-stats .st-hero::after { border-radius: 28px; background: linear-gradient(155deg, var(--f-prune-1) 0%, var(--f-prune-2) 50%, var(--f-prune-3) 100%); box-shadow: var(--f-shadow); }
-  #pg-stats .sh-q { padding: 0; font: 600 12px/16px var(--round); letter-spacing: .84px; text-transform: uppercase; color: var(--f-prune-muted); }
-  #pg-stats .sh-top { padding: 0; }
-  #pg-stats .st-who { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
-  #pg-stats .st-who b { font: 600 48px/52px var(--zd); letter-spacing: -.9px; color: var(--f-prune-ink); }
-  #pg-stats .st-who > span { display: none; }
-  #pg-stats .st-who .st-chip, #pg-stats .st-who .st-chip.up, #pg-stats .st-who .st-chip.down { margin: 0; padding: 0; background: none; box-shadow: none; font: 400 15px/20px var(--round); font-style: normal; color: var(--f-prune-ink); }
-  #pg-stats .sh-plot { margin: 4px 0 0; padding: 8px 8px 4px; border-radius: 18px; background: var(--f-prune-panel); box-shadow: none; gap: 4px; }
-  #pg-stats .st-hero .sh-plot > .sh-3d { display: none; }
-  #pg-stats .evo text { font: 400 13px var(--round); fill: var(--f-prune-muted); }
-  #pg-stats .evo-x { fill: var(--f-prune-muted) !important; }
-  #pg-stats .evo-grid { stroke: var(--f-prune-muted); stroke-opacity: .29; }
-  #pg-stats .evo polygon { display: none; }
-  #pg-stats .evo-line { stroke: var(--f-graph); stroke-width: 3; filter: none; }
-  #pg-stats .evo-dot { fill: var(--f-graph); stroke: none; r: 3px; }
-  #pg-stats .evo-sel { fill: var(--f-graph); stroke: var(--f-prune-panel); stroke-width: 3; }
-  #pg-stats .evo-cur { stroke: var(--f-prune-muted); stroke-opacity: .6; }
-  #pg-stats .evo-rec circle { stroke: var(--f-prune-muted); } #pg-stats .evo-rec text { fill: var(--f-prune-ink); }
-  /* L'infobulle : carte bordée, rayon 14 ; valeur 17/22, date 13/18. */
-  #pg-stats .evo-tip { padding: 8px; border-radius: 14px; background: var(--f-card); color: var(--f-ink); box-shadow: inset 0 0 0 1px var(--f-line), 0 8px 24px rgb(0 0 0 / .18); }
-  #pg-stats .evo-tip::after { background: var(--f-card); }
-  #pg-stats .evo-tip b { font: 600 17px/22px var(--round); color: var(--f-ink); }
-  #pg-stats .evo-tip small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  #pg-stats .evo-tip small i.up { color: var(--f-c-up); } #pg-stats .evo-tip small i.down { color: var(--f-c-down); }
-  #pg-stats .evo-read, #pg-stats .evo-read b { padding: 0; margin: 4px 0 0; min-height: 0; font: 400 13px/18px var(--round); color: var(--f-prune-ink); }
-  #pg-stats .evo-read b { margin: 0; }
-  #pg-stats .evo-span { padding: 0; margin: 0; font: 400 13px/18px var(--round); color: var(--f-prune-muted); }
-  #pg-stats .sh-stats { display: none; }
-  /* Les cartes sous la courbe : 74 de haut, rayon 24, titre 17/22, détail 13/18, chevron de marque. */
-  .st-minis { display: flex; flex-direction: column; gap: 12px; }
-  .st-minis:empty { display: none; }
-  .st-mini { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%; min-height: 74px; padding: 12px; border: 0; border-radius: 24px; text-align: left; cursor: pointer;
-    background: var(--f-card); color: var(--f-ink); box-shadow: inset 0 0 0 1px var(--f-line); font: inherit; -webkit-tap-highlight-color: transparent; }
-  .st-mini:active { transform: scale(.98); }
-  .st-mini span { display: flex; flex-direction: column; gap: 0; min-width: 0; }
-  .st-mini b { font: 600 17px/22px var(--round); color: var(--f-ink); }
-  .st-mini small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  .st-mini svg { flex: none; width: 16px; height: 16px; margin-top: 3px; fill: none; stroke: var(--f-brand); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-
-  /* ---------- Ça match ? (maquettes Question, Juste, Faux, Fin) : une zone de jeu lilas, claire en clair et profonde en sombre ---------- */
-  #quiz.quiz-back.bilan.fullpage { background: var(--f-bg); }
-  /* La carte reste transparente : le corps du Zieuteur (calque -1) passe derrière la zone de jeu, pas derrière la page. */
-  #quiz.quiz-back .card { background: transparent; color: var(--f-ink); gap: 12px; padding-left: 16px; padding-right: 16px; }
-  #quiz.quiz-back .fp-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; min-height: 44px; }
-  #quiz.quiz-back .fp-back { width: 32px; height: 44px; border-radius: 12px; background: none; color: var(--f-brand); box-shadow: none; }
-  #quiz.quiz-back .fp-head p { flex: 1; text-align: left; font: 600 34px/40px var(--zd); letter-spacing: -.3px; color: var(--f-ink); }
-  #quiz.quiz-back #quiz-score:not(:empty) { background: var(--f-nb-1); color: var(--f-ink-nb); font: 600 12px/16px var(--round); letter-spacing: .84px; }
-  #quiz.quiz-back .pips { gap: 8px; }
-  #quiz.quiz-back .pips i { height: 6px; border-radius: 14px; background: var(--f-nb-1); box-shadow: none; }
-  #quiz.quiz-back .pips i.cur, #quiz.quiz-back .pips i.ok, #quiz.quiz-back .pips i.no { background: var(--f-c-nb); box-shadow: none; }
-  #quiz.quiz-back .qz-stage { width: 104px; margin-bottom: -13px; }
-  #quiz.quiz-back .qz-bub { background: var(--f-card); color: var(--f-ink); box-shadow: inset 0 0 0 1px var(--f-line); font: 400 13px/18px var(--round); padding: 7px 8px; border-radius: 16px; }
-  #quiz.quiz-back .qz-card { gap: 8px; padding: 28px 16px 16px; border-radius: 28px; background: linear-gradient(155deg, var(--f-nb-1), var(--f-nb-2)); box-shadow: none; color: var(--f-ink-nb); text-align: center; }
-  #quiz.quiz-back .qz-ring.qz-bar { height: 6px; margin: 0 0 8px; background: color-mix(in srgb, var(--f-ink-nb) 12%, transparent); }
-  #quiz.quiz-back .qz-ring .trk { stroke: transparent; }
-  #quiz.quiz-back .qz-ring .arc { stroke: var(--f-c-nb); filter: none; }
-  #quiz.quiz-back .qz-ring.late .arc { stroke: var(--f-c-down); filter: none; }
-  /* Maquette : un plateau compact (≈ 272 de haut), tout centré ; les réponses suivent directement la question. */
-  #quiz.quiz-back .qz-card { flex: 0 0 auto; min-height: 272px; justify-content: center; }
-  #quiz.quiz-back .qz-card .quiz-body { flex: 0 0 auto; gap: 8px; }
-  #quiz.quiz-back .qz-card .yesno, #quiz.quiz-back .qz-card .g-opts { margin-top: 8px; }
-  #quiz.quiz-back .qz-who, #quiz.quiz-back .qz-card .qz-intro { margin: 0; }
-  #quiz.quiz-back .qz-who { gap: 8px; }
-  #quiz.quiz-back .qz-pic { width: 56px; height: 56px; background: var(--f-card) !important; color: var(--f-ink-nb); font: 600 22px/28px var(--zd); text-shadow: none; box-shadow: none; }
-  #quiz.quiz-back .quiz-q, #quiz.quiz-back .qz-who .quiz-q b { font: 600 22px/28px var(--zd); letter-spacing: -.14px; color: var(--f-ink-nb); }
-  #quiz.quiz-back .qz-who .quiz-q span { margin: 0; font: 400 15px/20px var(--round); color: var(--f-ink-nb); }
-  /* Oui et Non : même surface, 64 de haut, rayon 16, libellé 17/22 ; Juste en menthe avec « ✓ Bonne réponse », Faux en corail avec « × Faux ». */
-  #quiz.quiz-back .qz-card .yesno { gap: 8px; }
-  #quiz.quiz-back .qz-card .qz-opt.big { min-height: 64px; padding: 8px; gap: 4px; border-radius: 16px; background: var(--f-card); color: var(--f-ink);
-    box-shadow: inset 0 0 0 1px var(--f-line); font: 600 17px/22px var(--round); flex-direction: column; justify-content: center; }
-  #quiz.quiz-back .qz-opt .bigi { display: none; }
-  #quiz.quiz-back .qz-card .qz-opt.big:active:not(:disabled) { background: var(--f-soft); }
-  #quiz.quiz-back .qz-card .qz-opt.ok { background: var(--f-up-1); color: var(--f-ink-up); box-shadow: inset 0 0 0 1px var(--f-up-1); }
-  #quiz.quiz-back .qz-card .qz-opt.miss { background: var(--f-down-1); color: var(--f-ink-down); box-shadow: inset 0 0 0 1px var(--f-down-1); }
-  #quiz.quiz-back .qz-card .qz-opt.ok::after { content: "✓ Bonne réponse"; font: 400 13px/18px var(--round); }
-  #quiz.quiz-back .qz-card .qz-opt.miss::after { content: "× Faux"; font: 400 13px/18px var(--round); }
-  #quiz.quiz-back .qz-card .qz-opt:disabled:not(.ok):not(.miss) { opacity: 1; }
-  #quiz.quiz-back .qz-float { color: var(--f-c-up); }
-  #quiz.quiz-back .g-msg { margin: 0; min-height: 18px; font: 400 13px/18px var(--round); color: var(--f-ink-nb); }
-  #quiz.quiz-back .acts { min-height: 48px; }
-  #quiz.quiz-back .qz-go { min-height: 48px; padding: 12px; border-radius: 16px; background: var(--f-prepare-action); color: #fff; font: 600 17px/22px var(--round); box-shadow: none; }
-  #quiz.quiz-back .qz-go::after { display: none; }
-  #quiz.quiz-back .qz-ghost { background: var(--f-card); color: var(--f-ink); box-shadow: inset 0 0 0 1px var(--f-line); border-radius: 16px; font: 600 15px/20px var(--round); }
-  /* Accueil du jeu et fin de partie : mêmes encres lilas. */
-  #quiz.quiz-back .qz-big { font: 600 22px/28px var(--zd); color: var(--f-ink-nb); }
-  #quiz.quiz-back .qz-sub, #quiz.quiz-back .score p { font: 400 15px/20px var(--round); color: var(--f-ink-nb); }
-  #quiz.quiz-back .qz-rec > span:last-child { font: 600 13px/18px var(--round); color: var(--f-c-nb); }
-  #quiz.quiz-back .qz-rec .qz-st svg, #quiz.quiz-back .qz-stars span svg { fill: color-mix(in srgb, var(--f-ink-nb) 16%, transparent); filter: none; }
-  #quiz.quiz-back .qz-rec .qz-st svg.on, #quiz.quiz-back .qz-stars span.on svg { fill: var(--f-c-nb); filter: none; }
-  #quiz.quiz-back .qz-chips span { background: var(--f-card); color: var(--f-ink-nb); font: 400 13px/18px var(--round); }
-  #quiz.quiz-back .qz-chips b { color: var(--f-ink-nb); font-weight: 600; }
-  #quiz.quiz-back .qz-daily { background: var(--f-card); border: 1px solid var(--f-line); color: var(--f-ink); }
-  #quiz.quiz-back .qz-daily .qz-k { color: var(--f-c-nb); }
-  #quiz.quiz-back .qz-daily i, #quiz.quiz-back .qz-daily em { background: var(--f-nb-1); color: var(--f-ink-nb); }
-  #quiz.quiz-back .qz-daily.done i { background: var(--f-up-1); color: var(--f-ink-up); }
-  #quiz.quiz-back .score b { font: 600 48px/52px var(--zd); letter-spacing: -.9px; color: var(--f-ink-nb); text-shadow: none; }
-  #quiz.quiz-back .qz-pts, #quiz.quiz-back .record, #quiz.quiz-back .qz-goal { background: var(--f-card); color: var(--f-ink-nb); box-shadow: none; }
-  /* V3 · Listes (maquettes « Départs · dernier import » et « Départs · tout ») : en-tête en dégradé de la catégorie,
-     sélecteur à deux segments, recherche, puis chaque compte dans sa propre carte. Les autres listes gardent leur couleur. */
-  #list-page { --g1: var(--f-down-1); --g2: var(--f-down-2); --gi: var(--f-ink-down); --gc: var(--f-c-down); background: var(--f-bg); }
-  #list-page:has(#list-card[data-tab="follow"]) { --g1: var(--f-up-1); --g2: var(--f-up-2); --gi: var(--f-ink-up); --gc: var(--f-c-up); }
-  #list-page:has(#list-card[data-tab="notback"]) { --g1: var(--f-nb-1); --g2: var(--f-nb-2); --gi: var(--f-ink-nb); --gc: var(--f-c-nb); }
-  #list-page:has(#list-card[data-tab="fans"]) { --g1: var(--f-fan-1); --g2: var(--f-fan-2); --gi: var(--f-ink-fan); --gc: var(--f-c-fan); }
-  #list-page:has(#list-card[data-tab="recent"]) { --g1: var(--f-soft); --g2: var(--f-line); --gi: var(--f-ink); --gc: var(--f-brand); }
-  #list-page .st-in { padding-left: 16px; padding-right: 16px; }
-  #list-page .st-back { font: 400 13px/18px var(--round); color: var(--f-brand); }
-  #list-page .tabs-wrap { gap: 12px; }
-  #list-page .lp-head { gap: 4px; padding: 16px; border-radius: 28px; color: var(--gi); background: linear-gradient(160deg, var(--g1), var(--g2)); box-shadow: none; }
-  #list-page .lp-head::before { display: none; }
-  #list-page .lp-ic { width: auto; height: auto; margin: 0; background: none; }
-  #list-page .lp-ic svg { width: 19px; height: 19px; stroke: var(--gi); }
-  #list-page .lp-head h1 { font: 600 34px/40px var(--zd); letter-spacing: -.3px; color: var(--gi); }
-  #list-page .lp-n, #list-page .lp-sub { margin: 0; font: 400 15px/20px var(--round); color: var(--gi); opacity: 1; }
-  #list-page .lp-sub { font-size: 13px; line-height: 18px; }
-  #list-page .lp-scope { min-height: 52px; padding: 4px; gap: 4px; border-radius: 16px; background: var(--f-soft); }
-  #list-page .lp-scope button { min-height: 44px; border-radius: 14px; font: 400 13px/18px var(--round); color: var(--f-muted); gap: 0; }
-  #list-page .lp-scope button em { padding: 0; background: none; color: inherit; font: inherit; }
-  #list-page .lp-scope button em::before { content: "\00a0·\00a0"; }
-  #list-page .lp-scope button em:empty { display: none; }
-  #list-page .lp-scope button[aria-pressed="true"] { background: var(--f-card); color: var(--f-brand); font-weight: 600; box-shadow: none; }
-  #list-page .lp-scope button[aria-pressed="true"] em { background: none; color: inherit; }
-  #list-page .search { min-height: 44px; border-radius: 16px; background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line); }
-  #list-page .search input[type=search] { font: 400 15px/20px var(--round); color: var(--f-ink); }
-  #list-page .search input::placeholder { color: var(--f-muted); font-size: 13px; }
-  #list-page .search svg { stroke: var(--f-muted); }
-  #list-page .pp-h { margin: 4px 0 8px; color: var(--f-ink); }
-  #list-page .pp-h span { font: 600 17px/22px var(--round); }
-  #list-page .pp-h em { padding: 0; background: none; color: var(--f-muted); font: 400 13px/18px var(--round); }
-  #list-page .pp-list { display: flex; flex-direction: column; gap: 8px; padding: 0; background: none; border-radius: 0; box-shadow: none; }
-  #list-page .pp-list li.pp { border-radius: 16px; background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line); }
-  #list-page .pp + .pp .pp-a::before { display: none; }
-  #list-page .pp-a { min-height: 60px; padding: 8px 12px 8px 8px; gap: 8px; border-radius: 16px; color: var(--f-ink); }
-  #list-page .pp-a:active { background: var(--f-soft); }
-  #list-page .pp-av { width: 36px; height: 36px; background: var(--f-nb-1) !important; color: var(--f-ink-nb); font: 600 17px/22px var(--round); text-shadow: none; box-shadow: none; }
-  #list-page .pp-t { gap: 2px; }
-  #list-page .pp-t b { font: 600 17px/22px var(--round); }
-  #list-page .pp-t small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  #list-page .pp-tag { padding: 0 8px; border-radius: 99px; font: 400 13px/18px var(--round); background: var(--f-verify-1); color: var(--f-verify-ink); }
-  #list-page .pp-tag.new, #list-page .pp-tag.gold { background: var(--f-up-1); color: var(--f-ink-up); }
-  #list-page .pp-tag.cold { background: var(--f-nb-1); color: var(--f-ink-nb); }
-  #list-page .pp-tag.zap { background: var(--f-fan-1); color: var(--f-ink-fan); }
-  #list-page .pp-tag.heart { background: var(--f-down-1); color: var(--f-ink-down); }
-  #list-page .pp-go svg { width: 18px; height: 18px; stroke: var(--f-muted); }
-  #list-page .hi-c { border-radius: 24px; background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line); color: var(--f-ink); }
-  /* V3 · Écrans d'export (maquettes « À vérifier », « En préparation », « Fichier prêt ») : « Mon export » en haut, le Zieuteur
-     accroché au bord d'un panneau en dégradé (ambre, lilas ou menthe, arrondi 28), la pastille d'état (44), le titre 34/40,
-     le texte 15/20, puis l'action principale (48) et la seconde dedans. Le corps du Zieuteur passe derrière le panneau. */
-  .gf:has(.gw-v3) { background: var(--f-bg); }
-  .gw-v3 { --s1: var(--f-nb-1); --s2: var(--f-nb-2); --si: var(--f-ink-nb); --sa: var(--f-prepare-action);
-    width: 100%; margin-block: 0; padding: 0; gap: 12px; align-items: stretch; text-align: left; color: var(--f-ink); }
-  .gw-v3.gw-unsure { --s1: var(--f-verify-1); --s2: var(--f-verify-2); --si: var(--f-verify-ink); --sa: var(--f-verify-action); }
-  .gw-v3.gw-ready { --s1: var(--f-up-1); --s2: var(--f-up-2); --si: var(--f-ink-up); --sa: var(--f-ready-action); }
-  .gw-v3 .gw-top { margin: 0; min-height: 44px; display: flex; align-items: center; font: 600 17px/22px var(--round); color: var(--f-ink); }
-  .gw-v3 .gw-stage { position: relative; isolation: isolate; padding-top: 74px; }
-  .gw-v3 .gw-3d { position: absolute; top: 0; right: 10px; width: 112px; cursor: default; }
-  .gw-v3 .gw-panel { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 28px 16px 16px; border-radius: 28px;
-    background: linear-gradient(160deg, var(--s1), var(--s2)); color: var(--si); }
-  .gw-v3 .gw-chip { align-self: flex-start; min-height: 44px; box-sizing: border-box; gap: 8px; padding: 0 16px 0 8px; border-radius: 99px; background: var(--f-card); color: var(--f-ink); font: 600 17px/22px var(--round); letter-spacing: 0; text-transform: none; }
-  .gw-v3 .gw-chip i, .gw-v3 .gw-chip.warn i { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: none; color: var(--f-brand); font: 600 22px/28px var(--zd); font-style: normal; animation: none; }
-  .gf .gw-v3 h2 { margin: 0; font: 600 34px/40px var(--zd); letter-spacing: -.3px; color: var(--si); text-wrap: balance; }
-  .gw-v3 .gw-say { max-width: none; margin: 0; font: 400 15px/20px var(--round); color: var(--si); text-wrap: pretty; }
-  .gw-v3 .gw-state { margin: 0; font: 400 13px/18px var(--round); color: var(--si); }
-  /* La frise reste (FOU-131), discrète sur le panneau. */
-  .gw-v3 .gw-fr3 { margin: 4px 0; padding: 12px 4px 10px; border: 0; border-radius: 18px; background: color-mix(in srgb, var(--f-card) 55%, transparent); }
-  .gw-v3 .gw-fr3 li { font: 400 13px/18px var(--round); color: color-mix(in srgb, var(--si) 70%, transparent); }
-  .gw-v3 .gw-fr3 li.ok, .gw-v3 .gw-fr3 li.now, .gw-v3 .gw-fr3 li.warn { color: var(--si); font-weight: 600; }
-  .gw-v3 .gw-fr3 li > i { border-color: color-mix(in srgb, var(--si) 35%, transparent); background: var(--f-card); }
-  .gw-v3 .gw-fr3 li.ok > i, .gw-v3 .gw-fr3 li.warn > i { background: var(--sa); border-color: var(--sa); color: #fff; }
-  .gw-v3 .gw-fr3 li.now > i { border-color: var(--sa); }
-  .gw-v3 .gw-fr3 li.now > i::before { background: var(--sa); }
-  .gw-v3 .gw-fr3 li:not(:last-child)::after { background: color-mix(in srgb, var(--si) 25%, transparent); }
-  .gw-v3 .gw-dots i { background: var(--sa); }
-  .gw-v3 .gw-fr:not(.gw-fr3) { max-width: none; margin: 4px 0; padding: 8px 12px; border-radius: 18px; background: color-mix(in srgb, var(--f-card) 55%, transparent); }
-  .gw-v3 .gw-fr:not(.gw-fr3) li { font: 400 15px/20px var(--round); color: var(--si); }
-  .gw-v3 .gw-fr:not(.gw-fr3) li.ok > i { background: var(--sa); border-color: var(--sa); }
-  .gw-v3 .gw-fr:not(.gw-fr3) li.now > i { border-color: var(--sa); }
-  .gw-v3 .gw-fr:not(.gw-fr3) li.now > i::before { background: var(--sa); }
-  /* Action principale (48, arrondi 16, couleur de l'état) puis l'action seconde en texte (44). */
-  .gw-v3 .btn.cheer { width: 100%; min-height: 48px; margin: 4px 0 0; padding: 12px 16px; border-radius: 16px; background: var(--sa); color: #fff; box-shadow: none; font: 600 17px/22px var(--round); gap: 8px; }
-  .gw-v3 .btn.cheer::after { display: none; }
-  .gw-v3 .btn.cheer svg { width: 20px; height: 20px; }
-  .gw-v3 .gw-sec, .gw-v3 .gw-row { width: 100%; min-height: 44px; margin: 0; padding: 0 8px; border: 0; border-radius: 14px; background: none; box-shadow: none; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--si); font: 600 15px/20px var(--round); text-decoration: none; }
-  .gw-v3 .gw-row b { font: 600 15px/20px var(--round); }
-  .gw-v3 .gw-row small { font: 400 13px/18px var(--round); color: var(--si); opacity: .8; }
-  .gw-v3 .gw-cap { margin: -2px 0 0; text-align: center; font: 400 13px/18px var(--round); color: var(--si); opacity: .85; }
-  /* En préparation : l'aperçu des quatre listes, en petites cartes. */
-  .gw-v3 .gw-disc { margin: 4px 0 0; padding: 0; border: 0; border-radius: 0; background: none !important; box-shadow: none; display: flex; flex-direction: column; gap: 4px; }
-  .gw-v3 .gw-fict { font: 600 12px/16px var(--round); letter-spacing: .84px; color: var(--si); opacity: .8; }
-  .gw-v3 .gw-mini { grid-template-columns: 1fr 1fr; gap: 4px; }
-  .gw-v3 .gw-mini span { min-height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 14px; flex-direction: row; align-items: center; justify-content: center; gap: 6px; background: var(--f-card) !important; color: var(--f-ink); font: 400 13px/18px var(--round); }
-  .gw-v3 .gw-mini b { font: 600 13px/18px var(--round); }
-  .gw-v3 .gw-mini .t-down b { color: var(--f-c-down); } .gw-v3 .gw-mini .t-up b { color: var(--f-c-up); } .gw-v3 .gw-mini .t-notback b { color: var(--f-c-nb); } .gw-v3 .gw-mini .t-fans b { color: var(--f-c-fan); }
-  .gw-v3 .gw-disc p { margin: 0; font: 400 13px/18px var(--round); color: var(--si); opacity: .85; }
-  /* Sous le panneau : la ligne d'info, puis « Plus d'infos » en lien texte. */
-  .gw-v3 .gw-line { margin: 0; font: 400 13px/18px var(--round); color: var(--f-muted); }
-  .gw-v3 .gw-line .gw-ic { background: var(--f-soft); color: var(--f-brand); }
-  .gw-v3 ~ .gw-more, .gw-v3 + .gw-more { align-self: center; }
-  .gf:has(.gw-v3) .gw-more { color: var(--f-brand); font: 600 15px/20px var(--round); }
-  /* Fichier prêt : les trois gestes, en carte, sous le panneau. */
-  .gw-v3 .gx-list { margin: 0; border-radius: 24px; background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line); }
-  .gw-v3 .gx-row b { font: 600 17px/22px var(--round); color: var(--f-ink); }
-  .gw-v3 .gx-row small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  @media (max-height: 700px) { .gf .gw-v3 h2 { font-size: 28px; line-height: 34px; } .gw-v3 .gw-stage { padding-top: 60px; } .gw-v3 .gw-3d { width: 92px; } }
-  /* V3 · Réglages (maquette « Réglages ») et leurs pages : fond de la maquette, titre 34/40, groupes en cartes (arrondi 24,
-     filet), lignes de 62 avec libellé 17/22 et détail 13/18, chevron couleur de marque. */
-  .st-page { background: var(--f-bg); --line: var(--f-line); }
-  .st-back { padding: 13px 0; font: 400 13px/18px var(--round); color: var(--f-brand); }
-  .st-in > h1 { margin: 0 0 12px; font: 600 34px/40px var(--zd); letter-spacing: -.3px; color: var(--f-ink); }
-  .st-label { margin: 4px 0 8px; font: 600 17px/22px var(--round); letter-spacing: 0; text-transform: none; color: var(--f-ink); }
-  .st-group { margin-bottom: 12px; border-radius: 24px; background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line); }
-  .st-row { min-height: 62px; padding: 12px; border-top-color: var(--f-line); color: var(--f-ink); }
-  .st-row:active:not(.st-static), .st-me:active { background: var(--f-soft); }
-  .st-t b { font: 600 17px/22px var(--round); }
-  .st-t small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  .st-go { color: var(--f-brand); font: 400 22px/1 var(--round); opacity: 1; }
-  .st-page { --st-ic-bg: var(--f-soft); --st-ic-ink: var(--f-brand); }
-  .st-me { padding: 12px; }
-  .st-me .st-t b { font: 600 22px/28px var(--zd); }
-  .st-foot { margin: -4px 4px 16px; font: 400 13px/18px var(--round); color: var(--f-muted); }
-  .st-foot.st-solo { margin-top: 0; }
-  .st-ver { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  /* V3 · Zieuton Plus (maquette) : le Zieuteur s'accroche au panneau doré ; l'or reste réservé à Plus. */
-  .st-plus-hero.sp-v3 { display: block; position: relative; isolation: isolate; margin: 0 0 12px; padding: 74px 0 0; border-radius: 0; background: none; box-shadow: none; color: var(--f-plus-ink); }
-  .sp-3d { position: absolute; top: 0; right: 10px; width: 112px; }
-  .sp-panel { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 28px 16px 16px; border-radius: 28px; background: linear-gradient(160deg, var(--f-plus-1), var(--f-plus-2)); }
-  .sp-panel .plus-tag { font: 600 12px/16px var(--round); letter-spacing: .84px; padding: 4px 10px; }
-  .sp-t { margin: 0; font: 600 34px/40px var(--zd); letter-spacing: -.3px; color: var(--f-plus-ink); }
-  .st-plus-hero.sp-v3 p { margin: 0; font: 400 15px/20px var(--round); color: var(--f-plus-ink); }
-  .sp-buy { width: 100%; min-height: 48px; margin-top: 4px; border: 0; border-radius: 16px; background: var(--f-plus-button); color: var(--f-plus-button-ink); box-shadow: 0 4px 12px #38210c26; font: 600 17px/22px var(--round); cursor: pointer; }
-  .sp-buy[hidden] { display: none; }
-  #list-page .hi-c small { font: 400 13px/18px var(--round); color: var(--f-muted); }
-  #list-page .hi-c b { font: 600 17px/22px var(--round); }
-  #list-page .hi-c span { font: 600 13px/18px var(--round); color: var(--gc); }
-  #list-page .more { min-height: 48px; border-radius: 16px; background: var(--f-card); box-shadow: inset 0 0 0 1px var(--f-line); color: var(--f-brand); font: 600 17px/22px var(--round); }
 </style>
 
 <div class="wrap">
-  <!-- V3 (maquettes Figma) : la signature Zieuton centrée, puis la photo, le compte, Plus et les réglages. -->
-  <p class="hd-sig needs-data" aria-hidden="true">Zieuton</p>
   <div class="top">
-    <button class="ring avatar-btn needs-data" id="avatar-btn" type="button" aria-label="Choisir ta photo de profil"><span class="ring-in"><span class="ring-core" id="avatar-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></span></span><span class="avatar-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
     <div class="brand">
       <img src="icone-v5-180.png" alt="" width="34" height="34" style="border-radius:10px;display:block">
     </div>
     <button class="acct-pill" id="acct-pill" type="button"><h1 class="tn-brand">Zieuton</h1></button>
     <div class="top-actions">
       <button class="sync needs-data" id="sync" type="button" hidden></button>
-      <button class="hd-plus needs-data" id="hd-plus" type="button" aria-label="Zieuton Plus" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
       <button class="set-btn" id="set-btn" type="button" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="set-dot" id="set-dot" hidden></span></button>
     </div>
   </div>
@@ -3320,7 +2917,7 @@ if (!window.ZYEUTO_APP) {
 
   <section class="weekly needs-data" id="weekly" aria-labelledby="weekly-title">
     <div class="wk-bar">
-      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="wk-mark" aria-hidden="true"><svg class="i-re" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-2 8m2-13v5h-5"/></svg><svg class="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="wk-chip" id="wk-chip" hidden></span><span class="t" id="weekly-title">Mettre à jour</span><small class="due" id="due"></small></span></button>
+      <button class="wk-toggle" id="wk-toggle" type="button" aria-expanded="false" aria-controls="wk-more"><span class="chev" aria-hidden="true"></span><span class="zy-av wk-av" id="wk-av"></span><span><span class="wk-chip" id="wk-chip" hidden></span><span class="t" id="weekly-title">Mettre à jour</span><small class="due" id="due"></small></span></button>
       <button class="btn primary pill" id="bar-file" type="button" disabled hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer</button>
     </div>
@@ -3356,6 +2953,7 @@ if (!window.ZYEUTO_APP) {
   <span class="hh-zy" id="hh-zy" aria-hidden="true"></span><span class="hh-bub" id="hh-bub" aria-hidden="true"></span>
   <!-- Refonte (lot 1) : le Zieuteur 3D posé sur le bord de la carte, la date de l'import en haut, puis ce qui a changé en grand. -->
   <section class="needs-data profile" aria-label="Résumé">
+    <button class="ring avatar-btn" id="avatar-btn" type="button" aria-label="Choisir ta photo de profil"><span class="ring-in"><span class="ring-core" id="avatar-core"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.3-7 8.5-7s7.7 2.6 8.5 7z"/></svg></span></span><span class="avatar-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
     <p class="needs-data caption" id="caption">Chargement…</p>
   </section>
   <!-- V2 : le Zieuteur est derrière le panneau des chiffres, ses pattes accrochées à son bord. Les chiffres ouvrent les comptes de ce dernier import. -->
@@ -3412,7 +3010,7 @@ if (!window.ZYEUTO_APP) {
       <div id="lp-hi"></div>
       <div class="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="search" id="search" placeholder="Rechercher un pseudo" autocomplete="off" autocapitalize="none" aria-label="Rechercher un compte">
+        <input type="search" id="search" placeholder="Rechercher" autocomplete="off" autocapitalize="none" aria-label="Rechercher un compte">
       </div>
       <ul class="people" id="people"></ul>
       <button class="more" id="more" hidden>Voir plus</button>
@@ -3518,17 +3116,9 @@ if (!window.ZYEUTO_APP) {
     <button class="st-back" type="button" data-close="st-plus">‹ Réglages</button>
     <h1 id="st-plus-t">Zieuton Plus</h1>
 
-    <!-- V3 (maquette « Zieuton Plus ») : le Zieuteur accroché au panneau doré, l'accroche, l'état, puis le bouton. -->
-    <div class="st-plus-hero sp-v3">
-      <span class="sp-3d" id="sp-3d"></span>
-      <div class="sp-panel">
-        <span class="plus-tag">Zieuton Plus</span>
-        <h2 class="sp-t" id="sp-t">Va plus loin</h2>
-        <p id="plus-status"></p>
-        <button class="sp-buy" id="plus-open" type="button">Voir Zieuton Plus</button>
-      </div>
-    </div>
+    <div class="st-plus-hero"><span class="plus-tag">Zieuton Plus</span><p id="plus-status"></p></div>
     <div class="st-group st-gold">
+      <button class="st-row" id="plus-open" type="button"><span class="st-ic gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Découvrir Plus</b><small>Mises à jour illimitées, zieuteur en or</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row no-demo" id="plus-change" type="button" hidden><span class="st-ic gold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="st-t"><b>Voir les offres</b><small id="plus-change-sub">Passer à l'année ou à vie</small></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row no-demo" id="plus-manage" type="button" hidden><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M3.5 10h17"/></svg></span><span class="st-t"><b>Gérer mon abonnement</b></span><span class="st-go" aria-hidden="true">›</span></button>
       <button class="st-row" id="plus-restore" type="button"><span class="st-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg></span><span class="st-t"><b>Restaurer mes achats</b><small>Si tu as déjà payé sur un autre iPhone</small></span><span class="st-go" aria-hidden="true">›</span></button>
@@ -3714,9 +3304,9 @@ if (!window.ZYEUTO_APP) {
     <div class="qz-card">
       <span class="qz-ring qz-bar" id="quiz-ring"><svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><line class="trk" x1="0" y1="4" x2="100" y2="4"/><line class="arc" id="quiz-arc" x1="0" y1="4" x2="100" y2="4" pathLength="100"/></svg></span>
       <div class="quiz-body" id="quiz-body"></div>
-      <p class="g-msg" id="quiz-msg" role="status"></p>
-      <div class="acts" id="quiz-acts"></div>
     </div>
+    <p class="g-msg" id="quiz-msg" role="status"></p>
+    <div class="acts" id="quiz-acts"></div>
   </div>
 </div>
 <div class="bilan fullpage" id="rec-sheet" role="dialog" aria-modal="true" aria-labelledby="rec-title" hidden>
@@ -3814,7 +3404,6 @@ if (!window.ZYEUTO_APP) {
   <div class="wrap">
     <div class="pg-head center has-trophy"><div><h1 class="pg-title-big">Graphiques</h1></div><button class="pg-trophy pg-rec" id="tile-records" type="button" aria-label="Mes records"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l2 4 4.4.6-3.2 3.1.8 4.4L24 14l-4 2.1.8-4.4-3.2-3.1L22 8z" fill="#fff6d8"/><rect x="18" y="19" width="12" height="22" rx="2.5" fill="#fff"/><rect x="6" y="26" width="12" height="15" rx="2.5" fill="#fff" fill-opacity=".8"/><rect x="30" y="31" width="12" height="10" rx="2.5" fill="#fff" fill-opacity=".65"/></svg></button></div>
     <div class="st-hero" id="st-hero"></div>
-    <div class="st-minis" id="st-minis"></div>
     <section class="block st-card st-evo" id="g-evo-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-evo-tog" aria-expanded="false" aria-controls="g-evo-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></i><span class="sc-t" id="g-evo-title">Ton évolution</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-evo-body" inert><div class="sc-in"><div id="chart"></div></div></div></section>
     <section class="block st-card st-proj" id="g-proj-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-proj-tog" aria-expanded="false" aria-controls="g-proj-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18l5-5 3 2 4-5"/><path d="M16 10l4-4" stroke-dasharray="2 2.5"/><circle cx="20" cy="6" r="1.4"/></svg></i><span class="sc-t" id="g-proj-title">Ton prochain cap</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-proj-body" inert><div class="sc-in"><div class="chart" id="g-proj"></div><p class="sc-note" id="g-proj-note"></p></div></div></section>
     <section class="block st-card st-moves" id="g-moves-block"><h2 class="sc-h"><button type="button" class="sc-head" id="g-moves-tog" aria-expanded="false" aria-controls="g-moves-body"><i class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 19V5M4 9l4-4 4 4M16 5v14M12 15l4 4 4-4"/></svg></i><span class="sc-t" id="g-moves-title">Arrivées et départs</span><i class="sc-arr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></i></button></h2><div class="sc-body" id="g-moves-body" inert><div class="sc-in"><div class="key"><span><i style="background:var(--up)"></i>Arrivées</span><span><i style="background:var(--down)"></i>Départs</span></div><div class="chart" id="g-moves"></div></div></div></section>
@@ -4666,7 +4255,7 @@ function renderListHead() {
   sc.hidden = !scoped();
   if (!sc.hidden) {
     const last = snaps[snaps.length - 1], nLast = tab === "unfollow" ? last.unfollows : last.follows;
-    sc.innerHTML = `<button type="button" data-scope="last" aria-pressed="${listScope === "last"}">Dernier import<em>${nf(nLast)}</em></button><button type="button" data-scope="all" aria-pressed="${listScope !== "last"}" aria-label="Tout, depuis le ${fmtShort(snaps[0].takenAt)}">Tout<em>${v.n == null ? "" : nf(v.n)}</em></button>`;
+    sc.innerHTML = `<button type="button" data-scope="last" aria-pressed="${listScope === "last"}">Dernier import<em>${nf(nLast)}</em></button><button type="button" data-scope="all" aria-pressed="${listScope !== "last"}">Depuis le ${fmtShort(snaps[0].takenAt)}<em>${v.n == null ? "" : nf(v.n)}</em></button>`;
     $("lp-n").textContent = listScope === "last" ? `${nf(nLast)} compte${nLast > 1 ? "s" : ""} · import du ${fmtShort(last.takenAt)}` : $("lp-n").textContent;
   }
 }
@@ -5933,7 +5522,6 @@ function openStPage(id) {
   const el = $(id);
   renderSettings();
   el.hidden = false; el.scrollTop = 0;
-  if (id === "st-plus" && storeApp()) ztSetPose($("sp-3d"), hasPlus() ? "saut" : "malicieux");
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("open")));
   haptic("light");
 }
@@ -6755,30 +6343,23 @@ function renderGuided() {
         : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram&nbsp;: inutile d'en refaire une."
         : prefs.requestExisting ? "Une demande était déjà en cours chez Instagram&nbsp;: inutile d'en refaire une."
         : `Instagram prépare ton fichier. ${sinceLine}.`;
-      // V3 (maquettes Figma « Export · À vérifier » et « Export · En préparation ») : le Zieuteur s'accroche au bord du
-      // panneau coloré ; dedans, la pastille d'état, le titre, le texte, la frise, l'action principale puis la seconde.
-      // Mêmes textes, mêmes boutons et mêmes règles que la refonte FOU-131 validée.
-      body.innerHTML = `<div class="gw gw-b gw-r gw-v3${unsure ? " gw-unsure" : ""}">
-        <p class="gw-top">Mon export</p>
-        <div class="gw-stage">
-          <span class="gw-3d">${ztPoseHTML(unsure ? "loupe" : "clin")}</span>
-          <div class="gw-panel">
-            <p class="gw-chip${unsure ? " warn" : ""}" id="gw-chip"><i aria-hidden="true">${unsure ? "?" : "✓"}</i>${unsure ? "À vérifier" : "En cours chez Instagram"}</p>
-            <h2 id="gf-title">${unsure ? "Vérifions ta demande" : "Ton export se prépare"}</h2>
-            <p class="gw-say" id="guide-say">${sub}</p>
-            ${frise3}
-            ${wline ? `<p class="gw-state${prefs.watch && prefs.watch.state === "pending" ? " ok" : ""}" id="gw-state" role="status">${wline}</p>` : ""}
-            ${unsure ? `
-            <button class="btn cheer big" id="gf-get" type="button">${I_FIND}Vérifier dans Instagram</button>
-            <p class="gw-cap">Je rouvre ta liste Instagram et je te montre où regarder.</p>
-            <button class="gw-row" id="gf-wait-demo" type="button"><span><b>Découvrir Zieuton en attendant</b><small>Visite en 4 étapes, compte fictif</small></span></button>` : `
-            <section class="gw-disc" aria-label="En attendant, découvre Zieuton">${mini}
-              <p>Une visite en 4 étapes, sur un compte fictif.</p>
-            </section>
-            <button class="btn cheer big" id="gf-wait-demo" type="button">${I_EYE}Découvrir Zieuton</button>
-            <button class="gw-sec" id="gf-get" type="button">Vérifier mon export</button>`}
-          </div>
-        </div>
+      body.innerHTML = `<div class="gw gw-b gw-r${unsure ? " gw-unsure" : ""}">
+        <div class="gw-hero" aria-hidden="true"><span class="gw-halo"></span><span class="gw-av">${MASCOT}</span><span class="gw-bub">${unsure ? "On vérifie&nbsp;?" : "C'est en route&nbsp;!"}</span></div>
+        <p class="gw-chip${unsure ? " warn" : ""}" id="gw-chip"><i aria-hidden="true">${unsure ? "?" : "✓"}</i>${unsure ? "À vérifier" : "En cours chez Instagram"}</p>
+        <h2 id="gf-title">${unsure ? "Vérifions ta demande" : "Ton export se prépare"}</h2>
+        <p class="gw-say" id="guide-say">${sub}</p>
+        ${frise3}
+        ${wline ? `<p class="gw-state${prefs.watch && prefs.watch.state === "pending" ? " ok" : ""}" id="gw-state" role="status">${wline}</p>` : ""}
+        ${unsure ? `
+        <button class="btn cheer big" id="gf-get" type="button">${I_FIND}Vérifier dans Instagram</button>
+        <p class="gw-cap">Je rouvre ta liste Instagram et je te montre où regarder.</p>
+        <button class="gw-row" id="gf-wait-demo" type="button"><span class="gw-mini4" aria-hidden="true"><i class="t-down"></i><i class="t-up"></i><i class="t-notback"></i><i class="t-fans"></i></span><span><b>Découvrir Zieuton en attendant</b><small>Visite en 4 étapes, compte fictif</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>` : `
+        <section class="gw-disc" aria-labelledby="gw-disc-t">${mini}
+          <h3 id="gw-disc-t">En attendant, découvre Zieuton</h3>
+          <p>Une visite en 4 étapes, sur un compte fictif.</p>
+          <button class="btn cheer big" id="gf-wait-demo" type="button">${I_EYE}Découvrir Zieuton</button>
+        </section>
+        <button class="gw-sec" id="gf-get" type="button">${I_FIND}Vérifier mon export</button>`}
         <div class="gw-line"><span class="gw-ic">${unsure ? I_MUTE : I_PHONE}</span><span>${unsure ? "Pas de rappel tant que ta demande n'est pas vérifiée." : "Tu peux fermer l'app&nbsp;: je regarde chez Instagram à chaque ouverture."}</span></div>
         <button class="gw-more" id="gw-more" type="button" aria-expanded="${gwInfo}" aria-controls="gw-info">Plus d'infos</button>
       </div>
@@ -6805,27 +6386,18 @@ function renderGuided() {
       clearTimeout(gmTick); gmTick = setTimeout(() => { if (!DEMO && gfOn() && gfStep() === "get" && !$("gf-redo") && !gwInfo) renderGuided(); }, 60000);
     } else {
     // Écran E (FOU-131) : seulement après le signal « ready » de l'app (le bon fichier, jamais un ancien).
-    // V3 (maquette « Export · Fichier prêt ») : panneau menthe, le Zieuteur au bord, l'action principale dedans.
-    // Les étapes restent en dessous : c'est toujours la personne qui touche « Télécharger » dans Instagram.
-    body.innerHTML = `<div class="gw gw-r gw-v3 gw-ready">
-      <p class="gw-top">Mon export</p>
-      <div class="gw-stage">
-        <span class="gw-3d">${ztPoseHTML("saut")}</span>
-        <div class="gw-panel">
-          <p class="gw-chip ok"><i aria-hidden="true">✓</i>Fichier prêt</p>
-          <h2 id="gf-title">Ton export est prêt&nbsp;! 🎉</h2>
-          <p class="gw-say" id="guide-say">${say}</p>
-          ${frise(3)}
-          <button class="btn cheer big" id="gf-get" type="button">${I_TAP}Récupérer mon export</button>
-          <button class="gw-sec" id="gf-back" type="button">Refaire la demande</button>
-        </div>
-      </div>
+    body.innerHTML = `${guide(say)}
+      <h2 id="gf-title">Ton export est prêt&nbsp;! 🎉</h2>
+      ${frise(3)}
       <ul class="gx-list">
         ${row(I_TAP, "lilac", "Touche « Récupérer mon export »", "Instagram s'ouvre ici.")}
         ${row(I_OUT, "rose", "Touche toi-même « Télécharger »", "Sur la ligne que mon bandeau te montre.")}
         ${row(I_CHECK, "plum", "Je m'occupe du reste", "Ta liste s'affiche toute seule.")}
       </ul>
-    </div>`;
+      <div class="gf-foot">
+        <button class="btn cheer big" id="gf-get" type="button">${I_TAP}Récupérer mon export</button>
+        <button class="alt" id="gf-back" type="button">Refaire la demande</button>
+      </div>`;
     }
     $("gf-get").onclick = wkGo;
     // FOU-124 : pas de doublon involontaire. « Refaire la demande » demande d'abord une confirmation, dans l'écran
@@ -6927,7 +6499,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-1824";
+const BUILD = "2026-11-23-1828";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
@@ -7114,8 +6686,6 @@ function freeRules() {
 }
 function renderPlusMini() {
   $("plus-mini").hidden = !storeApp();
-  $("hd-plus").hidden = !storeApp();
-  $("hd-plus").classList.toggle("on", storeApp() && hasPlus());
   if (!storeApp()) return;
   const n = state.snapshots.length, next = nextFreeAt();
   $("plus-mini").classList.toggle("on", hasPlus());
@@ -7144,9 +6714,6 @@ function renderPlusBlock() {
       ? "Version gratuite : une mise à jour par mois. Ta mise à jour gratuite est disponible."
       : `Version gratuite : une mise à jour par mois. La prochaine gratuite dans ${freeLeft(next)}`;
   $("plus-open").hidden = on;
-  $("sp-t").textContent = on ? "Merci d'être là" : "Va plus loin";
-  // Le Zieuteur de la page Plus ne se charge qu'une fois la page ouverte (pas d'image en plus au démarrage).
-  if (!$("st-plus").hidden) ztSetPose($("sp-3d"), on ? "saut" : "malicieux");
   // Déjà Plus au mois ou à l'année : les autres offres restent accessibles (passer à l'année ou à vie).
   $("plus-change").hidden = !on || curPlan() === "fr.zyeuto.plus.avie";
   $("plus-change-sub").textContent = curPlan() === "fr.zyeuto.plus.an" ? "Passer à vie" : "Passer à l'année ou à vie";
@@ -7244,7 +6811,6 @@ $("plus").addEventListener("click", (e) => { if (e.target === $("plus")) closePl
 $("plus-open").addEventListener("click", () => openPlus());
 $("plus-change").addEventListener("click", () => { haptic("light"); openPlus("change"); });
 $("plus-mini").addEventListener("click", () => { haptic("light"); hasPlus() ? openStPage("st-plus") : openPlus(); });
-$("hd-plus").addEventListener("click", () => { haptic("light"); hasPlus() ? openStPage("st-plus") : openPlus(); });
 $("plus-manage").addEventListener("click", () => nativePost({ type: "plus", action: "manage" }));
 window.zyeutoFile = {
   begin(name) { sharedBusy = true; this.name = name || "export.zip"; this.parts = []; },
@@ -7679,7 +7245,7 @@ function answer(b) {
   renderPips();
   $("quiz-msg").textContent = q.reveal ? q.reveal
     : right ? "" : q.yesno ? (q.answer === "yes" ? `${q.u} te suit bien.` : `${q.u} ne te suit pas.`) : `C'était ${q.answer}.`;
-  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-next">${quiz.n < QUIZ_LEN ? "Suivant" : "Voir mon score"}</button>`;
+  $("quiz-acts").innerHTML = `<button class="qz-go" type="button" id="quiz-next">${quiz.n < QUIZ_LEN ? "Question suivante" : "Voir mon score"}</button>`;
   $("quiz-next").addEventListener("click", nextQuestion);
 }
 $("quiz-body").addEventListener("click", (e) => { const b = e.target.closest(".g-opt"); if (b && !b.disabled) answer(b); });
@@ -9622,15 +9188,6 @@ const MONTHS_S = ["jan", "fév", "mar", "avr", "mai", "juin", "juil", "août", "
 const DAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 const show = (id, on) => { $(id).hidden = !on; return on; };
 
-$("st-minis").addEventListener("click", (e) => {
-  const b = e.target.closest(".st-mini");
-  if (!b) return;
-  haptic("light");
-  if (b.dataset.open === "imports") { $("imp-row").click(); return; }
-  const tog = $(b.dataset.open + "-tog"), block = $(b.dataset.open + "-block");
-  if (tog && tog.getAttribute("aria-expanded") !== "true") tog.click();
-  block && block.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-});
 function renderStatsPage() {
   const snaps = state.snapshots;
   if (!snaps.length) return;
@@ -9651,7 +9208,7 @@ function renderStatsPage() {
   // Refonte (lot 1) : la courbe des abonnés devient le point d'entrée de la page. Elle part d'une question,
   // dit la période et l'unité, et donne la valeur de chaque import au toucher (mêmes chiffres que « Mes imports »).
   // V2 : le Zieuteur à la loupe se penche sur le panneau de la courbe (ses pattes sur le bord), sans bulle : la place va à la lecture.
-  $("st-hero").innerHTML = `<p class="sh-q">Abonnés à chaque import</p>
+  $("st-hero").innerHTML = `<p class="sh-q">Combien d'abonnés à chaque import&nbsp;?</p>
     <div class="sh-top"><div class="st-who"><b id="sh-count" data-n="${last.count}">${nf(last.count)}</b><span>abonnés</span>${chip}</div></div>
     <div class="sh-plot"><span class="sh-3d" id="sh-3d" title="${quip}">${ztPoseHTML("loupe")}</span>${evoHTML(snaps)}</div>
     <div class="sh-stats">${[
@@ -9660,12 +9217,6 @@ function renderStatsPage() {
       stat(nf(snaps.length), snaps.length > 1 ? "imports" : "import"),
     ].join("")}</div>`;
   bindEvo(snaps);
-  // V3 (maquette « Graphiques ») : Dernier import, Abonnés en retour, Ton historique, sous la courbe.
-  const lastMv = snaps.length > 1 ? `+${nf(last.follows)} arrivée${last.follows > 1 ? "s" : ""} · −${nf(last.unfollows)} départ${last.unfollows > 1 ? "s" : ""}` : "";
-  const mini = (k, t, d) => d ? `<button class="st-mini" type="button" data-open="${k}"><span><b>${t}</b><small>${d}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>` : "";
-  $("st-minis").innerHTML = mini("g-moves", "Dernier import", lastMv)
-    + mini("g-rel", "Abonnés en retour", rel && followingN ? `${pct(mutual, followingN)} % des comptes que tu suis` : "")
-    + mini("imports", "Ton historique", `${nf(snaps.length)} import${snaps.length > 1 ? "s" : ""} depuis le ${fmtShort(first.takenAt)}`);
   $("sh-3d").addEventListener("click", () => { if (ztBounce($("sh-3d").querySelector(".zt"))) haptic("light"); });
   // Les zieuteurs qui dépassent des cartes : le tien, et un copain déguisé.
   $("peek-a").innerHTML = zyHeadSVG(zy().look);
