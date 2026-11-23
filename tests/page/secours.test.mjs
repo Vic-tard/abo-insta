@@ -57,7 +57,7 @@ test("le plan propose « Passer par l'app Instagram », qui ouvre le chemin de s
 
 test("l'écran avant Instagram (après un blocage, par exemple) propose aussi l'app Instagram", async () => {
   const page = await app({ welcomed: true });
-  await page.click("#gf-meta"); // « Ouvrir Instagram » sur le plan → écran « Zieuton en haut, Instagram en bas »
+  await page.click("#gf-meta"); // « Continuer » sur le plan → écran « Zieuton en haut, Instagram en bas »
   assert.match(await page.textContent("#gf-title"), /Zieuton en haut/);
   assert.ok(await vis(page, "gf-via"));
   await page.click("#gf-via");
