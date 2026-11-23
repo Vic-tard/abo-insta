@@ -2557,7 +2557,7 @@ if (!window.ZYEUTO_APP) {
   .hm-tiles .hm-tile::before { display: none; }
   .hm-tiles .hm-ic { background: var(--ks); box-shadow: none; width: 32px; height: 32px; border-radius: 10px; }
   .hm-tiles .hm-ic svg { stroke: var(--k); }
-  .hm-tiles .hm-n { color: var(--k); font-size: 30px; }
+  .hm-tiles .hm-n { color: var(--k); }
   .hm-tiles .hm-l { color: var(--r-ink); }
   .hm-tiles .hm-s { color: var(--r-muted); }
   .hm-tiles .hm-faces i, .hm-tiles .hm-faces i:nth-child(2), .hm-tiles .hm-faces i:nth-child(3) { background: var(--ks); color: var(--k); box-shadow: 0 0 0 2px var(--r-card); }
@@ -2675,7 +2675,7 @@ if (!window.ZYEUTO_APP) {
     --prune-1: #5a2242; --prune-2: #3a142b; --prune-3: #22091a; --prune-panel: #4a1c39; --prune-line: rgb(255 255 255 / .09); }
 
   /* La police : titres, grands chiffres, onglets, boutons principaux. Le texte courant reste en police ronde du système. */
-  h1, h2, .fp-head p, .st-back, .hm-n, .hm-l, .home-hero .stat b, .home-hero .caption strong, .hh-total .stat b, #pg-stats .st-who b,
+  h1, h2, .fp-head p, .st-back, .home-hero .stat b, .home-hero .caption strong, .hh-total .stat b, #pg-stats .st-who b,
   body[data-mode="data"] .pager button, #wk-go, .wk-toggle .t, #hm-all .hm-all-t > b, .imp-t b, .quiz-q, .qz-go, .qz-opt, .qz-big, #lp-title, .lp-n, .pp-h span,
   .evo-tip b, .sh-stats b, .acct-pill b, .lp-scope button { font-family: var(--zd); }
 
@@ -2738,8 +2738,8 @@ if (!window.ZYEUTO_APP) {
   .hm-tiles .hm-ic svg { stroke: var(--kn); stroke-width: 2.6; }
   .hm-tiles .hm-faces i, .hm-tiles .hm-faces i:nth-child(2), .hm-tiles .hm-faces i:nth-child(3) { background: var(--kn); color: #fff; box-shadow: 0 0 0 2px var(--k1); }
   .hm-tiles .hm-faces i:nth-child(2) { opacity: .82; } .hm-tiles .hm-faces i:nth-child(3) { opacity: .64; }
-  .hm-tiles .hm-n { font: 600 36px/1 var(--zd); color: var(--kn); letter-spacing: -.02em; }
-  .hm-tiles .hm-l { font: 600 17px/1.15 var(--zd); color: var(--ki); margin-top: 2px; }
+  .hm-tiles .hm-n { color: var(--kn); }
+  .hm-tiles .hm-l { color: var(--ki); margin-top: 2px; }
   .hm-tiles .hm-s { margin-top: auto; padding-top: 8px; font: 700 12px/1.25 var(--round); color: var(--ki); opacity: .78; }
   .hm-tiles .hm-d { font: 600 11.5px/1.25 var(--round); color: var(--ki); opacity: .62; }
   .hm-tiles .hm-d:empty { display: none; }
@@ -2991,8 +2991,9 @@ if (!window.ZYEUTO_APP) {
   .hm-tiles .hm-faces { display: none; }
   .hm-tiles .hm-ic { grid-area: ic; align-self: center; width: 18px; height: 18px; border-radius: 0; background: none; }
   .hm-tiles .hm-ic svg { width: 18px; height: 18px; stroke: var(--ki); stroke-width: 1.75; }
-  .hm-tiles .hm-n { grid-area: n; font: 600 36px/40px var(--zd); letter-spacing: -.55px; color: var(--kn); }
-  .hm-tiles .hm-l { grid-area: l; margin: 0; font: 600 17px/22px var(--round); color: var(--ki); }
+  /* Chiffres et libellés des 4 cases : styles d'origine .hm-n et .hm-l gardés (police ronde 800, 32 px et 15,5 px), choix de Victor le 23 nov. */
+  .hm-tiles .hm-n { grid-area: n; color: var(--kn); }
+  .hm-tiles .hm-l { grid-area: l; margin: 0; color: var(--ki); }
   .hm-tiles .hm-s { grid-area: s; margin: 0; padding: 0; font: 400 13px/18px var(--round); color: var(--ki); opacity: 1; }
   .hm-tiles .hm-d { grid-area: d; font: 400 13px/18px var(--round); color: var(--ki); opacity: .8; }
 
@@ -6926,7 +6927,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-1812";
+const BUILD = "2026-11-23-1824";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
