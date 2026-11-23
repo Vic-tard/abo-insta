@@ -586,6 +586,19 @@ if (!window.ZYEUTO_APP) {
   .pl { text-align: center; gap: 18px; }
   .pl-av { width: 72px; height: 72px; margin: 0 auto; border-radius: 28%; overflow: hidden; background: #d4919b; }
   .pl-av svg { width: 100%; height: 100%; display: block; }
+  /* Refonte visuelle (23 nov.) : le Zieuteur 3D en petit, des étapes qui remplissent l'écran, le bouton plus présent. */
+  .gf-mid.pl2 { flex: 1; margin-block: 4px 0; gap: 16px; }
+  .pl2 .zt-pl { width: 128px; margin: 0 auto -4px; }
+  .pl2 .pl-steps { flex: 1; grid-auto-rows: minmax(76px, 1fr); max-height: 470px; gap: 12px; }
+  .pl2 .pl-steps li { align-items: center; gap: 14px; padding: 14px 18px; border-radius: 22px; }
+  .pl2 .pl-steps li i { width: 36px; height: 36px; font: 900 17px var(--round); background: linear-gradient(150deg, #ef7f6a, #e2685a); box-shadow: 0 4px 12px rgb(226 104 90 / .3); }
+  .pl2 .pl-steps li span { display: flex; flex-direction: column; gap: 4px; }
+  .pl2 .pl-steps li b { font: 800 19px/1.2 var(--round); }
+  .pl2 .pl-steps li small { font: 600 15px/1.35 var(--round); color: var(--muted); }
+  .pl-foot.pl2-foot { padding-top: 16px; gap: 6px; }
+  .gf .pl2-foot .btn.gf-huge { min-height: 72px; font-size: 22px; border-radius: 24px; box-shadow: 0 12px 28px rgb(239 127 106 / .38); }
+  .pl2-links { display: flex; justify-content: space-between; gap: 8px; }
+  .pl2-links .pl-restore { min-height: 44px; padding: 10px 6px; font-size: 13px; white-space: nowrap; text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent); text-decoration-thickness: 1px; }
   .pl h2 { margin: 0; font: 800 26px/1.2 var(--round); text-wrap: balance; }
   .pl-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; text-align: left; }
   .pl-steps li { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border-radius: 18px; padding: 14px 16px; font: 800 17px/1.3 var(--round); }
@@ -596,16 +609,42 @@ if (!window.ZYEUTO_APP) {
   .in-zy { position: relative; padding: 20px 64px 20px 14px; background: linear-gradient(135deg, #fbd8c4, #f6c2a8); color: #2e2328; font: 800 16px/1.25 var(--round); text-align: left; }
   .in-av { position: absolute; right: 10px; bottom: 8px; width: 46px; height: 46px; border-radius: 28%; overflow: hidden; background: #d4919b; }
   .in-av svg { width: 100%; height: 100%; display: block; }
+  .in-zy:has(.in-zt) { padding-right: 78px; }
+  .in-av.in-zt { width: 64px; height: auto; right: 6px; bottom: 6px; border-radius: 0; overflow: visible; background: none; }
   .in-ig { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 14px 28px; background: #fff; color: #262626; font: 600 15px var(--round); }
   .in-ig b { font: 800 20px var(--round); }
   .in-btn { width: 80%; height: 28px; border-radius: 8px; background: #0095f6; }
-  .in-pts li { font-size: 15.5px; }
+  .in-pts li { font: 700 16px/1.35 var(--round); }
   .in-pts li i { background: var(--surface); color: var(--ink); font-size: 15px; }
+  /* Le geste montré sur le schéma : d'abord le bandeau Zieuton, puis le bouton bleu d'Instagram. */
+  .in-ig { position: relative; }
+  .in-tap { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgb(0 149 246 / .28); border: 3px solid #0095f6; opacity: 0; pointer-events: none; }
+  .in-btn { position: relative; }
   .in-pts li i svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) {
-    .in > .in-phone { animation: sticker .5s .5s cubic-bezier(.3,1.6,.5,1) both; }
-    .in ~ .pl-foot { animation-delay: 2.6s; }
+    /* Les consignes et « J'ai compris, on y va » sont là dès l'arrivée ; seul le schéma s'anime, plus lentement. */
+    .in > .in-phone { animation: sticker .8s .1s cubic-bezier(.3,1.4,.5,1) both; }
+    .gf-mid.in > :not(.in-phone), .gf-mid.in .in-pts li, .in ~ .pl-foot { animation: none; }
+    .in-zy { animation: inLook 1.4s 1s ease-in-out both; }
+    .in-btn { animation: inPress 2.8s 2.6s ease-in-out infinite; }
+    .in-tap { animation: inTap 2.8s 2.6s ease-out infinite; }
   }
+  @keyframes inLook { 0%, 100% { box-shadow: inset 0 0 0 0 rgb(226 104 90 / 0); } 30%, 70% { box-shadow: inset 0 0 0 4px rgb(226 104 90 / .85); } }
+  @keyframes inPress { 0%, 30%, 100% { transform: scale(1); } 40% { transform: scale(.94); } 52% { transform: scale(1); } }
+  @keyframes inTap { 0%, 28% { opacity: 0; scale: .5; } 40% { opacity: 1; scale: .8; } 70% { opacity: 0; scale: 1.6; } 100% { opacity: 0; } }
+  /* Petits écrans (iPhone SE…) : tout tient sans faire défiler, « Ouvrir Instagram » compris. */
+  @media (max-height: 720px) {
+    .gf-mid.pl2 { gap: 10px; } .pl2 .zt-pl { width: 92px; }
+    .pl2 h2 { font-size: 23px; } .pl2 .pl-steps { grid-auto-rows: minmax(60px, 1fr); gap: 8px; }
+    .pl2 .pl-steps li { padding: 10px 14px; border-radius: 18px; } .pl2 .pl-steps li i { width: 30px; height: 30px; font-size: 15px; }
+    .pl2 .pl-steps li b { font-size: 17px; } .pl2 .pl-steps li small { font-size: 14px; }
+    .gf .pl2-foot .btn.gf-huge { min-height: 62px; font-size: 20px; } .pl-foot.pl2-foot { padding-top: 10px; gap: 2px; }
+    .in h2 { font-size: 23px; } .in-phone { min-height: min(240px, 31svh); width: min(280px, 76vw); } .in-zy { padding-block: 12px; font-size: 15px; } .in-ig { padding: 12px 14px 16px; gap: 5px; }
+    .in-ig b { font-size: 17px; } .gf-mid.in { gap: 10px; } .in-pts { gap: 8px; } .in-pts li { font-size: 14.5px; padding: 9px 14px; }
+    .in ~ .pl-foot { padding-top: 4px; gap: 2px; } .gf .in ~ .pl-foot .btn.gf-huge { min-height: 58px; font-size: 20px; }
+  }
+  @media (max-width: 350px) { .pl2-links .pl-restore { white-space: normal; text-align: left; } .pl2-links .pl-restore + .pl-restore { text-align: right; } }
+  @media (max-height: 600px) { .pl2 .zt-pl { display: none; } .pl2 .pl-steps li small { font-size: 13px; } .in-ig b { display: none; } }
   .pl-restore { align-self: center; border: 0; background: none; padding: 8px 12px; font: 600 13px var(--round); color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   @media (prefers-reduced-motion: no-preference) {
     .pl > * { animation: rise .5s both; }
@@ -614,6 +653,9 @@ if (!window.ZYEUTO_APP) {
     .pl-steps li:nth-child(1) { animation-delay: 1s; } .pl-steps li:nth-child(2) { animation-delay: 1.8s; } .pl-steps li:nth-child(3) { animation-delay: 2.6s; }
     .pl-steps { animation: none !important; }
     .pl-foot { animation: rise .5s 3.4s both; }
+    /* Écran des 3 étapes : tout est en place en moins d'une seconde. */
+    .pl2 .pl-steps li:nth-child(1) { animation-delay: .3s; } .pl2 .pl-steps li:nth-child(2) { animation-delay: .45s; } .pl2 .pl-steps li:nth-child(3) { animation-delay: .6s; }
+    .pl-foot.pl2-foot { animation: rise .45s .75s both; }
   }
   .pg { position: fixed; inset: 0; z-index: 15; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     transition: transform .34s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
@@ -2036,15 +2078,29 @@ if (!window.ZYEUTO_APP) {
   .wl { flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; position: relative; }
   .gf.welcome { background: radial-gradient(120% 60% at 50% 0%, var(--rose-soft), var(--bg) 70%); }
   .gf.welcome .gf-head, .gf.welcome .gf-prog { display: none; }
-  .wl-stage { position: relative; margin: auto auto 0; width: min(200px, 50vw, 30vh); }
+  .wl-stage { position: relative; margin: auto auto 0; width: min(250px, 64vw, 33vh); }
+  @media (max-height: 720px) { .wl-stage { width: min(250px, 64vw, 27vh); } }
+  /* Le Zieuteur 3D (P06) : le personnage passe devant et derrière son bloc prune, qui ne bouge pas.
+     Deux fichiers : perso (dessiné deux fois, derrière le bloc puis seulement ses pattes devant) et bloc. */
+  .zt { position: relative; display: block; width: 100%; aspect-ratio: 636 / 480; pointer-events: none; -webkit-user-select: none; user-select: none; }
+  .zt img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; -webkit-user-drag: none; }
+  .zt-move { position: absolute; inset: 0; transform-origin: 50% 67.7%; will-change: transform; }
+  .zt-front { -webkit-mask: radial-gradient(9.71% 11.49% at 24.69% 65.19%, #000 96%, transparent 100%), radial-gradient(9.71% 11.49% at 75.12% 65.19%, #000 96%, transparent 100%);
+    mask: radial-gradient(9.71% 11.49% at 24.69% 65.19%, #000 96%, transparent 100%), radial-gradient(9.71% 11.49% at 75.12% 65.19%, #000 96%, transparent 100%); }
+  .zt-svg { display: block; width: 76%; margin: 0 auto; aspect-ratio: 1; border-radius: 28%; overflow: hidden; background: #d4919b; }
+  .zt-svg svg { width: 100%; height: 100%; display: block; }
+  .wl-stage .zt { filter: drop-shadow(0 14px 22px rgb(46 35 40 / .22)); }
+  :root[data-theme="dark"] .wl-stage .zt { filter: drop-shadow(0 0 26px rgb(212 145 155 / .28)); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .wl-stage .zt { filter: drop-shadow(0 0 26px rgb(212 145 155 / .28)); } }
   .wl-art { width: 100%; aspect-ratio: 1; border-radius: 28%; overflow: hidden; background: #d4919b; box-shadow: 0 18px 44px rgb(212 145 155 / .45); }
   .wl-art svg { width: 100%; height: 100%; display: block; }
   .wl-tap { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 28%; -webkit-tap-highlight-color: transparent; }
   .wl-tap:focus-visible { outline: 3px solid var(--link); outline-offset: 4px; }
-  .wl-hint { position: absolute; left: 50%; top: 36%; width: 34%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; border: 3px solid #fff; pointer-events: none; opacity: 0; }
+  .wl-hint { position: absolute; left: 50%; top: 40%; width: 30%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; border: 3px solid #fff; pointer-events: none; opacity: 0; }
   .wl-stage.hinting .wl-hint { animation: ping 1.4s ease-out infinite; }
   .wl-bubble { position: absolute; top: -18px; right: -34px; background: #fff; color: #2e2328; font: 700 15px var(--round, var(--font)); padding: 8px 12px; border-radius: 16px 16px 16px 4px; box-shadow: 0 6px 18px rgb(0 0 0 / .12); white-space: nowrap; }
   .wl-stage + h2 { margin-top: 18px; }
+  .wl-bubble { top: -14px; right: -18px; }
   .wl-spark { position: absolute; font-size: 18px; line-height: 1; }
   .wl-spark.a { left: -26px; top: 22%; } .wl-spark.b { right: -22px; bottom: 18%; font-size: 15px; } .wl-spark.c { left: -10px; bottom: -6px; font-size: 13px; }
   .wl h2 { margin: 8px 0 0; font-size: 28px; line-height: 1.15; }
@@ -2064,6 +2120,7 @@ if (!window.ZYEUTO_APP) {
   .wl-pts li i svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) {
     .wl-head { animation: peek 1s .25s cubic-bezier(.3,1.5,.5,1) both; }
+    .wl-tap .zt { animation: ztIn .7s .15s cubic-bezier(.3,1.5,.5,1) both; }
     .wl-hands { animation: grab .35s .9s cubic-bezier(.3,1.6,.5,1) both; }
     .wl-eyes { transform-box: fill-box; transform-origin: center; animation: blink 4s 1.6s infinite; }
     .wl-look { animation: look 4s 1.3s ease-in-out infinite; }
@@ -2081,6 +2138,7 @@ if (!window.ZYEUTO_APP) {
   @keyframes bubble { from { transform: scale(0); opacity: 0; } }
   @keyframes twinkle { 0%, 100% { transform: scale(.6); opacity: .3; } 50% { transform: scale(1.1); opacity: 1; } }
   @keyframes peek { from { transform: translateY(60px); } }
+  @keyframes ztIn { from { transform: translateY(14px) scale(.9); opacity: 0; } }
   @keyframes grab { from { transform: translateY(14px); opacity: 0; } }
   @keyframes blink { 0%, 46%, 50%, 100% { transform: scaleY(1); } 48% { transform: scaleY(.1); } }
   @keyframes look { 0%, 20% { transform: translateX(0); } 30%, 45% { transform: translateX(-3px); } 55%, 70% { transform: translateX(3px); } 80%, 100% { transform: translateX(0); } }
@@ -5501,7 +5559,35 @@ const MASCOT = `<svg viewBox="0 0 100 100"><defs><clipPath id="wl-clip"><rect wi
   <rect y="64" width="100" height="36" fill="#2e2328"/>
   <g class="wl-hands"><g><rect x="17" y="57" width="16" height="12" rx="6" fill="#fff"/><path d="M23 60v5M27.5 60v5" stroke="#e7d6d9" stroke-width="1.4" stroke-linecap="round"/></g>
   <g class="wl-wave"><rect x="67" y="57" width="16" height="12" rx="6" fill="#fff"/><path d="M72.5 60v5M77 60v5" stroke="#e7d6d9" stroke-width="1.4" stroke-linecap="round"/></g></g></svg>`;
-// Le bonhomme se cache quand on touche sa tête, puis ressort avec une nouvelle réplique.
+// Refonte visuelle (23 nov.) : le Zieuteur 3D P06, en deux calques rangés dans guide/ (donc aussi dans l'app au prochain build).
+// Sans réseau et sans l'image rangée dans l'app, on garde l'ancien dessin (ztFail).
+const ZT_PERSO = "guide/zieuteur-p06-perso-v1.png", ZT_BLOC = "guide/zieuteur-p06-bloc-v1.png";
+function zieuteurHTML(cls = "") {
+  const img = (f) => `<img src="${asset(f)}" alt="" draggable="false" onerror="ztFail(this)">`;
+  return `<span class="zt ${cls}" aria-hidden="true"><span class="zt-move zt-back">${img(ZT_PERSO)}</span>${img(ZT_BLOC)}<span class="zt-move zt-front">${img(ZT_PERSO)}</span></span>`;
+}
+function ztFail(img) {
+  const z = img.closest(".zt");
+  if (!z || z.classList.contains("zt-off")) return;
+  z.classList.add("zt-off");
+  z.innerHTML = `<span class="zt-svg">${MASCOT}</span>`;
+  logError("zieuteur-3d", new Error("image du Zieuteur introuvable"));
+}
+// Toucher la tête : il se tasse, rebondit de quelques pixels et retrouve sa pose (350 ms). Le bloc ne bouge pas.
+const ZT_BOUNCE = [
+  { transform: "none" },
+  { transform: "scale(1.05, .9)", offset: .28, easing: "cubic-bezier(.3,0,.4,1)" },
+  { transform: "translateY(-6px) scale(.97, 1.04)", offset: .62, easing: "cubic-bezier(.4,0,.6,1)" },
+  { transform: "translateY(0) scale(1.015, .985)", offset: .84 },
+  { transform: "none" },
+];
+function ztBounce(z) {
+  if (!z || calm()) return null;
+  let last = null;
+  z.querySelectorAll(".zt-move").forEach((m) => { last = m.animate(ZT_BOUNCE, { duration: 350 }); });
+  return last;
+}
+// Le bonhomme réagit quand on touche sa tête, avec une nouvelle réplique.
 const WL_LINES = ["Hé&nbsp;!", "Tu m'as vu&nbsp;?", "Coucou-caché&nbsp;!", "Encore&nbsp;?", "Ok, t'as gagné&nbsp;😄", "Allez, on y va&nbsp;?"];
 let wlTimer = null;
 function wlPlay() {
@@ -5514,17 +5600,15 @@ function wlPlay() {
     if (busy) return;
     busy = true; n++;
     stage.classList.remove("hinting");
+    haptic("light");
     if (navigator.vibrate) try { navigator.vibrate(15); } catch { /* normal : vibration refusée par le navigateur */ }
-    const head = stage.querySelector(".wl-head"), hands = stage.querySelector(".wl-hands");
-    const easing = "cubic-bezier(.3,1.3,.5,1)";
-    bubble.animate([{ opacity: 1 }, { opacity: 0, scale: .6 }], { duration: 150, fill: "forwards" });
-    hands.animate([{ transform: "translateY(0)" }, { transform: "translateY(16px)", opacity: 0, offset: .2 }, { transform: "translateY(16px)", opacity: 0, offset: .72 }, { transform: "translateY(0)", opacity: 1 }], { duration: 1500, easing });
-    const a = head.animate([{ transform: "translateY(0)" }, { transform: "translateY(64px)", offset: .22 }, { transform: "translateY(64px)", offset: .62 }, { transform: "translateY(-5px)", offset: .85 }, { transform: "translateY(0)" }], { duration: 1500, easing: "ease-in-out" });
-    a.onfinish = () => {
+    const done = () => {
       bubble.innerHTML = WL_LINES[(n - 1) % WL_LINES.length];
-      bubble.animate([{ opacity: 0, scale: .4 }, { opacity: 1, scale: 1.08 }, { opacity: 1, scale: 1 }], { duration: 380, easing, fill: "forwards" });
+      if (!calm()) bubble.animate([{ opacity: 0, scale: .4 }, { opacity: 1, scale: 1.08 }, { opacity: 1, scale: 1 }], { duration: 300, easing: "cubic-bezier(.3,1.3,.5,1)", fill: "forwards" });
       busy = false;
     };
+    const a = ztBounce(stage.querySelector(".zt:not(.zt-off)"));
+    if (a) a.onfinish = done; else done();
   };
 }
 let gfLeftAt = 0, gfOnReturn = null;
@@ -5589,7 +5673,7 @@ function renderGuided() {
   if (step === "welcome") {
     body.innerHTML = `
       <div class="wl">
-        <div class="wl-stage" id="wl-stage"><button class="wl-tap" id="wl-tap" type="button" aria-label="Toucher le petit bonhomme"><div class="wl-art">${MASCOT}</div></button><span class="wl-hint" aria-hidden="true"></span><span class="wl-bubble" id="wl-bubble" aria-live="polite">Coucou&nbsp;!</span><span class="wl-spark a">✨</span><span class="wl-spark b">💗</span><span class="wl-spark c">✨</span></div>
+        <div class="wl-stage" id="wl-stage"><button class="wl-tap" id="wl-tap" type="button" aria-label="Toucher le Zieuteur">${zieuteurHTML()}</button><span class="wl-hint" aria-hidden="true"></span><span class="wl-bubble" id="wl-bubble" aria-live="polite">Coucou&nbsp;!</span><span class="wl-spark a">✨</span><span class="wl-spark b">💗</span><span class="wl-spark c">✨</span></div>
         <h2 id="gf-title">Salut, jeune <em>zieuteur·euse</em>&nbsp;!</h2>
         <p class="lead">Bienvenue&nbsp;! Ici, tu vas enfin voir qui se désabonne de toi, qui arrive, et plein d'autres choses. On s'y met ensemble&nbsp;?</p>
         <ul class="wl-pts">
@@ -5618,8 +5702,8 @@ function renderGuided() {
     body.innerHTML = `<div class="gf-mid pl in">
       <h2 id="gf-title">Zieuton en haut,<br>Instagram en bas</h2>
       <div class="in-phone" aria-hidden="true">
-        <div class="in-zy"><span>Moi, je te dis où toucher</span><div class="in-av">${MASCOT}</div></div>
-        <div class="in-ig"><b>Instagram</b><span>Toi, tu touches ici</span><i class="in-btn"></i></div>
+        <div class="in-zy"><span>Moi, je te dis où toucher</span><div class="in-av in-zt">${zieuteurHTML()}</div></div>
+        <div class="in-ig"><b>Instagram</b><span>Toi, tu touches ici</span><i class="in-btn"><i class="in-tap"></i></i></div>
       </div>
       <ul class="pl-steps in-pts">
         <li><i>${ICON.lock}</i><span>Ton mot de passe, tu le tapes chez Instagram. Zieuton ne le voit jamais.</span></li>
@@ -5633,19 +5717,20 @@ function renderGuided() {
     // App iPhone : Instagram s'ouvre DANS Zieuton, avec le bandeau qui montre où toucher (comme « Mettre à jour »).
     gfOnReturn = null;
     // Le plan, dès l'arrivée (FOU-121) : peu de texte, 3 étapes qui apparaissent une à une, en gras.
+    // Refonte visuelle (23 nov.) : un titre et une seule phrase par étape ; les 3 blocs remplissent l'espace jusqu'au bouton.
     const PLAN = [
-      "Instagram s'ouvre ici, sans quitter Zieuton.",
-      "Mon bandeau te guide, bouton par bouton.",
-      "Quand ton fichier est prêt, tu le récupères ici 🎉",
+      ["Ouvre Instagram", "Tu restes dans Zieuton."],
+      ["Demande ton export", "Le Zieuteur te montre où toucher."],
+      ["Récupère ton fichier", "Reviens ici quand Instagram l'a préparé."],
     ];
-    body.innerHTML = `<div class="gf-mid pl">
-      <div class="pl-av" aria-hidden="true">${MASCOT}</div>
+    body.innerHTML = `<div class="gf-mid pl pl2">
+      ${zieuteurHTML("zt-pl")}
       <h2 id="gf-title">On va chercher tes abonnés chez Instagram</h2>
-      <ol class="pl-steps">${PLAN.map((t, k) => `<li><i>${k + 1}</i><span>${t}</span></li>`).join("")}</ol></div>
-      <div class="gf-foot pl-foot">
+      <ol class="pl-steps">${PLAN.map(([t, d], k) => `<li><i>${k + 1}</i><span><b>${t}</b><small>${d}</small></span></li>`).join("")}</ol></div>
+      <div class="gf-foot pl-foot pl2-foot">
         <button class="btn cheer big gf-huge" id="gf-meta" type="button">Ouvrir Instagram</button>
-        <button class="pl-restore" id="gf-via" type="button">Passer par l'app Instagram</button>
-        <button class="pl-restore" id="gf-restore" type="button">J'ai une sauvegarde</button>
+        <div class="pl2-links"><button class="pl-restore" id="gf-via" type="button">Passer par l'app Instagram</button>
+        <button class="pl-restore" id="gf-restore" type="button">J'ai une sauvegarde</button></div>
       </div>`;
     $("gf-meta").onclick = () => { gfIntro = true; haptic("light"); renderGuided(); };
   } else if (step === "get" && metaInApp()) {
@@ -5866,7 +5951,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-0034";
+const BUILD = "2026-11-23-0157";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
