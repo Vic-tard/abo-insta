@@ -2474,14 +2474,21 @@ if (!window.ZYEUTO_APP) {
   /* ---------- Écran d'ouverture (Victor, 23 nov.) ----------
      Animation officielle (2,4 s, image animée) : le Zieuteur traverse sous le nom, puis on tombe sur l'écran suivant (la bienvenue au premier
      lancement). L'app se charge dessous et ne l'attend jamais : un toucher la coupe ; si elle ne démarre pas vite, on passe.
+     Dans l'app (coque 24), elle est rangée dans l'app et prend le relais de l'écran de lancement (sa première image).
      L'animation CSS la fait disparaître seule à 4,5 s, même si le script ne tourne pas. Le fond reprend le rose de l'animation
-     (bandes en haut et en bas sur les écrans plus allongés que l'animation, pour ne jamais couper le nom). */
+     (bandes en haut et en bas sur les écrans plus allongés que l'animation, pour ne jamais couper le nom). Le logo vient du
+     visuel fixe (net, identique à chaque image) ; seul le petit zieuteur est animé, pris dans la vidéo d'origine. */
   .op { display: none; }
   html.op-on .op { display: block; position: fixed; inset: 0; z-index: 10000; overflow: hidden; cursor: pointer;
-    background: linear-gradient(#f6d9de, #f4d7de); animation: op-out .3s ease 4.5s forwards; }
+    background: #f8d7e2; animation: op-out .3s ease 4.5s forwards; }
   html.op-on .op.op-skip { animation: op-out .25s ease forwards; }
   @keyframes op-out { to { opacity: 0; visibility: hidden; } }
-  .op img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  /* Scène au format de l'animation (9:16), entière à l'écran : le visuel fixe net (logo + grand zieuteur) en fond,
+     et par-dessus seulement la bande où passe le petit zieuteur (lignes 620 à 1080 sur 1280). */
+  .op-stage { position: absolute; left: 50%; top: 50%; width: min(100vw, 56.25vh); height: min(177.78vw, 100vh); transform: translate(-50%, -50%); }
+  .op-stage img { position: absolute; left: 0; width: 100%; }
+  .op-stage .op-bg { top: 0; height: 100%; }
+  .op-stage .op-zt { top: 48.4375%; height: 35.9375%; }
 </style>
 
 <div class="op" id="op" aria-hidden="true"></div>
@@ -5585,28 +5592,51 @@ function ztSources(f) {
   if (window.ZYEUTO_ASSETS && window.ZYEUTO_ASSETS[f]) return [window.ZYEUTO_ASSETS[f]];
   return nativeApp ? ZT_HOSTS.map((h) => h + f) : [f];
 }
-// Écran d'ouverture : l'animation officielle (même adresses que les images : zieuton.com, puis GitHub Pages).
+// Écran d'ouverture : l'animation officielle (rangée dans l'app depuis la coque 24, sinon zieuton.com puis GitHub Pages).
 // C'est une image animée (WebP, jouée une seule fois) et pas une vidéo : dans l'app, une vidéo ne démarre pas seule
 // sans un toucher, une image animée si. Elle part à la fin (2,4 s) ; un toucher la coupe ; si elle n'est pas chargée
-// au bout de 1,5 s (pas de réseau), on passe directement à l'app. Avec « Réduire les animations », rien.
-const OP_ANIM = "media/ouverture-gemini-v1.webp", OP_LEN = 2400;
+// au bout de 1,5 s (pas de réseau), on passe directement à l'app. Avec « Réduire les animations » : sa première image,
+// fixe, un court instant. La coque affiche cette même première image au lancement et l'efface quand la page lui dit
+// « opening » (animation affichée, ou pas d'animation) : on passe de l'une à l'autre sans écran vide.
+const OP_FOND = "media/ouverture-v2-fond.jpg", OP_ANIM = "media/ouverture-v2-zieuteur.webp", OP_STILL = "media/ouverture-v2-image1.jpg";
+const OP_LEN = 2400, OP_STILL_LEN = 1200;
 (function opening() {
   const op = $("op");
   if (!op) return;
   if (!document.documentElement.classList.contains("op-on")) { op.remove(); return; }
-  let done = false, leaving = false, shown = false;
-  const end = () => { if (done) return; done = true; document.documentElement.classList.remove("op-on"); op.remove(); };
-  const leave = () => { if (leaving) return; leaving = true; op.classList.add("op-skip"); setTimeout(end, 300); };
+  let done = false, leaving = false, shown = false, told = false;
+  const tell = (state) => {
+    if (told) return;
+    told = true;
+    try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "opening", state }); }
+    catch (e) { console.warn("ouverture : message à l'app impossible", e); }
+  };
+  const end = () => { if (done) return; done = true; tell("none"); document.documentElement.classList.remove("op-on"); op.remove(); };
+  const leave = () => { if (leaving) return; leaving = true; tell("none"); op.classList.add("op-skip"); setTimeout(end, 300); };
   op.addEventListener("animationend", (e) => { if (e.target === op) end(); });
   op.addEventListener("click", leave);
   setTimeout(end, 5000);   // sécurité si l'animation ne se termine pas (onglet en arrière-plan)
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { leave(); return; }
-  const srcs = ztSources(OP_ANIM);
-  const img = new Image();
-  img.alt = ""; img.draggable = false;
-  img.onload = () => { if (shown || leaving) return; shown = true; op.appendChild(img); setTimeout(leave, OP_LEN); };
-  img.onerror = () => { const next = srcs.shift(); if (next && !shown) img.src = next; else leave(); };
-  img.src = srcs.shift();
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const load = (f, cls) => new Promise((ok, ko) => {
+    const srcs = ztSources(f), img = new Image();
+    img.alt = ""; img.draggable = false; img.className = cls;
+    img.onload = () => ok(img);
+    img.onerror = () => { const next = srcs.shift(); if (next) img.src = next; else ko(new Error("ouverture : " + f + " introuvable")); };
+    img.src = srcs.shift();
+  });
+  // Le fond d'abord, puis l'animation : elle démarre quand elle est chargée, donc au moment où on l'affiche.
+  (still ? load(OP_STILL, "op-bg").then((bg) => [bg]) : load(OP_FOND, "op-bg").then((bg) => load(OP_ANIM, "op-zt").then((zt) => [bg, zt])))
+    .then((imgs) => {
+      if (shown || leaving) return;
+      shown = true;
+      const stage = document.createElement("div");
+      stage.className = "op-stage";
+      imgs.forEach((img) => stage.appendChild(img));
+      op.appendChild(stage);
+      requestAnimationFrame(() => requestAnimationFrame(() => tell("shown")));   // une fois l'image peinte
+      setTimeout(leave, still ? OP_STILL_LEN : OP_LEN);
+    })
+    .catch((e) => { console.warn(e.message); leave(); });
   setTimeout(() => { if (!shown) leave(); }, 1500);
 })();
 function zieuteurHTML(cls = "") {
@@ -6002,7 +6032,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-2355";
+const BUILD = "2026-11-24-0021";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
