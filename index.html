@@ -609,8 +609,6 @@ if (!window.ZYEUTO_APP) {
   .in-zy { position: relative; padding: 20px 64px 20px 14px; background: linear-gradient(135deg, #fbd8c4, #f6c2a8); color: #2e2328; font: 800 16px/1.25 var(--round); text-align: left; }
   .in-av { position: absolute; right: 10px; bottom: 8px; width: 46px; height: 46px; border-radius: 28%; overflow: hidden; background: #d4919b; }
   .in-av svg { width: 100%; height: 100%; display: block; }
-  .in-zy:has(.in-zt) { padding-right: 78px; }
-  .in-av.in-zt { width: 64px; height: auto; right: 6px; bottom: 6px; border-radius: 0; overflow: visible; background: none; }
   .in-ig { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 14px 28px; background: #fff; color: #262626; font: 600 15px var(--round); }
   .in-ig b { font: 800 20px var(--round); }
   .in-btn { width: 80%; height: 28px; border-radius: 8px; background: #0095f6; }
@@ -622,7 +620,7 @@ if (!window.ZYEUTO_APP) {
   .in-btn { position: relative; }
   .in-pts li i svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: no-preference) {
-    /* Les consignes et « J'ai compris, on y va » sont là dès l'arrivée ; seul le schéma s'anime, plus lentement. */
+    /* Les consignes et « Ouvrir Instagram » sont là dès l'arrivée ; seul le schéma s'anime, plus lentement. */
     .in > .in-phone { animation: sticker .8s .1s cubic-bezier(.3,1.4,.5,1) both; }
     .gf-mid.in > :not(.in-phone), .gf-mid.in .in-pts li, .in ~ .pl-foot { animation: none; }
     .in-zy { animation: inLook 1.4s 1s ease-in-out both; }
@@ -5716,14 +5714,14 @@ function renderGuided() {
     body.innerHTML = `<div class="gf-mid pl in">
       <h2 id="gf-title">Zieuton en haut,<br>Instagram en bas</h2>
       <div class="in-phone" aria-hidden="true">
-        <div class="in-zy"><span>Moi, je te dis où toucher</span><div class="in-av in-zt">${zieuteurHTML()}</div></div>
+        <div class="in-zy"><span>Moi, je te dis où toucher</span></div>
         <div class="in-ig"><b>Instagram</b><span>Toi, tu touches ici</span><i class="in-btn"><i class="in-tap"></i></i></div>
       </div>
       <ul class="pl-steps in-pts">
         <li><i>${ICON.lock}</i><span>Ton mot de passe, tu le tapes chez Instagram. Zieuton ne le voit jamais.</span></li>
         <li><i>🍪</i><span>Cookies&nbsp;? Touche « Refuser les cookies optionnels ».</span></li>
       </ul></div>
-      <div class="gf-foot pl-foot"><button class="btn cheer big gf-huge" id="gf-meta" type="button">J'ai compris, on y va</button>
+      <div class="gf-foot pl-foot"><button class="btn cheer big gf-huge" id="gf-meta" type="button">Ouvrir Instagram</button>
         <button class="pl-restore" id="gf-via" type="button">Ça coince chez Instagram&nbsp;? Passe par son app</button></div>`;
     // On reste sur cet écran : en revenant d'Instagram sans avoir fini, une touche suffit pour y retourner.
     $("gf-meta").onclick = wkGo;
@@ -5965,7 +5963,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-23-0303";
+const BUILD = "2026-11-23-0316";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

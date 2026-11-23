@@ -2,7 +2,7 @@
 // 1. « Salut, jeune zieuteur·euse ! » : le Zieuteur 3D P06 en deux calques (perso + bloc) ; au toucher, seul le perso
 //    rebondit (350 ms), le bloc reste fixe ; rien ne bouge si l'iPhone réduit les animations.
 // 2. « On va chercher tes abonnés chez Instagram » : 3 étapes (titre + une phrase), liens en bas à gauche et à droite.
-// 3. « Zieuton en haut, Instagram en bas » : consignes et « J'ai compris, on y va » là dès l'arrivée.
+// 3. « Zieuton en haut, Instagram en bas » : consignes et « Ouvrir Instagram » là dès l'arrivée.
 // Sur un iPhone SE (375 × 667), les boutons principaux sont visibles sans faire défiler.
 // Lancer : npm run test:lecteur.
 import { test, before, after } from "node:test";
@@ -211,7 +211,8 @@ test("« Zieuton en haut, Instagram en bas » : consignes et bouton là dès l'a
   await page.waitForTimeout(50);
   const op = await page.$$eval(".in-pts li, .in ~ .pl-foot", (l) => l.map((e) => +getComputedStyle(e).opacity));
   assert.ok(op.every((o) => o === 1), "rien n'attend pour apparaître");
-  assert.equal((await page.textContent("#gf-meta")).trim(), "J'ai compris, on y va");
+  assert.equal((await page.textContent("#gf-meta")).trim(), "Ouvrir Instagram");
+  assert.equal(await page.locator(".in-zy .zt").count(), 0, "pas de Zieuteur dans le bandeau du schéma");
   // Le geste : bandeau Zieuton d'abord, puis le bouton bleu.
   const d = await page.evaluate(() => ({ zy: getComputedStyle(document.querySelector(".in-zy")).animationDelay, tap: getComputedStyle(document.querySelector(".in-tap")).animationDelay }));
   assert.ok(parseFloat(d.zy) < parseFloat(d.tap));

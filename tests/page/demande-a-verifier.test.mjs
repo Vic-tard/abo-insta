@@ -41,7 +41,7 @@ const prefsOf = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("a
 async function toInstagram(page) {
   await page.click("#gf-meta");                                   // « Continuer » (écran des 3 étapes)
   assert.match(await gfText(page), /Zieuton en haut/);
-  await page.click("#gf-meta");                                   // « J'ai compris, on y va »
+  await page.click("#gf-meta");                                   // « Ouvrir Instagram » (écran Zieuton en haut)
   const metas = (await sent(page)).filter((m) => m.type === "meta");
   assert.equal(metas.at(-1).mode, "request");
 }
