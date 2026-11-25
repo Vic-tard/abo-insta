@@ -109,14 +109,14 @@ test("nouvelle demande en cours + import d'un ancien export : suivi conservé, d
   assert.deepEqual(await of(page, "exportEnded"), [], "la coque garde son suivi");
   assert.equal(await page.evaluate(() => reqPending()), true, "la page garde la demande en attente");
   // Avec un historique, la demande gardée se voit discrètement sur la carte de l'accueil (build 23 : plus « se prépare »).
-  assert.equal(await page.textContent("#weekly-title"), "Demande toujours suivie");
+  assert.equal(await page.textContent("#weekly-title"), "Export à vérifier");
   // Fermeture et réouverture de l'app : réglages relus depuis le stockage (l'historique reste celui du téléphone).
   // Rien ne change, et la page ne demande pas de reprise (la coque suit toujours).
   await reopen(page);
   const again = page;
   const saved = await page.evaluate(() => prefs);
   assert.equal(await again.evaluate(() => reqPending()), true);
-  assert.equal(await again.textContent("#weekly-title"), "Demande toujours suivie");
+  assert.equal(await again.textContent("#weekly-title"), "Export à vérifier");
   await info(again, { waiting: true, ready: false, reminders: 1, acct: "a1", requestedAt: saved.requestedAt });
   assert.deepEqual(await of(again, "exportEnded"), []);
   assert.deepEqual(await of(again, "exportResume"), []);

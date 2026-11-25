@@ -61,7 +61,7 @@ test("bon export, heure du .zip sans fuseau : pas de fin automatique, question a
   await question(page);
   assert.match(await page.textContent("#ia"), /1\s140 abonnés enregistrés/);
   assert.match(await page.textContent("#ia"), /Est-ce bien le fichier de ta demande Instagram en cours/);
-  assert.equal(await page.textContent("#weekly-title"), "Demande toujours suivie", "jamais « Ton export se prépare » à côté de l'historique");
+  assert.equal(await page.textContent("#weekly-title"), "Export à vérifier", "jamais « Ton export se prépare » à côté de l'historique");
   // Oui : fin explicite, avec le compte et l'heure de la demande.
   await page.click("#ia-yes");
   assert.deepEqual(await of(page, "exportEnded"), [{ type: "exportEnded", reason: "cleared", acct: "a1", requestedAt: req }]);
@@ -105,8 +105,9 @@ for (const [btn, a] of [["#ia-no", "no"], ["#ia-idk", "unknown"]]) {
     await page.click(btn);
     assert.deepEqual(await of(page, "exportEnded"), []);
     assert.equal(await page.evaluate(() => reqPending()), true);
-    assert.equal(await page.textContent("#weekly-title"), "Demande toujours suivie");
-    assert.match(await page.textContent("#due"), /reste suivie/);
+    assert.equal(await page.textContent("#weekly-title"), "Export à vérifier");
+    assert.match(await page.textContent("#due"), /^Demandé le /);
+    assert.deepEqual(await page.$$eval("#wk-steps i", (l) => l.map((i) => i.textContent)), ["✓", "?", "3"]);
     assert.equal(await page.textContent("#wk-go-t"), "Vérifier mon export");
     assert.equal(await page.evaluate(() => prefs.importAnswer.a), a);
     // Réouverture : la réponse est gardée, la question ne revient pas, le suivi non plus n'est pas terminé.

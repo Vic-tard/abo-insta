@@ -2889,6 +2889,11 @@ if (!window.ZYEUTO_APP) {
   html.bbx .weekly.wk-pend .wk-toggle .t { font-size: 21px !important; }
   html.bbx .weekly.wk-pend .wk-big { background: var(--bb-s2); color: var(--bb-ink); border: 0; box-shadow: none; font-size: 18px; min-height: 54px; }
   html.bbx .weekly.wk-pend.wk-unsure .wk-big { background: var(--cat-fans); color: #fff; box-shadow: 0 10px 20px rgb(201 124 20 / .3); }
+  /* FOU-119 (25 nov.) : le titre de la carte passe sur deux lignes si besoin, jamais coupé ; « ? » ambre sur l'étape à vérifier. */
+  html.bbx .weekly .wk-toggle > span:last-child { min-width: 0; }
+  html.bbx .weekly .wk-toggle .t { white-space: normal; overflow: visible; text-overflow: clip; text-wrap: balance; }
+  html.bbx .wk-steps li.on.ask { background: var(--cat-fans); color: #fff; }
+  html.bbx .wk-steps li.on.ask i { background: #fff; color: #7A4A0C; }
   html.bbx .wk-chip { background: #E4DBFB; color: #5B45B0; }
   html.bbx .wk-chip i { background: var(--cat-notback); }
   html.bbx .wk-unsure .wk-chip { background: #FCEBD2; color: #7A4A0C; } html.bbx .wk-unsure .wk-chip i { background: var(--cat-fans); }
@@ -3197,6 +3202,8 @@ if (!window.ZYEUTO_APP) {
     html.bbx .wk-steps li { font-size: 12px; gap: 4px; padding: 9px 3px; }
     html.bbx .wk-steps i { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
     html.bbx .weekly .wk-toggle .t { font-size: 22px !important; }
+    html.bbx .weekly.wk-pend .wk-toggle .t, html.bbx .weekly .wk-toggle .t.long { font-size: 19px !important; }
+    html.bbx .weekly .wk-big { font-size: 18px; padding: 0 12px; }
     html.bbx .bb-perch > .bb-pk { width: 84px; right: 14px; }
     html.bbx .st-in h1 { font-size: 28px; }
     html.bbx .hh-zy { width: 96px; }
@@ -5650,14 +5657,27 @@ function renderWeekly() {
   // de 5 jours) ne doit pas effacer le suivi de la coque, qui a sa propre limite de 4 jours.
   // Coque 11 : rien n'est déduit ici d'un changement d'état ; la fin vient seulement de endWatchCleared / endWatchImported.
   if (watchApp()) { /* rien */ } else if (nativeApp && !DEMO && !reqOtherAcct() && lastPendingSent !== pend && (pend || lastPendingSent === true)) { lastPendingSent = pend; try { window.webkit.messageHandlers.zyeuto.postMessage({ type: "exportState", pending: pend, acct: prefs.requestAcct || prefs.acctCur || "" }); } catch (e) { logError("bridge-exportState", e); } }
-  const at = !pend ? 0 : ready ? 2 : 1;
+  // FOU-119 (Victor, 25 nov.) : la carte dit seulement ce qui est connu.
+  // - « Instagram prépare ta liste » : seulement quand Instagram indique que l'export est en attente (demande confirmée par
+  //   Instagram, et la dernière vérification, s'il y en a une, a vu « en attente ») ;
+  // - « Export à vérifier » + date de la demande + « Vérifier mon export » : demande gardée après un import, ou dernière
+  //   vérification sans réponse claire (fichier à vérifier, hors ligne, reconnexion…) ;
+  // - « Demande à vérifier » : demande pas encore confirmée par Instagram (écran D).
+  const unsure = pend && !ready && !kept && !!prefs.requestUnsure;
+  const ws0 = prefs.watch && prefs.watch.state;
+  const igPending = pend && !ready && !kept && !unsure && (!ws0 || ws0 === "pending");
+  const toVerify = pend && !ready && !unsure && !igPending;
+  // Étapes : jamais de coche ni d'étape « en cours » sur ce qui n'est pas connu ; « ? » là où il faut vérifier. Ni pourcentage ni délai.
+  const at = !pend ? 0 : ready ? 2 : unsure ? 0 : 1;
+  const ask = unsure || toVerify;
   $("wk-steps").querySelectorAll("li").forEach((li, i) => {
-    li.className = i < at ? "done" : i === at ? "on" : "";
-    li.querySelector("i").textContent = i < at ? "✓" : String(i + 1);
+    li.className = i < at ? "done" : i === at ? (ask ? "on ask" : "on") : "";
+    li.querySelector("i").textContent = i < at ? "✓" : i === at && ask ? "?" : String(i + 1);
   });
-  $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : kept ? "Demande toujours suivie" : prefs.requestUnsure ? "Demande à vérifier" : "Ton export se prépare";
-  if (kept) { due.textContent = `Ta demande du ${fmtDate(prefs.requestedAt)} reste suivie`; due.className = "due"; }
-  else if (pend) { due.textContent = prefs.requestUnsure ? "Demande à vérifier chez Instagram" : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant, Instagram prépare ta liste" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
+  $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : unsure ? "Demande à vérifier" : toVerify ? "Export à vérifier" : "Instagram prépare ta liste";
+  $("weekly-title").classList.toggle("long", pend);
+  if (toVerify) { due.textContent = `Demandé le ${fmtDate(prefs.requestedAt)}`; due.className = "due"; }
+  else if (pend) { due.textContent = unsure ? "Demande à vérifier chez Instagram" : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
   // App iPhone : le gros bouton fait tout (Instagram dans Zieuton, téléchargement, import). Le reste est rangé dans « Un souci ? ».
   const simple = metaInApp();
   $("wk-redo").hidden = !pend || simple;
@@ -5665,11 +5685,11 @@ function renderWeekly() {
   if (simple) { $("wk-more").hidden = true; $("wk-toggle").setAttribute("aria-expanded", "false"); $("sos-redo").hidden = !pend; }
   // Refonte FOU-131 : pendant une demande (app iPhone), carte calme avec une pastille. Confirmée : lilas, ✓, bouton discret.
   // À vérifier : ambre, ?, « Vérifier dans Instagram » en avant. Jamais de coche sur une demande à vérifier.
-  const live = simple && pend && !ready && !kept, unsureLive = live && !!prefs.requestUnsure;
+  const live = simple && pend && !ready && !kept, unsureLive = live && unsure;
   $("weekly").classList.toggle("wk-pend", live);
-  $("weekly").classList.toggle("wk-unsure", unsureLive);
+  $("weekly").classList.toggle("wk-unsure", live && !igPending);
   $("wk-chip").hidden = !live;
-  if (live) $("wk-chip").innerHTML = unsureLive ? '<i aria-hidden="true">?</i>À vérifier' : '<i aria-hidden="true">✓</i>En cours chez Instagram';
+  if (live) $("wk-chip").innerHTML = !igPending ? '<i aria-hidden="true">?</i>À vérifier' : '<i aria-hidden="true">✓</i>En attente chez Instagram';
   // Coque 25 : pendant l'attente, le résultat de la dernière vérification (ou « Vérification en cours… ») et l'action utile.
   const ws = live && trackApp() ? watchHTML("wk-state", "wk-st") : "";
   $("wk-state-slot").hidden = !ws;
@@ -6831,7 +6851,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-25-1518";
+const BUILD = "2026-11-25-1533";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

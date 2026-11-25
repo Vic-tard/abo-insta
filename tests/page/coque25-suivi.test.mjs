@@ -53,7 +53,7 @@ async function withImports(page, mins = 20, extra = {}) {
 test("toucher un rappel (accueil, déjà des imports) : « Vérification en cours… », puis l'heure de la vérification", async () => {
   const page = await open({});
   await withImports(page);
-  assert.equal(await text(page, "#weekly-title"), "Ton export se prépare");
+  assert.equal(await text(page, "#weekly-title"), "Instagram prépare ta liste");
   await page.evaluate(() => { window.zyeutoMeta("home"); window.zyeutoMeta("check"); });
   assert.equal(await page.evaluate(() => page), "home");
   assert.match(await text(page, "#wk-state"), /^Vérification en cours…/);
@@ -123,7 +123,7 @@ test("toucher un rappel pendant la démo : retour aux vraies données, sur la de
   await page.waitForFunction(() => DEMO === true);
   await page.evaluate(() => { window.zyeutoMeta("home"); window.zyeutoMeta("check"); });
   await page.waitForFunction(() => DEMO === false);
-  assert.equal(await text(page, "#weekly-title"), "Ton export se prépare");
+  assert.equal(await text(page, "#weekly-title"), "Instagram prépare ta liste");
   assert.match(await text(page, "#wk-state"), /Vérification en cours…/);
   assert.deepEqual(page.errors, []);
   await page.close();
