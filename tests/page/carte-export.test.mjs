@@ -22,7 +22,8 @@ async function card(x, { width = 393, colorScheme = "light" } = {}) {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(() => {
     window.ZYEUTO_APP = { version: 12, embedded: true };
-    window.webkit = { messageHandlers: { zyeuto: { postMessage: () => {} } } };
+    window.__sent = [];
+    window.webkit = { messageHandlers: { zyeuto: { postMessage: (message) => window.__sent.push(message) } } };
     localStorage.setItem("abo-prefs", JSON.stringify({ welcomed: true, demoTourDone: true }));
   });
   await page.goto("file://" + root + "index.html");
@@ -92,6 +93,32 @@ test("demande pas encore confirmée (à vérifier) : aucune coche sur « Demande
   await page.close();
 });
 
+test("un import qui garde une demande non confirmée ne confirme ni la demande ni sa date", async () => {
+  const page = await card({ requestKept: true, requestUnsure: true });
+  const c = await read(page);
+  assert.equal(c.title, "Demande à vérifier");
+  assert.equal(c.due, "Demande à vérifier chez Instagram");
+  assert.equal(c.go, "Vérifier dans Instagram");
+  assert.deepEqual(c.steps, ["?*", "2", "3"]);
+  await page.locator("#wk-steps li.on.ask").click();
+  assert.equal(await page.locator("#gf-redo").count(), 0);
+  assert.equal(await page.evaluate(() => window.__sent.findLast((message) => message.type === "meta")?.mode), "request");
+  assert.equal(await page.evaluate(() => prefs.requestUnsure), true);
+  await page.close();
+});
+
+test("une demande déjà repérée sans date de création n'affiche pas la date de début du suivi", async () => {
+  for (const x of [{ requestKept: true }, { watch: { state: "offline", at: ago(5) } }]) {
+    const page = await card({ requestExisting: true, ...x });
+    const c = await read(page);
+    assert.equal(c.title, "Export à vérifier");
+    assert.equal(c.due, "Demande repérée chez Instagram");
+    assert.equal(c.go, "Vérifier mon export");
+    assert.deepEqual(c.steps, ["✓", "?*", "3"]);
+    await page.close();
+  }
+});
+
 test("export vu prêt : « Ton export est prêt », étapes 1 et 2 cochées", async () => {
   const page = await card({ readyAt: ago(3) });
   const c = await read(page);
@@ -102,8 +129,13 @@ test("export vu prêt : « Ton export est prêt », étapes 1 et 2 cochées", as
 
 test("petit iPhone (320), clair et sombre : titre en deux lignes au plus, rien ne dépasse de la carte", async () => {
   for (const colorScheme of ["light", "dark"]) {
-    for (const x of [{ requestKept: true }, {}, { readyAt: ago(3) }, { watch: { state: "toCheck", at: ago(5) } }]) {
+    for (const x of [{ requestKept: true }, { requestUnsure: true }, {}, { readyAt: ago(3) }, { watch: { state: "toCheck", at: ago(5) } }]) {
       const page = await card(x, { width: 320, colorScheme });
+      if (x.requestKept || x.requestUnsure || x.watch) {
+        const step = page.locator("#wk-steps li.on.ask");
+        assert.equal(await step.isVisible(), true, `${colorScheme} : l'étape à vérifier est visible`);
+        assert.equal(await step.locator("i").textContent(), "?");
+      }
       const m = await page.evaluate(() => {
         const t = document.getElementById("weekly-title"), r = t.getBoundingClientRect(), lh = parseFloat(getComputedStyle(t).lineHeight);
         const w = document.getElementById("weekly").getBoundingClientRect();

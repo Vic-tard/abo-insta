@@ -909,7 +909,7 @@ if (!window.ZYEUTO_APP) {
     color: var(--ink); font: 800 14px var(--round); cursor: pointer; }
   :root[data-theme="dark"] .wk-st.ok, :root[data-theme="dark"] .gw-state.ok { color: #c9bdf6; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .wk-st.ok, :root:not([data-theme="light"]) .gw-state.ok { color: #c9bdf6; } }
-  .weekly.wk-pend .wk-steps { display: none; }
+  .weekly.wk-pend:not(.wk-unsure) .wk-steps { display: none; }
   .weekly.wk-pend .wk-toggle .t { font-size: 19px !important; white-space: normal; }
   .weekly.wk-pend .wk-big { background: var(--surface); color: var(--ink); border: 1.5px solid var(--line); min-height: 50px; font-size: 16px; }
   .weekly.wk-pend .wk-big svg { stroke: currentColor; }
@@ -5660,10 +5660,10 @@ function renderWeekly() {
   // FOU-119 (Victor, 25 nov.) : la carte dit seulement ce qui est connu.
   // - « Instagram prépare ta liste » : seulement quand Instagram indique que l'export est en attente (demande confirmée par
   //   Instagram, et la dernière vérification, s'il y en a une, a vu « en attente ») ;
-  // - « Export à vérifier » + date de la demande + « Vérifier mon export » : demande gardée après un import, ou dernière
+  // - « Export à vérifier » + date si connue + « Vérifier mon export » : demande confirmée gardée après un import, ou dernière
   //   vérification sans réponse claire (fichier à vérifier, hors ligne, reconnexion…) ;
   // - « Demande à vérifier » : demande pas encore confirmée par Instagram (écran D).
-  const unsure = pend && !ready && !kept && !!prefs.requestUnsure;
+  const unsure = pend && !ready && reqUnsure();
   const ws0 = prefs.watch && prefs.watch.state;
   const igPending = pend && !ready && !kept && !unsure && (!ws0 || ws0 === "pending");
   const toVerify = pend && !ready && !unsure && !igPending;
@@ -5676,7 +5676,10 @@ function renderWeekly() {
   });
   $("weekly-title").textContent = !pend ? "Mettre à jour" : ready ? "Ton export est prêt" : unsure ? "Demande à vérifier" : toVerify ? "Export à vérifier" : "Instagram prépare ta liste";
   $("weekly-title").classList.toggle("long", pend);
-  if (toVerify) { due.textContent = `Demandé le ${fmtDate(prefs.requestedAt)}`; due.className = "due"; }
+  if (toVerify) {
+    due.textContent = prefs.requestExisting ? "Demande repérée chez Instagram" : `Demandé le ${fmtDate(prefs.requestedAt)}`;
+    due.className = "due";
+  }
   else if (pend) { due.textContent = unsure ? "Demande à vérifier chez Instagram" : prefs.requestToday ? "Une demande d'aujourd'hui est en cours chez Instagram" : prefs.requestExisting ? "Demande déjà en cours chez Instagram" : mins < 1 ? "Demandé à l'instant" : `Demandé il y a ${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"}`; due.className = "due"; }
   // App iPhone : le gros bouton fait tout (Instagram dans Zieuton, téléchargement, import). Le reste est rangé dans « Un souci ? ».
   const simple = metaInApp();
@@ -5685,7 +5688,8 @@ function renderWeekly() {
   if (simple) { $("wk-more").hidden = true; $("wk-toggle").setAttribute("aria-expanded", "false"); $("sos-redo").hidden = !pend; }
   // Refonte FOU-131 : pendant une demande (app iPhone), carte calme avec une pastille. Confirmée : lilas, ✓, bouton discret.
   // À vérifier : ambre, ?, « Vérifier dans Instagram » en avant. Jamais de coche sur une demande à vérifier.
-  const live = simple && pend && !ready && !kept, unsureLive = live && unsure;
+  const live = simple && pend && !ready && !kept;
+  const verifyRequest = simple && unsure;
   $("weekly").classList.toggle("wk-pend", live);
   $("weekly").classList.toggle("wk-unsure", live && !igPending);
   $("wk-chip").hidden = !live;
@@ -5695,8 +5699,8 @@ function renderWeekly() {
   $("wk-state-slot").hidden = !ws;
   $("wk-state-slot").innerHTML = ws;
   if (ws) bindWatch("wk-state");
-  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? (trackApp() ? "Récupérer mon export" : "Télécharger mon export") : unsureLive ? "Vérifier dans Instagram" : "Vérifier mon export";
-  $("wk-go-i").innerHTML = unsureLive ? '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>' : pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
+  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? (trackApp() ? "Récupérer mon export" : "Télécharger mon export") : verifyRequest ? "Vérifier dans Instagram" : "Vérifier mon export";
+  $("wk-go-i").innerHTML = verifyRequest ? '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>' : pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
   $("quick-import").className = "btn " + (waiting ? "primary" : "ghost");
@@ -6172,10 +6176,11 @@ function confirmRedo(then) {
   $("gf-redo-no").focus();
 }
 $("wk-go").addEventListener("click", () => wkGo());
-// Les 3 pastilles se touchent : Demander = nouvelle demande, Télécharger = droit à l'écran de téléchargement d'Instagram.
+// La pastille « ? » ouvre la vérification. Les autres gardent leur action habituelle.
 $("wk-steps").addEventListener("click", (e) => {
   const li = e.target.closest("li[data-step]");
   if (!li) return;
+  if (li.classList.contains("ask")) return wkGo();
   if (li.dataset.step === "get") return wkGo("get");
   if (li.dataset.step === "request") { if (reqPending()) return confirmRedo(() => { render(); wkGo("request"); }); return wkGo("request"); }
   haptic("light");
@@ -6851,7 +6856,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-25-1533";
+const BUILD = "2026-11-25-1609";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
