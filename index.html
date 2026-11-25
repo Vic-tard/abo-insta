@@ -896,6 +896,19 @@ if (!window.ZYEUTO_APP) {
   /* Refonte FOU-131 : carte de l'accueil pendant une demande (app iPhone) : calme, une pastille, les stats juste dessous. */
   .weekly.wk-pend { background: var(--surface) !important; border: 1.5px solid #ddd3fb; box-shadow: 0 8px 24px rgb(46 35 40 / .07); }
   .weekly.wk-pend.wk-unsure { border-color: #f3d9b0; }
+  /* Coque 25 : dernière vérification (carte de l'accueil et écrans B/D), avec l'action utile en bouton. */
+  .wk-state { margin: 10px 0 2px; }
+  .wk-st, .gw-state { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; }
+  .wk-st { font: 700 14px/1.35 var(--round); color: var(--muted); }
+  .wk-st.ok, .gw-state.ok { color: #6b56c9; }
+  .wk-st.busy span::before, .gw-state.busy span::before { content: ""; display: inline-block; width: 11px; height: 11px; margin-right: 7px; vertical-align: -1px;
+    border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: wkspin .8s linear infinite; }
+  @keyframes wkspin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .wk-st.busy span::before, .gw-state.busy span::before { animation: none; } }
+  .wk-st button, .gw-state button { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid currentColor; background: transparent;
+    color: var(--ink); font: 800 14px var(--round); cursor: pointer; }
+  :root[data-theme="dark"] .wk-st.ok, :root[data-theme="dark"] .gw-state.ok { color: #c9bdf6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .wk-st.ok, :root:not([data-theme="light"]) .gw-state.ok { color: #c9bdf6; } }
   .weekly.wk-pend .wk-steps { display: none; }
   .weekly.wk-pend .wk-toggle .t { font-size: 19px !important; white-space: normal; }
   .weekly.wk-pend .wk-big { background: var(--surface); color: var(--ink); border: 1.5px solid var(--line); min-height: 50px; font-size: 16px; }
@@ -3293,6 +3306,8 @@ if (!window.ZYEUTO_APP) {
       <button class="btn primary pill" id="bar-file" type="button" disabled hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Importer</button>
     </div>
+    <!-- Coque 25 : pendant l'attente, résultat de la dernière vérification (ou « Vérification en cours… ») et action utile. -->
+    <div class="wk-state" id="wk-state-slot" hidden></div>
     <!-- Bouton « Mettre à jour » : 3 étapes, la carte suit où on en est (demandé, prêt). -->
     <ol class="wk-steps" id="wk-steps" aria-label="Les étapes">
       <li data-step="request" role="button" tabindex="0"><i>1</i>Demander</li><li data-step="wait" role="button" tabindex="0"><i>2</i>Attendre</li><li data-step="get" role="button" tabindex="0"><i>3</i>Télécharger</li>
@@ -5637,12 +5652,12 @@ function endWatchImported(takenAt) {
 function maybeResume() {
   const w = watchInfo;
   if (!watchApp() || DEMO || !w || w.waiting || w.ready) return;
-  if (!reqPending() || reqOtherAcct() || prefs.requestUnsure || exportSeenReady()) return;
+  if (!reqPending() || reqOtherAcct() || (prefs.requestUnsure && !trackApp()) || exportSeenReady()) return;
   const req = prefs.requestedAt;
   if (!req || Date.now() - Date.parse(req) >= 4 * 864e5 || resumeSentFor === req) return;
   resumeSentFor = req;
   postWatch({ type: "exportResume", acct: prefs.requestAcct || prefs.acctCur || "", requestedAt: req,
-    existing: !!prefs.requestExisting, today: !!prefs.requestToday, proven: true });
+    existing: !!prefs.requestExisting, today: !!prefs.requestToday, proven: !prefs.requestUnsure, ...(prefs.requestUnsure ? { unsure: true } : {}) });
 }
 // « Rappel programmé » seulement si la coque suit CETTE demande (compte, heure) et qu'un rappel est enregistré chez iOS.
 function reminderSet() {
@@ -5707,7 +5722,12 @@ function renderWeekly() {
   $("weekly").classList.toggle("wk-unsure", unsureLive);
   $("wk-chip").hidden = !live;
   if (live) $("wk-chip").innerHTML = unsureLive ? '<i aria-hidden="true">?</i>À vérifier' : '<i aria-hidden="true">✓</i>En cours chez Instagram';
-  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? "Télécharger mon export" : unsureLive ? "Vérifier dans Instagram" : "Vérifier mon export";
+  // Coque 25 : pendant l'attente, le résultat de la dernière vérification (ou « Vérification en cours… ») et l'action utile.
+  const ws = live && trackApp() ? watchHTML("wk-state", "wk-st") : "";
+  $("wk-state-slot").hidden = !ws;
+  $("wk-state-slot").innerHTML = ws;
+  if (ws) bindWatch("wk-state");
+  $("wk-go-t").textContent = !pend ? "C'est parti" : ready ? (trackApp() ? "Récupérer mon export" : "Télécharger mon export") : unsureLive ? "Vérifier dans Instagram" : "Vérifier mon export";
   $("wk-go-i").innerHTML = unsureLive ? '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>' : pend ? '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>' : '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>';
   // Export déjà demandé : on met « Importer » en avant.
   $("go-export").className = "btn " + (waiting ? "ghost" : "primary");
@@ -5960,11 +5980,31 @@ window.zyeutoNotif = (info) => {
 };
 window.zyeutoWatch = (info) => {
   if (!info || !info.state || DEMO) return;
+  // Coque 25 : une vérification commence (notification touchée, réouverture, « Réessayer ») : « Vérification en cours… ».
+  // Ce n'est pas un résultat : la dernière vérification connue est gardée.
+  if (info.state === "checking") { watchCheckStart(); return; }
   // Un résultat plus ancien que la demande ne dit rien d'elle.
   if (prefs.requestedAt && info.at && Date.parse(info.at) < Date.parse(prefs.requestedAt) - 5000) return;
+  watchChecking = 0;
   prefs.watch = { state: info.state, at: info.at || new Date().toISOString() }; savePrefs();
-  if (gfOn() && gfStep() === "get" && !$("gf-redo")) renderGuided();
+  watchRedraw();
 };
+// Coque 25 (ZYEUTO_APP 12, 25 nov., Victor) : la coque suit aussi les demandes « à vérifier » (rappels, vérification à chaque
+// ouverture), et une notification touchée ouvre la demande avec « Vérification en cours… » (zyeutoMeta('check')).
+const trackApp = () => nativeApp && (window.ZYEUTO_APP.version || 1) >= 12;
+let watchChecking = 0;
+const WATCH_CHECK_MAX = 25000;
+function watchRedraw() {
+  renderWeekly();
+  if (gfOn() && gfStep() === "get" && !$("gf-redo")) renderGuided();
+}
+function watchCheckStart() {
+  if (DEMO || !reqPending() || exportSeenReady()) return;
+  watchChecking = Date.now();
+  watchRedraw();
+  // Pas de réponse (coque occupée, Instagram injoignable) : on n'affiche pas « en cours » pour toujours.
+  setTimeout(() => { if (watchChecking && Date.now() - watchChecking >= WATCH_CHECK_MAX) { watchChecking = 0; watchRedraw(); } }, WATCH_CHECK_MAX + 100);
+}
 // Écran « Je te préviens ? » : seulement si l'autorisation n'a jamais été demandée, et pas dans les 7 jours après « Plus tard ».
 function askNotifThen(go) {
   const later = prefs.notifLaterAt && Date.now() - Date.parse(prefs.notifLaterAt) < NOTIF_LATER_DAYS * 864e5;
@@ -5993,10 +6033,22 @@ function askNotifThen(go) {
 }
 // Ligne d'état de l'écran d'attente : le résultat de la dernière vérification de l'app (jamais « prêt » ici : l'écran « prête » s'en charge).
 function watchLine() {
+  if (watchChecking && notifApp()) return "Vérification en cours…";
   const w = prefs.watch;
   if (!notifApp() || !w || !w.state) return "";
   const t = new Date(w.at);
   const hh = isNaN(t) ? "" : t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  // Coque 25 : la raison connue, et l'action utile dans un bouton (watchAction).
+  if (trackApp()) {
+    switch (w.state) {
+      case "pending": return hh ? `✓ Vérifié à ${hh}&nbsp;: pas encore prêt, Instagram le prépare.` : "";
+      case "toCheck": return `Un fichier est disponible chez Instagram${hh ? ` (vérifié à ${hh})` : ""}. Vérifie sa date avant de le télécharger.`;
+      case "offline": return "Pas de connexion internet&nbsp;: je n'ai pas pu regarder chez Instagram.";
+      case "login": return "Instagram te demande de te reconnecter&nbsp;: je n'ai pas pu lire ta liste.";
+      case "unknown": return "Je n'ai pas pu lire ta liste chez Instagram.";
+      default: return "";
+    }
+  }
   switch (w.state) {
     case "pending": return hh ? `✓ Vérifié à ${hh}&nbsp;: pas encore prêt` : "";
     case "toCheck": return "Un fichier est peut-être prêt&nbsp;: touche « Vérifier mon export » et vérifie sa date.";
@@ -6005,6 +6057,25 @@ function watchLine() {
     case "unknown": return "Je n'ai pas pu regarder chez Instagram. Touche « Vérifier mon export ».";
     default: return "";
   }
+}
+// Coque 25 : l'action utile après une vérification qui n'a pas abouti.
+function watchAction() {
+  const w = prefs.watch;
+  if (!trackApp() || watchChecking || !w) return null;
+  if (w.state === "login") return { t: "Se reconnecter à Instagram", go: () => wkGo("get") };
+  if (w.state === "toCheck") return { t: "Vérifier dans Instagram", go: () => wkGo("get") };
+  if (w.state === "offline" || w.state === "unknown") return { t: "Réessayer", go: () => { haptic("light"); nativePost({ type: "notif", action: "check" }); watchCheckStart(); } };
+  return null;
+}
+function watchHTML(id, cls) {
+  const line = watchLine();
+  if (!line) return "";
+  const act = watchAction(), ok = !watchChecking && prefs.watch && prefs.watch.state === "pending";
+  return `<div class="${cls}${ok ? " ok" : ""}${watchChecking ? " busy" : ""}" id="${id}" role="status"><span>${line}</span>${act ? `<button type="button" id="${id}-go">${act.t}</button>` : ""}</div>`;
+}
+function bindWatch(id) {
+  const b = $(id + "-go"), act = watchAction();
+  if (b && act) b.onclick = (e) => { e.stopPropagation(); act.go(); };
 }
 // mode : "get" = aller tout de suite au téléchargement (pastille « 3 Télécharger »), "request" = refaire une demande.
 function wkGo(mode) {
@@ -6032,7 +6103,30 @@ window.zyeutoMeta = (ev, info) => {
     haptic("success"); renderDemoBar(); toast("Ton export est prêt 🎉 Touche « Mon export » en haut.", false);
     return;
   }
-  if (DEMO && (ev === "open" || ev === "home")) leaveDemo(true);
+  // Coque 25 : demande « à vérifier » confirmée pendant la démo : notée sur les vraies données.
+  if (DEMO && ev === "confirmed") {
+    if (realPrefs && realPrefs.requestUnsure) { delete realPrefs.requestUnsure; delete realPrefs.requestUnsureToday; try { localStorage.setItem("abo-prefs", JSON.stringify(realPrefs)); } catch (e) { logError("prefs-save-confirmed", e); } }
+    return;
+  }
+  if (DEMO && (ev === "open" || ev === "home" || ev === "check")) leaveDemo(true);
+  // Coque 25 : notification touchée (même app fermée) : la demande s'ouvre, en haut, et « Vérification en cours… » s'affiche.
+  // Instagram ne s'ouvre jamais tout seul.
+  if (ev === "check") {
+    celebrateFor = null; $("asked").hidden = true; gwInfo = false;
+    setPage("home"); scrollTo({ top: 0 });
+    render();
+    watchCheckStart();
+    return;
+  }
+  // Coque 25 : la carte « En attente » du jour a été lue chez Instagram : la demande « à vérifier » est confirmée (même heure,
+  // mêmes rappels). Une demande déjà prouvée n'est jamais touchée.
+  if (ev === "confirmed") {
+    if (prefs.requestUnsure && reqPending()) {
+      delete prefs.requestUnsure; delete prefs.requestUnsureToday; savePrefs(); render();
+      toast("Instagram a bien ta demande ✓", false);
+    }
+    return;
+  }
   // Fichier vu prêt par l'app : la carte passe à « Ton export est prêt ».
   if (ev === "ready") {
     if (reqPending() && !prefs.readyAt) { prefs.readyAt = new Date().toISOString(); savePrefs(); haptic("success"); renderWeekly(); if (gfOn()) renderGuided(); }
@@ -6610,7 +6704,8 @@ function renderGuided() {
       const tip = (ic, t, d) => `<li><span class="gw-ic">${ic}</span><span><b>${t}</b><small>${d}</small></span></li>`;
       // FOU-126 : l'état réel des rappels. « Rappel programmé » seulement si la coque dit qu'un rappel est vraiment prévu.
       const card = (cls, t, d, btn, id) => `<li class="gw-card"><div class="gw-nc${cls}"><span class="gw-ic">${I_BELL}</span><span><b>${t}</b><small>${d}</small>${btn ? `<button type="button" id="${id}">${btn}</button>` : ""}</span></div></li>`;
-      const notifTip = unsure ? tip(I_BELL, "Pas encore de rappel", "Les rappels démarrent quand ta demande est vérifiée.")
+      // Coque 25 : une demande « à vérifier » a ses rappels aussi. Avant, aucun.
+      const notifTip = unsure && !trackApp() ? tip(I_BELL, "Pas encore de rappel", "Les rappels démarrent quand ta demande est vérifiée.")
         : !notifApp() || !notifStatus ? tip(I_BELL, "Ouvre Zieuton pour vérifier", "Quand Zieuton est fermé, je ne peux pas regarder chez Instagram.")
         // Sécurité du suivi (21 nov.) : l'autorisation iOS ne prouve pas qu'un rappel est programmé. Sans l'état réel des rappels
         // (coque 11), on dit seulement « Notifications autorisées », jamais « Rappel activé ».
@@ -6618,7 +6713,7 @@ function renderGuided() {
         : notifStatus === "authorized" ? tip(I_BELL, "Notifications autorisées", "Zieuton peut t'envoyer un rappel pendant l'attente. Un rappel ne veut pas dire que ton fichier est prêt&nbsp;: c'est en ouvrant Zieuton que je regarde chez Instagram.")
         : notifStatus === "denied" ? card(" warn", "Tes notifications sont coupées", "Je ne pourrai pas te prévenir. Instagram t'envoie quand même un e-mail quand c'est prêt.", "Ouvrir les Réglages", "gw-notif-set")
         : card("", "Recevoir les nouvelles de ton export", "Une notification quand ta demande est confirmée, puis un rappel. Un rappel ne veut pas dire que ton fichier est prêt.", "Activer les notifications", "gw-notif-ask");
-      const wline = unsure ? "" : watchLine();
+      const wline = unsure && !trackApp() ? "" : watchHTML("gw-state", "gw-state");
       const I_EYE = SV('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>');
       const I_FIND = SV('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>');
       const frise3 = `<ol class="gw-fr gw-fr3" id="gw-fr" aria-label="Où en est ton export">${[
@@ -6637,7 +6732,7 @@ function renderGuided() {
         <h2 class="bb-t1${A(.08)}" id="gf-title">${unsure ? "Vérifions <br><span>ta demande</span>" : "Ton export <br><span>se prépare</span>"}</h2>
         <p class="bb-say${A(.08)}" id="guide-say">${sub}</p>
         <div class="${A(.16)}">${frise3}</div>
-        ${wline ? `<p class="gw-state${prefs.watch && prefs.watch.state === "pending" ? " ok" : ""}" id="gw-state" role="status">${wline}</p>` : ""}
+        ${wline}
         <div class="gf-foot bb-foot${A(.12)}">
           ${unsure ? `<button class="bb-go" id="gf-get" type="button">${I_FIND}Vérifier dans Instagram</button>
           <button class="bb-sec" id="gf-wait-demo" type="button">Découvrir Zieuton en attendant</button>`
@@ -6659,6 +6754,7 @@ function renderGuided() {
         </div>
       </div>`;
       $("gf-wait-demo").onclick = () => { gwInfo = false; enterDemo(); };
+      bindWatch("gw-state");
       const info = (on) => { gwInfo = on; $("gw-info").hidden = !on; $("gw-more").setAttribute("aria-expanded", String(on)); if (on) $("gw-info-x").focus(); else $("gw-more").focus(); };
       $("gw-more").onclick = () => { haptic("light"); info(true); };
       $("gw-info-x").onclick = () => info(false);
@@ -6787,7 +6883,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-25-1442";
+const BUILD = "2026-11-25-1455";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------

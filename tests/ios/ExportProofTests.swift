@@ -314,27 +314,31 @@ check(ReadyProof.rank(.ready) > ReadyProof.rank(.pending) && ReadyProof.rank(.pe
 let demande = now
 func ids(_ p: NoticePlan) -> [String] { p.post.map { $0.id } }
 let ok = NoticePlan.sync(requestedAt: demande, now: s(2), auth: .authorized, ready: false, askedShown: false, readyShown: false)
-check(ids(ok) == ["zy-asked", "zy-reminder", "zy-reminder-24h"], "preuve + autorisé : A, B1, B2")
-check(abs((ok.post.first(where: { $0.id == "zy-reminder" })?.after ?? 0) - (30 * 60 - 2)) < 0.01, "B1 à 30 min de la demande")
-check(abs((ok.post.first(where: { $0.id == "zy-reminder-24h" })?.after ?? 0) - (24 * 3600 - 2)) < 0.01, "B2 à 24 h de la demande")
+// Coque 25 (25 nov., Victor) : rappels à 15 min, 1 h, 4 h et 24 h.
+let rappels = ["zy-r15", "zy-r1h", "zy-r4h", "zy-r24h"]
+check(ids(ok) == ["zy-asked"] + rappels, "preuve + autorisé : A, puis les rappels à 15 min, 1 h, 4 h et 24 h")
+for (id, h) in [("zy-r15", 15.0 * 60), ("zy-r1h", 3600), ("zy-r4h", 4 * 3600), ("zy-r24h", 24 * 3600)] {
+    check(abs((ok.post.first(where: { $0.id == id })?.after ?? 0) - (h - 2)) < 0.01, "\(id) à la bonne heure après la demande")
+}
 check(ok.cancel.contains("zy-last-day") && ok.cancel.contains("zy-likely"), "les anciennes « expire bientôt » et « sûrement prêt » sont retirées")
+check(ok.cancel.contains("zy-reminder") && ok.cancel.contains("zy-reminder-24h"), "les rappels 30 min / 24 h des coques 17 à 24 sont retirés")
 let deja = NoticePlan.sync(requestedAt: demande, now: s(60), auth: .authorized, ready: false, askedShown: true, readyShown: false)
-check(ids(deja) == ["zy-reminder", "zy-reminder-24h"], "retour dans l'app : A pas renvoyée, rappels reprogrammés à la même heure")
+check(ids(deja) == rappels, "retour dans l'app : A pas renvoyée, rappels reprogrammés à la même heure")
 let pret = NoticePlan.sync(requestedAt: demande, now: s(600), auth: .authorized, ready: true, askedShown: true, readyShown: false)
 check(ids(pret) == ["zy-ready"], "prêt : C")
-check(pret.cancel.contains("zy-reminder") && pret.cancel.contains("zy-reminder-24h"), "prêt : B1 et B2 annulés")
+check(rappels.allSatisfy { pret.cancel.contains($0) }, "prêt : tous les rappels restants sont annulés")
 check(NoticePlan.sync(requestedAt: demande, now: s(700), auth: .authorized, ready: true, askedShown: true, readyShown: true).post.isEmpty, "C jamais envoyée deux fois")
 let fin = NoticePlan.end()
-check(fin.post.isEmpty && Set(fin.cancel).isSuperset(of: ["zy-asked", "zy-ready", "zy-reminder", "zy-reminder-24h", "zy-last-day"]), "import, téléchargement ou demande refaite : tout est annulé")
+check(fin.post.isEmpty && Set(fin.cancel).isSuperset(of: ["zy-asked", "zy-ready", "zy-reminder", "zy-reminder-24h", "zy-last-day"] + rappels), "import, téléchargement ou demande refaite : tout est annulé")
 let refuse = NoticePlan.sync(requestedAt: demande, now: s(2), auth: .denied, ready: false, askedShown: false, readyShown: false)
 check(refuse.post.isEmpty, "notifications refusées : rien de programmé")
 check(NoticePlan.sync(requestedAt: demande, now: s(2), auth: .notDetermined, ready: false, askedShown: false, readyShown: false).post.isEmpty,
       "« Plus tard » : rien tant que l'autorisation n'est pas donnée")
 let tard = NoticePlan.sync(requestedAt: demande, now: s(45 * 60), auth: .authorized, ready: false, askedShown: false, readyShown: false)
-check(ids(tard) == ["zy-asked", "zy-reminder-24h"], "autorisation donnée 45 min après : A une fois, B1 dépassé sauté, B2 gardé")
+check(ids(tard) == ["zy-asked", "zy-r1h", "zy-r4h", "zy-r24h"], "autorisation donnée 45 min après : A une fois, 15 min dépassé sauté, les autres gardés")
 let tardPret = NoticePlan.sync(requestedAt: demande, now: s(45 * 60), auth: .authorized, ready: true, askedShown: false, readyShown: false)
 check(ids(tardPret) == ["zy-ready"], "autorisation donnée après le fichier vu prêt : C tout de suite, pas de « C'est demandé » inutile")
-check(!NoticePlan.showsInForeground("zy-reminder") && !NoticePlan.showsInForeground("zy-reminder-24h"), "app ouverte : B1 et B2 pas affichées")
+check(rappels.allSatisfy { !NoticePlan.showsInForeground($0) }, "app ouverte : les rappels ne s'affichent pas (Zieuton vérifie déjà)")
 check(NoticePlan.showsInForeground("zy-asked") && NoticePlan.showsInForeground("zy-ready"), "app ouverte : A et C affichées")
 check(!NoticePlan.all.contains { $0.contains("expire") }, "aucune notification « expire »")
 
@@ -343,15 +347,23 @@ check(NoticeText.of("zy-asked", existing: false, hour: "14:32") == NoticeText.Te
       body: "Instagram prépare ton fichier. Tu pourras vérifier son état dans Zieuton.", subtitle: "Demandé à 14:32"), "texte A")
 check(NoticeText.of("zy-asked", existing: true, hour: nil)?.title == "Une demande est déjà en cours ✓", "texte A, demande déjà en cours")
 check(NoticeText.of("zy-asked", existing: true, hour: nil)?.subtitle == nil, "demande déjà en cours : pas d'heure inventée")
-check(NoticeText.of("zy-reminder", existing: false, hour: "14:32")?.title == "Des nouvelles de ton export ? 👀", "texte B1")
-check(NoticeText.of("zy-reminder-24h", existing: false, hour: nil)?.body == "Ouvre Zieuton pour vérifier où en est Instagram.", "texte B2")
-check(NoticeText.of("zy-ready", existing: false, hour: nil)?.title == "Ton fichier est prêt 🎉", "texte C")
+// Coque 25 : textes décidés par Victor le 25 nov.
+for id in rappels {
+    check(NoticeText.of(id, existing: false, hour: "14:32", unsure: true) == NoticeText.Text(title: "Vérifie ta demande Instagram",
+          body: "Ouvre Zieuton pour voir si elle est bien partie.", subtitle: nil), "\(id), demande à vérifier")
+    check(NoticeText.of(id, existing: false, hour: "14:32") == NoticeText.Text(title: "Où en est ton export ?",
+          body: "Touche pour vérifier chez Instagram.", subtitle: nil), "\(id), demande confirmée")
+}
+check(NoticeText.of("zy-ready", existing: false, hour: nil) == NoticeText.Text(title: "Ton export est prêt 🎉", body: "Touche pour le récupérer.", subtitle: nil), "texte C")
+check(NoticeText.of("zy-reminder", existing: false, hour: nil) == nil, "les anciens rappels n'ont plus de texte : seulement retirés")
 for id in NoticePlan.all {
-    guard let t = NoticeText.of(id, existing: false, hour: "14:32") else { continue }
+  for unsure in [false, true] {
+    guard let t = NoticeText.of(id, existing: false, hour: "14:32", unsure: unsure) else { continue }
     let all = (t.title + " " + t.body + " " + (t.subtitle ?? "")).lowercased()
     for banned in ["dès que je le vois", "je guette", "expire", "sûrement prêt", "plus long que d'habitude", "zieuton fermé"] {
         check(!all.contains(banned), "« \(banned) » absent de \(id)")
     }
+  }
 }
 
 // 26. FOU-126 : multicompte. Seul le compte de la demande peut dire que l'attente est finie.
@@ -779,5 +791,22 @@ let carte40 = "expire le 25/11/2026 · moins de 1 mo · vifrnt (instagram) follo
 r40b.read(pending: [], ready: [carte40], now: later, calendar: cal)
 check(rv(r40b, [], [carte40], at: later.addingTimeInterval(5)) == .toCheck, "40. carte lue avec sa date, jour inconnu : à vérifier, jamais « prêt »")
 check(GetBanner.of(waiting: true, proven: false, verdict: .toCheck, fileVisible: true) == .available, "40. … et le bandeau dit « disponible »")
+// 41. Coque 25 : rappels envoyés à iOS sans doublon, et renvoyés s'ils n'ont jamais été confirmés.
+let plan41 = NoticePlan.sync(requestedAt: demande, now: s(60), auth: .authorized, ready: false, askedShown: true, readyShown: false).post
+let tous = Set(rappels)
+check(NoticePlan.toSend(plan41, pending: tous, scheduled: Dictionary(uniqueKeysWithValues: rappels.map { ($0, "unsure") }), kind: "unsure").isEmpty,
+      "41. déjà programmés chez iOS (confirmés) : rien de renvoyé, pas de doublon")
+check(NoticePlan.toSend(plan41, pending: [], scheduled: [:], kind: "unsure").map { $0.id } == rappels, "41. rien chez iOS : tout est envoyé")
+check(NoticePlan.toSend(plan41, pending: tous, scheduled: [:], kind: "unsure").map { $0.id } == rappels,
+      "41. chez iOS mais jamais confirmés (erreur, ancienne coque) : renvoyés avec le même identifiant, iOS remplace")
+check(NoticePlan.toSend(plan41, pending: tous, scheduled: ["zy-r15": "confirmed", "zy-r1h": "confirmed", "zy-r4h": "confirmed", "zy-r24h": "confirmed"], kind: "confirmed").isEmpty,
+      "41. demande confirmée, rappels déjà au bon texte : rien de renvoyé")
+check(NoticePlan.toSend(plan41, pending: tous, scheduled: Dictionary(uniqueKeysWithValues: rappels.map { ($0, "unsure") }), kind: "confirmed").map { $0.id } == rappels,
+      "41. demande à vérifier confirmée ensuite : mêmes rappels, mêmes heures, nouveau texte")
+check(NoticePlan.toSend(plan41, pending: ["zy-r15", "zy-r1h"], scheduled: ["zy-r15": "unsure", "zy-r1h": "unsure"], kind: "unsure").map { $0.id } == ["zy-r4h", "zy-r24h"],
+      "41. reprise après une erreur : seuls les rappels manquants sont envoyés")
+let aEtC = [NoticePlan.Item(id: "zy-asked", after: 1), NoticePlan.Item(id: "zy-ready", after: 1)]
+check(NoticePlan.toSend(aEtC, pending: ["zy-asked", "zy-ready"], scheduled: [:], kind: "confirmed").count == 2, "41. A et C restent gardées par askedShown / readyShown")
+check(NoticePlan.kind(unsure: true) == "unsure" && NoticePlan.kind(unsure: false) == "confirmed", "41. genres des rappels")
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)

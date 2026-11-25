@@ -27,21 +27,40 @@ test("aucune promesse de surveillance ni d'expiration dans les textes de la coqu
   for (const s of strings) for (const b of banned) assert.doesNotMatch(s, b, `texte interdit : ${s}`);
 });
 
-test("textes A, B et C décidés", () => {
+test("textes A et C, et rappels de la coque 25 (décidés par Victor le 25 nov.)", () => {
   assert.match(web, /"C'est demandé ✓"/);
   assert.match(web, /"Instagram prépare ton fichier\. Tu pourras vérifier son état dans Zieuton\."/);
   assert.match(web, /"Une demande est déjà en cours ✓"/);
-  assert.match(web, /"Des nouvelles de ton export \? 👀"/);
-  assert.match(web, /"Ouvre Zieuton pour vérifier où en est Instagram\."/);
-  assert.match(web, /"Ton fichier est prêt 🎉"/);
+  // Demande à vérifier / demande confirmée / bon fichier détecté.
+  assert.match(web, /title: "Vérifie ta demande Instagram", body: "Ouvre Zieuton pour voir si elle est bien partie\."/);
+  assert.match(web, /title: "Où en est ton export \?", body: "Touche pour vérifier chez Instagram\."/);
+  assert.match(web, /title: "Ton export est prêt 🎉", body: "Touche pour le récupérer\."/);
+  assert.doesNotMatch(web, /Des nouvelles de ton export/);
 });
 
-test("rappels à 30 min et 24 h, plus de rappel à 3 min ni de « dernier jour »", () => {
-  assert.match(web, /\(remind30, 30 \* 60\), \(remind24, 24 \* 3600\)/);
+test("coque 25 : rappels à 15 min, 1 h, 4 h et 24 h ; les rappels 30 min / 24 h des coques 17 à 24 sont retirés", () => {
+  assert.match(web, /\[\(remind15, 15 \* 60\), \(remind1h, 3600\), \(remind4h, 4 \* 3600\), \(remind24h, 24 \* 3600\)\]/);
   assert.doesNotMatch(web, /likelyAfter|3 \* 86400|2 \* 86400/);
   // Les anciens identifiants ne servent plus qu'à être retirés.
-  const legacyUses = web.match(/"zy-(likely|last-day)"/g) || [];
-  assert.equal(legacyUses.length, 2, "zy-likely et zy-last-day : seulement dans la liste à retirer");
+  const legacyUses = web.match(/"zy-(likely|last-day|reminder|reminder-24h)"/g) || [];
+  assert.equal(legacyUses.length, 4, "anciens identifiants : seulement dans la liste à retirer");
+  assert.match(web, /static let legacy = \["zy-likely", "zy-last-day", "zyeuto-export", "zy-reminder", "zy-reminder-24h"\]/);
+});
+
+test("coque 25 : rappels notés seulement après la confirmation d'iOS, renvoyés après une erreur, jamais en double", () => {
+  const watcher = web.slice(web.indexOf("final class ExportWatcher"), web.indexOf("// MARK: Logo de l'écran d'ouverture"));
+  // Ce qui est déjà chez iOS avec le même genre n'est pas renvoyé ; le reste l'est avec le même identifiant (iOS remplace).
+  assert.match(web, /return !\(pending\.contains\(item\.id\) && scheduled\[item\.id\] == kind\)/);
+  assert.match(watcher, /center\.getPendingNotificationRequests \{ \[weak self\] requests in/);
+  assert.match(watcher, /NoticePlan\.toSend\(plan\.post, pending: pending, scheduled: self\.scheduled, kind: kind\)/);
+  // Noté seulement si iOS n'a pas renvoyé d'erreur.
+  const add = watcher.slice(watcher.indexOf("UNUserNotificationCenter.current().add("), watcher.indexOf("// MARK: Ce que la page affiche"));
+  assert.match(add, /if let error \{[\s\S]*?return\s*\}\s*guard let kind else \{ return \}[\s\S]*?done\[id\] = kind/);
+  // Une lecture d'iOS en retard ne reprogramme jamais d'anciens rappels (fichier vu prêt entre-temps).
+  assert.match(watcher, /guard let self, gen == self\.noticeGen else \{ return \}/);
+  // Retirés : fichier vu prêt (sync ready), demande terminée ou abandonnée (end).
+  assert.match(web, /plan\.cancel = reminderIds \+ \[asked\] \+ legacy/);
+  assert.match(web, /static func end\(\) -> NoticePlan \{ NoticePlan\(post: \[\], cancel: all\) \}/);
 });
 
 test("l'autorisation n'est plus demandée au milieu d'Instagram", () => {
@@ -64,8 +83,8 @@ test("« prêt » vient de la preuve ReadyProof, plus du décompte des « Télé
   assert.match(web, /if verdict == \.ready \{ self\.markReady\(\) \}/);
 });
 
-test("pont page ⇄ coque : version 10, zyeutoNotif, zyeutoWatch, actions notif", () => {
-  assert.match(web, /window\.ZYEUTO_APP = \{ version: 11,/);
+test("pont page ⇄ coque : version 12, zyeutoNotif, zyeutoWatch, actions notif", () => {
+  assert.match(web, /window\.ZYEUTO_APP = \{ version: 12,/);
   assert.match(web, /window\.zyeutoNotif && window\.zyeutoNotif\(/);
   assert.match(web, /window\.zyeutoWatch && window\.zyeutoWatch\(/);
   for (const a of ["ask", "settings", "check"]) assert.match(web, new RegExp(`case "${a}":`));
@@ -184,9 +203,31 @@ test("relecture ChatGPT (18 nov., 14 h 09) : Instagram fermé sans preuve, la pa
   // Seulement à la vraie fermeture d'Instagram (pas quand une fenêtre passe par-dessus).
   assert.match(web, /if isBeingDismissed, LeaveHint\.leftUnsure\(requesting: requesting, finished: finished, tapped: sentAt != nil, toCheck: toCheck,\s*todayShown: todayPendingShown, pendingSeen: pendingSeen\) \{\s*onLeftUnsure\?\(todayPendingShown \|\| proof\.pendingToday\)/);
   assert.match(web, /meta\.onLeftUnsure = \{ \[weak self\] today in\s*self\?\.webView\.evaluateJavaScript\("window\.zyeutoMeta && window\.zyeutoMeta\('unsure', \{ today: \\\(today\) \}\); true"\)/);
-  // « à vérifier » ne lance ni le guet ni les notifications : seul « requested » appelle ExportWatcher.requested.
+  // Coque 25 (25 nov., Victor) : « à vérifier » est suivie aussi, pour le compte affiché, mais jamais comme une demande prouvée :
+  // pas de « C'est demandé » (askedShown), pas de référence tant que la carte « En attente » du jour n'est pas lue.
   const unsure = web.slice(web.indexOf("meta.onLeftUnsure ="), web.indexOf("meta.onFile ="));
-  assert.doesNotMatch(unsure, /ExportWatcher/);
+  assert.match(unsure, /ExportWatcher\.shared\.leftUnsure\(acct: acct\)/);
+  assert.doesNotMatch(unsure, /\.requested\(/);
+  const left = web.slice(web.indexOf("func leftUnsure(acct: String?)"), web.indexOf("private func confirmUnsure()"));
+  assert.match(left, /if isWaiting, !store\.bool\(forKey: Key\.unsure\) \{ return \}/, "une demande prouvée n'est jamais rétrogradée");
+  assert.match(left, /store\.set\(true, forKey: Key\.askedShown\)/, "jamais « C'est demandé »");
+  assert.match(left, /proof = ReadyProof\(day: now\)/, "aucune référence : « prêt » exige toujours la preuve ReadyProof");
+  // Confirmée quand la référence est fixée (carte « En attente » du jour, lue deux fois) : mêmes échéances, texte « Où en est ton export ? ».
+  assert.match(web, /if store\.bool\(forKey: Key\.unsure\), before\.baseline == nil, proof\.baseline != nil \{ confirmUnsure\(\) \}/);
+  const confirm = web.slice(web.indexOf("private func confirmUnsure()"), web.indexOf("/// Sécurité du suivi (build 22) : la page dit"));
+  assert.doesNotMatch(confirm, /Key\.requested/, "même heure de demande, donc mêmes échéances");
+});
+
+test("coque 25 : une notification touchée ouvre la demande et lance une vérification, même après un démarrage à froid", () => {
+  assert.match(app, /if NoticePlan\.all\.contains\(id\) \{ AppDelegate\.openCheck\(tries: 20\) \}/);
+  assert.doesNotMatch(app, /openExport\(\)/, "Instagram ne s'ouvre jamais tout seul");
+  const open = web.slice(web.indexOf("func openCheck() {"), web.indexOf("/// Notification « C'est demandé » touchée"));
+  assert.match(open, /guard pageReady else \{ checkWhenReady = true; return \}/);
+  assert.match(open, /zyeutoMeta\('check'\)/);
+  assert.match(open, /ExportWatcher\.shared\.checkFromNotification\(\)/);
+  assert.match(web, /if checkWhenReady \{ openCheck\(\) \}/);
+  // La page apprend qu'une vérification commence.
+  assert.match(web, /onState\?\("checking", Date\(\)\)/);
 });
 
 test("relecture ChatGPT (18 nov., 15 h 44) : deux demandes indiscernables, jamais « prêt », même après réouverture", () => {

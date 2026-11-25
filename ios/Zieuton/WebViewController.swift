@@ -12,6 +12,8 @@ final class WebViewController: UIViewController {
     static weak var current: WebViewController?
     /// Une notification a été touchée avant que la page soit prête : on ouvre Instagram dès qu'elle l'est.
     private var openWhenReady = false
+    /// Coque 25 : notification touchée avant que la page soit prête (démarrage à froid) : la demande s'ouvre dès qu'elle l'est.
+    private var checkWhenReady = false
     /// Adresse de base de la page affichée. Les données (IndexedDB, localStorage) sont rangées sous cette adresse :
     /// NE PAS LA CHANGER, sinon les utilisateurs ne retrouvent plus leurs données.
     static let home = URL(string: "https://vic-tard.github.io/abo-insta/")!
@@ -71,7 +73,7 @@ final class WebViewController: UIViewController {
         let content = WKUserContentController()
         // Dit à la page qu'elle tourne dans l'app (pas de Drive, pas de bandeau « installer »).
         content.addUserScript(WKUserScript(
-            source: "window.ZYEUTO_APP = { version: 11, embedded: true, icloud: true, channels: true, signed: true };",
+            source: "window.ZYEUTO_APP = { version: 12, embedded: true, icloud: true, channels: true, signed: true };",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         // Les images de la page (guide d'export, logo) sont rangées dans l'app : elles s'affichent sans internet.
         content.addUserScript(WKUserScript(source: Self.assetsScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -112,6 +114,10 @@ final class WebViewController: UIViewController {
         }
         ExportWatcher.shared.onNotif = { [weak self] auth in self?.sendNotif(auth) }
         ExportWatcher.shared.onState = { [weak self] state, at in self?.sendWatch(state, at) }
+        // Coque 25 : demande « à vérifier » confirmée par Instagram : la page passe de « Vérifions ta demande » à « Ton export se prépare ».
+        ExportWatcher.shared.onConfirmed = { [weak self] in
+            self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('confirmed'); true")
+        }
         ExportWatcher.shared.appBecameActive()
         // Zieuton Plus : la page apprend tout de suite si c'est acheté, et les prix du magasin.
         PlusStore.shared.onChange = { [weak self] in self?.sendPlus(nil) }
@@ -131,6 +137,18 @@ final class WebViewController: UIViewController {
         openWhenReady = false
         guard presentedViewController == nil else { return }
         webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('open'); true")
+    }
+
+    /// Coque 25 (25 nov., Victor) : une notification de l'export est touchée (rappel, « C'est demandé » ou « prêt »), même après
+    /// un démarrage à froid. La page ouvre la demande et affiche « Vérification en cours… », puis Zieuton vérifie tout de suite
+    /// chez Instagram, sans l'afficher. Instagram ne s'ouvre jamais tout seul : « Récupérer mon export » reste un geste de l'utilisateur.
+    func openCheck() {
+        guard pageReady else { checkWhenReady = true; return }
+        checkWhenReady = false
+        guard presentedViewController == nil else { return }
+        // « home » d'abord : une page plus ancienne (canal stable) revient au moins à l'accueil.
+        webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('home'); window.zyeutoMeta && window.zyeutoMeta('check'); true")
+        ExportWatcher.shared.checkFromNotification()
     }
 
     /// Notification « C'est demandé » touchée : retour à l'accueil, sur la carte « En préparation ».
@@ -543,6 +561,7 @@ extension WebViewController: WKScriptMessageHandler {
             ExportWatcher.shared.sendLastState()
             sendWatchInfo()
             if openWhenReady { openExport() }
+            if checkWhenReady { openCheck() }
             sendPlus(nil)
         case "plus":
             handlePlus(body)
@@ -583,7 +602,7 @@ extension WebViewController: WKScriptMessageHandler {
             // La page garde une demande que la coque ne suit plus : reprise prudente, sans aucune preuve (WatchSync.resumeAccepted).
             ExportWatcher.shared.resume(acct: body["acct"] as? String, requestedAt: WatchSync.date(body["requestedAt"]),
                                         existing: body["existing"] as? Bool == true, today: body["today"] as? Bool == true,
-                                        proven: body["proven"] as? Bool == true)
+                                        proven: body["proven"] as? Bool == true, unsure: body["unsure"] as? Bool == true)
             // Les rappels sont programmés en arrière-plan : on redonne l'état un peu plus tard.
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.sendWatchInfo() }
         case "watch":
@@ -721,9 +740,12 @@ extension WebViewController: WKScriptMessageHandler {
             ExportWatcher.shared.requested(existing: existing, today: today, acct: acct)
         }
         // Relecture ChatGPT (18 nov.) : demande possible mais pas prouvée. La page passe sur « Demande à vérifier » (une page plus
-        // ancienne ignore cet évènement). Pas de « C'est demandé », pas de guet ni de notification tant que ce n'est pas vérifié.
+        // ancienne ignore cet évènement). Jamais « C'est demandé » ni « prêt » sans preuve.
+        // Coque 25 (25 nov., Victor) : elle est suivie quand même (rappels « Vérifie ta demande Instagram », vérification à chaque
+        // ouverture), pour le compte affiché, jusqu'à ce qu'Instagram la confirme.
         meta.onLeftUnsure = { [weak self] today in
             self?.webView.evaluateJavaScript("window.zyeutoMeta && window.zyeutoMeta('unsure', { today: \(today) }); true")
+            ExportWatcher.shared.leftUnsure(acct: acct)
         }
         meta.onFile = { [weak self] url in self?.receive(fileAt: url) }
         meta.modalPresentationStyle = .fullScreen
@@ -3654,11 +3676,16 @@ struct NoticePlan: Equatable {
     /// Retirées (programmées et déjà affichées).
     var cancel: [String] = []
 
-    static let asked = "zy-asked", ready = "zy-ready", remind30 = "zy-reminder", remind24 = "zy-reminder-24h"
-    static let reminders: [(id: String, after: TimeInterval)] = [(remind30, 30 * 60), (remind24, 24 * 3600)]
+    static let asked = "zy-asked", ready = "zy-ready"
+    /// Coque 25 (25 nov., Victor) : rappels à 15 min, 1 h, 4 h et 24 h après la demande, prouvée ou « à vérifier ».
+    /// Programmés chez iOS dès la demande : ils arrivent même Zieuton fermé.
+    static let remind15 = "zy-r15", remind1h = "zy-r1h", remind4h = "zy-r4h", remind24h = "zy-r24h"
+    static let reminders: [(id: String, after: TimeInterval)] =
+        [(remind15, 15 * 60), (remind1h, 3600), (remind4h, 4 * 3600), (remind24h, 24 * 3600)]
     static var reminderIds: [String] { reminders.map { $0.id } }
-    /// Notifications des builds 15 et avant (« sûrement prêt », « expire bientôt »…) : toujours retirées.
-    static let legacy = ["zy-likely", "zy-last-day", "zyeuto-export"]
+    /// Notifications des builds 15 et avant (« sûrement prêt », « expire bientôt »…) et rappels 30 min / 24 h des coques 17 à 24 :
+    /// toujours retirées.
+    static let legacy = ["zy-likely", "zy-last-day", "zyeuto-export", "zy-reminder", "zy-reminder-24h"]
     static var all: [String] { [asked, ready] + reminderIds + legacy }
 
     /// Met les notifications d'accord avec l'état de l'attente. Appelée à la preuve, quand le fichier est vu prêt,
@@ -3686,6 +3713,19 @@ struct NoticePlan: Equatable {
     /// Fin de l'attente (téléchargement, import réussi, demande refaite ou annulée) : tout est retiré.
     static func end() -> NoticePlan { NoticePlan(post: [], cancel: all) }
 
+    /// Coque 25 : genre de rappel, selon que la demande est encore « à vérifier » ou confirmée par Instagram. Le texte en dépend.
+    static func kind(unsure: Bool) -> String { unsure ? "unsure" : "confirmed" }
+
+    /// Coque 25 : ce qu'il faut vraiment envoyer à iOS. Un rappel déjà enregistré chez iOS (programmation confirmée) avec le même
+    /// genre n'est pas renvoyé. Un rappel jamais confirmé (erreur d'iOS) ou d'un autre genre (demande confirmée entre-temps) l'est,
+    /// avec le même identifiant : iOS remplace l'ancien, jamais de doublon. A et C restent gardées par askedShown et readyShown.
+    static func toSend(_ post: [Item], pending: Set<String>, scheduled: [String: String], kind: String) -> [Item] {
+        post.filter { item in
+            guard reminderIds.contains(item.id) else { return true }
+            return !(pending.contains(item.id) && scheduled[item.id] == kind)
+        }
+    }
+
     /// Zieuton au premier plan : il vérifie déjà lui-même toutes les 30 s, les rappels B1 et B2 ne s'affichent pas.
     /// A et C s'affichent toujours.
     static func showsInForeground(_ id: String) -> Bool { !reminderIds.contains(id) }
@@ -3706,7 +3746,8 @@ enum NoticeText {
 
     /// hour : heure de la demande (« 14:32 »), nil si elle est inconnue (demande déjà en cours).
     /// today : demande « déjà en cours » datée d'aujourd'hui (peut-être la sienne, sans preuve) : ni « déjà en cours », ni « ta demande », ni heure inventée.
-    static func of(_ id: String, existing: Bool, today: Bool = false, hour: String?) -> Text? {
+    /// unsure (coque 25) : la demande n'est pas encore confirmée par Instagram (écran « Vérifions ta demande »).
+    static func of(_ id: String, existing: Bool, today: Bool = false, hour: String?, unsure: Bool = false) -> Text? {
         switch id {
         case NoticePlan.asked:
             if existing && today {
@@ -3716,11 +3757,12 @@ enum NoticeText {
             return Text(title: existing ? "Une demande est déjà en cours ✓" : "C'est demandé ✓",
                         body: "Instagram prépare ton fichier. Tu pourras vérifier son état dans Zieuton.",
                         subtitle: existing ? nil : hour.map { "Demandé à \($0)" })
-        case NoticePlan.remind30, NoticePlan.remind24:
-            return Text(title: "Des nouvelles de ton export ? 👀",
-                        body: "Ouvre Zieuton pour vérifier où en est Instagram.", subtitle: nil)
+        case NoticePlan.remind15, NoticePlan.remind1h, NoticePlan.remind4h, NoticePlan.remind24h:
+            // Textes décidés par Victor le 25 nov. (coque 25).
+            if unsure { return Text(title: "Vérifie ta demande Instagram", body: "Ouvre Zieuton pour voir si elle est bien partie.", subtitle: nil) }
+            return Text(title: "Où en est ton export ?", body: "Touche pour vérifier chez Instagram.", subtitle: nil)
         case NoticePlan.ready:
-            return Text(title: "Ton fichier est prêt 🎉", body: "Touche pour le récupérer dans Zieuton.", subtitle: nil)
+            return Text(title: "Ton export est prêt 🎉", body: "Touche pour le récupérer.", subtitle: nil)
         default:
             return nil
         }
@@ -3987,9 +4029,10 @@ extension MetaViewController: WKDownloadDelegate {
 
 // MARK: Notifications de l'export Instagram
 
-/// Suit l'export Instagram après une demande prouvée et prévient par notification (FOU-126) :
-/// A « C'est demandé ✓ » à la preuve, B1 et B2 « Des nouvelles de ton export ? » à 30 min et 24 h (annulés dès que l'attente
-/// se termine), C « Ton fichier est prêt 🎉 » seulement quand Zieuton voit la ligne de la demande prête (ReadyProof).
+/// Suit l'export Instagram après une demande prouvée, ou « à vérifier » depuis la coque 25, et prévient par notification (FOU-126) :
+/// A « C'est demandé ✓ » à la preuve (jamais pour une demande à vérifier), rappels à 15 min, 1 h, 4 h et 24 h (« Vérifie ta demande
+/// Instagram » puis, une fois confirmée, « Où en est ton export ? » ; annulés dès que l'attente se termine), C « Ton export est prêt 🎉 »
+/// seulement quand Zieuton voit la ligne de la demande prête (ReadyProof).
 ///
 /// Pour savoir si le fichier est prêt, Zieuton ouvre en cachette la page « Exporter vos informations »
 /// (la même session Instagram que dans l'app, jamais le mot de passe) et la lit avec le lecteur de la fenêtre Instagram.
@@ -4031,9 +4074,13 @@ final class ExportWatcher: NSObject {
         /// Heure de la dernière demande terminée (téléchargée, importée, retirée). Pas dans `all` : elle survit à clear(),
         /// pour qu'une demande finie ne soit jamais reprise.
         static let endedFor = "zy.export.endedFor"
+        /// Coque 25 : demande suivie mais pas encore confirmée par Instagram (écran « Vérifions ta demande »).
+        static let unsure = "zy.export.unsure"
+        /// Coque 25 : rappels dont iOS a confirmé la programmation (identifiant → genre « unsure » ou « confirmed »).
+        static let scheduled = "zy.export.scheduled"
         /// Clés des builds 15 et avant (décompte des « Télécharger ») : plus utilisées.
         static let legacy = ["zy.export.downloadsBefore", "zy.export.baselineChecked"]
-        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, ambiguous, askedShown, readyShown, lastState, lastAt, acct, resumed] + legacy }
+        static var all: [String] { [requested, ready, existing, today, day, baseline, signature, ambiguous, askedShown, readyShown, lastState, lastAt, acct, resumed, unsure, scheduled] + legacy }
     }
     /// Notification « prêt » avec un bouton « Mettre à jour » (appui long ou glisser vers le bas).
     static let readyCategory = "zy-ready-actions"
@@ -4085,6 +4132,19 @@ final class ExportWatcher: NSObject {
         return Date().timeIntervalSince(r) < 4 * 86400
     }
     var isReady: Bool { requestedAt != nil && readyAt != nil }
+    /// Coque 25 : la demande suivie n'est pas encore confirmée par Instagram (« Vérifions ta demande »).
+    var isUnsure: Bool { isWaiting && store.bool(forKey: Key.unsure) }
+    /// Coque 25 : la demande « à vérifier » vient d'être confirmée (sa carte « En attente » du jour est lue) : la page passe sur B.
+    var onConfirmed: (() -> Void)?
+    /// Rappels dont iOS a confirmé la programmation. Un rappel refusé par iOS n'y est pas : il est renvoyé à la prochaine mise
+    /// d'accord (retour dans l'app, page prête).
+    private var scheduled: [String: String] {
+        get { store.dictionary(forKey: Key.scheduled) as? [String: String] ?? [:] }
+        set { if newValue.isEmpty { store.removeObject(forKey: Key.scheduled) } else { store.set(newValue, forKey: Key.scheduled) } }
+    }
+    /// Chaque mise d'accord des notifications a son numéro : une lecture d'iOS arrivée en retard (état changé entre-temps,
+    /// par exemple fichier vu prêt) ne reprogramme jamais d'anciens rappels.
+    private var noticeGen = 0
     /// La demande guettée était déjà en cours chez Instagram : son heure est inconnue.
     private var isExisting: Bool { store.bool(forKey: Key.existing) }
 
@@ -4136,6 +4196,36 @@ final class ExportWatcher: NSObject {
     /// La page d'Instagram ouverte dans Zieuton vient de montrer le fichier prêt (preuve ReadyProof).
     func seenReady() { markReady() }
 
+    /// Coque 25 (25 nov., Victor) : Instagram fermé avec une demande possible mais pas prouvée (écran « Vérifions ta demande »).
+    /// Elle est suivie quand même, pour le bon compte : rappels « Vérifie ta demande Instagram », vérification à chaque ouverture.
+    /// Jamais « C'est demandé », jamais « prêt » sans preuve : la référence (ReadyProof) ne se fait que si la carte « En attente »
+    /// du jour est lue, ce qui confirme la demande (confirmUnsure). Une demande prouvée et suivie n'est jamais rétrogradée.
+    func leftUnsure(acct: String?) {
+        if isWaiting, !store.bool(forKey: Key.unsure) { return }
+        let now = Date()
+        for k in Key.all { store.removeObject(forKey: k) }
+        store.set(now, forKey: Key.requested)
+        store.set(true, forKey: Key.unsure)
+        // Pas de « C'est demandé » pour une demande à vérifier.
+        store.set(true, forKey: Key.askedShown)
+        if let acct, !acct.isEmpty { store.set(acct, forKey: Key.acct) }
+        proof = ReadyProof(day: now)
+        saveProof()
+        apply(NoticePlan.end())
+        syncNotices()
+        startTimer()
+        scheduleBackgroundCheck()
+    }
+
+    /// Coque 25 : la demande « à vérifier » est confirmée par Instagram. Même suivi, mêmes échéances : les rappels restants
+    /// gardent leur heure et prennent le texte « Où en est ton export ? ».
+    private func confirmUnsure() {
+        guard store.bool(forKey: Key.unsure) else { return }
+        store.removeObject(forKey: Key.unsure)
+        syncNotices()
+        onConfirmed?()
+    }
+
     /// Sécurité du suivi (build 22) : la page dit que l'attente est finie (exportEnded). Effacé seulement si la raison, le compte
     /// et la demande correspondent (WatchSync.endAccepted). Sinon rien ne change.
     func pageEnded(acct: String?, reason: String?, requestedAt pageAt: Date?, importedAt: Date?) {
@@ -4150,8 +4240,9 @@ final class ExportWatcher: NSObject {
     /// Sécurité du suivi (build 22) : la page garde une demande que la coque ne suit plus (par exemple effacée par la démo avant
     /// le build 22). Reprise sans aucune preuve : pas de « C'est demandé », pas de référence. ReadyProof ne refait la référence
     /// que si la carte « En attente » de la demande est encore là ; sinon jamais « prêt » automatique (au mieux « vérifie la date »).
-    func resume(acct: String?, requestedAt pageAt: Date?, existing: Bool, today: Bool, proven: Bool) {
-        guard WatchSync.resumeAccepted(now: Date(), pageRequestedAt: pageAt, proven: proven, hasWatch: requestedAt != nil,
+    /// Coque 25 : une demande « à vérifier » gardée par la page est reprise aussi (unsure), toujours sans aucune preuve.
+    func resume(acct: String?, requestedAt pageAt: Date?, existing: Bool, today: Bool, proven: Bool, unsure: Bool = false) {
+        guard WatchSync.resumeAccepted(now: Date(), pageRequestedAt: pageAt, proven: proven || unsure, hasWatch: requestedAt != nil,
                                        endedFor: store.object(forKey: Key.endedFor) as? Date), let at = pageAt else {
             NSLog("Zieuton : reprise du suivi refusée")
             return
@@ -4162,6 +4253,7 @@ final class ExportWatcher: NSObject {
         store.set(existing && today, forKey: Key.today)
         if let acct, !acct.isEmpty { store.set(acct, forKey: Key.acct) }
         store.set(true, forKey: Key.resumed)
+        if unsure { store.set(true, forKey: Key.unsure) }
         // « C'est demandé » a déjà été envoyée pour cette demande (ou elle est trop ancienne) : jamais de nouvelle confirmation.
         store.set(true, forKey: Key.askedShown)
         proof = ReadyProof(day: existing && !today ? nil : at)
@@ -4180,7 +4272,7 @@ final class ExportWatcher: NSObject {
             let reminders = NoticePlan.reminderIds.filter { ids.contains($0) }.count
             DispatchQueue.main.async {
                 var info: [String: Any] = ["waiting": self.isWaiting, "ready": self.isReady, "reminders": reminders,
-                                           "resumed": self.store.bool(forKey: Key.resumed)]
+                                           "resumed": self.store.bool(forKey: Key.resumed), "unsure": self.isUnsure]
                 if let acct = self.store.string(forKey: Key.acct) { info["acct"] = acct }
                 if let r = self.requestedAt {
                     let f = ISO8601DateFormatter()
@@ -4251,21 +4343,40 @@ final class ExportWatcher: NSObject {
 
     private func apply(_ plan: NoticePlan) {
         let center = UNUserNotificationCenter.current()
+        noticeGen += 1
+        let gen = noticeGen
         if !plan.cancel.isEmpty {
             center.removePendingNotificationRequests(withIdentifiers: plan.cancel)
             center.removeDeliveredNotifications(withIdentifiers: plan.cancel)
+            var kept = scheduled
+            for id in plan.cancel { kept.removeValue(forKey: id) }
+            scheduled = kept
         }
-        for item in plan.post {
-            let hour = isExisting ? nil : requestedAt.map { Self.hour($0) }
-            guard let text = NoticeText.of(item.id, existing: isExisting, today: store.bool(forKey: Key.today), hour: hour) else { continue }
-            if item.id == NoticePlan.asked { store.set(true, forKey: Key.askedShown) }
-            if item.id == NoticePlan.ready { store.set(true, forKey: Key.readyShown) }
-            let ready = item.id == NoticePlan.ready
-            notify(item.id, text, after: item.after, badge: ready, category: ready ? Self.readyCategory : nil)
+        guard !plan.post.isEmpty else { return }
+        // Coque 25 : on regarde d'abord ce qu'iOS a déjà, pour ne renvoyer que ce qui manque (sans doublon, reprise après erreur).
+        center.getPendingNotificationRequests { [weak self] requests in
+            let pending = Set(requests.map { $0.identifier })
+            DispatchQueue.main.async {
+                guard let self, gen == self.noticeGen else { return }
+                let unsure = self.store.bool(forKey: Key.unsure)
+                let kind = NoticePlan.kind(unsure: unsure)
+                for item in NoticePlan.toSend(plan.post, pending: pending, scheduled: self.scheduled, kind: kind) {
+                    let hour = self.isExisting ? nil : self.requestedAt.map { Self.hour($0) }
+                    guard let text = NoticeText.of(item.id, existing: self.isExisting, today: self.store.bool(forKey: Key.today),
+                                                   hour: hour, unsure: unsure) else { continue }
+                    if item.id == NoticePlan.asked { self.store.set(true, forKey: Key.askedShown) }
+                    if item.id == NoticePlan.ready { self.store.set(true, forKey: Key.readyShown) }
+                    let ready = item.id == NoticePlan.ready
+                    let reminder = NoticePlan.reminderIds.contains(item.id)
+                    self.notify(item.id, text, after: item.after, badge: ready, category: ready ? Self.readyCategory : nil,
+                                kind: reminder ? kind : nil)
+                }
+            }
         }
     }
 
-    private func notify(_ id: String, _ text: NoticeText.Text, after seconds: TimeInterval, badge: Bool, category: String?) {
+    /// kind : genre d'un rappel. Il n'est noté comme programmé qu'une fois la programmation confirmée par iOS.
+    private func notify(_ id: String, _ text: NoticeText.Text, after seconds: TimeInterval, badge: Bool, category: String?, kind: String? = nil) {
         let content = UNMutableNotificationContent()
         content.title = text.title
         content.body = text.body
@@ -4277,8 +4388,19 @@ final class ExportWatcher: NSObject {
         // Le bonhomme de Zieuton en vignette, à droite de la notification.
         if let attachment = Self.mascot() { content.attachments = [attachment] }
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
-            if let error { NSLog("Zieuton : notification %@ refusée par iOS : %@", id, error.localizedDescription) }
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { [weak self] error in
+            if let error {
+                // Pas noté comme programmé : la prochaine mise d'accord (retour dans l'app) le renverra.
+                NSLog("Zieuton : notification %@ refusée par iOS : %@", id, error.localizedDescription)
+                return
+            }
+            guard let kind else { return }
+            DispatchQueue.main.async {
+                guard let self, self.isWaiting else { return }
+                var done = self.scheduled
+                done[id] = kind
+                self.scheduled = done
+            }
         }
     }
 
@@ -4315,6 +4437,8 @@ final class ExportWatcher: NSObject {
             let before = proof
             proof.read(pending: pending, ready: ready, now: now)
             if proof.day != before.day || proof.baseline != before.baseline || proof.ambiguous != before.ambiguous { saveProof() }
+            // Coque 25 : demande « à vérifier » dont la carte « En attente » du jour vient d'être lue et retenue : Instagram l'a bien.
+            if store.bool(forKey: Key.unsure), before.baseline == nil, proof.baseline != nil { confirmUnsure() }
         }
         return proof.verdict(pending: pending, ready: ready, login: login, offline: false, now: now)
     }
@@ -4338,6 +4462,20 @@ final class ExportWatcher: NSObject {
         check { }
     }
 
+    /// Coque 25 : une notification de l'export a été touchée, peut-être après un démarrage à froid. La vérification part dès que
+    /// Zieuton est au premier plan avec sa fenêtre (essais toutes les 0,5 s pendant 6 s). Instagram n'est jamais ouvert à l'écran.
+    func checkFromNotification(tries: Int = 12) {
+        guard isWaiting else { return }
+        guard UIApplication.shared.applicationState == .active, let screen = WebViewController.current, screen.view.window != nil else {
+            if tries > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.checkFromNotification(tries: tries - 1) }
+            }
+            return
+        }
+        guard screen.presentedViewController == nil else { return }
+        check { }
+    }
+
     private func startTimer() {
         guard timer == nil, isWaiting else { return }
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in self?.tick() }
@@ -4358,6 +4496,8 @@ final class ExportWatcher: NSObject {
     private func check(_ done: @escaping () -> Void) {
         guard checker == nil, isWaiting else { done(); return }
         guard let window = WebViewController.current?.view.window else { report(.unknown); done(); return }
+        // Coque 25 : la page affiche « Vérification en cours… » (pas gardé comme résultat).
+        onState?("checking", Date())
         best = nil
         let handler = CheckHandler(self)
         let config = WKWebViewConfiguration()
