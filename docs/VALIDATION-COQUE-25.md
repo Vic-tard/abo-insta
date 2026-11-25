@@ -1,6 +1,6 @@
 # Coque 25 : suivi des exports (FOU-126, FOU-131)
 
-Version à installer : **build 25** (CURRENT_PROJECT_VERSION 25, ZYEUTO_APP 12), page BUILD 2026-11-25-1439 (canal test).
+Version à installer : **build 25** (CURRENT_PROJECT_VERSION 25, ZYEUTO_APP 12), page BUILD 2026-11-25-1455 (canal test).
 
 ## Ce qui change
 
