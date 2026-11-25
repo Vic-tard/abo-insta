@@ -41,12 +41,12 @@ test("le plan propose « Passer par l'app Instagram », qui ouvre le chemin de s
   const txt = await page.evaluate(() => document.getElementById("va").innerText);
   assert.match(txt, /Espace Comptes/);
   assert.match(txt, /Exporter vos informations/);
-  assert.match(txt, /Ne le donne jamais/);
-  // Si le bouton ouvre Safari : comment ouvrir l'app Instagram à la main. Et aucune promesse « pas d'alerte ».
+  assert.match(txt, /Ne le donne à personne/);
+  // Si le bouton ouvre Safari : comment ouvrir l'app Instagram à la main (texte court validé le 25 nov.). Et aucune promesse « pas d'alerte ».
   assert.ok(await vis(page, "va-manual"));
-  assert.match(await page.textContent("#va-manual"), /ouvre Safari/);
-  assert.match(await page.textContent("#va-manual"), /écran d'accueil/);
-  assert.match(txt, /Instagram demande une vérification/);
+  assert.match(await page.textContent("#va-manual"), /Safari s'ouvre/);
+  assert.match(await page.textContent("#va-manual"), /ouvre toi-même l'app Instagram/);
+  assert.match(txt, /Vérification\s?\?\s*Suis les étapes d'Instagram/);
   assert.doesNotMatch(txt, /pas d'alerte|aucune alerte|sans alerte/i);
   // Bouton vers l'app Instagram officielle, jamais un mot de passe ni un code demandé.
   assert.equal(await page.getAttribute("#va-open", "href"), "https://www.instagram.com/");
@@ -109,7 +109,7 @@ test("refermé puis rouvert : on reprend à la même capture", async () => {
 test("après 5 jours, on reprend au début (Instagram ne garde le fichier que 4 jours)", async () => {
   const page = await app({ welcomed: true, viaApp: { step: 6, at: Date.now() - 6 * 864e5 } });
   await page.evaluate(() => openViaApp());
-  assert.match(await say(page), /Fais ta demande/);
+  assert.match(await say(page), /Passe par\s*l'app Instagram/);
   await page.close();
 });
 
@@ -131,5 +131,28 @@ test("petit iPhone : le bouton de la suite reste atteignable", async () => {
   assert.ok(await page.locator("#va-next").isVisible());
   const wide = await page.evaluate(() => document.getElementById("va").scrollWidth <= window.innerWidth);
   assert.ok(wide, "pas de défilement horizontal");
+  await page.close();
+});
+
+// Refonte « Bonbon prune » (25 nov.) : une étape = la capture sur le mur du zieuteur, la consigne, sans « Pourquoi ? ».
+test("une étape du secours : capture entourée, doigt une seule fois, « Mon écran est différent » montre tous les écrans", async () => {
+  const page = await app({ welcomed: true, viaApp: { step: 3, at: Date.now() } });
+  await page.evaluate(() => openViaApp());
+  assert.match(await say(page), /Touche\s+Exporter sur mon appareil/);
+  const txt = await page.evaluate(() => document.getElementById("va").innerText);
+  assert.doesNotMatch(txt, /Pourquoi|Le fichier arrivera directement sur ton téléphone/);
+  assert.equal(await page.locator("#va-fig .sh-ring").count(), 1);
+  assert.equal(await page.$eval("#va-fig .bb-doigt", (d) => getComputedStyle(d).animationIterationCount), "1", "le doigt ne tourne pas en boucle");
+  assert.equal(await page.locator("#va .bb-peek").count(), 1, "le zieuteur passe la tête au-dessus de la capture");
+  await page.click("#va-lost");
+  assert.equal(await page.locator("#va [data-va]").count(), await page.evaluate(() => IG_SHOTS.length));
+  await page.click('#va [data-va="5"]');
+  assert.match(await say(page), /Followers et suivi/);
+  await page.click("#va-prev2");
+  assert.match(await say(page), /Personnaliser/);
+  // Toucher le zieuteur ne change pas d'étape.
+  await page.locator("#va .bb-peek").click();
+  assert.match(await say(page), /Personnaliser/);
+  assert.deepEqual(page.errors, []);
   await page.close();
 });

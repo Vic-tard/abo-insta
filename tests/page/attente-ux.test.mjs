@@ -69,12 +69,12 @@ test("demande déjà en cours : pas de « je guette »", async () => {
 
 test("FOU-131 : « Découvrir Zieuton » est le bouton principal, « Vérifier mon export » juste dessous, « Refaire la demande » est discret", async () => {
   const page = await waiting(5);
-  // Refonte du 23 nov. : un seul bouton principal (« Découvrir Zieuton », dans la carte de découverte), puis « Vérifier mon export ».
-  assert.equal(await page.locator("#gf .btn.cheer").count(), 1);
+  // Refonte du 23 nov. (style « Bonbon prune » du 25 nov.) : un seul gros bouton prune (« Découvrir Zieuton »), puis « Vérifier mon export ».
+  assert.equal(await page.locator("#gf .bb-go").count(), 1);
   assert.equal((await page.textContent("#gf-wait-demo")).trim(), "Découvrir Zieuton");
-  assert.match(await page.getAttribute("#gf-wait-demo", "class"), /cheer/);
+  assert.match(await page.getAttribute("#gf-wait-demo", "class"), /bb-go/);
   assert.equal((await page.textContent("#gf-get")).trim(), "Vérifier mon export");
-  assert.doesNotMatch(await page.getAttribute("#gf-get", "class"), /cheer/, "un seul bouton principal");
+  assert.doesNotMatch(await page.getAttribute("#gf-get", "class"), /bb-go/, "un seul bouton principal");
   const a = await page.locator("#gf-wait-demo").boundingBox(), b = await page.locator("#gf-get").boundingBox();
   assert.ok(b.y > a.y, "« Vérifier mon export » juste dessous");
   // « Refaire la demande » : dans « Plus d'infos », en lien discret.
@@ -115,9 +115,13 @@ test("fichier vu prêt : écran E « Ton export est prêt » (téléchargement e
   await page.evaluate(() => window.zyeutoMeta("ready"));
   assert.equal(await page.textContent("#gf-title"), "Ton export est prêt\u00a0! 🎉");
   assert.match(await page.textContent("#gf-get"), /Récupérer mon export/);
-  assert.match(await gfText(page), /Touche toi-même « Télécharger »/);
-  // Frise : étapes 1 à 3 faites, l'import reste à faire.
-  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["ok", "ok", "ok", "now"]);
+  assert.match(await gfText(page), /Touche toi-même «\s?Télécharger\s?»/);
+  // Ce qui se passe vraiment après « Télécharger » : le fichier revient dans Zieuton, qui l'importe et le vérifie (aucun bouton à chercher).
+  assert.match(await gfText(page), /Zieuton importe ton fichier/);
+  assert.match(await gfText(page), /Ta liste s'affiche une fois le fichier vérifié/);
+  assert.doesNotMatch(await gfText(page), /Je m'occupe du reste|toute seule/);
+  // Refonte du 25 nov. : la pastille « Prêt chez Instagram » remplace la frise.
+  assert.match(await page.textContent("#gw-chip"), /Prêt chez Instagram/);
   await page.close();
 });
 
