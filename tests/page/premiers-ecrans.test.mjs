@@ -216,7 +216,8 @@ for (const colorScheme of ["light", "dark"]) {
     for (const id of ["#gf-meta", "#gf-via", "#gf-restore"]) assert.ok(await inView(page, id), id);
     // Les deux liens tiennent dans la largeur du gros bouton (marge de sécurité : les polices varient d'un appareil à l'autre).
     const meta = await page.locator("#gf-meta").boundingBox(), via = await page.locator("#gf-via").boundingBox(), rs = await page.locator("#gf-restore").boundingBox();
-    assert.ok(via.x >= meta.x - 1 && rs.x + rs.width <= meta.x + meta.width + 1, "liens dans la largeur du bouton");
+    const fonts = await page.evaluate(() => document.fonts.check('800 14px "Zt Nunito"') + " " + document.fonts.status);
+    assert.ok(via.x >= meta.x - 1 && rs.x + rs.width <= meta.x + meta.width + 1, "liens dans la largeur du bouton " + JSON.stringify({ meta, via, rs, fonts }));
     assert.ok(rs.x - (via.x + via.width) >= 12, "assez d'espace entre les deux liens");
     await click(page, "gf-meta");
     await page.waitForTimeout(300);

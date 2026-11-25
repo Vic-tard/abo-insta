@@ -2528,7 +2528,7 @@ if (!window.ZYEUTO_APP) {
   .gf.bb .bb-sec svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .gf.bb .bb-link { align-self: center; min-height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; padding: 0 6px; font: 800 15px var(--bb-f); color: var(--bb-ink2); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
   .gf.bb .bb-links { display: flex; justify-content: space-between; gap: 8px; }
-  .gf.bb .bb-links .bb-link { white-space: nowrap; font-size: 14.5px; align-self: auto; text-align: left; }
+  .gf.bb .bb-links .bb-link { flex: 0 1 auto; min-width: 0; font-size: 14.5px; line-height: 1.15; align-self: auto; text-align: left; text-wrap: balance; }
   .gf.bb .bb-links .bb-link + .bb-link { text-align: right; }
   .gf.bb .bb-links .bb-link:first-child { padding-left: 0; } .gf.bb .bb-links .bb-link:last-child { padding-right: 0; }
   @media (max-width: 400px) { .gf.bb .bb-links .bb-link { font-size: 14px; } }
@@ -6310,7 +6310,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-25-0426";
+const BUILD = "2026-11-25-0432";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
