@@ -1,5 +1,5 @@
 // Refonte « Bonbon prune » (maquettes validées par Victor le 25 nov.) : les trois premiers écrans du premier lancement.
-// 1. « Salut, jeune zieuteur·euse ! » : le zieuteur derrière son mur prune ; le toucher le cache un instant, sans rien interrompre.
+// 1. « Salut, jeune zieuteur·euse ! » : le zieuteur derrière son mur prune. Il ne réagit pas au toucher, sur aucune page (Victor, 25 nov.).
 // 2. « On va chercher tes abonnés chez Instagram » : 3 cartes (titre + une phrase), zieuteur immobile, liens à gauche et à droite.
 // 3. « Zieuton en haut, Instagram en bas » : 2 rappels courts, un doigt qui touche deux fois la partie Instagram puis s'en va.
 // Sur un iPhone SE (375 × 667), les boutons principaux sont visibles sans faire défiler.
@@ -103,23 +103,29 @@ test("bienvenue : titre, 3 cartes, « C'est parti ! » et le lien démo", async 
   await page.close();
 });
 
-test("toucher le zieuteur : il se cache derrière son mur puis revient, sans rien interrompre", async () => {
+test("toucher le zieuteur ne fait rien, sur aucun écran du parcours", async () => {
   const page = await open();
   await loaded(page);
-  const z = page.locator("#gf button.bb-zt");
-  const b = await z.boundingBox();
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 3);
-  await page.mouse.down();
-  assert.match(await z.getAttribute("class"), /\bhid\b/, "il plonge derrière le mur");
-  await page.waitForTimeout(250);
-  const y = await page.$eval("#gf button.bb-zt img", (i) => new DOMMatrix(getComputedStyle(i).transform).m42);
-  assert.ok(y > 50, "l'image est descendue derrière le mur (" + y + " px)");
-  await page.mouse.up();
-  assert.doesNotMatch(await z.getAttribute("class"), /\bhid\b/, "il remonte");
-  assert.equal(await page.locator("#gf-body").getAttribute("data-step"), "welcome", "toujours sur la bienvenue");
-  // Même chose sur l'écran « Zieuton en haut » : le tutoriel continue.
-  await click(page, "gf-go"); await click(page, "gf-meta");
-  await page.locator("#gf button.bb-zt").click();
+  const still = async (where) => {
+    assert.equal(await page.locator("#gf button.bb-zt, #gf .bb-zt.hid").count(), 0, where + " : pas de bouton");
+    const z = page.locator("#gf .bb-zt").first();
+    assert.equal(await z.getAttribute("role"), "img", where);
+    assert.equal(await z.evaluate((e) => getComputedStyle(e).pointerEvents), "none", where + " : le toucher passe à travers");
+    assert.doesNotMatch(await z.getAttribute("aria-label"), /Touche/, where);
+    await page.waitForTimeout(2600); // fin de l'apparition de l'écran
+    const b = await z.boundingBox(), y0 = await page.$eval("#gf .bb-zt img", (i) => i.getBoundingClientRect().top);
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 3);
+    await page.mouse.down();
+    await page.waitForTimeout(300);
+    assert.equal(await page.$eval("#gf .bb-zt img", (i) => i.getBoundingClientRect().top), y0, where + " : il ne bouge pas");
+    await page.mouse.up();
+  };
+  await still("bienvenue");
+  assert.equal(await page.locator("#gf-body").getAttribute("data-step"), "welcome");
+  await click(page, "gf-go"); await page.waitForSelector(".bb-pl .bb-zt");
+  await still("plan");
+  await click(page, "gf-meta"); await page.waitForSelector(".bb-rap");
+  await still("Zieuton en haut");
   assert.match(await page.textContent("#gf-title"), /Zieuton en haut/);
   assert.deepEqual(page.errors, []);
   await page.close();
