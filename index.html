@@ -3247,6 +3247,38 @@ if (!window.ZYEUTO_APP) {
   html.bbx .dt-row { flex-wrap: wrap; }
   html.bbx .dt-next { flex: 0 1 auto; min-width: 0; max-width: 100%; padding: 10px 18px; white-space: normal; text-wrap: balance; line-height: 1.1; }
   @media (max-width: 300px) { html.bbx .dt-next { font-size: 16px; padding: 10px 14px; } }
+
+  /* ---------- Revue finale (25 nov.) ---------- */
+  /* Rangs de Mon zieuteur */
+  html.bbx .zy-ranks li { background: var(--surface); box-shadow: var(--card-sh); border-radius: 16px; font-weight: 800; }
+  html.bbx .zy-ranks li b { font-weight: 900; color: var(--ink); }
+  html.bbx .zy-ranks li.on { background: var(--cat-recent); color: #fff; } html.bbx .zy-ranks li.on b { color: #fff; }
+  html.bbx .zy-ranks li:last-child:not(.on) { background: #E4DBFB; color: #5B45B0; } html.bbx .zy-ranks li:last-child:not(.on) b { color: #451C31; }
+  /* Écran doré après un achat Plus : écrin prune, l'or reste à Plus */
+  html.bbx .goat { background: radial-gradient(120% 70% at 50% 30%, #6A2F50 0%, #451C31 55%, #2A0F1E 100%); }
+  html.bbx .goat-t { font: 400 38px/1.08 var(--bb-t); letter-spacing: 0; }
+  html.bbx .goat-plan { font-weight: 900; }
+  html.bbx .goat-s { font-weight: 700; color: rgb(251 230 238 / .8); }
+  html.bbx .goat-go { font: 400 21px var(--bb-t); border-radius: 22px; min-height: 60px; }
+  /* Petit iPhone (320 à 360 points de large) */
+  @media (max-width: 360px) {
+    html.bbx .pg-head .pg-title-big { font-size: 27px; }
+    html.bbx .wk-steps { gap: 4px; }
+    html.bbx .wk-steps li { font-size: 12px; gap: 4px; padding: 9px 3px; }
+    html.bbx .wk-steps i { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
+    html.bbx .weekly .wk-toggle .t { font-size: 22px !important; }
+    html.bbx .bb-perch > .bb-pk { width: 84px; right: 14px; }
+    html.bbx .st-in h1 { font-size: 28px; }
+    html.bbx .hh-zy { width: 96px; }
+    html.bbx .hh-bub { right: 118px; }
+    html.bbx .home-hero .profile { gap: 12px; }
+    html.bbx .home-hero .ring { width: 64px; height: 64px; }
+    html.bbx .home-hero .stat b { font-size: 23px; }
+    html.bbx .home-hero .stat > span { font-size: 9.5px; letter-spacing: .02em; }
+  }
+  /* Réponses en grand (Oui/Non, Moi/l'autre) : un long pseudo reste dans sa carte */
+  html.bbx #quiz .qz-opt.big .txt { font-size: 18px; min-width: 0; max-width: 100%; }
+  html.bbx #quiz .qz-opt.big .txt > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   /* ==== BONBON-APP : fin ==== */
 </style>
 
@@ -6883,7 +6915,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-25-1455";
+const BUILD = "2026-11-25-1506";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
