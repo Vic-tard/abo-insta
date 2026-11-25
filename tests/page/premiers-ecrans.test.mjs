@@ -214,6 +214,10 @@ for (const colorScheme of ["light", "dark"]) {
     await click(page, "gf-go");
     await page.waitForTimeout(1400);
     for (const id of ["#gf-meta", "#gf-via", "#gf-restore"]) assert.ok(await inView(page, id), id);
+    // Les deux liens tiennent dans la largeur du gros bouton (marge de sécurité : les polices varient d'un appareil à l'autre).
+    const meta = await page.locator("#gf-meta").boundingBox(), via = await page.locator("#gf-via").boundingBox(), rs = await page.locator("#gf-restore").boundingBox();
+    assert.ok(via.x >= meta.x - 1 && rs.x + rs.width <= meta.x + meta.width + 1, "liens dans la largeur du bouton");
+    assert.ok(rs.x - (via.x + via.width) >= 12, "assez d'espace entre les deux liens");
     await click(page, "gf-meta");
     await page.waitForTimeout(300);
     for (const id of ["#gf-meta", "#gf-via"]) assert.ok(await inView(page, id), id + " (écran 3)");
