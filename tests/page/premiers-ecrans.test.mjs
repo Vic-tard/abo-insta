@@ -206,7 +206,7 @@ test("« Zieuton en haut, Instagram en bas » : consignes courtes et doigt qui t
 });
 
 for (const colorScheme of ["light", "dark"]) {
-  test(`iPhone SE (${colorScheme}) : les boutons principaux sont visibles sans défiler`, async () => {
+  test(`iPhone SE (${colorScheme}) : les boutons principaux sont visibles sans défiler`, async (t) => {
     const page = await open({ viewport: { width: 375, height: 667 }, colorScheme });
     await page.waitForTimeout(4500);
     assert.ok(await inView(page, "#gf-go"), "C'est parti !");
@@ -217,8 +217,9 @@ for (const colorScheme of ["light", "dark"]) {
     // Les deux liens tiennent dans la largeur du gros bouton (marge de sécurité : les polices varient d'un appareil à l'autre).
     const meta = await page.locator("#gf-meta").boundingBox(), via = await page.locator("#gf-via").boundingBox(), rs = await page.locator("#gf-restore").boundingBox();
     const fonts = await page.evaluate(() => document.fonts.check('800 14px "Zt Nunito"') + " " + document.fonts.status);
+    t.diagnostic("mesures " + JSON.stringify({ via: [via.x, via.width, via.height], rs: [rs.x, rs.width, rs.height], fonts }));
     assert.ok(via.x >= meta.x - 1 && rs.x + rs.width <= meta.x + meta.width + 1, "liens dans la largeur du bouton " + JSON.stringify({ meta, via, rs, fonts }));
-    assert.ok(rs.x - (via.x + via.width) >= 12, "assez d'espace entre les deux liens");
+    assert.ok(rs.x - (via.x + via.width) >= 12, "assez d'espace entre les deux liens " + JSON.stringify({ via, rs, fonts }));
     await click(page, "gf-meta");
     await page.waitForTimeout(300);
     for (const id of ["#gf-meta", "#gf-via"]) assert.ok(await inView(page, id), id + " (écran 3)");
