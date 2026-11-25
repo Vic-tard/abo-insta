@@ -11,7 +11,7 @@ if (!baseRef) {
   process.exit(2);
 }
 const root = new URL("..", import.meta.url);
-const git = (...args) => execFileSync("git", args, { cwd: root, encoding: "utf8" });
+const git = (...args) => execFileSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 } // index.html dépasse 1 Mo depuis la refonte Bonbon (#174));
 const PBX = "ios/Zieuton.xcodeproj/project.pbxproj";
 
 const mergeBase = git("merge-base", baseRef, "HEAD").trim();
