@@ -55,8 +55,9 @@ test("retour d'Instagram sans preuve, ligne du jour vue : attente « Demande à 
   // FOU-131 : écran D « Vérifions ta demande ».
   assert.match(txt, /À vérifier/);
   assert.equal(await page.textContent("#gf-title"), "Vérifions ta demande");
-  // Refonte FOU-131 (texte de Victor, 23 nov.).
-  assert.match(txt, /Vérifie si ta demande apparaît dans Instagram\. Tu n'as pas besoin de la refaire pour vérifier\./);
+  // Refonte FOU-131 (texte de Victor, 23 nov., allégé le 25 nov.).
+  assert.match(txt, /Regarde si elle apparaît dans Instagram\./);
+  assert.match(txt, /J'y ai vu une demande d'aujourd'hui/);
   assert.doesNotMatch(txt, /C'est demandé|C'est parti|Demande confirmée|Bravo|Bien joué|Instagram prépare ta liste|Rappel activé|Ton export est prêt/, "aucune preuve inventée, aucune promesse");
   assert.equal(await page.evaluate(() => document.getElementById("asked").hidden), true, "pas d'écran A « C'est parti »");
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["warn", "", ""], "frise : seulement « à vérifier »");
@@ -74,7 +75,7 @@ test("« Demande à vérifier » sans ligne du jour : texte neutre", async () =>
   await toInstagram(page);
   await page.evaluate(() => window.zyeutoMeta("unsure", { today: false }));
   const txt = await gfText(page);
-  assert.match(txt, /Vérifie si ta demande apparaît dans Instagram/);
+  assert.match(txt, /Regarde si elle apparaît dans Instagram/);
   assert.doesNotMatch(txt, /demande d'aujourd'hui/);
   await page.close();
 });

@@ -37,33 +37,32 @@ const metaSent = (page) => page.evaluate(() => window.__sent.filter((m) => m.typ
 test("D : texte validé, ambre et point d'interrogation, jamais de coche ni « confirmée »", async () => {
   const page = await open({ prefs: unsure });
   assert.equal(await page.textContent("#gf-title"), "Vérifions ta demande");
-  assert.equal(await page.textContent("#guide-say"), "Vérifie si ta demande apparaît dans Instagram. Tu n'as pas besoin de la refaire pour vérifier.");
+  assert.match(await page.textContent("#guide-say"), /^Regarde si elle apparaît dans Instagram\./);
   assert.match(await page.getAttribute("#gw-chip", "class"), /warn/);
   assert.equal(await page.textContent("#gw-chip i"), "?");
   const txt = await gfText(page);
   assert.doesNotMatch(txt, /✓|confirmée|Instagram a peut-être déjà/);
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#gw-fr li")].map((l) => l.className)), ["warn", "", ""]);
   // La vérification est l'action principale ; la découverte reste visible, en second.
-  assert.match(await page.getAttribute("#gf-get", "class"), /cheer/);
+  assert.match(await page.getAttribute("#gf-get", "class"), /bb-go/);
   assert.equal(await page.textContent("#gf-get"), "Vérifier dans Instagram");
-  assert.doesNotMatch(await page.getAttribute("#gf-wait-demo", "class"), /cheer/);
+  assert.doesNotMatch(await page.getAttribute("#gf-wait-demo", "class"), /bb-go/);
   assert.match(await page.textContent("#gf-wait-demo"), /Découvrir Zieuton en attendant/);
   assert.deepEqual(page.errors, []);
   await page.close();
 });
 
-test("B : lilas avec la coche, « Découvrir Zieuton » en avant, « Compte fictif » au-dessus des 4 chiffres", async () => {
+test("B : lilas avec la coche, « Découvrir Zieuton » en avant, allégé (25 nov.)", async () => {
   const page = await open({ prefs: { requestedAt: ago(12) } });
   assert.equal(await page.textContent("#gf-title"), "Ton export se prépare");
   assert.equal(await page.textContent("#gw-chip i"), "✓");
-  assert.match(await page.getAttribute("#gf-wait-demo", "class"), /cheer/);
-  assert.doesNotMatch(await page.getAttribute("#gf-get", "class"), /cheer/);
-  const fict = await page.locator(".gw-fict").boundingBox(), mini = await page.locator(".gw-mini").boundingBox();
-  assert.equal(await page.textContent(".gw-fict"), "Compte fictif");
-  assert.ok(fict.y + fict.height <= mini.y + 1, "« Compte fictif » au-dessus des chiffres");
-  assert.match(await page.textContent(".gw-disc"), /compte fictif/);
-  // Orange plus foncé derrière le texte blanc.
-  assert.match(await page.evaluate(() => getComputedStyle(document.getElementById("gf-wait-demo")).backgroundImage), /rgb\(196, 73, 59\)/);
+  assert.match(await page.getAttribute("#gf-wait-demo", "class"), /bb-go/);
+  assert.doesNotMatch(await page.getAttribute("#gf-get", "class"), /bb-go/);
+  // Allégé à la demande de Victor : plus d'aperçu « Compte fictif » ni de ligne d'info sous les boutons (elle est dans « Plus d'infos »).
+  assert.equal(await page.locator(".gw-mini, .gw-disc, .gw-line").count(), 0);
+  assert.match(await page.textContent("#guide-say"), /Tu n'as plus rien à faire/);
+  // Texte crème sur prune : bien lisible.
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("gf-wait-demo")).backgroundColor), "rgb(69, 28, 49)");
   await page.close();
 });
 

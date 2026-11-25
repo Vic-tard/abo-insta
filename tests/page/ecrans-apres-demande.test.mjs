@@ -141,7 +141,7 @@ test("B : rappels honnêtes, aucun délai ni pourcentage", async () => {
   const page = await open({ prefs: { requestedAt: new Date(Date.now() - 12 * 60000).toISOString() } });
   await page.click("#gw-more");                                   // refonte FOU-131 : les rappels sont dans « Plus d'infos »
   const txt = await page.evaluate(() => document.getElementById("gf").innerText);
-  assert.match(txt, /Instagram prépare ton fichier\. Demandé il y a 12 min\./);
+  assert.match(txt, /Demandé il y a 12 min\.\s*Tu n'as plus rien à faire\./);
   assert.match(txt, /Un rappel ne veut pas dire que ton fichier est prêt/);
   assert.match(txt, /Demandé il y a 12 min/);
   assert.doesNotMatch(txt, /\d+\s?%|il reste|prêt dans|quelques minutes|en permanence|en continu/i);

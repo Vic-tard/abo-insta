@@ -1,8 +1,7 @@
-// Refonte visuelle (23 nov.) : les trois premiers écrans du premier lancement.
-// 1. « Salut, jeune zieuteur·euse ! » : le Zieuteur 3D P06 en deux calques (perso + bloc) ; au toucher, seul le perso
-//    rebondit (350 ms), le bloc reste fixe ; rien ne bouge si l'iPhone réduit les animations.
-// 2. « On va chercher tes abonnés chez Instagram » : 3 étapes (titre + une phrase), liens en bas à gauche et à droite.
-// 3. « Zieuton en haut, Instagram en bas » : consignes et « Ouvrir Instagram » là dès l'arrivée.
+// Refonte « Bonbon prune » (maquettes validées par Victor le 25 nov.) : les trois premiers écrans du premier lancement.
+// 1. « Salut, jeune zieuteur·euse ! » : le zieuteur derrière son mur prune ; le toucher le cache un instant, sans rien interrompre.
+// 2. « On va chercher tes abonnés chez Instagram » : 3 cartes (titre + une phrase), zieuteur immobile, liens à gauche et à droite.
+// 3. « Zieuton en haut, Instagram en bas » : 2 rappels courts, un doigt qui touche deux fois la partie Instagram puis s'en va.
 // Sur un iPhone SE (375 × 667), les boutons principaux sont visibles sans faire défiler.
 // Lancer : npm run test:lecteur.
 import { test, before, after } from "node:test";
@@ -17,7 +16,6 @@ let browser;
 before(async () => { browser = await chromium.launch(); });
 after(async () => { await browser?.close(); });
 
-const ZT = ["zieuteur-p06-perso-v1.png", "zieuteur-p06-bloc-v1.png"];
 const GH = "https://vic-tard.github.io/abo-insta/";
 // Les images « en ligne » sont servies depuis le dépôt ; hits compte les demandes par site.
 async function serveImages(page, { zieuton = true, github = true } = {}) {
@@ -55,12 +53,7 @@ const inView = async (page, sel) => {
   return b && b.y >= 0 && b.y + b.height <= v.height && b.x >= 0 && b.x + b.width <= v.width;
 };
 
-const loaded = (page) => page.waitForFunction(() => [...document.querySelectorAll("#wl-tap .zt img")].length === 3
-  && [...document.querySelectorAll("#wl-tap .zt img")].every((i) => i.complete && i.naturalWidth > 0), null, { timeout: 5000 });
-const srcs = (page) => page.$$eval("#wl-tap .zt img", (l) => l.map((i) => i.currentSrc || i.src));
-
-// Non-régression (relecture du 23 nov.) : dans l'app (coque 23), la page est affichée par loadHTMLString à l'adresse
-// GitHub Pages, que la page vienne de l'app ou du canal test. Les images doivent être lues sur zieuton.com.
+// Dans l'app (coque 23), la page est affichée par loadHTMLString à l'adresse GitHub Pages.
 async function openLikeApp({ zieuton = true, github = true } = {}) {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, locale: "fr-FR" });
   const hits = await serveImages(page, { zieuton, github });
@@ -74,70 +67,60 @@ async function openLikeApp({ zieuton = true, github = true } = {}) {
   page.hits = hits;
   return page;
 }
+// Refonte « Bonbon prune » (25 nov.) : les poses du zieuteur sont rangées dans la page (WebP), sans aucune demande réseau.
+const loaded = (page, sel = "#gf .bb-zt img") => page.waitForFunction((s) => {
+  const l = [...document.querySelectorAll(s)];
+  return l.length > 0 && l.every((i) => i.complete && i.naturalWidth > 0);
+}, sel, { timeout: 5000 });
 
-test("app (coque 23, page à l'adresse GitHub Pages) : les deux PNG viennent de zieuton.com", async () => {
-  const page = await openLikeApp({ github: false });
+test("app (page à l'adresse GitHub Pages) : les poses du zieuteur viennent de la page, sans réseau", async () => {
+  const page = await openLikeApp({ zieuton: false, github: false });
   await loaded(page);
-  const s = await srcs(page);
-  assert.deepEqual(s, [ZT[0], ZT[1], ZT[0]].map((f) => "https://zieuton.com/guide/" + f));
-  assert.equal(page.hits.github, 0, "aucune demande à GitHub Pages quand zieuton.com répond");
-  assert.equal(await page.locator(".zt-off").count(), 0);
+  assert.ok((await page.$$eval("#gf .bb-zt img", (l) => l.map((i) => i.src))).every((u) => u.startsWith("blob:")));
+  assert.deepEqual(page.hits, { zieuton: 0, github: 0 }, "aucune demande à zieuton.com ni à GitHub Pages");
+  assert.equal(await page.locator("#gf .bb-svg").count(), 0);
   await page.close();
 });
 
-test("app : zieuton.com injoignable → GitHub Pages en secours, puis l'ancien dessin si rien ne répond", async () => {
-  let page = await openLikeApp({ zieuton: false });
-  await loaded(page);
-  assert.ok((await srcs(page)).every((u) => u.startsWith(GH + "guide/zieuteur-p06-")));
-  await page.close();
-  page = await openLikeApp({ zieuton: false, github: false });
-  await page.waitForSelector("#wl-tap .zt.zt-off svg");
-  await page.close();
-});
-
-test("app : une image rangée dans l'app (builds suivants) passe avant le réseau", async () => {
-  const png = (f) => "data:image/png;base64," + readFileSync(root + "guide/" + f).toString("base64");
-  const page = await open({ assets: { ["guide/" + ZT[0]]: png(ZT[0]), ["guide/" + ZT[1]]: png(ZT[1]) } });
-  await loaded(page);
-  assert.ok((await srcs(page)).every((u) => u.startsWith("data:image/png")));
-  assert.deepEqual(page.hits, { zieuton: 0, github: 0 });
-  await page.close();
-});
-
-test("site (Safari, sans l'app) : chemins relatifs, servis par le site lui-même", async () => {
+test("site (Safari, sans l'app) : mêmes poses, rangées dans la page", async () => {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 } });
   await page.goto("file://" + root + "index.html");
   await page.waitForFunction(() => typeof renderGuided === "function" && !loading);
   await loaded(page);
-  assert.deepEqual(await page.$$eval("#wl-tap .zt img", (l) => l.map((i) => i.getAttribute("src"))), [ZT[0], ZT[1], ZT[0]].map((f) => "guide/" + f));
   await page.close();
 });
 
-test("bienvenue : le Zieuteur 3D en deux calques", async () => {
+test("bienvenue : titre, 3 cartes, « C'est parti ! » et le lien démo", async () => {
   const page = await open();
   await loaded(page);
-  assert.equal(await page.locator("#wl-tap .wl-art").count(), 0, "plus d'icône carrée");
   assert.equal((await page.textContent("#gf-title")).replace(/\s+/g, " ").trim(), "Salut, jeune zieuteur·euse !");
-  assert.deepEqual(await page.$$eval(".wl-pts li", (l) => l.map((li) => li.textContent.trim())), ["Mot de passe saisi chez Instagram", "Je te guidepas à pas", "Tout restechez toi"]);
+  assert.deepEqual(await page.$$eval(".bb-c3 li", (l) => l.map((li) => li.textContent.trim())), ["Mot de passe saisi chez Instagram", "Je te guide pas à pas", "Tout reste chez toi"]);
+  assert.equal((await page.textContent("#gf-go")).trim(), "C'est parti\u00a0!");
   assert.equal(await page.locator("#gf-demo").isVisible(), true);
+  // Le zieuteur est derrière son mur (le mur passe devant lui).
+  assert.ok(await page.$eval("#gf .bb-zt .bb-mur", (m) => +getComputedStyle(m).zIndex > 0));
   assert.deepEqual(page.errors, []);
   await page.close();
 });
 
-test("bienvenue : toucher la tête = rebond de 350 ms du perso, le bloc ne bouge pas, nouvelle réplique", async () => {
+test("toucher le zieuteur : il se cache derrière son mur puis revient, sans rien interrompre", async () => {
   const page = await open();
-  await page.waitForSelector("#wl-tap .zt");
-  await click(page, "wl-tap");
-  const anims = await page.evaluate(() => document.getAnimations().filter((a) => a.effect?.target?.closest?.(".zt")).map((a) => ({
-    cls: a.effect.target.className, dur: a.effect.getTiming().duration,
-  })));
-  assert.equal(anims.filter((a) => /zt-move/.test(a.cls) && a.dur === 350).length, 2, "derrière et pattes devant bougent ensemble");
-  assert.ok(!anims.some((a) => !/zt-move/.test(a.cls) && a.dur === 350), "le bloc reste fixe");
-  await page.waitForFunction(() => document.getElementById("wl-bubble").textContent.includes("Hé"), null, { timeout: 2000 });
-  // Un 2e toucher après la fin donne la réplique suivante.
-  await page.waitForTimeout(100);
-  await click(page, "wl-tap");
-  await page.waitForFunction(() => document.getElementById("wl-bubble").textContent.includes("Tu m'as vu"), null, { timeout: 2000 });
+  await loaded(page);
+  const z = page.locator("#gf button.bb-zt");
+  const b = await z.boundingBox();
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 3);
+  await page.mouse.down();
+  assert.match(await z.getAttribute("class"), /\bhid\b/, "il plonge derrière le mur");
+  await page.waitForTimeout(250);
+  const y = await page.$eval("#gf button.bb-zt img", (i) => new DOMMatrix(getComputedStyle(i).transform).m42);
+  assert.ok(y > 50, "l'image est descendue derrière le mur (" + y + " px)");
+  await page.mouse.up();
+  assert.doesNotMatch(await z.getAttribute("class"), /\bhid\b/, "il remonte");
+  assert.equal(await page.locator("#gf-body").getAttribute("data-step"), "welcome", "toujours sur la bienvenue");
+  // Même chose sur l'écran « Zieuton en haut » : le tutoriel continue.
+  await click(page, "gf-go"); await click(page, "gf-meta");
+  await page.locator("#gf button.bb-zt").click();
+  assert.match(await page.textContent("#gf-title"), /Zieuton en haut/);
   assert.deepEqual(page.errors, []);
   await page.close();
 });
@@ -147,75 +130,77 @@ const running = (page) => page.evaluate(() => document.getAnimations()
   .filter((a) => a.playState === "running" && a.effect?.target?.closest?.("#gf"))
   .map((a) => ({ name: a.animationName || "js", el: a.effect.target.className?.baseVal ?? a.effect.target.className, loop: a.effect.getComputedTiming().iterations === Infinity })));
 
-test("bienvenue : réduction des animations = aucun rebond, aucune boucle, même après plusieurs secondes", async () => {
-  const page = await open({ reducedMotion: "reduce" });
-  await page.waitForSelector("#wl-tap .zt");
-  // « Touche ma tête ! » arrive au bout de 4,8 s : on attend au-delà, sans toucher.
-  await page.waitForFunction(() => document.getElementById("wl-stage").classList.contains("hinting"), null, { timeout: 7000 });
-  await page.waitForTimeout(1500);
-  assert.deepEqual((await running(page)).filter((a) => a.loop), [], "aucune animation en boucle (ni anneau, ni yeux, ni étincelles)");
-  assert.deepEqual(await running(page), [], "rien ne bouge du tout");
-  await click(page, "wl-tap");
-  const n = await page.evaluate(() => document.getAnimations().filter((a) => a.effect?.target?.closest?.(".zt")).length);
-  assert.equal(n, 0, "pas de rebond");
-  assert.match(await page.textContent("#wl-bubble"), /Hé/);
-  await page.waitForTimeout(3000);
-  assert.deepEqual((await running(page)).filter((a) => a.loop), []);
-  // Les deux écrans suivants non plus.
+test("aucune animation en boucle sur les 3 premiers écrans ; réduction des animations = rien ne bouge", async () => {
+  let page = await open();
+  for (const next of ["gf-go", "gf-meta", null]) {
+    await page.waitForTimeout(300);
+    assert.deepEqual((await running(page)).filter((a) => a.loop), [], "aucune boucle");
+    if (next) await click(page, next);
+  }
+  // Le doigt de « Zieuton en haut » touche deux fois puis disparaît : une seule fois.
+  await page.waitForTimeout(4500);
+  assert.deepEqual(await running(page), [], "tout est fini, rien ne se répète");
+  assert.equal(await page.$eval(".bb-tel-b .bb-doigt", (d) => getComputedStyle(d).opacity), "0");
+  await page.close();
+  page = await open({ reducedMotion: "reduce" });
+  await page.waitForTimeout(300);
+  assert.deepEqual(await running(page), [], "bienvenue : rien ne bouge");
   await click(page, "gf-go");
-  await page.waitForTimeout(2000);
-  assert.deepEqual((await running(page)).filter((a) => a.loop), [], "écran des 3 étapes");
+  await page.waitForTimeout(300);
+  assert.deepEqual(await running(page), [], "écran des 3 étapes");
   await click(page, "gf-meta");
-  await page.waitForTimeout(4000);
-  assert.deepEqual((await running(page)).filter((a) => a.loop), [], "écran Zieuton en haut");
+  await page.waitForTimeout(300);
+  assert.deepEqual(await running(page), [], "écran Zieuton en haut");
   await page.close();
 });
 
-test("bienvenue : sans les images du Zieuteur, l'ancien dessin reste affiché", async () => {
-  const page = await open({ block: /zieuteur-p06/ });
-  await page.waitForSelector("#wl-tap .zt.zt-off svg");
-  await click(page, "wl-tap");
-  assert.match(await page.textContent("#wl-bubble"), /Hé/);
+test("pose illisible : l'ancien dessin s'affiche à la place, derrière le même mur", async () => {
+  const page = await open();
+  await loaded(page);
+  await page.evaluate(() => bbFail(document.querySelector("#gf .bb-zt img")));
+  assert.equal(await page.locator("#gf .bb-zt .bb-svg svg").count(), 1);
   await page.close();
 });
 
 test("écran des 3 étapes : titres + une phrase, bouton « Continuer », liens à gauche et à droite", async () => {
   const page = await open();
   await click(page, "gf-go");
-  await page.waitForSelector(".pl2 .zt");
+  await page.waitForSelector(".bb-pl .bb-zt");
   // Ce bouton ouvre encore le tutoriel : il n'annonce pas « Ouvrir Instagram ».
   assert.equal((await page.textContent("#gf-meta")).trim(), "Continuer");
-  const steps = await page.$$eval(".pl2 .pl-steps li", (l) => l.map((li) => [li.querySelector("b").textContent, li.querySelector("small").textContent]));
+  assert.equal((await page.textContent("#gf-title")).replace(/\s+/g, " ").trim(), "On va chercher tes abonnés chez Instagram");
+  const steps = await page.$$eval(".bb-cards li", (l) => l.map((li) => [li.querySelector("b").textContent, li.querySelector("small").textContent]));
   assert.deepEqual(steps, [
-    ["Ouvre Instagram", "Tu restes dans Zieuton."],
-    ["Demande ton export", "Le Zieuteur te montre où toucher."],
-    ["Récupère ton fichier", "Reviens ici quand Instagram l'a préparé."],
+    ["Ouvre Instagram", "Tu restes dans Zieuton, je ne te lâche pas."],
+    ["Demande ton export", "Je te montre pile où toucher."],
+    ["Récupère ton fichier", "Instagram le prépare, tu reviens ici le chercher."],
   ]);
-  await page.waitForTimeout(1300);
+  // Ici le zieuteur reste immobile : ce n'est pas un bouton.
+  assert.equal(await page.locator(".bb-pl button.bb-zt").count(), 0);
+  await page.waitForTimeout(2900);
   const via = await page.locator("#gf-via").boundingBox(), rs = await page.locator("#gf-restore").boundingBox();
-  const btn = await page.locator("#gf-meta").boundingBox(), list = await page.locator(".pl2 .pl-steps").boundingBox();
+  const btn = await page.locator("#gf-meta").boundingBox();
   assert.ok(via.x < rs.x && Math.abs(via.y - rs.y) < 2, "« Passer par l'app » à gauche, « J'ai une sauvegarde » à droite");
   assert.ok(via.height >= 44 && rs.height >= 44, "zones tactiles de 44 px");
-  assert.ok(btn.height >= 70, "bouton plus haut");
-  assert.ok(btn.y - (list.y + list.height) < 40, "les étapes descendent jusqu'au bouton (pas de grand vide)");
+  assert.ok(btn.height >= 70, "gros bouton");
   assert.deepEqual(page.errors, []);
   await page.close();
 });
 
-test("« Zieuton en haut, Instagram en bas » : consignes et bouton là dès l'arrivée", async () => {
+test("« Zieuton en haut, Instagram en bas » : consignes courtes et doigt qui touche la partie Instagram", async () => {
   const page = await open();
   await click(page, "gf-go");
   await page.waitForSelector("#gf-meta");
   await click(page, "gf-meta");
-  await page.waitForSelector(".in-pts");
-  await page.waitForTimeout(50);
-  const op = await page.$$eval(".in-pts li, .in ~ .pl-foot", (l) => l.map((e) => +getComputedStyle(e).opacity));
-  assert.ok(op.every((o) => o === 1), "rien n'attend pour apparaître");
+  await page.waitForSelector(".bb-rap");
   assert.equal((await page.textContent("#gf-meta")).trim(), "Ouvrir Instagram");
-  assert.equal(await page.locator(".in-zy .zt").count(), 0, "pas de Zieuteur dans le bandeau du schéma");
-  // Le geste : bandeau Zieuton d'abord, puis le bouton bleu.
-  const d = await page.evaluate(() => ({ zy: getComputedStyle(document.querySelector(".in-zy")).animationDelay, tap: getComputedStyle(document.querySelector(".in-tap")).animationDelay }));
-  assert.ok(parseFloat(d.zy) < parseFloat(d.tap));
+  assert.deepEqual(await page.$$eval(".bb-rap > div", (l) => l.map((d) => [d.querySelector("b").textContent, d.querySelector("small").textContent])), [["Mot de passe", "Il reste chez Instagram."], ["Cookies\u00a0?", "Refuse les cookies optionnels."]]);
+  // Le doigt est dans la partie Instagram (en bas) ; il touche deux fois puis s'en va.
+  const tel = await page.locator(".bb-tel-b").boundingBox(), d = await page.locator(".bb-tel-b .bb-doigt").boundingBox();
+  assert.ok(d.y > tel.y && d.y < tel.y + tel.height, "le doigt est sur Instagram");
+  const it = await page.$eval(".bb-tel-b .bb-doigt", (e) => getComputedStyle(e).animationIterationCount);
+  assert.equal(it, "1", "pas en boucle");
+  assert.equal(await page.locator(".bb-tel-b .bb-onde").count(), 2, "deux touches");
   assert.deepEqual(page.errors, []);
   await page.close();
 });
