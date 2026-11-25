@@ -21,22 +21,29 @@ final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationC
     }
 
     // Zieuton ouvert : « C'est demandé » et « prêt » s'affichent quand même en haut de l'écran.
-    // Les rappels (30 min, 24 h) non : Zieuton ouvert vérifie déjà lui-même (FOU-126, pas de doublon).
+    // Les rappels (15 min, 1 h, 4 h, 24 h) non : Zieuton ouvert vérifie déjà lui-même (FOU-126, pas de doublon).
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let id = notification.request.identifier
         completionHandler(NoticePlan.showsInForeground(id) ? [.banner, .list, .sound] : [])
     }
 
-    // Notification touchée : « prêt » ouvre Instagram sur « Télécharger » ; « C'est demandé » et les rappels ouvrent
-    // l'écran d'attente, qui vérifie tout de suite où en est Instagram.
+    // Coque 25 (25 nov., Victor) : toute notification de l'export touchée (rappel, « C'est demandé », « prêt ») ouvre la demande
+    // dans Zieuton et lance une vérification chez Instagram, même après un démarrage à froid. Instagram ne s'ouvre jamais seul.
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let id = response.notification.request.identifier
         DispatchQueue.main.async {
-            if id == NoticePlan.ready { WebViewController.current?.openExport() }
-            else { WebViewController.current?.showHome() }
+            if NoticePlan.all.contains(id) { AppDelegate.openCheck(tries: 20) }
             completionHandler()
         }
+    }
+
+    /// Démarrage à froid : l'écran de Zieuton peut ne pas exister encore quand iOS transmet le toucher. On attend qu'il soit là
+    /// (essais toutes les 0,25 s pendant 5 s) ; la page, elle, s'ouvre sur la demande dès qu'elle est prête.
+    private static func openCheck(tries: Int) {
+        if let screen = WebViewController.current { screen.openCheck(); return }
+        guard tries > 0 else { NSLog("Zieuton : notification touchée, écran introuvable"); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { AppDelegate.openCheck(tries: tries - 1) }
     }
 }
