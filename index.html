@@ -3230,6 +3230,10 @@ if (!window.ZYEUTO_APP) {
 
   /* ---------- Petits éléments communs ---------- */
   html.bbx .search svg { stroke: var(--bb-mut); z-index: 1; }
+  /* Petit iPhone avec texte agrandi : le bouton de la visite passe à la ligne plutôt que de sortir de la bulle. */
+  html.bbx .dt-row { flex-wrap: wrap; }
+  html.bbx .dt-next { flex: 0 1 auto; min-width: 0; max-width: 100%; padding: 10px 18px; white-space: normal; text-wrap: balance; line-height: 1.1; }
+  @media (max-width: 300px) { html.bbx .dt-next { font-size: 16px; padding: 10px 14px; } }
   /* ==== BONBON-APP : fin ==== */
 </style>
 
@@ -6783,7 +6787,7 @@ function renderGuided() {
 }
 // Mise à jour automatique : quand on revient sur l'app, si une nouvelle version est en ligne, on recharge
 // (l'historique et la progression sont gardés sur le téléphone, rien n'est perdu).
-const BUILD = "2026-11-25-1434";
+const BUILD = "2026-11-25-1442";
 let updChecked = 0;
 
 // ---------- App iPhone : fichier reçu par « Partager → Zieuton » ----------
