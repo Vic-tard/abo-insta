@@ -150,8 +150,9 @@ test("une étape du secours : capture entourée, doigt une seule fois, « Mon é
   assert.match(await say(page), /Followers et suivi/);
   await page.click("#va-prev2");
   assert.match(await say(page), /Personnaliser/);
-  // Toucher le zieuteur ne change pas d'étape.
-  await page.locator("#va .bb-peek").click();
+  // Le zieuteur ne réagit pas au toucher (Victor, 25 nov.) : simple image, le toucher passe à travers.
+  const peek = page.locator("#va .bb-peek");
+  assert.equal(await peek.evaluate((e) => e.tagName + " " + e.getAttribute("role") + " " + getComputedStyle(e).pointerEvents), "SPAN img none");
   assert.match(await say(page), /Personnaliser/);
   assert.deepEqual(page.errors, []);
   await page.close();
