@@ -456,8 +456,8 @@ var r30c = ReadyProof(day: n30)
 r30c.read(pending: [], ready: [carteJourPrete], now: n30, calendar: cal)
 r30c.read(pending: [], ready: [carteJourPrete], now: n30.addingTimeInterval(3), calendar: cal)
 check(r30c.baseline == nil, "sans ligne « En attente » du jour, aucune référence")
-check(r30c.verdict(pending: [], ready: [carteJourPrete, carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(60), calendar: cal) == .toCheck,
-      "sans référence, même deux fichiers du jour : « vérifie la date », jamais « prêt »")
+check(r30c.verdict(pending: [], ready: [carteJourPrete, carteJourPrete], login: false, offline: false, now: n30.addingTimeInterval(60), calendar: cal) == .ready,
+      "règle du 27 nov. : sans référence, plus rien en attente, le plus haut fichier du jour revu : prêt")
 
 // 31. Vidéo iPhone du 18 nov. (14 h 30) : textes tels que le lecteur les envoie pour la vraie liste.
 // Trois fichiers prêts (« Expire le 22/11 », « 21/11 », « 21/11 ») et une demande « En attente » du 18/11.
@@ -510,8 +510,8 @@ check(ReadyProof.signature(of: "en attente · demandée le 18/11/2026 annuler") 
 var r32a = base18()
 check(settle(&r32a, [attente18], [pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(300)) == .pending,
       "a. un autre fichier arrive, notre demande est encore « En attente » : pas encore prêt")
-check(settle(&r32a, [], [pret("22/11/2026"), pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .toCheck,
-      "a. puis la nôtre aussi : deux fichiers nouveaux, on ne sait pas lequel : à vérifier, jamais « prêt »")
+check(settle(&r32a, [], [pret("22/11/2026"), pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .ready,
+      "a. puis la nôtre aussi : deux fichiers nouveaux, plus rien en attente : le plus haut est le plus récent, prêt (règle du 27 nov.)")
 // b. La carte « En attente » manque un instant dans la lecture.
 var r32b = base18()
 r32b.read(pending: [], ready: [pret("22/11/2026")] + prets18, now: n18.addingTimeInterval(300), calendar: cal)
@@ -545,13 +545,13 @@ var r32e = ReadyProof(day: n18)
 let attente18b = attente18.replacingOccurrences(of: "vifrnt", with: "autrecompte")
 for t in [0.0, 2.5] { r32e.read(pending: [attente18, attente18b], ready: prets18, now: n18.addingTimeInterval(t), calendar: cal) }
 check(r32e.baseline == nil, "e. deux cartes « En attente » du jour : pas de référence")
-check(settle(&r32e, [], [pret("22/11/2026"), pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .toCheck,
-      "e. puis des fichiers prêts : à vérifier, jamais « prêt »")
+check(settle(&r32e, [], [pret("22/11/2026"), pret("22/11/2026")] + prets18, at: n18.addingTimeInterval(900)) == .ready,
+      "e. puis des fichiers prêts, plus rien en attente : le plus haut, prêt (règle du 27 nov.)")
 // f. Relecture ChatGPT (15 h 33) : référence enregistrée par le build 17 (sans empreinte). Elle n'est pas gardée (migration prudente).
 var r32f = ReadyProof(day: n18, baseline: 1)
 check(r32f.baseline == nil && r32f.signature == nil, "f. ancienne référence sans empreinte : oubliée")
-check(settle(&r32f, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
-      "f. la demande a déjà quitté « En attente » : on ne peut plus refaire la référence, à vérifier, jamais « prêt »")
+check(settle(&r32f, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .ready,
+      "f. la demande a déjà quitté « En attente », pas de référence : le plus haut fichier possible, prêt (règle du 27 nov.)")
 var r32f2 = ReadyProof(day: n18, baseline: 1)
 for t in [0.0, 2.5] { r32f2.read(pending: [attente18], ready: prets18, now: n18.addingTimeInterval(t), calendar: cal) }
 check(r32f2.baseline == 1 && r32f2.signature != nil, "f. la carte « En attente » est encore là : référence refaite, avec empreinte")
@@ -601,8 +601,8 @@ var r35 = ReadyProof(day: n18)
 for t in [0.0, 2.5] { r35.read(pending: [attente18, attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
 check(r35.baseline == nil, "deux demandes identiques en attente : aucune référence")
 check(settle(&r35, [attente18], [pret("22/11/2026")], at: n18.addingTimeInterval(300)) == .pending, "l'une est prête, l'autre en attente : pas encore prêt")
-check(settle(&r35, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
-      "les deux sont prêtes : on ne sait pas laquelle est la sienne, à vérifier, jamais « prêt »")
+check(settle(&r35, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .ready,
+      "les deux sont prêtes, identiques (même compte, même format) : le plus haut convient, prêt (règle du 27 nov.)")
 // Demande suivie seule, puis une 2e identique le même jour (par exemple refaite dans l'app Instagram).
 var r35b = ReadyProof(day: n18)
 for t in [0.0, 2.5] { r35b.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
@@ -610,8 +610,8 @@ check(r35b.baseline == 0, "la première demande est suivie")
 check(settle(&r35b, [attente18, attente18], [], at: n18.addingTimeInterval(120)) == .pending, "une 2e demande identique arrive : pas encore prêt")
 check(settle(&r35b, [attente18], [pret("22/11/2026")], at: n18.addingTimeInterval(300)) == .pending,
       "un fichier prêt, une demande encore en attente : peut-être pas le sien, pas encore prêt")
-check(settle(&r35b, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .toCheck,
-      "deux fichiers identiques prêts : à vérifier, jamais « prêt »")
+check(settle(&r35b, [], [pret("22/11/2026"), pret("22/11/2026")], at: n18.addingTimeInterval(900)) == .ready,
+      "deux fichiers identiques prêts, plus rien en attente : le plus haut, prêt (règle du 27 nov.)")
 
 // 36. Relecture ChatGPT (18 nov., 15 h 44) : le scénario exact du faux « prêt ».
 // 1. demande suivie seule (référence 0) ; 2-3. une 2e demande identique du même jour, les deux « En attente » ;
@@ -622,14 +622,16 @@ check(r36.baseline == 0 && !r36.ambiguous, "36.1 demande suivie seule : référe
 for t in [60.0, 62.5] { r36.read(pending: [attente18, attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
 check(r36.ambiguous, "36.3 deux cartes « En attente » indiscernables : ambiguïté notée")
 check(settle(&r36, [attente18], [pret("22/11/2026")], at: n18.addingTimeInterval(300)) == .pending, "36.4 l'une prête, l'autre en attente : pas encore prêt")
-check(settle(&r36, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .toCheck,
-      "36.6 l'autre annulée : une carte prête, zéro en attente, relue 2 s plus tard : à vérifier, jamais « prêt »")
-check(settle(&r36, [], [pret("22/11/2026")], at: n18.addingTimeInterval(3600)) == .toCheck, "36.6 et toujours pas « prêt » une heure plus tard")
+// Règle de Victor (27 nov.) : deux demandes identiques (même compte, même catégorie, même format) donnent des fichiers qui se valent.
+// Plus rien en attente : le plus haut est prêt. L'import vérifie ensuite le fichier lui-même.
+check(settle(&r36, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .ready,
+      "36.6 l'autre annulée : une carte prête identique, zéro en attente, relue 2 s plus tard : prêt (règle du 27 nov.)")
+check(settle(&r36, [], [pret("22/11/2026")], at: n18.addingTimeInterval(3600)) == .ready, "36.6 toujours prête une heure plus tard")
 check(r36.ambiguous, "l'ambiguïté ne s'efface jamais toute seule")
 // Fermeture puis réouverture de l'app : la coque recrée le suivi avec ce qu'elle a gardé (jour, référence, empreinte, ambiguïté).
 var r36b = ReadyProof(day: r36.day, baseline: r36.baseline, signature: r36.signature, ambiguous: r36.ambiguous)
 check(r36b.ambiguous && r36b.baseline == 0, "réouverture : ambiguïté et référence retrouvées")
-check(settle(&r36b, [], [pret("22/11/2026")], at: n18.addingTimeInterval(7200)) == .toCheck, "réouverture : toujours jamais « prêt »")
+check(settle(&r36b, [], [pret("22/11/2026")], at: n18.addingTimeInterval(7200)) == .ready, "réouverture : même règle, prêt")
 // Sans l'ambiguïté (régression) : la même liste finale donnerait bien « prêt ».
 var r36c = ReadyProof(day: n18)
 for t in [0.0, 2.5] { r36c.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
@@ -646,7 +648,7 @@ r36e.read(pending: [attente18, attente18], ready: [], now: n18, calendar: cal)
 check(r36e.ambiguous, "deux demandes identiques dès le début : ambiguïté notée")
 for t in [60.0, 62.5] { r36e.read(pending: [attente18], ready: [], now: n18.addingTimeInterval(t), calendar: cal) }
 check(r36e.baseline == 0, "une seule reste : la référence se fixe")
-check(settle(&r36e, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .toCheck, "mais jamais « prêt » : on ne sait pas laquelle était la sienne")
+check(settle(&r36e, [], [pret("22/11/2026")], at: n18.addingTimeInterval(600)) == .ready, "plus rien en attente : le plus haut fichier identique, prêt (règle du 27 nov.)")
 
 // 37. Relecture ChatGPT (18 nov., 15 h 55) : une demande en attente d'un AUTRE compte ne bloque pas le compte suivi.
 let attenteB = attente18.replacingOccurrences(of: "vifrnt", with: "compteb")
@@ -689,14 +691,16 @@ var r38b = ReadyProof(day: n18)
 for t in [0.0, 2.5] { r38b.read(pending: [attente18], ready: [pret("22/11/2026")], now: n18.addingTimeInterval(t), calendar: cal) }
 let liste38b = [pret("23/11/2026"), pret("22/11/2026")]
 check(settle(&r38b, [], liste38b, at: n19) == .ready, "38. un fichier de plus que la référence : prêt")
-check(r38b.identifiedExpiry(ready: liste38b, now: n19, calendar: cal) == nil, "38. deux dates possibles (22/11 et 23/11) : aucune date affichée")
+check(r38b.identifiedExpiry(ready: liste38b, now: n19, calendar: cal).map { GetBanner.dayText($0, calendar: cal) } == "23/11",
+      "38. deux dates possibles (22/11 et 23/11) : celle du plus haut, 23/11 (règle du 27 nov.)")
 // Même date sur les deux : quelle que soit la ligne nouvelle, sa date est sûre.
 var r38c = ReadyProof(day: n18)
 for t in [0.0, 2.5] { r38c.read(pending: [attente18], ready: [pret("22/11/2026")], now: n18.addingTimeInterval(t), calendar: cal) }
 check(r38c.identifiedExpiry(ready: [pret("22/11/2026"), pret("22/11/2026")], now: n18.addingTimeInterval(600), calendar: cal)
         .map { GetBanner.dayText($0, calendar: cal) } == "22/11", "38. deux fichiers du même jour à la même date : date sûre")
 // Ambiguïté, empreinte inconnue ou ancien format sans « Expire le » : aucune date.
-check(r36.identifiedExpiry(ready: [pret("22/11/2026")], now: n18.addingTimeInterval(600), calendar: cal) == nil, "38. demandes indiscernables : aucune date")
+check(r36.identifiedExpiry(ready: [pret("22/11/2026")], now: n18.addingTimeInterval(600), calendar: cal).map { GetBanner.dayText($0, calendar: cal) } == "22/11",
+      "38. demandes indiscernables : la date écrite sur le plus haut fichier (règle du 27 nov.)")
 check(ReadyProof(day: n18, baseline: 0).identifiedExpiry(ready: [pret("22/11/2026")], now: n18, calendar: cal) == nil, "38. sans empreinte : aucune date")
 check(r1.identifiedExpiry(ready: [pretJour, pretAncien], now: s(30), calendar: cal) == nil, "38. carte sans « Expire le » : aucune date")
 
@@ -758,9 +762,9 @@ check(WatchSync.date("") == nil && WatchSync.date(42) == nil && WatchSync.date(n
 var r39 = ReadyProof(day: n21)
 for t in [0.0, 2.5, 30, 60] { r39.read(pending: [], ready: liste21, now: later.addingTimeInterval(t), calendar: cal) }
 check(r39.baseline == nil, "39. reprise sans carte « En attente » : aucune référence")
-check(rv(r39, [], liste21, at: later.addingTimeInterval(90)) != .ready, "39. reprise : jamais « prêt » sans référence, même avec le fichier du jour")
-check(GetBanner.of(waiting: true, proven: false, verdict: rv(r39, [], liste21, at: later.addingTimeInterval(90)), fileVisible: true) == .available,
-      "39. bandeau : « Un fichier est disponible chez Instagram »")
+check(rv(r39, [], liste21, at: later.addingTimeInterval(90)) == .ready, "39. reprise sans référence : le plus haut fichier possible (25/11), prêt (règle du 27 nov.)")
+check(GetBanner.of(waiting: true, proven: false, verdict: rv(r39, [], liste21, at: later.addingTimeInterval(90)), fileVisible: true) == .ready,
+      "39. bandeau : « Touche Télécharger »")
 // Demande reprise quand la carte « En attente » est encore là : référence refaite, puis « prêt » normal.
 var r39b = ReadyProof(day: n21)
 for t in [0.0, 2.5] { r39b.read(pending: [attente21], ready: [pret("24/11/2026"), pret("22/11/2026")], now: later.addingTimeInterval(t), calendar: cal) }
@@ -808,5 +812,28 @@ check(NoticePlan.toSend(plan41, pending: ["zy-r15", "zy-r1h"], scheduled: ["zy-r
 let aEtC = [NoticePlan.Item(id: "zy-asked", after: 1), NoticePlan.Item(id: "zy-ready", after: 1)]
 check(NoticePlan.toSend(aEtC, pending: ["zy-asked", "zy-ready"], scheduled: [:], kind: "confirmed").count == 2, "41. A et C restent gardées par askedShown / readyShown")
 check(NoticePlan.kind(unsure: true) == "unsure" && NoticePlan.kind(unsure: false) == "confirmed", "41. genres des rappels")
+// 42. Règle de Victor (27 nov., test du build 25) : demande du 27/11 passée par « Vérifions ta demande », jamais de référence
+// (la liste n'a pas été lue pendant l'attente). Puis la liste : le nouveau fichier (expire le 01/12) au-dessus de l'ancien (29/11).
+let n27 = cal.date(from: DateComponents(year: 2026, month: 11, day: 27, hour: 14, minute: 29))!
+let liste27 = [pret("01/12/2026"), pret("29/11/2026")]
+var r42 = ReadyProof(day: n27)
+check(settle(&r42, [], liste27, at: n27.addingTimeInterval(1020)) == .ready, "42. plus rien en attente, le plus haut expire le 01/12 : prêt")
+check(r42.baseline == nil && r42.topStable, "42. sans référence : c'est la règle du plus haut qui conclut")
+check(r42.identifiedExpiry(ready: liste27, now: n27.addingTimeInterval(1020), calendar: cal).map { GetBanner.dayText($0, calendar: cal) } == "01/12",
+      "42. bandeau : la ligne « Expire le 01/12 »")
+var r42b = ReadyProof(day: n27)
+check(settle(&r42b, [], [pret("29/11/2026")], at: n27.addingTimeInterval(1020)) == .unknown, "42. seul l'ancien (29/11) : jamais « prêt »")
+var r42c = ReadyProof(day: n27)
+let attenteAutreJour = "en attente · demandée le 26/11/2026 · vifrnt (instagram) followers et suivi(e)s exporter vers appareil · une fois · json demandée le 26/11/2026 annuler"
+check(settle(&r42c, [attenteAutreJour], liste27, at: n27.addingTimeInterval(1020)) != .ready, "42. une ligne « En attente », même d'un autre jour : jamais « prêt »")
+var r42d = ReadyProof(day: n27)
+check(rv(r42d, [], liste27, at: n27.addingTimeInterval(1020)) != .ready, "42. lu une seule fois (pas revu 2 s plus tard) : pas encore « prêt »")
+r42d.read(pending: [], ready: liste27, now: n27.addingTimeInterval(1000), calendar: cal)
+r42d.read(pending: [], ready: [pret("29/11/2026")], now: n27.addingTimeInterval(1001), calendar: cal)
+r42d.read(pending: [], ready: liste27, now: n27.addingTimeInterval(1002.5), calendar: cal)
+check(rv(r42d, [], liste27, at: n27.addingTimeInterval(1002.5)) != .ready, "42. le plus haut a changé entre deux lectures : on recommence l'attente de 2 s")
+// Référence là et aucun fichier nouveau : la règle du plus haut ne s'applique pas (r30, r31 restent « à vérifier »).
+check(r31.verdict(pending: [], ready: prets18, login: false, offline: false, now: n18.addingTimeInterval(600), calendar: cal) != .ready,
+      "42. référence fixée, aucun fichier nouveau : jamais « prêt » par la règle du plus haut")
 print(failures == 0 ? "\nTout est vert." : "\n\(failures) test(s) en échec.")
 exit(failures == 0 ? 0 : 1)
