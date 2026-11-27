@@ -4525,6 +4525,8 @@ final class ExportWatcher: NSObject {
             if verdict == .ready { self.markReady() } else { self.report(verdict) }
             done()
         }
+        // Journal (fil « suivi », 27 nov.) : pourquoi la vérification cachée ne lit rien. Visible dans la console Xcode uniquement.
+        NSLog("Zieuton journal : vérification cachée lancée")
         web.load(URLRequest(url: Self.exportURL))
         // La page met quelques secondes à afficher la liste : on conclut au bout de 12 s.
         DispatchQueue.main.asyncAfter(deadline: .now() + 12) { [weak self] in self?.conclude() }
@@ -4532,6 +4534,7 @@ final class ExportWatcher: NSObject {
 
     fileprivate func received(_ body: [String: Any]) {
         guard finishCheck != nil else { return }
+        NSLog("Zieuton journal : liste reçue, %d en attente, %d prêts, connexion demandée : %@", (body["rows"] as? [String])?.count ?? -1, (body["ready"] as? [String])?.count ?? -1, String(describing: body["login"] as? Bool == true))
         let v = observe(pending: body["rows"] as? [String], ready: body["ready"] as? [String], login: body["login"] as? Bool == true)
         if best.map({ ReadyProof.rank(v) > ReadyProof.rank($0) }) ?? true { best = v }
         // Une ligne prête nouvelle, à la date de la demande : pas besoin d'attendre la fin.
@@ -4540,6 +4543,7 @@ final class ExportWatcher: NSObject {
 
     fileprivate func loadFailed(_ error: Error) {
         let e = error as NSError
+        NSLog("Zieuton journal : chargement de la page cachée échoué, domaine %@, code %d", e.domain, e.code)
         switch LoginHelp.loadFailure(domain: e.domain, code: e.code) {
         case .none: return
         case .network: finishCheck?(.offline)
@@ -4548,6 +4552,7 @@ final class ExportWatcher: NSObject {
     }
 
     private func conclude() {
+        if finishCheck != nil { NSLog("Zieuton journal : 12 s sans réponse utile de la page cachée, verdict %@", String(describing: best ?? .unknown)) }
         finishCheck?(best ?? .unknown)
     }
 
