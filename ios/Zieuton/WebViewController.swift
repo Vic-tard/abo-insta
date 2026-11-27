@@ -3429,6 +3429,12 @@ struct ReadyProof: Equatable {
     /// On ne sait plus quel fichier est le sien : jamais « prêt » automatique pour cette demande, même si l'une est annulée
     /// ou disparaît ensuite. Gardé avec la référence (l'app peut être fermée puis rouverte).
     private(set) var ambiguous = false
+    /// Règle de Victor (27 nov.) : quand la référence manque ou ne suffit pas, le fichier de la demande est le PLUS HAUT des fichiers
+    /// qui peuvent être le sien, à condition qu'il n'y ait plus AUCUNE ligne « En attente » dans la liste (quelle que soit sa date).
+    /// Instagram range la liste du plus récent au plus ancien. Revu identique au moins 2 s plus tard, comme le reste.
+    private var topRow: String?
+    private var topSeenAt: Date?
+    private(set) var topStable = false
 
     /// Deux lectures identiques à au moins 2 s d'écart fixent la référence (et confirment « prêt »).
     static let stableFor: TimeInterval = 2
@@ -3450,6 +3456,16 @@ struct ReadyProof: Equatable {
         // Demande déjà en cours chez Instagram : son jour est celui de la ligne « En attente » la plus récente.
         if day == nil { day = Self.latestDay(of: pending, now: now, calendar: calendar) }
         guard let day else { return }
+        // Règle de Victor (27 nov.) : le plus haut fichier possible, revu identique au moins 2 s plus tard.
+        if let top = topCandidate(pending: pending, ready: ready, day: day, now: now, calendar: calendar) {
+            if top == topRow, let at = topSeenAt {
+                if now.timeIntervalSince(at) >= Self.stableFor { topStable = true }
+            } else {
+                topRow = top; topSeenAt = now; topStable = false
+            }
+        } else {
+            topRow = nil; topSeenAt = nil; topStable = false
+        }
         // Deux cartes « En attente » du jour avec la même empreinte (la nôtre si elle est connue) : ambiguïté, gardée pour toujours.
         let sigs = pending.filter { ExportProof.isDated($0, day: day, now: now, calendar: calendar) }.compactMap { Self.signature(of: $0) }
         if let signature { if sigs.filter({ $0 == signature }).count > 1 { ambiguous = true } }
@@ -3485,6 +3501,27 @@ struct ReadyProof: Equatable {
         }
     }
 
+    /// Règle de Victor (27 nov.) : aucune ligne « En attente » dans toute la liste, puis le premier (le plus haut) des fichiers
+    /// qui peuvent être celui de la demande (« Expire le » au moins 4 jours après son jour, même empreinte si elle est connue).
+    func topCandidate(pending: [String], ready: [String], day: Date, now: Date, calendar: Calendar = .current) -> String? {
+        guard pending.isEmpty else { return nil }
+        return ready.first { Self.matches($0, day: day, signature: signature, now: now, calendar: calendar) }
+    }
+
+    /// La règle du plus haut fichier s'applique seulement quand la référence ne peut pas conclure : référence absente, demandes
+    /// indiscernables, ou plusieurs fichiers nouveaux. Si la référence est là et qu'aucun fichier nouveau n'est apparu, jamais.
+    private func topAllowed(_ r: Int) -> Bool {
+        guard let baseline else { return true }
+        return ambiguous || r > baseline
+    }
+
+    /// Le fichier retenu par la règle du plus haut, s'il est encore le même dans la liste lue maintenant.
+    private func topFile(pending: [String], ready: [String], day: Date, now: Date, calendar: Calendar) -> String? {
+        guard topStable, let top = topRow,
+              topCandidate(pending: pending, ready: ready, day: day, now: now, calendar: calendar) == top else { return nil }
+        return top
+    }
+
     /// Lignes « En attente » du jour, et lignes prêtes qui peuvent être le fichier de la demande.
     private func count(pending: [String], ready: [String], day: Date, now: Date, calendar: Calendar) -> (Int, Int) {
         // Relecture ChatGPT (18 nov., 15 h 55) : une demande en attente d'un AUTRE compte ou d'une autre catégorie (empreinte
@@ -3516,6 +3553,9 @@ struct ReadyProof: Equatable {
         // Empreinte inconnue : jamais « prêt » (on ne sait pas quel fichier est le sien).
         // Deux demandes indiscernables vues : jamais « prêt » automatique (relecture ChatGPT, 15 h 44).
         if let baseline, signature != nil, !ambiguous, r == baseline + 1, readyStable { return .ready }
+        // Règle de Victor (27 nov.) : plus rien « En attente » nulle part, et le plus haut fichier possible revu 2 s plus tard : prêt.
+        // L'import vérifie ensuite le fichier lui-même (date, « Depuis le début », bon compte).
+        if topAllowed(r), topFile(pending: pending, ready: ready, day: day, now: now, calendar: calendar) != nil { return .ready }
         // Plus de ligne « En attente » de ce jour, sans preuve nette (référence absente, ancien fichier expiré ou supprimé,
         // plusieurs fichiers nouveaux) : l'utilisateur vérifie la date lui-même.
         return r > 0 ? .toCheck : .unknown
@@ -3525,12 +3565,15 @@ struct ReadyProof: Equatable {
     /// Il faut une preuve nette (empreinte, pas d'ambiguïté, exactement un fichier de plus que la référence) et que tous les fichiers
     /// possibles portent la MÊME date : alors celle du nouveau est forcément celle-là. Sinon nil : consigne neutre, sans date.
     func identifiedExpiry(ready: [String], now: Date, calendar: Calendar = .current) -> Date? {
-        guard let day, let baseline, signature != nil, !ambiguous else { return nil }
+        guard let day else { return nil }
         let mine = ready.filter { Self.matches($0, day: day, signature: signature, now: now, calendar: calendar) }
-        guard mine.count == baseline + 1 else { return nil }
-        let dates = mine.map { Self.expiry($0, calendar: calendar).map { calendar.startOfDay(for: $0) } }
-        guard let first = dates.first ?? nil, dates.allSatisfy({ $0 == first }) else { return nil }
-        return first
+        if let baseline, signature != nil, !ambiguous, mine.count == baseline + 1 {
+            let dates = mine.map { Self.expiry($0, calendar: calendar).map { calendar.startOfDay(for: $0) } }
+            if let first = dates.first ?? nil, dates.allSatisfy({ $0 == first }) { return first }
+        }
+        // Règle de Victor (27 nov.) : la date écrite sur le plus haut fichier retenu (jamais une date calculée).
+        guard topAllowed(mine.count), let top = topFile(pending: [], ready: ready, day: day, now: now, calendar: calendar) else { return nil }
+        return Self.expiry(top, calendar: calendar).map { calendar.startOfDay(for: $0) }
     }
 
     /// Mots qui ne disent ni le compte, ni la catégorie, ni le format : dates, statuts, boutons, tailles.
